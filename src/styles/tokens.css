@@ -1,0 +1,19 @@
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-muted: #ffffff;
+  --color-text: #111111;
+  --color-text-muted: #4f5660;
+  --color-border: #e5e8ee;
+  --color-accent: #d9252a;
+  --color-success: #2f6b4f;
+  --color-warning: #a06a2c;
+  --color-error: #9a3e34;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --shadow-soft: 0 18px 40px rgba(17, 17, 17, 0.08);
+  --container: 1180px;
+}
