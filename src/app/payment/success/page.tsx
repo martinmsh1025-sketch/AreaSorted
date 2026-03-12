@@ -1,4 +1,5 @@
 import { getBookingRecordBySessionId, markBookingPaymentStatusBySessionId } from "@/lib/booking-record-store";
+import { buildBookingConfirmationEmail } from "@/lib/booking-email";
 import { getStripe } from "@/lib/stripe";
 
 type PaymentSuccessPageProps = {
@@ -34,6 +35,8 @@ export default async function PaymentSuccessPage({ searchParams }: PaymentSucces
         .filter(Boolean)
         .join(", ")
     : "";
+
+  const emailPreview = bookingDetails ? buildBookingConfirmationEmail(bookingDetails) : null;
 
   return (
     <main className="section">
@@ -100,6 +103,17 @@ export default async function PaymentSuccessPage({ searchParams }: PaymentSucces
             <p style={{ color: "var(--color-text-muted)", wordBreak: "break-all" }}>
               Stripe session: {sessionId}
             </p>
+          ) : null}
+          {emailPreview ? (
+            <div className="panel card" style={{ marginTop: "1.5rem", textAlign: "left" }}>
+              <div className="eyebrow">Confirmation email preview</div>
+              <p style={{ marginTop: "0.8rem" }}>
+                Subject: <strong>{emailPreview.subject}</strong>
+              </p>
+              <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7 }}>
+                Manage booking link: <a href={emailPreview.manageUrl} style={{ color: "var(--color-accent)", fontWeight: 700 }}>{emailPreview.manageUrl}</a>
+              </p>
+            </div>
           ) : null}
           <div className="button-row" style={{ marginTop: "1rem" }}>
             <a className="button button-primary" href="/">Back to Home</a>

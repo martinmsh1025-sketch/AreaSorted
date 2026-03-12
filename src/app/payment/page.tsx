@@ -19,8 +19,8 @@ type PaymentDraft = {
   kitchens: string;
   estimatedHours: number;
   preferredDate: string;
+  selectedDates?: string[];
   preferredTime: string;
-  frequency: string;
   supplies: string;
   pets: string;
   additionalRequests: string;
@@ -38,12 +38,13 @@ type PaymentDraft = {
   eco: boolean;
   pricing: {
     total: number;
+    dateCount?: number;
+    perVisitBaseAmount?: number;
     baseAmount: number;
     addOns: number;
     weekendSurcharge: number;
     eveningSurcharge: number;
     urgentSurcharge: number;
-    recurringDiscount: number;
   };
 };
 
@@ -185,8 +186,8 @@ export default function PaymentPage() {
                 <div><span>Kitchens</span><strong>{draft.kitchens}</strong></div>
                 <div><span>Estimated hours</span><strong>{draft.estimatedHours} hours</strong></div>
                 <div><span>Date</span><strong>{draft.preferredDate || "To be confirmed"}</strong></div>
+                <div><span>Cleaning dates</span><strong>{draft.selectedDates?.length ? draft.selectedDates.join(", ") : draft.preferredDate || "To be confirmed"}</strong></div>
                 <div><span>Time</span><strong>{draft.preferredTime || "To be confirmed"}</strong></div>
-                <div><span>Frequency</span><strong>{formatLabel(draft.frequency)}</strong></div>
                 <div><span>Supplies</span><strong>{draft.supplies === "cleaner" ? "Cleaner brings supplies" : "Customer provides supplies"}</strong></div>
                 <div><span>Pets</span><strong>{draft.pets === "yes" ? "Pets at property" : "No pets"}</strong></div>
               </div>
@@ -213,12 +214,13 @@ export default function PaymentPage() {
               <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>Ready for Stripe</h2>
               <div className="quote-total-number">{formatGBP(draft.pricing.total)}</div>
               <div className="quote-summary-list">
+                <div><span>Per visit</span><strong>{formatGBP(draft.pricing.perVisitBaseAmount || 0)}</strong></div>
+                <div><span>Selected dates</span><strong>{draft.pricing.dateCount || draft.selectedDates?.length || 1}</strong></div>
                 <div><span>Base amount</span><strong>{formatGBP(draft.pricing.baseAmount)}</strong></div>
                 <div><span>Add-ons</span><strong>{formatGBP(draft.pricing.addOns)}</strong></div>
                 <div><span>Weekend surcharge</span><strong>{formatGBP(draft.pricing.weekendSurcharge)}</strong></div>
                 <div><span>Evening surcharge</span><strong>{formatGBP(draft.pricing.eveningSurcharge)}</strong></div>
                 <div><span>Urgent booking surcharge</span><strong>{formatGBP(draft.pricing.urgentSurcharge)}</strong></div>
-                <div><span>Recurring discount</span><strong>-{formatGBP(draft.pricing.recurringDiscount)}</strong></div>
               </div>
               {!paymentReady ? (
                 <p style={{ color: "var(--color-text-muted)", lineHeight: 1.6 }}>

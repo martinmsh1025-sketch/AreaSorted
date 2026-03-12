@@ -16,8 +16,8 @@ type BookingDraft = {
   service: string;
   estimatedHours: number;
   preferredDate: string;
+  selectedDates?: string[];
   preferredTime: string;
-  frequency: string;
   supplies: string;
   customerName: string;
   contactPhone: string;
@@ -36,16 +36,17 @@ type BookingDraft = {
   billingAddressLine2: string;
   billingCity: string;
   billingPostcode: string;
-  pricing: {
-    hourlyRate: number;
-    baseAmount: number;
-    addOns: number;
-    weekendSurcharge: number;
-    eveningSurcharge: number;
-    urgentSurcharge: number;
-    recurringDiscount: number;
-    total: number;
-  };
+    pricing: {
+      hourlyRate: number;
+      dateCount?: number;
+      perVisitBaseAmount?: number;
+      baseAmount: number;
+      addOns: number;
+      weekendSurcharge: number;
+      eveningSurcharge: number;
+      urgentSurcharge: number;
+      total: number;
+    };
 };
 
 function formatGBP(value: number) {
@@ -56,7 +57,9 @@ function formatGBP(value: number) {
   }).format(value);
 }
 
-function formatLabel(value: string) {
+function formatLabel(value?: string) {
+  if (!value) return "To be confirmed";
+
   return value
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -171,7 +174,6 @@ export default function BookingPage() {
                 <div><span>Bathrooms</span><strong>{draft.bathrooms}</strong></div>
                 <div><span>Kitchens</span><strong>{draft.kitchens}</strong></div>
                 <div><span>Estimated hours</span><strong>{draft.estimatedHours} hours</strong></div>
-                <div><span>Frequency</span><strong>{formatLabel(draft.frequency)}</strong></div>
                 <div><span>Supplies</span><strong>{draft.supplies === "cleaner" ? "Cleaner brings supplies" : "Customer provides supplies"}</strong></div>
               </div>
             </section>
@@ -195,7 +197,7 @@ export default function BookingPage() {
               </div>
               <div className="quote-summary-list">
                 <div><span>Cleaning address</span><strong>{serviceAddress || "To be confirmed"}</strong></div>
-                <div><span>Preferred date</span><strong>{draft.preferredDate || "To be confirmed"}</strong></div>
+                <div><span>Cleaning dates</span><strong>{draft.selectedDates?.length ? draft.selectedDates.join(", ") : draft.preferredDate || "To be confirmed"}</strong></div>
                 <div><span>Preferred time</span><strong>{draft.preferredTime || "To be confirmed"}</strong></div>
                 <div><span>Pets</span><strong>{draft.pets === "yes" ? "Pets at property" : "No pets"}</strong></div>
               </div>
@@ -225,14 +227,18 @@ export default function BookingPage() {
               <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>Pay securely with Stripe</h2>
               <div className="quote-total-number">{formatGBP(draft.pricing.total)}</div>
               <div className="quote-summary-list">
+                <div><span>Per visit</span><strong>{formatGBP(draft.pricing.perVisitBaseAmount || 0)}</strong></div>
+                <div><span>Selected dates</span><strong>{draft.pricing.dateCount || draft.selectedDates?.length || 1}</strong></div>
                 <div><span>Base amount</span><strong>{formatGBP(draft.pricing.baseAmount)}</strong></div>
                 <div><span>Add-ons</span><strong>{formatGBP(draft.pricing.addOns)}</strong></div>
                 <div><span>Weekend surcharge</span><strong>{formatGBP(draft.pricing.weekendSurcharge)}</strong></div>
                 <div><span>Evening surcharge</span><strong>{formatGBP(draft.pricing.eveningSurcharge)}</strong></div>
                 <div><span>Urgent booking surcharge</span><strong>{formatGBP(draft.pricing.urgentSurcharge)}</strong></div>
-                <div><span>Recurring discount</span><strong>-{formatGBP(draft.pricing.recurringDiscount)}</strong></div>
               </div>
               {error ? <p style={{ color: "var(--color-error)", lineHeight: 1.6 }}>{error}</p> : null}
+              <div className="button-row" style={{ marginTop: "1rem" }}>
+                <a className="button button-secondary" href="/instant-quote">Edit details</a>
+              </div>
               <button className="button button-primary quote-summary-button" type="button" disabled={isSubmitting} onClick={handleContinueToStripe}>
                 {isSubmitting ? "Redirecting to Stripe..." : "Continue to Stripe"}
               </button>

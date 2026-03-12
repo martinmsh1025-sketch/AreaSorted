@@ -3,6 +3,7 @@ import path from "node:path";
 
 export type BookingRecord = {
   bookingReference: string;
+  accessToken?: string;
   customerName: string;
   email: string;
   contactPhone: string;
@@ -42,6 +43,21 @@ type BookingRecordStore = {
 
 const storeDir = path.join(process.cwd(), "data");
 const storeFile = path.join(storeDir, "booking-records.json");
+
+function randomBlock(length: number) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "";
+
+  for (let index = 0; index < length; index += 1) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  return result;
+}
+
+export function createAccessToken() {
+  return `${randomBlock(8)}${randomBlock(8)}`;
+}
 
 async function ensureStore() {
   await mkdir(storeDir, { recursive: true });

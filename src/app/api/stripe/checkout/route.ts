@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { upsertBookingRecord } from "@/lib/booking-record-store";
+import { createAccessToken, upsertBookingRecord } from "@/lib/booking-record-store";
 import { getStripe } from "@/lib/stripe";
 
 type CheckoutDraft = {
@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      payment_method_types: ["card"],
       success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/payment/cancel`,
       customer_email: draft.email || undefined,
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
 
     await upsertBookingRecord({
       bookingReference: draft.bookingReference || `WH-PENDING-${Date.now()}`,
+      accessToken: createAccessToken(),
       customerName: draft.customerName || "",
       email: draft.email || "",
       contactPhone: draft.contactPhone || "",

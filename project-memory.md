@@ -205,6 +205,16 @@ When the user asks to roll back, present saved versions by date + version label 
   - bookings over 6 hours now warn that additional cleaners may be assigned
   - customer name, phone, email, and billing address flow were added, with billing defaulting to the cleaning address
 
+- `2026-03-12 / v7-booking-review-and-stripe-flow / d90b4e3`
+  - quote, booking review, and Stripe checkout were connected into a working customer flow
+  - mandatory fields, T&C agreement, booking references, local booking records, and Stripe test checkout were added
+  - payment success now reads back booking details for safer customer confirmation and reconciliation
+
+- `2026-03-12 / v8-multiple-dates-and-booking-edit / pending`
+  - recurring frequency was replaced with multiple cleaning date selection
+  - pricing now calculates per visit and across all selected dates
+  - booking review now includes an edit details action so customers can return to the quote step before paying
+
 ### Working Rule
 
 - every future approved update should be saved as a new dated version entry here
