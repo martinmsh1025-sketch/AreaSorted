@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type AddressResult = {
   ID: string;
@@ -21,6 +21,24 @@ export default function HomePage() {
     service,
     address: selectedAddress?.Line ?? "",
   }).toString()}`;
+
+  useEffect(() => {
+    const cleanedPostcode = postcode.trim();
+
+    if (cleanedPostcode.length < 5) {
+      setAddresses([]);
+      setAddressId("");
+      setLookupMessage("");
+      setIsLoadingAddresses(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void lookupAddresses(cleanedPostcode);
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [postcode]);
 
   async function lookupAddresses(nextPostcode: string) {
     const cleanedPostcode = nextPostcode.trim();
@@ -74,19 +92,17 @@ export default function HomePage() {
             Choose the service first. We will ask for the rest on the next step.
           </p>
         </div>
-        <form className="panel mini-form hero-minimal-form">
+        <form
+          className="panel mini-form hero-minimal-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+          }}
+        >
           <input
             placeholder="Postcode"
             aria-label="Postcode"
             value={postcode}
             onChange={(event) => setPostcode(event.target.value.toUpperCase())}
-            onBlur={() => void lookupAddresses(postcode)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void lookupAddresses(postcode);
-              }
-            }}
           />
           {addresses.length ? (
             <div className="minimal-select-wrap">
@@ -108,7 +124,7 @@ export default function HomePage() {
             </div>
           ) : null}
           {postcode ? (
-            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Press Enter after typing your postcode to load addresses."}</p>
+            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Keep typing your postcode to load addresses."}</p>
           ) : null}
           <div className="minimal-select-wrap">
             <select
