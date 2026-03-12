@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type AddressResult = {
   ID: string;
@@ -36,24 +36,6 @@ export default function HomePage() {
     service,
     address: chosenAddress,
   }).toString()}`;
-
-  useEffect(() => {
-    const cleanedPostcode = postcode.trim();
-
-    if (cleanedPostcode.length < 5) {
-      setAddresses([]);
-      setAddressId("");
-      setLookupMessage("");
-      setIsLoadingAddresses(false);
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      void lookupAddresses(cleanedPostcode);
-    }, 350);
-
-    return () => window.clearTimeout(timer);
-  }, [postcode]);
 
   async function lookupAddresses(nextPostcode: string) {
     const cleanedPostcode = nextPostcode.trim();
@@ -129,15 +111,36 @@ export default function HomePage() {
               Manual address
             </button>
           </div>
-          <input
-            placeholder="Postcode"
-            aria-label="Postcode"
-            value={postcode}
-            onChange={(event) => {
-              setPostcode(event.target.value.toUpperCase());
-              setAddressId("");
-            }}
-          />
+          {entryMode === "lookup" ? (
+            <div className="hero-minimal-search-row">
+              <input
+                placeholder="Postcode"
+                aria-label="Postcode"
+                value={postcode}
+                onChange={(event) => {
+                  setPostcode(event.target.value.toUpperCase());
+                  setAddressId("");
+                  setAddresses([]);
+                  setLookupMessage("");
+                }}
+              />
+              <button
+                type="button"
+                className="button button-secondary hero-minimal-find-button"
+                onClick={() => void lookupAddresses(postcode)}
+                disabled={isLoadingAddresses}
+              >
+                {isLoadingAddresses ? "Finding..." : "Find"}
+              </button>
+            </div>
+          ) : (
+            <input
+              placeholder="Postcode"
+              aria-label="Postcode"
+              value={postcode}
+              onChange={(event) => setPostcode(event.target.value.toUpperCase())}
+            />
+          )}
           {entryMode === "lookup" && addresses.length ? (
             <div className="minimal-select-wrap">
               <select
@@ -160,15 +163,18 @@ export default function HomePage() {
             </div>
           ) : null}
           {entryMode === "manual" ? (
-            <input
-              placeholder="Enter address manually"
-              aria-label="Manual address"
-              value={manualAddress}
-              onChange={(event) => setManualAddress(event.target.value)}
-            />
+            <>
+              <input
+                placeholder="Address line 1"
+                aria-label="Manual address"
+                value={manualAddress}
+                onChange={(event) => setManualAddress(event.target.value)}
+              />
+              <p className="hero-minimal-note">Enter your address manually if you prefer not to search by postcode.</p>
+            </>
           ) : null}
           {postcode && entryMode === "lookup" ? (
-            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Keep typing your postcode to load addresses."}</p>
+            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Enter your postcode and click Find."}</p>
           ) : null}
           <div className="minimal-select-wrap">
             <select
