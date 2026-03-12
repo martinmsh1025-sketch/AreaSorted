@@ -95,17 +95,18 @@ export default function HomePage() {
             event.preventDefault();
           }}
         >
-          <div className="hero-minimal-tabs" role="tablist" aria-label="Address entry method">
+          <div className="hero-minimal-mode-switch" aria-label="Address entry method">
             <button
               type="button"
-              className={`hero-minimal-tab ${entryMode === "lookup" ? "hero-minimal-tab-active" : ""}`}
+              className={`hero-minimal-mode-link ${entryMode === "lookup" ? "hero-minimal-mode-link-active" : ""}`}
               onClick={() => setEntryMode("lookup")}
             >
               Find address
             </button>
+            <span className="hero-minimal-mode-separator">/</span>
             <button
               type="button"
-              className={`hero-minimal-tab ${entryMode === "manual" ? "hero-minimal-tab-active" : ""}`}
+              className={`hero-minimal-mode-link ${entryMode === "manual" ? "hero-minimal-mode-link-active" : ""}`}
               onClick={() => setEntryMode("manual")}
             >
               Manual address

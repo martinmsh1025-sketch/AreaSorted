@@ -232,32 +232,29 @@ img {
   line-height: 1.6;
 }
 
-.hero-minimal-tabs {
+.hero-minimal-mode-switch {
   display: inline-flex;
+  align-items: center;
   gap: 0.45rem;
-  padding: 0.3rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: #fff;
+  font-size: 0.92rem;
 }
 
-.hero-minimal-tab {
-  min-height: 40px;
-  padding: 0.55rem 0.95rem;
+.hero-minimal-mode-link {
+  padding: 0;
   border: 0;
-  border-radius: 999px;
   background: transparent;
   color: var(--color-text-muted);
   font: inherit;
-  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
 }
 
-.hero-minimal-tab-active {
-  background: #fff;
+.hero-minimal-mode-link-active {
   color: var(--color-text);
-  box-shadow: 0 6px 18px rgba(17, 17, 17, 0.08);
+}
+
+.hero-minimal-mode-separator {
+  color: var(--color-text-muted);
 }
 
 .hero-minimal-search-row {
