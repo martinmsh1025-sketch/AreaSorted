@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { saveBookingDraft } from "@/lib/booking-draft";
 
 const serviceOptions = [
   { value: "regular-home-cleaning", label: "Regular cleaning" },
@@ -101,6 +103,7 @@ export function InstantQuoteForm({
   initialCity,
   initialService,
 }: InstantQuoteFormProps) {
+  const router = useRouter();
   const [postcode, setPostcode] = useState(initialPostcode);
   const [addressLine1, setAddressLine1] = useState(initialAddressLine1);
   const [addressLine2, setAddressLine2] = useState(initialAddressLine2);
@@ -132,6 +135,8 @@ export function InstantQuoteForm({
   const [billingAddressLine2, setBillingAddressLine2] = useState("");
   const [billingCity, setBillingCity] = useState("");
   const [billingPostcode, setBillingPostcode] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
 
   const preferredTime = `${preferredHour}:${preferredMinute}`;
 
@@ -180,6 +185,75 @@ export function InstantQuoteForm({
     };
   }, [estimatedHours, service, supplies, preferredDate, preferredTime, oven, fridge, windows, ironing, eco, frequency]);
 
+  function handleContinueToBooking() {
+    const missingFields: string[] = [];
+
+    if (!postcode.trim()) missingFields.push("postcode");
+    if (!addressLine1.trim()) missingFields.push("address line 1");
+    if (!city.trim()) missingFields.push("city");
+    if (!propertyType) missingFields.push("property type");
+    if (!service) missingFields.push("service type");
+    if (!bedrooms) missingFields.push("bedrooms");
+    if (!bathrooms) missingFields.push("bathrooms");
+    if (!kitchens) missingFields.push("kitchens");
+    if (!preferredDate) missingFields.push("preferred date");
+    if (!preferredHour || !preferredMinute) missingFields.push("preferred time");
+    if (!customerName.trim()) missingFields.push("customer name");
+    if (!contactPhone.trim()) missingFields.push("contact phone");
+    if (!email.trim()) missingFields.push("email");
+
+    if (!acceptedTerms) {
+      setQuoteError("Please complete all mandatory fields and agree to the Terms & Conditions before continuing.");
+      return;
+    }
+
+    if (missingFields.length) {
+      setQuoteError(`Please complete all mandatory fields before continuing. Missing: ${missingFields.join(", ")}.`);
+      return;
+    }
+
+    setQuoteError("");
+
+    const bookingDraft = {
+      postcode,
+      addressLine1,
+      addressLine2,
+      city,
+      propertyType,
+      bedrooms,
+      bathrooms,
+      kitchens,
+      service,
+      estimatedHours,
+      preferredDate,
+      preferredTime,
+      frequency,
+      supplies,
+      customerName,
+      contactPhone,
+      email,
+      pets,
+      oven,
+      fridge,
+      windows,
+      ironing,
+      eco,
+      additionalRequests,
+      entryNotes,
+      parkingNotes,
+      billingSameAsService,
+      billingAddressLine1: billingSameAsService ? addressLine1 : billingAddressLine1,
+      billingAddressLine2: billingSameAsService ? addressLine2 : billingAddressLine2,
+      billingCity: billingSameAsService ? city : billingCity,
+      billingPostcode: billingSameAsService ? postcode : billingPostcode,
+      acceptedTerms,
+      pricing,
+    };
+
+    saveBookingDraft(bookingDraft);
+    router.push("/book");
+  }
+
   return (
     <main className="section">
       <div className="container">
@@ -219,7 +293,7 @@ export function InstantQuoteForm({
               </div>
               <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
-                  <span>Property type</span>
+                  <span>Property type *</span>
                   <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>
                     {propertyOptions.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
@@ -227,7 +301,7 @@ export function InstantQuoteForm({
                   </select>
                 </label>
                 <label className="quote-field-stack">
-                  <span>Service type</span>
+                  <span>Service type *</span>
                   <select value={service} onChange={(event) => setService(event.target.value)}>
                     {serviceOptions.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
@@ -235,7 +309,7 @@ export function InstantQuoteForm({
                   </select>
                 </label>
                 <label className="quote-field-stack">
-                  <span>Bedrooms</span>
+                  <span>Bedrooms *</span>
                   <select value={bedrooms} onChange={(event) => setBedrooms(event.target.value)}>
                     {roomOptions.map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -243,7 +317,7 @@ export function InstantQuoteForm({
                   </select>
                 </label>
                 <label className="quote-field-stack">
-                  <span>Bathrooms</span>
+                  <span>Bathrooms *</span>
                   <select value={bathrooms} onChange={(event) => setBathrooms(event.target.value)}>
                     {roomOptions.map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -251,7 +325,7 @@ export function InstantQuoteForm({
                   </select>
                 </label>
                 <label className="quote-field-stack">
-                  <span>Kitchens</span>
+                  <span>Kitchens *</span>
                   <select value={kitchens} onChange={(event) => setKitchens(event.target.value)}>
                     {roomOptions.slice(1, 5).map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -273,7 +347,7 @@ export function InstantQuoteForm({
               </div>
               <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
-                  <span>Frequency</span>
+                  <span>Frequency *</span>
                   <select value={frequency} onChange={(event) => setFrequency(event.target.value)}>
                     <option value="one-off">One-off</option>
                     <option value="weekly">Weekly</option>
@@ -282,11 +356,11 @@ export function InstantQuoteForm({
                   </select>
                 </label>
                 <label className="quote-field-stack">
-                  <span>Preferred date</span>
+                  <span>Preferred date *</span>
                   <input type="date" value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} />
                 </label>
                 <label className="quote-field-stack">
-                  <span>Preferred time</span>
+                  <span>Preferred time *</span>
                   <div className="quote-time-grid">
                     <select value={preferredHour} onChange={(event) => setPreferredHour(event.target.value)}>
                       {hourOptions.map((hour) => (
@@ -301,7 +375,7 @@ export function InstantQuoteForm({
                   </div>
                 </label>
                 <label className="quote-field-stack">
-                  <span>Cleaning supplies</span>
+                  <span>Cleaning supplies *</span>
                   <select value={supplies} onChange={(event) => setSupplies(event.target.value as "customer" | "cleaner")}>
                     <option value="customer">Customer provides supplies</option>
                     <option value="cleaner">Cleaner brings supplies</option>
@@ -351,15 +425,15 @@ export function InstantQuoteForm({
               </div>
               <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
-                  <span>Customer name</span>
+                  <span>Customer name *</span>
                   <input placeholder="Full name" value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
                 </label>
                 <label className="quote-field-stack">
-                  <span>Contact phone</span>
+                  <span>Contact phone *</span>
                   <input placeholder="Phone number" value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} />
                 </label>
                 <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
-                  <span>Email</span>
+                  <span>Email *</span>
                   <input placeholder="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
                 </label>
               </div>
@@ -401,6 +475,20 @@ export function InstantQuoteForm({
                 </div>
               ) : null}
             </section>
+
+            <section className="panel mini-form quote-section-card">
+              <div className="quote-section-head">
+                <div className="eyebrow">Section H</div>
+                <strong>Terms & Conditions</strong>
+                <p>The customer must agree to the booking terms before payment.</p>
+              </div>
+              <label className="quote-check-item">
+                <input type="checkbox" checked={acceptedTerms} onChange={() => setAcceptedTerms((value) => !value)} />
+                <span>
+                  I agree to the <a href="/terms-and-conditions" style={{ color: "var(--color-accent)", fontWeight: 700 }}>Terms & Conditions</a>. *
+                </span>
+              </label>
+            </section>
           </form>
 
           <aside className="quote-sidebar-stack">
@@ -438,7 +526,8 @@ export function InstantQuoteForm({
                 <li>Price changes stay visible as the customer edits the form</li>
                 <li>End of tenancy or unusual jobs may still need a manual review</li>
               </ul>
-              <button className="button button-primary quote-summary-button" type="button">Continue to Booking</button>
+              {quoteError ? <p style={{ color: "var(--color-error)", lineHeight: 1.6 }}>{quoteError}</p> : null}
+              <button className="button button-primary quote-summary-button" type="button" onClick={handleContinueToBooking}>Continue to Booking</button>
             </section>
 
             <section className="panel card">

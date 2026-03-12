@@ -1,0 +1,58 @@
+{
+  "bookings": [
+    {
+      "bookingReference": "WH-20260312-M6ZF",
+      "customerName": "Mabots Ma",
+      "email": "mabotsma@gmail.com",
+      "contactPhone": "07898112070",
+      "service": "airbnb-turnover-cleaning",
+      "postcode": "HA5 2AH",
+      "addressLine1": "2 Camden Row Cuckoo Hill Pinner Middlesex HA5 2AH",
+      "addressLine2": "Pinner",
+      "city": "London",
+      "propertyType": "semi-detached",
+      "bedrooms": "3",
+      "bathrooms": "2",
+      "kitchens": "1",
+      "estimatedHours": 8,
+      "preferredDate": "2026-03-05",
+      "preferredTime": "10:00",
+      "frequency": "one-off",
+      "supplies": "customer",
+      "pets": "no",
+      "billingAddressLine1": "2 Camden Row Cuckoo Hill Pinner Middlesex HA5 2AH",
+      "billingAddressLine2": "Pinner",
+      "billingCity": "London",
+      "billingPostcode": "HA5 2AH",
+      "additionalRequests": "",
+      "entryNotes": "dsfs",
+      "parkingNotes": "fsd",
+      "addOns": [
+        "Oven",
+        "Fridge",
+        "Inside windows",
+        "Ironing"
+      ],
+      "totalAmount": 334,
+      "stripeSessionId": "cs_test_a15vcnjjoJqRPuuf2ODkt5NYFSTueeqBAF118JI7Smd12nv1UT0dfhB6Qo",
+      "stripePaymentStatus": "paid",
+      "createdAt": "2026-03-12T22:30:00.100Z",
+      "updatedAt": "2026-03-12T22:31:26.615Z"
+    },
+    {
+      "bookingReference": "WH-TEST-1001",
+      "customerName": "Test User",
+      "email": "test@example.com",
+      "contactPhone": "07123456789",
+      "service": "regular-home-cleaning",
+      "postcode": "SW1A 1AA",
+      "preferredDate": "2026-03-20",
+      "preferredTime": "10:00",
+      "totalAmount": 96,
+      "stripeSessionId": "cs_test_a1JAq3K6WGHVVOzSurBnTsKlRDoAPYHmC1gkk2F1RsjkkxbeL1KEUycr4A",
+      "stripePaymentStatus": "pending",
+      "createdAt": "2026-03-12T22:27:54.202Z",
+      "updatedAt": "2026-03-12T22:27:54.202Z"
+    }
+  ]
+}

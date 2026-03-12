@@ -8,7 +8,9 @@ export async function GET(request: Request) {
   const lineId = searchParams.get("id")?.trim();
 
   if (!apiKey) {
-    return NextResponse.json({ error: "Missing SIMPLY_POSTCODE_API_KEY." }, { status: 500 });
+    return NextResponse.json({
+      error: "Address lookup is not configured right now. Please use manual address entry.",
+    });
   }
 
   if (!lineId) {

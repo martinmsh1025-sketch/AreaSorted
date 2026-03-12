@@ -30,13 +30,12 @@ export default function HomePage() {
   const [manualAddress1, setManualAddress1] = useState("");
   const [manualAddress2, setManualAddress2] = useState("");
   const [manualAddress3, setManualAddress3] = useState("");
-  const [manualPostcode, setManualPostcode] = useState("");
   const [manualCountry, setManualCountry] = useState("United Kingdom");
 
   const selectedAddress = addresses.find((item) => item.ID === addressId);
   const chosenAddress =
     entryMode === "manual"
-      ? [manualAddress1, manualAddress2, manualAddress3, manualPostcode, manualCountry].filter(Boolean).join(", ")
+      ? [manualAddress1, manualAddress2, manualAddress3, manualCountry].filter(Boolean).join(", ")
       : selectedAddress?.Line ?? "";
   const continueHref = `/instant-quote?${new URLSearchParams({
     postcode,
@@ -194,12 +193,6 @@ export default function HomePage() {
                 aria-label="Address line 3"
                 value={manualAddress3}
                 onChange={(event) => setManualAddress3(event.target.value)}
-              />
-              <input
-                placeholder="Postcode"
-                aria-label="Manual postcode"
-                value={manualPostcode}
-                onChange={(event) => setManualPostcode(event.target.value.toUpperCase())}
               />
               <input
                 placeholder="Country"
