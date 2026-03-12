@@ -2,8 +2,58 @@
 
 import { useState } from "react";
 
+type AddressResult = {
+  ID: string;
+  Line: string;
+};
+
 export default function HomePage() {
   const [service, setService] = useState("");
+  const [postcode, setPostcode] = useState("");
+  const [addressId, setAddressId] = useState("");
+  const [addresses, setAddresses] = useState<AddressResult[]>([]);
+  const [lookupMessage, setLookupMessage] = useState("");
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+
+  const selectedAddress = addresses.find((item) => item.ID === addressId);
+  const continueHref = `/instant-quote?${new URLSearchParams({
+    postcode,
+    service,
+    address: selectedAddress?.Line ?? "",
+  }).toString()}`;
+
+  async function lookupAddresses(nextPostcode: string) {
+    const cleanedPostcode = nextPostcode.trim();
+
+    if (!cleanedPostcode) {
+      setAddresses([]);
+      setAddressId("");
+      setLookupMessage("");
+      return;
+    }
+
+    setIsLoadingAddresses(true);
+    setLookupMessage("");
+
+    try {
+      const response = await fetch(`/api/postcode-search?query=${encodeURIComponent(cleanedPostcode)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to find addresses for that postcode.");
+      }
+
+      setAddresses(data.results ?? []);
+      setAddressId("");
+      setLookupMessage(data.results?.length ? data.instructionsTxt || "Select your address." : "No addresses found for that postcode.");
+    } catch (error) {
+      setAddresses([]);
+      setAddressId("");
+      setLookupMessage(error instanceof Error ? error.message : "Unable to find addresses for that postcode.");
+    } finally {
+      setIsLoadingAddresses(false);
+    }
+  }
 
   return (
     <main className="hero-minimal">
@@ -25,7 +75,41 @@ export default function HomePage() {
           </p>
         </div>
         <form className="panel mini-form hero-minimal-form">
-          <input placeholder="Postcode" aria-label="Postcode" />
+          <input
+            placeholder="Postcode"
+            aria-label="Postcode"
+            value={postcode}
+            onChange={(event) => setPostcode(event.target.value.toUpperCase())}
+            onBlur={() => void lookupAddresses(postcode)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void lookupAddresses(postcode);
+              }
+            }}
+          />
+          {addresses.length ? (
+            <div className="minimal-select-wrap">
+              <select
+                value={addressId}
+                onChange={(event) => setAddressId(event.target.value)}
+                aria-label="Address"
+                className={`minimal-select ${addressId ? "has-value" : ""}`}
+              >
+                <option value="" disabled>
+                  Select address
+                </option>
+                {addresses.map((address) => (
+                  <option key={address.ID} value={address.ID}>
+                    {address.Line}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+          {postcode ? (
+            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Press Enter after typing your postcode to load addresses."}</p>
+          ) : null}
           <div className="minimal-select-wrap">
             <select
               value={service}
@@ -42,7 +126,7 @@ export default function HomePage() {
               <option value="airbnb-turnover-cleaning">Airbnb Turnover Cleaning</option>
             </select>
           </div>
-          <a className="button button-primary" href="/instant-quote">
+          <a className="button button-primary" href={continueHref}>
             Continue
           </a>
         </form>

@@ -1,3 +1,5 @@
+import { WashHubLogo } from "@/components/branding/washhub-logo";
+
 const customerLinks = [
   ["/services", "Services"],
   ["/pricing", "Pricing"],
@@ -42,10 +44,12 @@ function LinkList({ items }: { items: string[][] }) {
 export function SiteFooter() {
   return (
     <footer className="footer section">
-      <div className="container">
+      <div className="container footer-shell">
         <div className="footer-grid">
-          <div>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 800, color: "var(--color-accent)", marginBottom: "0.7rem" }}>WashHub</div>
+          <div className="footer-brand-block">
+            <div className="footer-brand-mark">
+              <WashHubLogo />
+            </div>
             <p className="footer-brand-copy">
               Trusted cleaning across London with verified cleaners, clear booking, and practical support for customers and applicants.
             </p>
@@ -55,19 +59,19 @@ export function SiteFooter() {
               <li>Mon-Fri, 9am-6pm</li>
             </ul>
           </div>
-          <div>
+          <div className="footer-column">
             <div className="footer-title">Customer</div>
             <LinkList items={customerLinks} />
           </div>
-          <div>
+          <div className="footer-column">
             <div className="footer-title">Cleaners</div>
             <LinkList items={cleanerLinks} />
           </div>
-          <div>
+          <div className="footer-column">
             <div className="footer-title">Legal</div>
             <LinkList items={legalLinks} />
           </div>
-          <div>
+          <div className="footer-column">
             <div className="footer-title">Sitemap</div>
             <LinkList items={sitemapLinks} />
           </div>

@@ -133,8 +133,9 @@ img {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
-  gap: 1.5rem;
+  grid-template-columns: minmax(260px, 1.5fr) repeat(4, minmax(120px, 1fr));
+  gap: 2rem;
+  align-items: start;
 }
 
 .list-clean {
@@ -219,8 +220,16 @@ img {
   font-weight: 600;
 }
 
+
 .hero-minimal-form input::placeholder {
   color: #8a8f98;
+}
+
+.hero-minimal-note {
+  margin: -0.1rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
 }
 
 .hero-wrap {
@@ -377,6 +386,74 @@ img {
   transform: translateY(-1px);
 }
 
+.site-header-shell {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 88px;
+}
+
+.site-header-brand {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.washhub-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.washhub-logo-compact {
+  gap: 0;
+}
+
+.washhub-logo-image {
+  width: auto;
+  height: 78px;
+  object-fit: contain;
+}
+
+.washhub-logo-compact .washhub-logo-image {
+  height: 88px;
+}
+
+.site-header-nav {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.site-header-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.site-header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0.2rem 0;
+}
+
 .trust-list {
   display: flex;
   flex-wrap: wrap;
@@ -402,6 +479,20 @@ img {
   border-top: 1px solid var(--color-border);
 }
 
+.footer-shell {
+  padding-top: 2rem;
+  padding-bottom: 1rem;
+}
+
+.footer-brand-block {
+  padding-right: 1.25rem;
+}
+
+.footer-brand-mark {
+  display: inline-flex;
+  margin-bottom: 0.9rem;
+}
+
 .footer-title {
   margin-bottom: 0.7rem;
   font-size: 0.95rem;
@@ -412,6 +503,18 @@ img {
   max-width: 320px;
   color: var(--color-text-muted);
   line-height: 1.7;
+}
+
+.footer-column {
+  justify-self: stretch;
+}
+
+.footer-column .list-clean a {
+  color: var(--color-text-muted);
+}
+
+.footer-column .list-clean li + li {
+  margin-top: 0.65rem;
 }
 
 .footer-bottom {
@@ -445,5 +548,61 @@ img {
 
   .hero-art {
     min-height: auto;
+  }
+
+  .site-header-grid {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    min-height: auto;
+    padding: 1rem 0;
+  }
+
+  .site-header-brand {
+    text-align: center;
+    justify-content: center;
+  }
+
+  .washhub-logo-image {
+    height: 72px;
+  }
+
+  .washhub-logo-compact .washhub-logo-image {
+    height: 80px;
+  }
+
+  .site-header-nav {
+    justify-content: center;
+    padding-bottom: 0.25rem;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+  }
+
+  .footer-brand-block {
+    padding-right: 0;
+  }
+
+  .footer-shell,
+  .footer-brand-block,
+  .footer-column,
+  .footer-bottom {
+    text-align: center;
+  }
+
+  .footer-brand-copy {
+    max-width: none;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .footer-brand-mark {
+    justify-content: center;
+  }
+
+  .footer-column .list-clean {
+    display: grid;
+    justify-content: center;
   }
 }

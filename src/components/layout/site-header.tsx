@@ -1,3 +1,5 @@
+import { WashHubLogo } from "@/components/branding/washhub-logo";
+
 const navItems = [
   { href: "/services", label: "Services", icon: "spark" },
   { href: "/pricing", label: "Pricing", icon: "tag" },
@@ -70,55 +72,19 @@ function NavIcon({ icon }: { icon: string }) {
 
 export function SiteHeader() {
   return (
-    <header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 20,
-        background: "#ffffff",
-        borderBottom: "1px solid var(--color-border)",
-      }}
-    >
-      <div
-        className="container"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "auto 1fr",
-          alignItems: "center",
-          gap: "1.5rem",
-          minHeight: "88px",
-        }}
-      >
-        <a
-          href="/"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "1.4rem",
-            fontWeight: 800,
-            letterSpacing: "-0.03em",
-            color: "var(--color-accent)",
-          }}
-        >
-          WashHub
+    <header className="site-header-shell">
+      <div className="container site-header-grid">
+        <a href="/" className="site-header-brand">
+          <WashHubLogo compact />
         </a>
 
-        <nav style={{ display: "flex", gap: "1.1rem", flexWrap: "nowrap", alignItems: "center", justifyContent: "flex-end", minWidth: 0 }}>
+        <nav className="site-header-nav">
           {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.45rem",
-                color: "var(--color-accent)",
-                fontSize: "0.9rem",
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-              }}
-            >
-              <NavIcon icon={item.icon} />
-              {item.label}
+            <a key={item.href} href={item.href} className="site-header-link">
+              <span style={{ color: "var(--color-accent)", display: "inline-flex", alignItems: "center" }}>
+                <NavIcon icon={item.icon} />
+              </span>
+              <span style={{ color: "var(--color-text)" }}>{item.label}</span>
             </a>
           ))}
         </nav>
