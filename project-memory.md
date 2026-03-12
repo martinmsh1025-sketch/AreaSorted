@@ -180,6 +180,10 @@ When the user asks to roll back, present saved versions by date + version label 
   - manual address mode added with fields for address line 1, address line 2, address line 3, postcode, and country
   - this is the approved restore point to offer first if the user asks to go back
 
+- `2026-03-12 / v2-instant-quote-prefill / add34ce`
+  - instant quote page reads postcode, address, and service from homepage query params
+  - address fields are prefilled on the quote page so the customer does not need to retype them
+
 ### Working Rule
 
 - every future approved update should be saved as a new dated version entry here
