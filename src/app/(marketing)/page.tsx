@@ -7,6 +7,18 @@ type AddressResult = {
   Line: string;
 };
 
+type EntryMode = "lookup" | "manual";
+
+async function readJsonSafely(response: Response) {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("Address lookup is temporarily unavailable. Please try manual entry.");
+  }
+}
+
 export default function HomePage() {
   const [service, setService] = useState("");
   const [postcode, setPostcode] = useState("");
@@ -14,11 +26,11 @@ export default function HomePage() {
   const [addresses, setAddresses] = useState<AddressResult[]>([]);
   const [lookupMessage, setLookupMessage] = useState("");
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
-  const [manualEntry, setManualEntry] = useState(false);
+  const [entryMode, setEntryMode] = useState<EntryMode>("lookup");
   const [manualAddress, setManualAddress] = useState("");
 
   const selectedAddress = addresses.find((item) => item.ID === addressId);
-  const chosenAddress = manualEntry ? manualAddress.trim() : selectedAddress?.Line ?? "";
+  const chosenAddress = entryMode === "manual" ? manualAddress.trim() : selectedAddress?.Line ?? "";
   const continueHref = `/instant-quote?${new URLSearchParams({
     postcode,
     service,
@@ -33,7 +45,6 @@ export default function HomePage() {
       setAddressId("");
       setLookupMessage("");
       setIsLoadingAddresses(false);
-      setManualEntry(false);
       return;
     }
 
@@ -51,7 +62,6 @@ export default function HomePage() {
       setAddresses([]);
       setAddressId("");
       setLookupMessage("");
-      setManualEntry(false);
       return;
     }
 
@@ -60,7 +70,7 @@ export default function HomePage() {
 
     try {
       const response = await fetch(`/api/postcode-search?query=${encodeURIComponent(cleanedPostcode)}`);
-      const data = await response.json();
+      const data = await readJsonSafely(response);
 
       if (!response.ok) {
         throw new Error(data.error || "Unable to find addresses for that postcode.");
@@ -68,13 +78,11 @@ export default function HomePage() {
 
       setAddresses(data.results ?? []);
       setAddressId("");
-      setLookupMessage(data.results?.length ? "Select your address." : "No address found. You can enter it manually.");
-      setManualEntry(!(data.results?.length));
+      setLookupMessage(data.results?.length ? "Select your address." : "No address found. You can use the manual tab instead.");
     } catch (error) {
       setAddresses([]);
       setAddressId("");
       setLookupMessage(error instanceof Error ? error.message : "Unable to find addresses for that postcode.");
-      setManualEntry(true);
     } finally {
       setIsLoadingAddresses(false);
     }
@@ -105,6 +113,22 @@ export default function HomePage() {
             event.preventDefault();
           }}
         >
+          <div className="hero-minimal-tabs" role="tablist" aria-label="Address entry method">
+            <button
+              type="button"
+              className={`hero-minimal-tab ${entryMode === "lookup" ? "hero-minimal-tab-active" : ""}`}
+              onClick={() => setEntryMode("lookup")}
+            >
+              Find address
+            </button>
+            <button
+              type="button"
+              className={`hero-minimal-tab ${entryMode === "manual" ? "hero-minimal-tab-active" : ""}`}
+              onClick={() => setEntryMode("manual")}
+            >
+              Manual address
+            </button>
+          </div>
           <input
             placeholder="Postcode"
             aria-label="Postcode"
@@ -114,13 +138,12 @@ export default function HomePage() {
               setAddressId("");
             }}
           />
-          {addresses.length ? (
+          {entryMode === "lookup" && addresses.length ? (
             <div className="minimal-select-wrap">
               <select
                 value={addressId}
                 onChange={(event) => {
                   setAddressId(event.target.value);
-                  setManualEntry(false);
                 }}
                 aria-label="Address"
                 className={`minimal-select ${addressId ? "has-value" : ""}`}
@@ -136,7 +159,7 @@ export default function HomePage() {
               </select>
             </div>
           ) : null}
-          {manualEntry ? (
+          {entryMode === "manual" ? (
             <input
               placeholder="Enter address manually"
               aria-label="Manual address"
@@ -144,17 +167,8 @@ export default function HomePage() {
               onChange={(event) => setManualAddress(event.target.value)}
             />
           ) : null}
-          {postcode ? (
-            <>
-              <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Keep typing your postcode to load addresses."}</p>
-              <button
-                type="button"
-                className="hero-minimal-link"
-                onClick={() => setManualEntry((current) => !current)}
-              >
-                {manualEntry ? "Use address list instead" : "Enter address manually"}
-              </button>
-            </>
+          {postcode && entryMode === "lookup" ? (
+            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Keep typing your postcode to load addresses."}</p>
           ) : null}
           <div className="minimal-select-wrap">
             <select
