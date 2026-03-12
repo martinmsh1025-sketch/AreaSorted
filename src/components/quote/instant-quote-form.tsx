@@ -9,6 +9,9 @@ const serviceOptions = [
   { value: "airbnb-turnover-cleaning", label: "Airbnb turnover cleaning" },
 ];
 
+const hourOptions = Array.from({ length: 16 }, (_, index) => `${String(index + 6).padStart(2, "0")}`);
+const minuteOptions = ["00", "15", "30", "45"];
+
 const baseRates = {
   "regular-home-cleaning": { customer: 24, cleaner: 27 },
   "deep-cleaning": { customer: 30, cleaner: 33 },
@@ -52,12 +55,13 @@ export function InstantQuoteForm({
   const [addressLine2, setAddressLine2] = useState(initialAddressLine2);
   const [city, setCity] = useState(initialCity);
   const [propertyType, setPropertyType] = useState("flat");
-  const [bedrooms, setBedrooms] = useState("2");
-  const [bathrooms, setBathrooms] = useState("1");
-  const [hours, setHours] = useState("4");
+  const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
+  const [hours, setHours] = useState("");
   const [service, setService] = useState(initialService || "regular-home-cleaning");
   const [preferredDate, setPreferredDate] = useState("");
-  const [preferredTime, setPreferredTime] = useState("10:00");
+  const [preferredHour, setPreferredHour] = useState("10");
+  const [preferredMinute, setPreferredMinute] = useState("00");
   const [frequency, setFrequency] = useState("one-off");
   const [supplies, setSupplies] = useState<"customer" | "cleaner">("customer");
   const [pets, setPets] = useState("no");
@@ -69,6 +73,8 @@ export function InstantQuoteForm({
   const [additionalRequests, setAdditionalRequests] = useState("");
   const [entryNotes, setEntryNotes] = useState("");
   const [parkingNotes, setParkingNotes] = useState("");
+
+  const preferredTime = `${preferredHour}:${preferredMinute}`;
 
   const pricing = useMemo(() => {
     const parsedHours = Math.max(Number(hours) || 0, 0);
@@ -139,14 +145,26 @@ export function InstantQuoteForm({
                 <p>Hours usually drive the biggest part of the quote. Increase them for larger homes or first visits.</p>
               </div>
               <div className="quote-two-col-fields">
-                <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>
-                  <option value="flat">Flat</option>
-                  <option value="house">House</option>
-                  <option value="office">Office</option>
-                </select>
-                <input placeholder="Bedrooms" value={bedrooms} onChange={(event) => setBedrooms(event.target.value)} />
-                <input placeholder="Bathrooms" value={bathrooms} onChange={(event) => setBathrooms(event.target.value)} />
-                <input placeholder="Estimated hours" value={hours} onChange={(event) => setHours(event.target.value)} />
+                <label className="quote-field-stack">
+                  <span>Property type</span>
+                  <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>
+                    <option value="flat">Flat</option>
+                    <option value="house">House</option>
+                    <option value="office">Office</option>
+                  </select>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Bedrooms</span>
+                  <input placeholder="e.g. 2" value={bedrooms} onChange={(event) => setBedrooms(event.target.value)} />
+                </label>
+                <label className="quote-field-stack">
+                  <span>Bathrooms</span>
+                  <input placeholder="e.g. 1" value={bathrooms} onChange={(event) => setBathrooms(event.target.value)} />
+                </label>
+                <label className="quote-field-stack">
+                  <span>Estimated hours</span>
+                  <input placeholder="e.g. 4" value={hours} onChange={(event) => setHours(event.target.value)} />
+                </label>
               </div>
             </section>
 
@@ -157,27 +175,56 @@ export function InstantQuoteForm({
                 <p>Service type, timing, and supplies all affect the estimate.</p>
               </div>
               <div className="quote-two-col-fields">
-                <select value={service} onChange={(event) => setService(event.target.value)}>
-                  {serviceOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-                <select value={frequency} onChange={(event) => setFrequency(event.target.value)}>
-                  <option value="one-off">One-off</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="fortnightly">Fortnightly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-                <input type="date" value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} />
-                <input type="time" value={preferredTime} onChange={(event) => setPreferredTime(event.target.value)} />
-                <select value={supplies} onChange={(event) => setSupplies(event.target.value as "customer" | "cleaner")}>
-                  <option value="customer">Customer provides supplies</option>
-                  <option value="cleaner">Cleaner brings supplies</option>
-                </select>
-                <select value={pets} onChange={(event) => setPets(event.target.value)}>
-                  <option value="no">No pets</option>
-                  <option value="yes">Pets at property</option>
-                </select>
+                <label className="quote-field-stack">
+                  <span>Service type</span>
+                  <select value={service} onChange={(event) => setService(event.target.value)}>
+                    {serviceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Frequency</span>
+                  <select value={frequency} onChange={(event) => setFrequency(event.target.value)}>
+                    <option value="one-off">One-off</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="fortnightly">Fortnightly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Preferred date</span>
+                  <input type="date" value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} />
+                </label>
+                <label className="quote-field-stack">
+                  <span>Preferred time</span>
+                  <div className="quote-time-grid">
+                    <select value={preferredHour} onChange={(event) => setPreferredHour(event.target.value)}>
+                      {hourOptions.map((hour) => (
+                        <option key={hour} value={hour}>{hour}</option>
+                      ))}
+                    </select>
+                    <select value={preferredMinute} onChange={(event) => setPreferredMinute(event.target.value)}>
+                      {minuteOptions.map((minute) => (
+                        <option key={minute} value={minute}>{minute}</option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Cleaning supplies</span>
+                  <select value={supplies} onChange={(event) => setSupplies(event.target.value as "customer" | "cleaner")}>
+                    <option value="customer">Customer provides supplies</option>
+                    <option value="cleaner">Cleaner brings supplies</option>
+                  </select>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Pets</span>
+                  <select value={pets} onChange={(event) => setPets(event.target.value)}>
+                    <option value="no">No pets</option>
+                    <option value="yes">Pets at property</option>
+                  </select>
+                </label>
               </div>
             </section>
 
