@@ -184,6 +184,10 @@ When the user asks to roll back, present saved versions by date + version label 
   - instant quote page reads postcode, address, and service from homepage query params
   - address fields are prefilled on the quote page so the customer does not need to retype them
 
+- `2026-03-12 / v3-homepage-enter-search / e2bba2a`
+  - homepage postcode field now triggers address lookup when the customer presses Enter
+  - Find button behavior remains available
+
 ### Working Rule
 
 - every future approved update should be saved as a new dated version entry here
