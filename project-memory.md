@@ -210,7 +210,7 @@ When the user asks to roll back, present saved versions by date + version label 
   - mandatory fields, T&C agreement, booking references, local booking records, and Stripe test checkout were added
   - payment success now reads back booking details for safer customer confirmation and reconciliation
 
-- `2026-03-12 / v8-multiple-dates-and-booking-edit / pending`
+- `2026-03-12 / v8-multiple-dates-and-booking-edit / 8278166`
   - recurring frequency was replaced with multiple cleaning date selection
   - pricing now calculates per visit and across all selected dates
   - booking review now includes an edit details action so customers can return to the quote step before paying
