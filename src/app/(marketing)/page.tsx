@@ -14,12 +14,15 @@ export default function HomePage() {
   const [addresses, setAddresses] = useState<AddressResult[]>([]);
   const [lookupMessage, setLookupMessage] = useState("");
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  const [manualEntry, setManualEntry] = useState(false);
+  const [manualAddress, setManualAddress] = useState("");
 
   const selectedAddress = addresses.find((item) => item.ID === addressId);
+  const chosenAddress = manualEntry ? manualAddress.trim() : selectedAddress?.Line ?? "";
   const continueHref = `/instant-quote?${new URLSearchParams({
     postcode,
     service,
-    address: selectedAddress?.Line ?? "",
+    address: chosenAddress,
   }).toString()}`;
 
   useEffect(() => {
@@ -30,6 +33,7 @@ export default function HomePage() {
       setAddressId("");
       setLookupMessage("");
       setIsLoadingAddresses(false);
+      setManualEntry(false);
       return;
     }
 
@@ -47,6 +51,7 @@ export default function HomePage() {
       setAddresses([]);
       setAddressId("");
       setLookupMessage("");
+      setManualEntry(false);
       return;
     }
 
@@ -63,11 +68,13 @@ export default function HomePage() {
 
       setAddresses(data.results ?? []);
       setAddressId("");
-      setLookupMessage(data.results?.length ? data.instructionsTxt || "Select your address." : "No addresses found for that postcode.");
+      setLookupMessage(data.results?.length ? "Select your address." : "No address found. You can enter it manually.");
+      setManualEntry(!(data.results?.length));
     } catch (error) {
       setAddresses([]);
       setAddressId("");
       setLookupMessage(error instanceof Error ? error.message : "Unable to find addresses for that postcode.");
+      setManualEntry(true);
     } finally {
       setIsLoadingAddresses(false);
     }
@@ -102,13 +109,19 @@ export default function HomePage() {
             placeholder="Postcode"
             aria-label="Postcode"
             value={postcode}
-            onChange={(event) => setPostcode(event.target.value.toUpperCase())}
+            onChange={(event) => {
+              setPostcode(event.target.value.toUpperCase());
+              setAddressId("");
+            }}
           />
           {addresses.length ? (
             <div className="minimal-select-wrap">
               <select
                 value={addressId}
-                onChange={(event) => setAddressId(event.target.value)}
+                onChange={(event) => {
+                  setAddressId(event.target.value);
+                  setManualEntry(false);
+                }}
                 aria-label="Address"
                 className={`minimal-select ${addressId ? "has-value" : ""}`}
               >
@@ -123,8 +136,25 @@ export default function HomePage() {
               </select>
             </div>
           ) : null}
+          {manualEntry ? (
+            <input
+              placeholder="Enter address manually"
+              aria-label="Manual address"
+              value={manualAddress}
+              onChange={(event) => setManualAddress(event.target.value)}
+            />
+          ) : null}
           {postcode ? (
-            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Keep typing your postcode to load addresses."}</p>
+            <>
+              <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Keep typing your postcode to load addresses."}</p>
+              <button
+                type="button"
+                className="hero-minimal-link"
+                onClick={() => setManualEntry((current) => !current)}
+              >
+                {manualEntry ? "Use address list instead" : "Enter address manually"}
+              </button>
+            </>
           ) : null}
           <div className="minimal-select-wrap">
             <select
