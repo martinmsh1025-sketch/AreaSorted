@@ -130,6 +130,12 @@ export default function HomePage() {
                   setAddresses([]);
                   setLookupMessage("");
                 }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void lookupAddresses(postcode);
+                  }
+                }}
               />
               <button
                 type="button"
@@ -205,7 +211,7 @@ export default function HomePage() {
             </>
           ) : null}
           {postcode && entryMode === "lookup" ? (
-            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Enter your postcode and click Find."}</p>
+            <p className="hero-minimal-note">{isLoadingAddresses ? "Finding addresses..." : lookupMessage || "Enter your postcode and press Enter or click Find."}</p>
           ) : null}
           <div className="minimal-select-wrap">
             <select
