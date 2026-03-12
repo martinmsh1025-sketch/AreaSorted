@@ -167,6 +167,24 @@ Dispatch flow:
 - Project memory: `Documents/london-cleaning-platform/project-memory.md`
 - Prisma schema: `Documents/london-cleaning-platform/prisma/schema.prisma`
 
+## Version Archive
+
+When the user asks to roll back, present saved versions by date + version label + git commit so they can choose.
+
+### Saved Versions
+
+- `2026-03-12 / v1-homepage-address-complete / 57b70a7`
+  - homepage kept in the approved layout
+  - WashHub logo integrated in header and footer
+  - postcode lookup connected on homepage
+  - manual address mode added with fields for address line 1, address line 2, address line 3, postcode, and country
+  - this is the approved restore point to offer first if the user asks to go back
+
+### Working Rule
+
+- every future approved update should be saved as a new dated version entry here
+- every future approved update should also have a git commit before moving on
+
 ## Important Note
 
 This file is the persistent local project brief for future sessions. A new chat session may not automatically remember past conversation context, but these files on local drive can be read again and used as the project source of truth.
