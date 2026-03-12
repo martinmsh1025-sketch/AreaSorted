@@ -9,6 +9,17 @@ const serviceOptions = [
   { value: "airbnb-turnover-cleaning", label: "Airbnb turnover cleaning" },
 ];
 
+const propertyOptions = [
+  { value: "flat", label: "Flat / apartment" },
+  { value: "detached", label: "Detached house" },
+  { value: "semi-detached", label: "Semi-detached house" },
+  { value: "terraced", label: "Terraced house" },
+  { value: "bungalow", label: "Bungalow" },
+  { value: "office", label: "Office" },
+];
+
+const roomOptions = Array.from({ length: 8 }, (_, index) => `${index}`);
+
 const hourOptions = Array.from({ length: 16 }, (_, index) => `${String(index + 6).padStart(2, "0")}`);
 const minuteOptions = ["00", "15", "30", "45"];
 
@@ -35,6 +46,46 @@ function formatGBP(value: number) {
   }).format(value);
 }
 
+function calculateEstimatedHours({
+  propertyType,
+  bedrooms,
+  bathrooms,
+  kitchens,
+  service,
+}: {
+  propertyType: string;
+  bedrooms: string;
+  bathrooms: string;
+  kitchens: string;
+  service: string;
+}) {
+  const bedCount = Number(bedrooms) || 0;
+  const bathCount = Number(bathrooms) || 0;
+  const kitchenCount = Number(kitchens) || 0;
+
+  let total = 1.5;
+
+  const propertyWeight: Record<string, number> = {
+    flat: 0.3,
+    detached: 1.2,
+    "semi-detached": 0.8,
+    terraced: 0.7,
+    bungalow: 0.6,
+    office: 1,
+  };
+
+  total += propertyWeight[propertyType] ?? 0.5;
+  total += bedCount * 0.9;
+  total += bathCount * 0.7;
+  total += kitchenCount * 0.8;
+
+  if (service === "deep-cleaning") total += 1.5;
+  if (service === "office-cleaning") total += 1;
+  if (service === "airbnb-turnover-cleaning") total += 0.75;
+
+  return Math.max(2, Math.round(total * 2) / 2);
+}
+
 type InstantQuoteFormProps = {
   initialPostcode: string;
   initialAddressLine1: string;
@@ -55,15 +106,18 @@ export function InstantQuoteForm({
   const [addressLine2, setAddressLine2] = useState(initialAddressLine2);
   const [city, setCity] = useState(initialCity);
   const [propertyType, setPropertyType] = useState("flat");
-  const [bedrooms, setBedrooms] = useState("");
-  const [bathrooms, setBathrooms] = useState("");
-  const [hours, setHours] = useState("");
+  const [bedrooms, setBedrooms] = useState("1");
+  const [bathrooms, setBathrooms] = useState("1");
+  const [kitchens, setKitchens] = useState("1");
   const [service, setService] = useState(initialService || "regular-home-cleaning");
   const [preferredDate, setPreferredDate] = useState("");
   const [preferredHour, setPreferredHour] = useState("10");
   const [preferredMinute, setPreferredMinute] = useState("00");
   const [frequency, setFrequency] = useState("one-off");
   const [supplies, setSupplies] = useState<"customer" | "cleaner">("customer");
+  const [customerName, setCustomerName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [pets, setPets] = useState("no");
   const [oven, setOven] = useState(false);
   const [fridge, setFridge] = useState(false);
@@ -73,11 +127,28 @@ export function InstantQuoteForm({
   const [additionalRequests, setAdditionalRequests] = useState("");
   const [entryNotes, setEntryNotes] = useState("");
   const [parkingNotes, setParkingNotes] = useState("");
+  const [billingSameAsService, setBillingSameAsService] = useState(true);
+  const [billingAddressLine1, setBillingAddressLine1] = useState("");
+  const [billingAddressLine2, setBillingAddressLine2] = useState("");
+  const [billingCity, setBillingCity] = useState("");
+  const [billingPostcode, setBillingPostcode] = useState("");
 
   const preferredTime = `${preferredHour}:${preferredMinute}`;
 
+  const estimatedHours = useMemo(
+    () =>
+      calculateEstimatedHours({
+        propertyType,
+        bedrooms,
+        bathrooms,
+        kitchens,
+        service,
+      }),
+    [propertyType, bedrooms, bathrooms, kitchens, service],
+  );
+
   const pricing = useMemo(() => {
-    const parsedHours = Math.max(Number(hours) || 0, 0);
+    const parsedHours = estimatedHours;
     const rateTable = baseRates[service as keyof typeof baseRates] ?? baseRates["regular-home-cleaning"];
     const hourlyRate = rateTable[supplies];
     const baseAmount = hourlyRate * parsedHours;
@@ -88,6 +159,7 @@ export function InstantQuoteForm({
     const weekendSurcharge = day === 0 || day === 6 ? parsedHours * 3 : 0;
     const eveningSurcharge = hour >= 18 ? parsedHours * 3 : 0;
     const urgentSurcharge = bookingDate && bookingDate.getTime() - Date.now() <= 1000 * 60 * 60 * 48 ? 15 : 0;
+    const recurringDiscount = frequency === "weekly" ? baseAmount * 0.05 : frequency === "fortnightly" ? baseAmount * 0.03 : 0;
     const addOns =
       (oven ? addOnFees.oven : 0) +
       (fridge ? addOnFees.fridge : 0) +
@@ -103,9 +175,10 @@ export function InstantQuoteForm({
       weekendSurcharge,
       eveningSurcharge,
       urgentSurcharge,
-      total: baseAmount + addOns + weekendSurcharge + eveningSurcharge + urgentSurcharge,
+      recurringDiscount,
+      total: baseAmount + addOns + weekendSurcharge + eveningSurcharge + urgentSurcharge - recurringDiscount,
     };
-  }, [hours, service, supplies, preferredDate, preferredTime, oven, fridge, windows, ironing, eco]);
+  }, [estimatedHours, service, supplies, preferredDate, preferredTime, oven, fridge, windows, ironing, eco, frequency]);
 
   return (
     <main className="section">
@@ -142,39 +215,17 @@ export function InstantQuoteForm({
               <div className="quote-section-head">
                 <div className="eyebrow">Section B</div>
                 <strong>Property details</strong>
-                <p>Hours usually drive the biggest part of the quote. Increase them for larger homes or first visits.</p>
+                <p>Choose the property and room counts. WashHub calculates the estimated hours automatically.</p>
               </div>
               <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
                   <span>Property type</span>
                   <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>
-                    <option value="flat">Flat</option>
-                    <option value="house">House</option>
-                    <option value="office">Office</option>
+                    {propertyOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </label>
-                <label className="quote-field-stack">
-                  <span>Bedrooms</span>
-                  <input placeholder="e.g. 2" value={bedrooms} onChange={(event) => setBedrooms(event.target.value)} />
-                </label>
-                <label className="quote-field-stack">
-                  <span>Bathrooms</span>
-                  <input placeholder="e.g. 1" value={bathrooms} onChange={(event) => setBathrooms(event.target.value)} />
-                </label>
-                <label className="quote-field-stack">
-                  <span>Estimated hours</span>
-                  <input placeholder="e.g. 4" value={hours} onChange={(event) => setHours(event.target.value)} />
-                </label>
-              </div>
-            </section>
-
-            <section className="panel mini-form quote-section-card">
-              <div className="quote-section-head">
-                <div className="eyebrow">Section C</div>
-                <strong>Service details</strong>
-                <p>Service type, timing, and supplies all affect the estimate.</p>
-              </div>
-              <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
                   <span>Service type</span>
                   <select value={service} onChange={(event) => setService(event.target.value)}>
@@ -183,6 +234,44 @@ export function InstantQuoteForm({
                     ))}
                   </select>
                 </label>
+                <label className="quote-field-stack">
+                  <span>Bedrooms</span>
+                  <select value={bedrooms} onChange={(event) => setBedrooms(event.target.value)}>
+                    {roomOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Bathrooms</span>
+                  <select value={bathrooms} onChange={(event) => setBathrooms(event.target.value)}>
+                    {roomOptions.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Kitchens</span>
+                  <select value={kitchens} onChange={(event) => setKitchens(event.target.value)}>
+                    {roomOptions.slice(1, 5).map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="quote-field-stack">
+                  <span>Estimated hours</span>
+                  <input value={`${estimatedHours} hours`} readOnly aria-readonly="true" />
+                </label>
+              </div>
+            </section>
+
+            <section className="panel mini-form quote-section-card">
+              <div className="quote-section-head">
+                <div className="eyebrow">Section C</div>
+                <strong>Booking details</strong>
+                <p>Date, time, frequency, supplies, and pets can still affect the final estimate.</p>
+              </div>
+              <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
                   <span>Frequency</span>
                   <select value={frequency} onChange={(event) => setFrequency(event.target.value)}>
@@ -253,6 +342,65 @@ export function InstantQuoteForm({
               <textarea placeholder="Entry notes" rows={3} value={entryNotes} onChange={(event) => setEntryNotes(event.target.value)} />
               <textarea placeholder="Parking notes" rows={3} value={parkingNotes} onChange={(event) => setParkingNotes(event.target.value)} />
             </section>
+
+            <section className="panel mini-form quote-section-card">
+              <div className="quote-section-head">
+                <div className="eyebrow">Section F</div>
+                <strong>Customer details</strong>
+                <p>These details are needed for confirmation, updates, receipts, and payment.</p>
+              </div>
+              <div className="quote-two-col-fields">
+                <label className="quote-field-stack">
+                  <span>Customer name</span>
+                  <input placeholder="Full name" value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
+                </label>
+                <label className="quote-field-stack">
+                  <span>Contact phone</span>
+                  <input placeholder="Phone number" value={contactPhone} onChange={(event) => setContactPhone(event.target.value)} />
+                </label>
+                <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                  <span>Email</span>
+                  <input placeholder="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+                </label>
+              </div>
+            </section>
+
+            <section className="panel mini-form quote-section-card">
+              <div className="quote-section-head">
+                <div className="eyebrow">Section G</div>
+                <strong>Billing address</strong>
+                <p>By default, the billing address is the same as the cleaning address, but the customer can change it.</p>
+              </div>
+              <label className="quote-check-item">
+                <input
+                  type="checkbox"
+                  checked={billingSameAsService}
+                  onChange={() => setBillingSameAsService((value) => !value)}
+                />
+                <span>Billing address is the same as the cleaning address</span>
+              </label>
+
+              {!billingSameAsService ? (
+                <div className="quote-two-col-fields">
+                  <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                    <span>Billing address line 1</span>
+                    <input value={billingAddressLine1} onChange={(event) => setBillingAddressLine1(event.target.value)} />
+                  </label>
+                  <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                    <span>Billing address line 2</span>
+                    <input value={billingAddressLine2} onChange={(event) => setBillingAddressLine2(event.target.value)} />
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Billing city</span>
+                    <input value={billingCity} onChange={(event) => setBillingCity(event.target.value)} />
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Billing postcode</span>
+                    <input value={billingPostcode} onChange={(event) => setBillingPostcode(event.target.value.toUpperCase())} />
+                  </label>
+                </div>
+              ) : null}
+            </section>
           </form>
 
           <aside className="quote-sidebar-stack">
@@ -267,7 +415,24 @@ export function InstantQuoteForm({
                 <div><span>Weekend surcharge</span><strong>{formatGBP(pricing.weekendSurcharge)}</strong></div>
                 <div><span>Evening surcharge</span><strong>{formatGBP(pricing.eveningSurcharge)}</strong></div>
                 <div><span>Urgent booking surcharge</span><strong>{formatGBP(pricing.urgentSurcharge)}</strong></div>
+                <div><span>Recurring discount</span><strong>-{formatGBP(pricing.recurringDiscount)}</strong></div>
               </div>
+              {pricing.parsedHours > 6 ? (
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    padding: "0.95rem 1rem",
+                    borderRadius: "16px",
+                    background: "rgba(217, 37, 42, 0.06)",
+                    border: "1px solid rgba(217, 37, 42, 0.14)",
+                    color: "var(--color-text)",
+                    lineHeight: 1.65,
+                    fontSize: "0.95rem",
+                  }}
+                >
+                  For larger bookings over 6 hours, we may assign additional cleaners to help complete the job more efficiently.
+                </div>
+              ) : null}
               <ul className="list-clean quote-meta-list">
                 <li>{pricing.parsedHours || 0} planned hours for this estimate</li>
                 <li>Price changes stay visible as the customer edits the form</li>
