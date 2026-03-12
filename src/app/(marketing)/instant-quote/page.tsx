@@ -1,4 +1,64 @@
-export default function InstantQuotePage() {
+"use client";
+
+import { useState } from "react";
+
+const serviceOptions = [
+  { value: "regular-home-cleaning", label: "Regular Cleaning" },
+  { value: "deep-cleaning", label: "Deep Cleaning" },
+  { value: "office-cleaning", label: "Office Cleaning" },
+  { value: "airbnb-turnover-cleaning", label: "Airbnb Turnover Cleaning" },
+];
+
+function splitAddressParts(address: string) {
+  const parts = address
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    line1: parts[0] ?? "",
+    line2: parts[1] ?? "",
+    city: parts[2] ?? "",
+  };
+}
+
+type InstantQuotePageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function InstantQuotePage({ searchParams }: InstantQuotePageProps) {
+  const params = (await searchParams) ?? {};
+  const postcode = typeof params.postcode === "string" ? params.postcode : "";
+  const address = typeof params.address === "string" ? params.address : "";
+  const service = typeof params.service === "string" ? params.service : "";
+  const addressParts = splitAddressParts(address);
+
+  return (
+    <InstantQuoteForm
+      initialPostcode={postcode}
+      initialAddressLine1={addressParts.line1}
+      initialAddressLine2={addressParts.line2}
+      initialCity={addressParts.city}
+      initialService={service}
+    />
+  );
+}
+
+type InstantQuoteFormProps = {
+  initialPostcode: string;
+  initialAddressLine1: string;
+  initialAddressLine2: string;
+  initialCity: string;
+  initialService: string;
+};
+
+function InstantQuoteForm({ initialPostcode, initialAddressLine1, initialAddressLine2, initialCity, initialService }: InstantQuoteFormProps) {
+  const [postcode, setPostcode] = useState(initialPostcode);
+  const [addressLine1, setAddressLine1] = useState(initialAddressLine1);
+  const [addressLine2, setAddressLine2] = useState(initialAddressLine2);
+  const [city, setCity] = useState(initialCity);
+  const [service, setService] = useState(initialService);
+
   return (
     <main className="section">
       <div className="container">
@@ -10,9 +70,10 @@ export default function InstantQuotePage() {
         <div className="grid-2" style={{ alignItems: "start" }}>
           <form className="panel mini-form">
             <strong>Address</strong>
-            <input placeholder="Postcode" />
-            <input placeholder="Address line 1" />
-            <input placeholder="City" />
+            <input placeholder="Postcode" value={postcode} onChange={(event) => setPostcode(event.target.value)} />
+            <input placeholder="Address line 1" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} />
+            <input placeholder="Address line 2" value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} />
+            <input placeholder="City" value={city} onChange={(event) => setCity(event.target.value)} />
             <strong style={{ marginTop: "0.8rem" }}>Property details</strong>
             <select defaultValue="">
               <option value="" disabled>Property type</option>
@@ -24,11 +85,11 @@ export default function InstantQuotePage() {
             <input placeholder="Bathrooms" />
             <input placeholder="Estimated hours" />
             <strong style={{ marginTop: "0.8rem" }}>Service</strong>
-            <select defaultValue="">
+            <select value={service} onChange={(event) => setService(event.target.value)}>
               <option value="" disabled>Service type</option>
-              <option>Regular Cleaning</option>
-              <option>Deep Cleaning</option>
-              <option>Office Cleaning</option>
+              {serviceOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
             <select defaultValue="">
               <option value="" disabled>Who provides supplies?</option>
