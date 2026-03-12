@@ -188,6 +188,11 @@ When the user asks to roll back, present saved versions by date + version label 
   - homepage postcode field now triggers address lookup when the customer presses Enter
   - Find button behavior remains available
 
+- `2026-03-12 / v4-instant-quote-live-pricing / b88f3bf`
+  - instant quote page upgraded to a multi-section quote form with live pricing
+  - pricing now updates from service type, hours, supplies, add-ons, weekend, evening, and urgent booking rules
+  - quote summary, pricing transparency, and support panels added to keep the page clear and trustworthy
+
 ### Working Rule
 
 - every future approved update should be saved as a new dated version entry here
