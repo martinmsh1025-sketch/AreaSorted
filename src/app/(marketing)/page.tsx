@@ -27,10 +27,17 @@ export default function HomePage() {
   const [lookupMessage, setLookupMessage] = useState("");
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [entryMode, setEntryMode] = useState<EntryMode>("lookup");
-  const [manualAddress, setManualAddress] = useState("");
+  const [manualAddress1, setManualAddress1] = useState("");
+  const [manualAddress2, setManualAddress2] = useState("");
+  const [manualAddress3, setManualAddress3] = useState("");
+  const [manualPostcode, setManualPostcode] = useState("");
+  const [manualCountry, setManualCountry] = useState("United Kingdom");
 
   const selectedAddress = addresses.find((item) => item.ID === addressId);
-  const chosenAddress = entryMode === "manual" ? manualAddress.trim() : selectedAddress?.Line ?? "";
+  const chosenAddress =
+    entryMode === "manual"
+      ? [manualAddress1, manualAddress2, manualAddress3, manualPostcode, manualCountry].filter(Boolean).join(", ")
+      : selectedAddress?.Line ?? "";
   const continueHref = `/instant-quote?${new URLSearchParams({
     postcode,
     service,
@@ -103,7 +110,6 @@ export default function HomePage() {
             >
               Find address
             </button>
-            <span className="hero-minimal-mode-separator">/</span>
             <button
               type="button"
               className={`hero-minimal-mode-link ${entryMode === "manual" ? "hero-minimal-mode-link-active" : ""}`}
@@ -167,9 +173,33 @@ export default function HomePage() {
             <>
               <input
                 placeholder="Address line 1"
-                aria-label="Manual address"
-                value={manualAddress}
-                onChange={(event) => setManualAddress(event.target.value)}
+                aria-label="Address line 1"
+                value={manualAddress1}
+                onChange={(event) => setManualAddress1(event.target.value)}
+              />
+              <input
+                placeholder="Address line 2"
+                aria-label="Address line 2"
+                value={manualAddress2}
+                onChange={(event) => setManualAddress2(event.target.value)}
+              />
+              <input
+                placeholder="Address line 3"
+                aria-label="Address line 3"
+                value={manualAddress3}
+                onChange={(event) => setManualAddress3(event.target.value)}
+              />
+              <input
+                placeholder="Postcode"
+                aria-label="Manual postcode"
+                value={manualPostcode}
+                onChange={(event) => setManualPostcode(event.target.value.toUpperCase())}
+              />
+              <input
+                placeholder="Country"
+                aria-label="Country"
+                value={manualCountry}
+                onChange={(event) => setManualCountry(event.target.value)}
               />
               <p className="hero-minimal-note">Enter your address manually if you prefer not to search by postcode.</p>
             </>
