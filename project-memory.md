@@ -193,6 +193,11 @@ When the user asks to roll back, present saved versions by date + version label 
   - pricing now updates from service type, hours, supplies, add-ons, weekend, evening, and urgent booking rules
   - quote summary, pricing transparency, and support panels added to keep the page clear and trustworthy
 
+- `2026-03-12 / v5-quote-form-ux-refine / 6fec7a8`
+  - property detail fields changed from confusing preset values to labelled inputs with examples
+  - service still defaults from homepage selection but remains editable
+  - preferred time now uses cleaner hour and minute dropdowns with minutes limited to 00, 15, 30, and 45
+
 ### Working Rule
 
 - every future approved update should be saved as a new dated version entry here
