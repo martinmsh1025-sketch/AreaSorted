@@ -415,6 +415,109 @@ img {
   background: rgba(217, 37, 42, 0.05);
 }
 
+.quote-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.quote-form-sections {
+  display: grid;
+  gap: 1rem;
+}
+
+.quote-section-card {
+  gap: 1rem;
+}
+
+.quote-section-head strong {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 1.2rem;
+}
+
+.quote-section-head p {
+  margin: 0.55rem 0 0;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+.quote-two-col-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.quote-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.quote-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 54px;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fbf8f3;
+  font-weight: 600;
+}
+
+.quote-check-item input {
+  width: 18px;
+  height: 18px;
+}
+
+.quote-sidebar-stack {
+  display: grid;
+  gap: 1rem;
+  position: sticky;
+  top: 110px;
+}
+
+.quote-summary-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(250, 244, 237, 0.94));
+}
+
+.quote-total-number {
+  margin: 1rem 0 1.2rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  letter-spacing: -0.04em;
+}
+
+.quote-summary-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.quote-summary-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(32, 49, 44, 0.08);
+  color: var(--color-text-muted);
+}
+
+.quote-summary-list strong {
+  color: var(--color-text);
+}
+
+.quote-meta-list {
+  margin-top: 1rem;
+  color: var(--color-text-muted);
+}
+
+.quote-summary-button {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
 .footer a:hover,
 .button:hover {
   opacity: 0.9;
@@ -569,7 +672,10 @@ img {
   .grid-3,
   .footer-grid,
   .section-card-grid,
-  .hero-stat-grid {
+  .hero-stat-grid,
+  .quote-page-grid,
+  .quote-two-col-fields,
+  .quote-check-grid {
     grid-template-columns: 1fr;
   }
 
@@ -586,6 +692,10 @@ img {
 
   .hero-art {
     min-height: auto;
+  }
+
+  .quote-sidebar-stack {
+    position: static;
   }
 
   .hero-minimal-search-row {
