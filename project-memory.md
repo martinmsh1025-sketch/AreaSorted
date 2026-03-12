@@ -198,6 +198,13 @@ When the user asks to roll back, present saved versions by date + version label 
   - service still defaults from homepage selection but remains editable
   - preferred time now uses cleaner hour and minute dropdowns with minutes limited to 00, 15, 30, and 45
 
+- `2026-03-12 / v6-quote-details-and-billing-flow / 5b3778e`
+  - service type moved back into the property details section
+  - property type expanded to detached, semi-detached, terraced, bungalow, office, and flat options
+  - bedrooms, bathrooms, and kitchens now use dropdowns and estimated hours are system-calculated only
+  - bookings over 6 hours now warn that additional cleaners may be assigned
+  - customer name, phone, email, and billing address flow were added, with billing defaulting to the cleaning address
+
 ### Working Rule
 
 - every future approved update should be saved as a new dated version entry here
