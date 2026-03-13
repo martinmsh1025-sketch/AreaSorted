@@ -1,3 +1,7 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
 const nationalityOptions = [
   "British",
   "Irish",
@@ -15,75 +19,43 @@ const nationalityOptions = [
   "Other",
 ];
 
-const londonBoroughs = [
-  "Barking and Dagenham",
-  "Barnet",
-  "Bexley",
-  "Brent",
-  "Bromley",
-  "Camden",
-  "Croydon",
-  "Ealing",
-  "Enfield",
-  "Greenwich",
-  "Hackney",
-  "Hammersmith and Fulham",
-  "Haringey",
-  "Harrow",
-  "Havering",
-  "Hillingdon",
-  "Hounslow",
-  "Islington",
-  "Kensington and Chelsea",
-  "Kingston upon Thames",
-  "Lambeth",
-  "Lewisham",
-  "Merton",
-  "Newham",
-  "Redbridge",
-  "Richmond upon Thames",
-  "Southwark",
-  "Sutton",
-  "Tower Hamlets",
-  "Waltham Forest",
-  "Wandsworth",
-  "Westminster",
-];
+const boroughPostcodes: Record<string, string[]> = {
+  Camden: ["NW1", "NW3", "NW5", "WC1", "WC2"],
+  Harrow: ["HA1", "HA2", "HA3", "HA5", "HA7"],
+  Westminster: ["SW1", "W1", "W2", "WC2"],
+  "Kensington and Chelsea": ["SW3", "SW5", "SW7", "W8", "W10"],
+  Islington: ["EC1", "N1", "N5", "N7"],
+  Barnet: ["EN4", "N2", "N3", "NW4", "NW7"],
+  Brent: ["HA0", "NW10", "NW2", "W5"],
+  Ealing: ["UB1", "W3", "W5", "W7", "W13"],
+  Hillingdon: ["HA4", "UB3", "UB7", "UB8", "UB10"],
+  Hounslow: ["TW3", "TW4", "TW5", "TW7", "W4"],
+};
 
-const postcodeAreas = [
-  "HA1",
-  "HA2",
-  "HA3",
-  "HA4",
-  "HA5",
-  "NW1",
-  "NW2",
-  "NW3",
-  "NW4",
-  "W1",
-  "W2",
-  "W8",
-  "SW1",
-  "SW3",
-  "SW6",
-  "E1",
-  "E14",
-  "N1",
-  "N7",
-  "EC1",
+const transportModes = ["Public transport", "Car", "Bike", "Walk"];
+const serviceTypes = ["Domestic cleaning", "Deep cleaning", "Office cleaning", "Airbnb turnover"];
+const supplyItems = [
+  "Vacuum cleaner",
+  "Mop and bucket",
+  "General cleaning products",
+  "Bathroom cleaning products",
+  "Glass cleaner",
+  "Duster / microfiber cloths",
+  "Iron and ironing board",
 ];
+const weeklyDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const weeklyDays = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+function getSelectedValues(event: React.ChangeEvent<HTMLSelectElement>) {
+  return Array.from(event.target.selectedOptions).map((option) => option.value);
+}
 
 export default function CleanerApplyPage() {
+  const [selectedBoroughs, setSelectedBoroughs] = useState<string[]>([]);
+
+  const postcodeOptions = useMemo(() => {
+    return Array.from(new Set(selectedBoroughs.flatMap((borough) => boroughPostcodes[borough] || []))).sort();
+  }, [selectedBoroughs]);
+
   return (
     <main className="section">
       <div className="container">
@@ -93,7 +65,7 @@ export default function CleanerApplyPage() {
             Join WashHub as a self-employed cleaner.
           </h1>
           <p className="lead">
-            This onboarding flow is designed to collect the identity, work eligibility, availability, service area, and trust information needed before a cleaner can be reviewed and activated.
+            This onboarding flow collects the identity, work eligibility, service area, availability, and trust data needed before a cleaner can be reviewed and activated.
           </p>
         </div>
 
@@ -176,82 +148,86 @@ export default function CleanerApplyPage() {
               <div className="quote-section-head">
                 <div className="eyebrow">Step 3</div>
                 <strong>Service areas and availability</strong>
-                <p>These details drive postcode matching, dispatch priority, and whether a cleaner is offered a job.</p>
+                <p>These fields should stay compact, but still provide the postcode and time data needed for future dispatch matching.</p>
               </div>
+
               <div className="quote-two-col-fields">
-                <div className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
                   <span>London boroughs you cover *</span>
-                  <div className="quote-check-grid">
-                    {londonBoroughs.map((borough) => (
-                      <label key={borough} className="quote-check-item">
-                        <input type="checkbox" />
-                        <span>{borough}</span>
-                      </label>
+                  <select multiple size={6} value={selectedBoroughs} onChange={(event) => setSelectedBoroughs(getSelectedValues(event))}>
+                    {Object.keys(boroughPostcodes).map((borough) => (
+                      <option key={borough} value={borough}>{borough}</option>
                     ))}
-                  </div>
-                </div>
-                <div className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
-                  <span>Postcode areas you cover *</span>
-                  <div className="quote-check-grid">
-                    {postcodeAreas.map((postcode) => (
-                      <label key={postcode} className="quote-check-item">
-                        <input type="checkbox" />
-                        <span>{postcode}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <p className="lead" style={{ margin: 0, fontSize: "0.95rem" }}>
-                    Select every postcode area you actually cover, for example `HA1`, `HA2`, and `HA5`. Dispatch should match jobs against these areas later.
-                  </p>
-                </div>
-                <label className="quote-field-stack">
-                  <span>Primary work area *</span>
-                  <input placeholder="Example: Harrow / HA5" />
+                  </select>
+                  <p className="lead" style={{ margin: 0, fontSize: "0.95rem" }}>Hold `Command` on Mac to select more than one borough.</p>
                 </label>
+
+                <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                  <span>Postcode areas you cover *</span>
+                  <select multiple size={6} disabled={!postcodeOptions.length}>
+                    {postcodeOptions.length ? (
+                      postcodeOptions.map((postcode) => (
+                        <option key={postcode} value={postcode}>{postcode}</option>
+                      ))
+                    ) : (
+                      <option>Select boroughs first</option>
+                    )}
+                  </select>
+                  <p className="lead" style={{ margin: 0, fontSize: "0.95rem" }}>
+                    Choose only the postcode prefixes you really cover, for example `HA1`, `HA2`, and `HA5`.
+                  </p>
+                </label>
+
                 <label className="quote-field-stack">
                   <span>Maximum travel distance (miles)</span>
                   <input type="number" placeholder="Example: 8" />
                 </label>
-                <div className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+
+                <label className="quote-field-stack">
                   <span>Transport modes *</span>
-                  <div className="quote-check-grid">
-                    {[
-                      "Public transport",
-                      "Car",
-                      "Bike",
-                      "Walk",
-                    ].map((mode) => (
-                      <label key={mode} className="quote-check-item">
-                        <input type="checkbox" />
-                        <span>{mode}</span>
-                      </label>
+                  <select multiple size={4}>
+                    {transportModes.map((mode) => (
+                      <option key={mode}>{mode}</option>
                     ))}
-                  </div>
-                </div>
+                  </select>
+                </label>
+
+                <label className="quote-field-stack">
+                  <span>Service types accepted *</span>
+                  <select multiple size={4}>
+                    {serviceTypes.map((type) => (
+                      <option key={type}>{type}</option>
+                    ))}
+                  </select>
+                </label>
+
                 <label className="quote-field-stack">
                   <span>Own supplies / equipment *</span>
                   <select defaultValue="">
                     <option value="" disabled>Select</option>
-                    <option>Yes</option>
+                    <option>Yes, fully equipped</option>
+                    <option>Yes, partially equipped</option>
                     <option>No</option>
                   </select>
                 </label>
-                <label className="quote-field-stack">
-                  <span>Service types accepted *</span>
-                  <select defaultValue="">
-                    <option value="" disabled>Select main type</option>
-                    <option>Domestic cleaning</option>
-                    <option>Deep cleaning</option>
-                    <option>Office cleaning</option>
-                    <option>Airbnb turnover</option>
-                  </select>
-                </label>
+
+                <div className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                  <span>Tools and supplies you can bring</span>
+                  <div className="quote-check-grid">
+                    {supplyItems.map((item) => (
+                      <label key={item} className="quote-check-item">
+                        <input type="checkbox" />
+                        <span>{item}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="quote-section-head" style={{ marginTop: "1rem" }}>
                 <div className="eyebrow">Weekly availability engine input</div>
                 <strong>Working days and times</strong>
-                <p>Each day should carry its own available time windows so the dispatch engine can match jobs properly later.</p>
+                <p>Each day should carry its own available time windows so the dispatch engine can match jobs correctly later.</p>
               </div>
               <div style={{ display: "grid", gap: "0.85rem" }}>
                 {weeklyDays.map((day) => (
@@ -369,7 +345,7 @@ export default function CleanerApplyPage() {
               <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>What WashHub needs before activation</h2>
               <ul className="list-clean quote-meta-list">
                 <li>Identity, photo, CV, and right-to-work proof</li>
-                <li>Service areas, postcode coverage, and weekly availability</li>
+                <li>Boroughs, postcode areas, transport, and weekly availability</li>
                 <li>Cleaning experience and optional intro video</li>
                 <li>Self-employed declaration and contractor agreement</li>
               </ul>
