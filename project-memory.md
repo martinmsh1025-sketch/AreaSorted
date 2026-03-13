@@ -134,6 +134,62 @@ Dispatch flow:
 - if cleaner cancels, system re-dispatches
 - if no cleaner found within 24 hours of start, notify admin and customer and trigger refund workflow if needed
 
+## Latest Confirmed Product Direction
+
+- Homepage stays extremely simple, with Uber-like flow and minimal friction
+- Customers should move through a short booking path: first-step search, full quote step, review step, then Stripe
+- The product should feel closer to Uber-style job dispatch than a traditional recurring subscription cleaner platform
+- Recurring weekly/monthly selection is no longer preferred for MVP
+- Instead of recurring frequency, customers should be able to choose multiple cleaning visits directly
+- Each selected cleaning date should have its own time, not one shared time across all visits
+
+## Customer Access Direction
+
+- Customers should not be forced to create a traditional account before booking
+- After payment, the system should send a confirmation email
+- The confirmation email should include:
+  - booking reference
+  - service summary
+  - payment amount
+  - service address
+  - selected visit dates/times
+  - a secure manage-booking link
+- Customer booking access should work by email link / access token, not by mandatory password login
+
+## Admin Direction
+
+- Admin pages must require login; they must not be publicly accessible
+- Admin booking list should support filters and search across multiple data points
+- Admin booking list should show:
+  - booking reference
+  - customer details
+  - cleaner ID
+  - cleaner name
+  - cleaner email
+  - payment status
+  - assignment status
+  - job status
+  - refund status
+  - service date/time
+  - total amount
+- Admin dashboard / booking list should also show summary values such as:
+  - total transaction amount for the day
+  - total cancelled amount
+  - total refunded amount
+
+## Cleaner And Dispatch Direction
+
+- Cleaners should eventually log in via web or app to receive and accept jobs
+- Cleaner jobs and earnings views should also be protected by cleaner login, not public query-string access
+- When a cleaner accepts a job, the system should notify the customer with cleaner details and contact info
+- If the assigned cleaner cancels, the system should:
+  - record the cancellation
+  - apply the score penalty if within 48 hours
+  - automatically re-post / re-dispatch the job
+  - notify the customer again when a replacement cleaner accepts
+- Booking records should keep a history of cleaner assignments and reassignments, not just the latest cleaner
+- This dispatch model should behave similarly to Uber-style reassignment and customer notification
+
 ## Core Product Modules
 
 - marketing + SEO website
@@ -214,6 +270,16 @@ When the user asks to roll back, present saved versions by date + version label 
   - recurring frequency was replaced with multiple cleaning date selection
   - pricing now calculates per visit and across all selected dates
   - booking review now includes an edit details action so customers can return to the quote step before paying
+
+- `2026-03-13 / v9-multi-visit-times-and-admin-booking-list / c80db89`
+  - each selected cleaning visit can now carry its own time instead of sharing one time across all dates
+  - booking review and payment pages now show selected visits rather than a single date/time only
+  - admin booking list was added as the first step toward a fuller operations backend
+
+- `2026-03-13 / pending-next / cleaner-login-and-filtered-jobs`
+  - cleaner jobs and earnings should sit behind cleaner login
+  - jobs and earnings views should support search, date range filtering, and job status filtering
+  - admin booking pages should drill down into cleaner information and earnings split
 
 ### Working Rule
 

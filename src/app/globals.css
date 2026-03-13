@@ -663,6 +663,110 @@ img {
   line-height: 1.7;
 }
 
+.admin-filter-shell {
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(244,247,251,0.92));
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.admin-filter-title {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.admin-filter-subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+.admin-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.admin-filter-span-3 {
+  grid-column: span 3;
+}
+
+.admin-filter-span-4 {
+  grid-column: span 4;
+}
+
+.admin-filter-span-6 {
+  grid-column: span 6;
+}
+
+.admin-filter-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.admin-stat-card {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.admin-stat-number {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.admin-table-shell {
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-table-head {
+  background: #f7f9fc;
+}
+
+.admin-table-head th {
+  font-size: 0.84rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.admin-booking-link {
+  color: var(--color-accent);
+  font-weight: 800;
+}
+
+.admin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: #f4f7fb;
+  border: 1px solid var(--color-border);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
 .footer-column {
   justify-self: stretch;
 }
@@ -747,6 +851,16 @@ img {
   .footer-grid {
     grid-template-columns: 1fr;
     gap: 1.6rem;
+  }
+
+  .admin-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-filter-span-3,
+  .admin-filter-span-4,
+  .admin-filter-span-6 {
+    grid-column: auto;
   }
 
   .footer-brand-block {

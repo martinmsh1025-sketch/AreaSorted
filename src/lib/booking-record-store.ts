@@ -8,6 +8,9 @@ export type BookingRecord = {
   assignmentStatus?: "unassigned" | "offering" | "assigned" | "accepted" | "reassigned";
   jobStatus?: "pending" | "scheduled" | "in_progress" | "completed" | "no_show" | "cancelled";
   refundStatus?: "not_requested" | "pending" | "refunded" | "partial_refund" | "declined";
+  cleanerId?: string;
+  cleanerName?: string;
+  cleanerEmail?: string;
   customerName: string;
   email: string;
   contactPhone: string;
@@ -35,6 +38,8 @@ export type BookingRecord = {
   parkingNotes?: string;
   addOns?: string[];
   totalAmount: number;
+  cleanerPayoutAmount?: number;
+  platformEarningsAmount?: number;
   stripeSessionId?: string;
   stripePaymentStatus: "pending" | "paid" | "cancelled" | "failed";
   createdAt: string;
@@ -95,6 +100,8 @@ export async function upsertBookingRecord(input: Omit<BookingRecord, "createdAt"
     assignmentStatus: input.assignmentStatus || "unassigned",
     jobStatus: input.jobStatus || (input.stripePaymentStatus === "paid" ? "scheduled" : "pending"),
     refundStatus: input.refundStatus || "not_requested",
+    cleanerPayoutAmount: input.cleanerPayoutAmount ?? Number((input.totalAmount * 0.7).toFixed(2)),
+    platformEarningsAmount: input.platformEarningsAmount ?? Number((input.totalAmount * 0.3).toFixed(2)),
     createdAt: existingIndex >= 0 ? store.bookings[existingIndex].createdAt : timestamp,
     updatedAt: timestamp,
   };
@@ -140,4 +147,50 @@ export async function getBookingRecordByReference(bookingReference: string) {
 export async function listBookingRecords() {
   const store = await readStore();
   return store.bookings.sort((left, right) => (left.createdAt < right.createdAt ? 1 : -1));
+}
+
+export async function getBookingDashboardSummary() {
+  const bookings = await listBookingRecords();
+  const today = new Date().toISOString().slice(0, 10);
+  const todayBookings = bookings.filter((booking) => booking.createdAt.slice(0, 10) === today);
+
+  return {
+    totalTransactionAmount: todayBookings.reduce(
+      (sum, booking) => sum + (booking.stripePaymentStatus === "paid" ? booking.totalAmount : 0),
+      0,
+    ),
+    totalCancelledAmount: todayBookings.reduce(
+      (sum, booking) => sum + (booking.jobStatus === "cancelled" ? booking.totalAmount : 0),
+      0,
+    ),
+    totalRefundAmount: todayBookings.reduce(
+      (sum, booking) =>
+        sum + (booking.refundStatus === "refunded" || booking.refundStatus === "partial_refund" ? booking.totalAmount : 0),
+      0,
+    ),
+  };
+}
+
+export async function updateBookingStatuses(
+  bookingReference: string,
+  updates: Partial<Pick<BookingRecord, "bookingStatus" | "assignmentStatus" | "jobStatus" | "refundStatus" | "stripePaymentStatus" | "cleanerId" | "cleanerName" | "cleanerEmail" | "cleanerPayoutAmount" | "platformEarningsAmount">>,
+) {
+  const store = await readStore();
+  const index = store.bookings.findIndex((booking) => booking.bookingReference === bookingReference);
+
+  if (index < 0) return null;
+
+  store.bookings[index] = {
+    ...store.bookings[index],
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await writeStore(store);
+  return store.bookings[index];
+}
+
+export async function listCleanerBookings(cleanerEmail: string) {
+  const bookings = await listBookingRecords();
+  return bookings.filter((booking) => (booking.cleanerEmail || "").toLowerCase() === cleanerEmail.toLowerCase());
 }
