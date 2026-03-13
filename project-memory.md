@@ -181,6 +181,19 @@ Dispatch flow:
 
 - Cleaners should eventually log in via web or app to receive and accept jobs
 - Cleaner jobs and earnings views should also be protected by cleaner login, not public query-string access
+- Cleaner onboarding is a core platform module and should be treated as more important than the cleaner jobs screen alone
+- Cleaner onboarding/profile should store and surface at least:
+  - cleaner ID
+  - full name
+  - phone
+  - email
+  - service postcode(s)
+  - service area / region
+  - working dates and times
+  - profile photo
+  - short introduction video up to 30 seconds (optional)
+  - onboarding documents and verification status
+- Cleaner profile / portal should make this information visible to admin and, where appropriate, to customers after assignment
 - When a cleaner accepts a job, the system should notify the customer with cleaner details and contact info
 - If the assigned cleaner cancels, the system should:
   - record the cancellation
@@ -280,6 +293,11 @@ When the user asks to roll back, present saved versions by date + version label 
   - cleaner jobs and earnings should sit behind cleaner login
   - jobs and earnings views should support search, date range filtering, and job status filtering
   - admin booking pages should drill down into cleaner information and earnings split
+
+- `2026-03-13 / pending-next / cleaner-onboarding-core`
+  - cleaner onboarding and profile data should be expanded before relying too heavily on the cleaner jobs screen
+  - onboarding should support phone, email, postcodes, service region, working times, profile photo, and optional short intro video
+  - this module is a core platform asset because cleaner quality, trust, and dispatch depend on it
 
 ### Working Rule
 
