@@ -4,6 +4,10 @@ import path from "node:path";
 export type BookingRecord = {
   bookingReference: string;
   accessToken?: string;
+  bookingStatus?: "draft" | "awaiting_payment" | "paid" | "confirmed" | "completed" | "cancelled";
+  assignmentStatus?: "unassigned" | "offering" | "assigned" | "accepted" | "reassigned";
+  jobStatus?: "pending" | "scheduled" | "in_progress" | "completed" | "no_show" | "cancelled";
+  refundStatus?: "not_requested" | "pending" | "refunded" | "partial_refund" | "declined";
   customerName: string;
   email: string;
   contactPhone: string;
@@ -87,6 +91,10 @@ export async function upsertBookingRecord(input: Omit<BookingRecord, "createdAt"
 
   const nextRecord: BookingRecord = {
     ...input,
+    bookingStatus: input.bookingStatus || (input.stripePaymentStatus === "paid" ? "confirmed" : "awaiting_payment"),
+    assignmentStatus: input.assignmentStatus || "unassigned",
+    jobStatus: input.jobStatus || (input.stripePaymentStatus === "paid" ? "scheduled" : "pending"),
+    refundStatus: input.refundStatus || "not_requested",
     createdAt: existingIndex >= 0 ? store.bookings[existingIndex].createdAt : timestamp,
     updatedAt: timestamp,
   };
@@ -110,6 +118,8 @@ export async function markBookingPaymentStatusBySessionId(sessionId: string, sta
   store.bookings[existingIndex] = {
     ...store.bookings[existingIndex],
     stripePaymentStatus: status,
+    bookingStatus: status === "paid" ? "confirmed" : store.bookings[existingIndex].bookingStatus,
+    jobStatus: status === "paid" ? "scheduled" : store.bookings[existingIndex].jobStatus,
     updatedAt: new Date().toISOString(),
   };
 
@@ -125,4 +135,9 @@ export async function getBookingRecordBySessionId(sessionId: string) {
 export async function getBookingRecordByReference(bookingReference: string) {
   const store = await readStore();
   return store.bookings.find((booking) => booking.bookingReference === bookingReference) ?? null;
+}
+
+export async function listBookingRecords() {
+  const store = await readStore();
+  return store.bookings.sort((left, right) => (left.createdAt < right.createdAt ? 1 : -1));
 }

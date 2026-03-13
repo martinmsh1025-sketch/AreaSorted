@@ -40,6 +40,12 @@ const addOnFees = {
   eco: 5,
 } as const;
 
+type VisitEntry = {
+  date: string;
+  hour: string;
+  minute: string;
+};
+
 function formatGBP(value: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
@@ -113,9 +119,7 @@ export function InstantQuoteForm({
   const [bathrooms, setBathrooms] = useState("1");
   const [kitchens, setKitchens] = useState("1");
   const [service, setService] = useState(initialService || "regular-home-cleaning");
-  const [selectedDates, setSelectedDates] = useState<string[]>([""]);
-  const [preferredHour, setPreferredHour] = useState("10");
-  const [preferredMinute, setPreferredMinute] = useState("00");
+  const [visits, setVisits] = useState<VisitEntry[]>([{ date: "", hour: "10", minute: "00" }]);
   const [supplies, setSupplies] = useState<"customer" | "cleaner">("customer");
   const [customerName, setCustomerName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
@@ -137,9 +141,15 @@ export function InstantQuoteForm({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [quoteError, setQuoteError] = useState("");
 
-  const preferredTime = `${preferredHour}:${preferredMinute}`;
-  const cleanedDates = selectedDates.map((date) => date.trim()).filter(Boolean);
-  const primaryDate = cleanedDates[0] || "";
+  const cleanedVisits = visits
+    .map((visit) => ({
+      date: visit.date.trim(),
+      hour: visit.hour,
+      minute: visit.minute,
+    }))
+    .filter((visit) => visit.date);
+  const primaryVisit = cleanedVisits[0] || { date: "", hour: "10", minute: "00" };
+  const preferredTime = `${primaryVisit.hour}:${primaryVisit.minute}`;
 
   const estimatedHours = useMemo(
     () =>
@@ -158,16 +168,18 @@ export function InstantQuoteForm({
     const rateTable = baseRates[service as keyof typeof baseRates] ?? baseRates["regular-home-cleaning"];
     const hourlyRate = rateTable[supplies];
     const perVisitBaseAmount = hourlyRate * parsedHours;
-    const hour = Number((preferredTime || "0:00").split(":")[0]);
-    const dateCount = Math.max(cleanedDates.length, 1);
-    const weekendSurcharge = cleanedDates.reduce((total, date) => {
-      const bookingDate = new Date(`${date}T${preferredTime || "10:00"}:00`);
+    const dateCount = Math.max(cleanedVisits.length, 1);
+    const weekendSurcharge = cleanedVisits.reduce((total, visit) => {
+      const bookingDate = new Date(`${visit.date}T${visit.hour}:${visit.minute}:00`);
       const day = bookingDate.getDay();
       return total + (day === 0 || day === 6 ? parsedHours * 3 : 0);
     }, 0);
-    const eveningSurcharge = hour >= 18 ? parsedHours * 3 * dateCount : 0;
-    const urgentSurcharge = cleanedDates.reduce((total, date) => {
-      const bookingDate = new Date(`${date}T${preferredTime || "10:00"}:00`);
+    const eveningSurcharge = cleanedVisits.reduce((total, visit) => {
+      const hour = Number(visit.hour || "0");
+      return total + (hour >= 18 ? parsedHours * 3 : 0);
+    }, 0);
+    const urgentSurcharge = cleanedVisits.reduce((total, visit) => {
+      const bookingDate = new Date(`${visit.date}T${visit.hour}:${visit.minute}:00`);
       return total + (bookingDate.getTime() - Date.now() <= 1000 * 60 * 60 * 48 ? 15 : 0);
     }, 0);
     const addOns =
@@ -192,7 +204,7 @@ export function InstantQuoteForm({
       urgentSurcharge,
       total: baseAmount + addOnsTotal + weekendSurcharge + eveningSurcharge + urgentSurcharge,
     };
-  }, [estimatedHours, service, supplies, preferredTime, oven, fridge, windows, ironing, eco, cleanedDates]);
+  }, [estimatedHours, service, supplies, oven, fridge, windows, ironing, eco, cleanedVisits]);
 
   function handleContinueToBooking() {
     const missingFields: string[] = [];
@@ -205,8 +217,8 @@ export function InstantQuoteForm({
     if (!bedrooms) missingFields.push("bedrooms");
     if (!bathrooms) missingFields.push("bathrooms");
     if (!kitchens) missingFields.push("kitchens");
-    if (!cleanedDates.length) missingFields.push("cleaning date");
-    if (!preferredHour || !preferredMinute) missingFields.push("preferred time");
+    if (!cleanedVisits.length) missingFields.push("cleaning date");
+    if (cleanedVisits.some((visit) => !visit.hour || !visit.minute)) missingFields.push("cleaning time");
     if (!customerName.trim()) missingFields.push("customer name");
     if (!contactPhone.trim()) missingFields.push("contact phone");
     if (!email.trim()) missingFields.push("email");
@@ -234,8 +246,12 @@ export function InstantQuoteForm({
       kitchens,
       service,
       estimatedHours,
-      preferredDate: primaryDate,
-      selectedDates: cleanedDates,
+      preferredDate: primaryVisit.date,
+      selectedDates: cleanedVisits.map((visit) => visit.date),
+      visits: cleanedVisits.map((visit) => ({
+        date: visit.date,
+        time: `${visit.hour}:${visit.minute}`,
+      })),
       preferredTime,
       supplies,
       customerName,
@@ -356,48 +372,59 @@ export function InstantQuoteForm({
               </div>
               <div className="quote-two-col-fields">
                 <div className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
-                  <span>Cleaning dates *</span>
+                  <span>Cleaning dates and times *</span>
                   <div style={{ display: "grid", gap: "0.8rem" }}>
-                    {selectedDates.map((date, index) => (
-                      <div key={`${index}-${date}`} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "0.75rem" }}>
+                    {visits.map((visit, index) => (
+                      <div key={`${index}-${visit.date}-${visit.hour}-${visit.minute}`} style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr auto", gap: "0.75rem", alignItems: "start" }}>
                         <input
                           type="date"
-                          value={date}
+                          value={visit.date}
                           onChange={(event) => {
-                            const nextDates = [...selectedDates];
-                            nextDates[index] = event.target.value;
-                            setSelectedDates(nextDates);
+                            const nextVisits = [...visits];
+                            nextVisits[index] = { ...nextVisits[index], date: event.target.value };
+                            setVisits(nextVisits);
                           }}
                         />
-                        {selectedDates.length > 1 ? (
-                          <button type="button" className="button button-secondary" onClick={() => setSelectedDates(selectedDates.filter((_, itemIndex) => itemIndex !== index))}>
+                        <div className="quote-time-grid">
+                          <select
+                            value={visit.hour}
+                            onChange={(event) => {
+                              const nextVisits = [...visits];
+                              nextVisits[index] = { ...nextVisits[index], hour: event.target.value };
+                              setVisits(nextVisits);
+                            }}
+                          >
+                            {hourOptions.map((hour) => (
+                              <option key={hour} value={hour}>{hour}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={visit.minute}
+                            onChange={(event) => {
+                              const nextVisits = [...visits];
+                              nextVisits[index] = { ...nextVisits[index], minute: event.target.value };
+                              setVisits(nextVisits);
+                            }}
+                          >
+                            {minuteOptions.map((minute) => (
+                              <option key={minute} value={minute}>{minute}</option>
+                            ))}
+                          </select>
+                        </div>
+                        {visits.length > 1 ? (
+                          <button type="button" className="button button-secondary" onClick={() => setVisits(visits.filter((_, itemIndex) => itemIndex !== index))}>
                             Remove
                           </button>
                         ) : null}
                       </div>
                     ))}
                     <div>
-                      <button type="button" className="button button-secondary" onClick={() => setSelectedDates([...selectedDates, ""])}>
+                      <button type="button" className="button button-secondary" onClick={() => setVisits([...visits, { date: "", hour: "10", minute: "00" }])}>
                         Add another date
                       </button>
                     </div>
                   </div>
                 </div>
-                <label className="quote-field-stack">
-                  <span>Preferred time *</span>
-                  <div className="quote-time-grid">
-                    <select value={preferredHour} onChange={(event) => setPreferredHour(event.target.value)}>
-                      {hourOptions.map((hour) => (
-                        <option key={hour} value={hour}>{hour}</option>
-                      ))}
-                    </select>
-                    <select value={preferredMinute} onChange={(event) => setPreferredMinute(event.target.value)}>
-                      {minuteOptions.map((minute) => (
-                        <option key={minute} value={minute}>{minute}</option>
-                      ))}
-                    </select>
-                  </div>
-                </label>
                 <label className="quote-field-stack">
                   <span>Cleaning supplies *</span>
                   <select value={supplies} onChange={(event) => setSupplies(event.target.value as "customer" | "cleaner")}>
@@ -523,7 +550,7 @@ export function InstantQuoteForm({
               <div className="quote-summary-list">
                 <div><span>Hourly rate</span><strong>{formatGBP(pricing.hourlyRate)}</strong></div>
                 <div><span>Per visit</span><strong>{formatGBP(pricing.perVisitBaseAmount)}</strong></div>
-                <div><span>Selected dates</span><strong>{pricing.dateCount}</strong></div>
+                <div><span>Selected visits</span><strong>{pricing.dateCount}</strong></div>
                 <div><span>Base amount</span><strong>{formatGBP(pricing.baseAmount)}</strong></div>
                 <div><span>Add-ons</span><strong>{formatGBP(pricing.addOns)}</strong></div>
                 <div><span>Weekend surcharge</span><strong>{formatGBP(pricing.weekendSurcharge)}</strong></div>
@@ -548,7 +575,7 @@ export function InstantQuoteForm({
               ) : null}
               <ul className="list-clean quote-meta-list">
                 <li>{pricing.parsedHours || 0} planned hours per visit</li>
-                <li>{pricing.dateCount} cleaning date(s) selected</li>
+                <li>{pricing.dateCount} visit(s) selected</li>
                 <li>Price changes stay visible as the customer edits the form</li>
                 <li>End of tenancy or unusual jobs may still need a manual review</li>
               </ul>

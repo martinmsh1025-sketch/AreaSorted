@@ -17,6 +17,7 @@ type BookingDraft = {
   estimatedHours: number;
   preferredDate: string;
   selectedDates?: string[];
+  visits?: Array<{ date: string; time: string }>;
   preferredTime: string;
   supplies: string;
   customerName: string;
@@ -197,8 +198,16 @@ export default function BookingPage() {
               </div>
               <div className="quote-summary-list">
                 <div><span>Cleaning address</span><strong>{serviceAddress || "To be confirmed"}</strong></div>
-                <div><span>Cleaning dates</span><strong>{draft.selectedDates?.length ? draft.selectedDates.join(", ") : draft.preferredDate || "To be confirmed"}</strong></div>
-                <div><span>Preferred time</span><strong>{draft.preferredTime || "To be confirmed"}</strong></div>
+                <div>
+                  <span>Selected visits</span>
+                  <strong>
+                    {draft.visits?.length
+                      ? draft.visits.map((visit) => `${visit.date} ${visit.time}`).join(", ")
+                      : draft.selectedDates?.length
+                        ? draft.selectedDates.join(", ")
+                        : draft.preferredDate || "To be confirmed"}
+                  </strong>
+                </div>
                 <div><span>Pets</span><strong>{draft.pets === "yes" ? "Pets at property" : "No pets"}</strong></div>
               </div>
             </section>
