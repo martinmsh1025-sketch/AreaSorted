@@ -1,0 +1,1408 @@
+{
+  "applications": [
+    {
+      "fullName": "",
+      "password": "",
+      "dateOfBirth": "",
+      "email": "mabotsma1@gmail.com",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "",
+      "boroughs": [],
+      "postcodeAreas": [],
+      "transportModes": [],
+      "serviceTypes": [],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773423025375-LGUUG",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:30:25.375Z",
+      "updatedAt": "2026-03-13T17:30:25.375Z"
+    },
+    {
+      "fullName": "",
+      "password": "washhub-cleaner",
+      "dateOfBirth": "",
+      "email": "mabotsma@gmail.com",
+      "phone": "cleaner1@washhub.test",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "",
+      "boroughs": [],
+      "postcodeAreas": [],
+      "transportModes": [],
+      "serviceTypes": [],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773422756113-CS6OX",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:25:56.113Z",
+      "updatedAt": "2026-03-13T17:25:56.113Z"
+    },
+    {
+      "fullName": "",
+      "password": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "",
+      "boroughs": [],
+      "postcodeAreas": [],
+      "transportModes": [],
+      "serviceTypes": [],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773422581727-WU7TU",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:23:01.727Z",
+      "updatedAt": "2026-03-13T17:23:01.727Z"
+    },
+    {
+      "fullName": "",
+      "password": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "",
+      "boroughs": [],
+      "postcodeAreas": [],
+      "transportModes": [],
+      "serviceTypes": [],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773422549536-KU0CU",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:22:29.536Z",
+      "updatedAt": "2026-03-13T17:22:29.536Z"
+    },
+    {
+      "fullName": "",
+      "password": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "",
+      "boroughs": [],
+      "postcodeAreas": [],
+      "transportModes": [],
+      "serviceTypes": [],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773422439871-NP1GO",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:20:39.871Z",
+      "updatedAt": "2026-03-13T17:20:39.871Z"
+    },
+    {
+      "fullName": "",
+      "password": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "",
+      "boroughs": [],
+      "postcodeAreas": [],
+      "transportModes": [],
+      "serviceTypes": [],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773422383910-6MIVQ",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:19:43.910Z",
+      "updatedAt": "2026-03-13T17:19:43.910Z"
+    },
+    {
+      "fullName": "",
+      "password": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773422165947-4PD9N",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:16:05.947Z",
+      "updatedAt": "2026-03-13T17:16:05.947Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "South East England",
+      "boroughs": [
+        "Essex"
+      ],
+      "postcodeAreas": [
+        "CO1"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Domestic cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773421934320-F2OSL",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:12:14.319Z",
+      "updatedAt": "2026-03-13T17:12:14.319Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "South East England",
+      "boroughs": [
+        "Essex"
+      ],
+      "postcodeAreas": [
+        "CO1"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning",
+        "Office cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket"
+      ],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773421503760-T0805",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T17:05:03.760Z",
+      "updatedAt": "2026-03-13T17:05:03.760Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420996922-UADVY",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:36.922Z",
+      "updatedAt": "2026-03-13T16:56:36.922Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420996453-8PO9W",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:36.453Z",
+      "updatedAt": "2026-03-13T16:56:36.453Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420996235-KZ16H",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:36.235Z",
+      "updatedAt": "2026-03-13T16:56:36.235Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420996067-BOU4B",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:36.067Z",
+      "updatedAt": "2026-03-13T16:56:36.067Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420995595-ZJSSK",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:35.595Z",
+      "updatedAt": "2026-03-13T16:56:35.595Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420994523-GZ514",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:34.523Z",
+      "updatedAt": "2026-03-13T16:56:34.523Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420993994-OUD7T",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:33.994Z",
+      "updatedAt": "2026-03-13T16:56:33.994Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": true,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420993168-R1BW3",
+      "status": "submitted",
+      "submittedAt": "2026-03-13T16:56:33.168Z",
+      "updatedAt": "2026-03-13T16:56:33.168Z"
+    },
+    {
+      "fullName": "",
+      "dateOfBirth": "",
+      "email": "",
+      "phone": "",
+      "addressLine1": "",
+      "city": "",
+      "postcode": "",
+      "nationality": "",
+      "rightToWork": "",
+      "visaStatus": "",
+      "visaExpiry": "",
+      "region": "East Midlands",
+      "boroughs": [
+        "Derbyshire"
+      ],
+      "postcodeAreas": [
+        "S41",
+        "DE3"
+      ],
+      "transportModes": [
+        "Car"
+      ],
+      "serviceTypes": [
+        "Deep cleaning"
+      ],
+      "maxTravelMiles": "",
+      "ownSuppliesLevel": "",
+      "supplyItems": [
+        "Mop and bucket",
+        "General cleaning products"
+      ],
+      "availability": {
+        "Monday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Tuesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Wednesday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Thursday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Friday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Saturday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        },
+        "Sunday": {
+          "available": false,
+          "start": "09:00",
+          "end": "17:00"
+        }
+      },
+      "uploads": {
+        "idDocumentName": "",
+        "photoName": "",
+        "cvName": "",
+        "visaDocumentName": "",
+        "addressProofName": "",
+        "introVideoName": ""
+      },
+      "applicationId": "APP-1773420985170-0FH3O",
+      "status": "approved",
+      "submittedAt": "2026-03-13T16:56:25.169Z",
+      "updatedAt": "2026-03-13T17:01:45.695Z",
+      "internalReason": "dffds",
+      "externalMessage": ""
+    }
+  ]
+}

@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { getCleanerApplicationByEmail } from "@/lib/cleaner-application-store";
+import { getCleanerRecordByEmail } from "@/lib/cleaner-record-store";
 
 export const CLEANER_SESSION_COOKIE = "washhub_cleaner_email";
 
@@ -9,4 +11,18 @@ export async function getAuthenticatedCleanerEmail() {
 
 export async function isCleanerAuthenticated() {
   return Boolean(await getAuthenticatedCleanerEmail());
+}
+
+export async function getCleanerPortalRoute(email: string) {
+  const cleanerRecord = await getCleanerRecordByEmail(email);
+  if (cleanerRecord) {
+    return "/cleaner/jobs";
+  }
+
+  const application = await getCleanerApplicationByEmail(email);
+  if (application) {
+    return "/cleaner/application-status";
+  }
+
+  return "/cleaner/login?error=1";
 }

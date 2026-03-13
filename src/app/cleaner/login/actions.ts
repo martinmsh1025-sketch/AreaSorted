@@ -2,13 +2,20 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getCleanerApplicationByEmail } from "@/lib/cleaner-application-store";
+import { getCleanerRecordByEmail } from "@/lib/cleaner-record-store";
+import { getCleanerPortalRoute } from "@/lib/cleaner-auth";
 import { CLEANER_SESSION_COOKIE } from "@/lib/cleaner-auth";
 
 export async function cleanerLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
 
-  if (!email || !process.env.CLEANER_LOGIN_PASSWORD || password !== process.env.CLEANER_LOGIN_PASSWORD) {
+  const cleaner = email ? await getCleanerRecordByEmail(email) : null;
+  const application = cleaner ? null : email ? await getCleanerApplicationByEmail(email) : null;
+  const storedPassword = cleaner?.password || application?.password || "";
+
+  if (!email || !storedPassword || password !== storedPassword) {
     redirect("/cleaner/login?error=1");
   }
 
@@ -20,7 +27,7 @@ export async function cleanerLoginAction(formData: FormData) {
     path: "/",
   });
 
-  redirect("/cleaner/jobs");
+  redirect(await getCleanerPortalRoute(email));
 }
 
 export async function cleanerLogoutAction() {

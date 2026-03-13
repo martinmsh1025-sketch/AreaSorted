@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const regions = {
   GreaterLondon: {
@@ -227,6 +228,23 @@ function buildAvailabilityState() {
 }
 
 export default function CleanerApplyPage() {
+  const router = useRouter();
+  const [emailGate, setEmailGate] = useState("");
+  const [emailChecked, setEmailChecked] = useState(false);
+  const [emailGateError, setEmailGateError] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [city, setCity] = useState("");
+  const [postcode, setPostcode] = useState("");
+  const [nationality, setNationality] = useState("");
+  const [rightToWork, setRightToWork] = useState("");
+  const [visaStatus, setVisaStatus] = useState("");
+  const [visaExpiry, setVisaExpiry] = useState("");
+  const [maxTravelMiles, setMaxTravelMiles] = useState("");
+  const [ownSuppliesLevel, setOwnSuppliesLevel] = useState("");
   const [step, setStep] = useState(1);
   const [selectedRegion, setSelectedRegion] = useState<keyof typeof regions | "">("");
   const [selectedBoroughs, setSelectedBoroughs] = useState<string[]>([]);
@@ -236,6 +254,8 @@ export default function CleanerApplyPage() {
   const [selectedSupplyItems, setSelectedSupplyItems] = useState<string[]>([]);
   const [selectedAvailabilityPreset, setSelectedAvailabilityPreset] = useState("");
   const [availability, setAvailability] = useState<Record<string, AvailabilityDay>>(buildAvailabilityState);
+  const [submitState, setSubmitState] = useState<"idle" | "submitting" | "done" | "error">("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
 
   const totalSteps = 7;
   const progress = Math.round(((step - 1) / totalSteps) * 100);
@@ -316,6 +336,83 @@ export default function CleanerApplyPage() {
     });
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (step !== totalSteps) return;
+
+    setSubmitState("submitting");
+    setSubmitMessage("");
+
+    const formData = new FormData(event.currentTarget);
+    formData.set("fullName", fullName);
+    formData.set("dateOfBirth", dateOfBirth);
+    formData.set("email", emailGate);
+    formData.set("phone", phone);
+    formData.set("password", password);
+    formData.set("addressLine1", addressLine1);
+    formData.set("city", city);
+    formData.set("postcode", postcode);
+    formData.set("nationality", nationality);
+    formData.set("rightToWork", rightToWork);
+    formData.set("visaStatus", visaStatus);
+    formData.set("visaExpiry", visaExpiry);
+    formData.set("region", selectedRegion ? regions[selectedRegion].label : "");
+    formData.set("boroughs", JSON.stringify(selectedBoroughs));
+    formData.set("postcodeAreas", JSON.stringify(selectedPostcodes));
+    formData.set("transportModes", JSON.stringify(selectedTransportModes));
+    formData.set("serviceTypes", JSON.stringify(selectedServiceTypes));
+    formData.set("maxTravelMiles", maxTravelMiles);
+    formData.set("ownSuppliesLevel", ownSuppliesLevel);
+    formData.set("supplyItems", JSON.stringify(selectedSupplyItems));
+    formData.set("availability", JSON.stringify(availability));
+
+    try {
+      const response = await fetch("/api/cleaner-applications", {
+        method: "POST",
+        body: formData,
+      });
+      const data = (await response.json()) as { ok?: boolean; applicationId?: string };
+
+      if (!response.ok || !data.ok) {
+        throw new Error("Unable to submit cleaner application");
+      }
+
+      setSubmitState("done");
+      setSubmitMessage(`Application submitted. Reference: ${data.applicationId}`);
+      router.push(`/cleaner/application-submitted?applicationId=${encodeURIComponent(data.applicationId || "")}`);
+    } catch {
+      setSubmitState("error");
+      setSubmitMessage("Unable to submit the application right now.");
+    }
+  }
+
+  function handleFormKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
+    const target = event.target as HTMLElement;
+    const tagName = target.tagName.toLowerCase();
+
+    if (event.key === "Enter" && tagName !== "textarea") {
+      event.preventDefault();
+    }
+  }
+
+  async function handleEmailCheck() {
+    setEmailGateError("");
+    if (!emailGate.trim()) {
+      setEmailGateError("Please enter an email address.");
+      return;
+    }
+
+    const response = await fetch(`/api/cleaner-applications/check-email?email=${encodeURIComponent(emailGate.trim())}`);
+    const data = (await response.json()) as { exists?: boolean };
+
+    if (data.exists) {
+      setEmailGateError("This email is already in use. Please log in to continue.");
+      return;
+    }
+
+    setEmailChecked(true);
+  }
+
   return (
     <main className="section">
       <div className="container" style={{ maxWidth: 920 }}>
@@ -342,7 +439,25 @@ export default function CleanerApplyPage() {
           </div>
         </div>
 
-        <div className="panel mini-form quote-section-card">
+        {!emailChecked ? (
+          <div className="panel mini-form quote-section-card">
+            <div className="quote-section-head">
+              <div className="eyebrow">Cleaner registration</div>
+              <strong>Start with your email</strong>
+              <p>We check first that the email is not already registered before showing the full application form.</p>
+            </div>
+            <label className="quote-field-stack">
+              <span>Email *</span>
+              <input type="email" value={emailGate} onChange={(event) => setEmailGate(event.target.value)} placeholder="Email address" />
+            </label>
+            {emailGateError ? <p style={{ color: "var(--color-error)", margin: 0 }}>{emailGateError}</p> : null}
+            <div className="button-row">
+              <button className="button button-primary" type="button" onClick={handleEmailCheck}>Continue</button>
+              <a className="button button-secondary" href="/cleaner/login">Already registered? Login</a>
+            </div>
+          </div>
+        ) : (
+          <form className="panel mini-form quote-section-card" onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
           {step === 1 ? (
             <>
               <div className="quote-section-head">
@@ -353,31 +468,35 @@ export default function CleanerApplyPage() {
               <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
                   <span>Full legal name *</span>
-                  <input placeholder="Full name" />
+                  <input name="fullName" placeholder="Full name" value={fullName} onChange={(event) => setFullName(event.target.value)} />
                 </label>
                 <label className="quote-field-stack">
                   <span>Date of birth *</span>
-                  <input type="date" />
+                  <input name="dateOfBirth" type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} />
                 </label>
                 <label className="quote-field-stack">
                   <span>Email *</span>
-                  <input type="email" placeholder="Email address" />
+                  <input name="email" type="email" placeholder="Email address" value={emailGate} readOnly />
                 </label>
                 <label className="quote-field-stack">
                   <span>Phone *</span>
-                  <input placeholder="Phone number" />
+                  <input name="phone" placeholder="Phone number" value={phone} onChange={(event) => setPhone(event.target.value)} />
+                </label>
+                <label className="quote-field-stack">
+                  <span>Create password *</span>
+                  <input name="password" type="password" placeholder="Create password" value={password} onChange={(event) => setPassword(event.target.value)} />
                 </label>
                 <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
                   <span>Home address *</span>
-                  <input placeholder="Address line 1" />
+                  <input name="addressLine1" placeholder="Address line 1" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} />
                 </label>
                 <label className="quote-field-stack">
                   <span>City *</span>
-                  <input placeholder="City" />
+                  <input name="city" placeholder="City" value={city} onChange={(event) => setCity(event.target.value)} />
                 </label>
                 <label className="quote-field-stack">
                   <span>Postcode *</span>
-                  <input placeholder="Postcode" />
+                  <input name="postcode" placeholder="Postcode" value={postcode} onChange={(event) => setPostcode(event.target.value)} />
                 </label>
               </div>
             </>
@@ -393,7 +512,7 @@ export default function CleanerApplyPage() {
               <div className="quote-two-col-fields">
                 <label className="quote-field-stack">
                   <span>Nationality *</span>
-                  <select defaultValue="">
+                  <select name="nationality" value={nationality} onChange={(event) => setNationality(event.target.value)}>
                     <option value="" disabled>Select nationality</option>
                     {nationalityOptions.map((option) => (
                       <option key={option}>{option}</option>
@@ -402,7 +521,7 @@ export default function CleanerApplyPage() {
                 </label>
                 <label className="quote-field-stack">
                   <span>Right to work in the UK? *</span>
-                  <select defaultValue="">
+                  <select name="rightToWork" value={rightToWork} onChange={(event) => setRightToWork(event.target.value)}>
                     <option value="" disabled>Select</option>
                     <option>Yes</option>
                     <option>No</option>
@@ -410,11 +529,11 @@ export default function CleanerApplyPage() {
                 </label>
                 <label className="quote-field-stack">
                   <span>Visa / permit status</span>
-                  <input placeholder="If applicable" />
+                  <input name="visaStatus" placeholder="If applicable" value={visaStatus} onChange={(event) => setVisaStatus(event.target.value)} />
                 </label>
                 <label className="quote-field-stack">
                   <span>Visa / permit expiry</span>
-                  <input type="date" />
+                  <input name="visaExpiry" type="date" value={visaExpiry} onChange={(event) => setVisaExpiry(event.target.value)} />
                 </label>
               </div>
             </>
@@ -500,11 +619,11 @@ export default function CleanerApplyPage() {
               </div>
               <label className="quote-field-stack">
                 <span>Maximum travel distance (miles)</span>
-                <input type="number" placeholder="Example: 8" />
+                <input name="maxTravelMiles" type="number" placeholder="Example: 8" value={maxTravelMiles} onChange={(event) => setMaxTravelMiles(event.target.value)} />
               </label>
               <label className="quote-field-stack">
-                <span>Own supplies / equipment *</span>
-                <select defaultValue="">
+                  <span>Own supplies / equipment *</span>
+                  <select name="ownSuppliesLevel" value={ownSuppliesLevel} onChange={(event) => setOwnSuppliesLevel(event.target.value)}>
                   <option value="" disabled>Select</option>
                   <option>Yes, fully equipped</option>
                   <option>Yes, partially equipped</option>
@@ -620,7 +739,23 @@ export default function CleanerApplyPage() {
                     <strong>{title}</strong>
                     <p>{copy}</p>
                     <span className="upload-button">Choose file</span>
-                    <input type="file" accept={title.includes("video") ? "video/*" : undefined} />
+                    <input
+                      name={
+                        title === "ID / passport *"
+                          ? "idDocument"
+                          : title === "Recent photo *"
+                            ? "photo"
+                            : title === "CV *"
+                              ? "cv"
+                              : title === "Working visa / permit"
+                                ? "visaDocument"
+                                : title === "Proof of address *"
+                                  ? "addressProof"
+                                  : "introVideo"
+                      }
+                      type="file"
+                      accept={title.includes("video") ? "video/*" : undefined}
+                    />
                   </label>
                 ))}
               </div>
@@ -640,21 +775,29 @@ export default function CleanerApplyPage() {
             </>
           ) : null}
 
-          <div className="button-row" style={{ marginTop: "1.25rem" }}>
+            <div className="button-row" style={{ marginTop: "1.25rem" }}>
             {step > 1 ? (
-              <button className="button button-secondary" type="button" onClick={() => setStep(step - 1)}>
+              <button key={`back-${step}`} className="button button-secondary" type="button" onClick={() => setStep(step - 1)}>
                 Back
               </button>
             ) : null}
             {step < totalSteps ? (
-              <button className="button button-primary" type="button" onClick={() => setStep(step + 1)}>
+              <button key={`next-${step}`} className="button button-primary" type="button" onClick={() => setStep((current) => Math.min(current + 1, totalSteps))}>
                 Next step
               </button>
             ) : (
-              <button className="button button-primary" type="button">Submit application</button>
+              <button key="submit-final" className="button button-primary" type="submit" disabled={submitState === "submitting"}>
+                {submitState === "submitting" ? "Submitting..." : "Submit application"}
+              </button>
             )}
-          </div>
-        </div>
+            </div>
+            {submitMessage ? (
+              <p style={{ color: submitState === "error" ? "var(--color-error)" : "var(--color-success)", marginTop: "0.4rem" }}>
+                {submitMessage}
+              </p>
+            ) : null}
+          </form>
+        )}
       </div>
     </main>
   );
