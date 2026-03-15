@@ -198,6 +198,7 @@ enum ActorType {
   SYSTEM
   CUSTOMER
   CLEANER
+  PROVIDER
 }
 
 enum ScoreEventType {
@@ -590,6 +591,7 @@ model Booking {
   quoteId                  String?
   customerId               String
   customerAddressId        String?
+  providerCompanyId        String?
   serviceAddressLine1      String
   serviceAddressLine2      String?
   serviceCity              String
@@ -616,19 +618,30 @@ model Booking {
   quote                    Quote?             @relation(fields: [quoteId], references: [id])
   customer                 Customer           @relation(fields: [customerId], references: [id])
   customerAddress          CustomerAddress?   @relation(fields: [customerAddressId], references: [id])
+  marketplaceProviderCompany ProviderCompany? @relation("MarketplaceProviderCompany", fields: [providerCompanyId], references: [id])
   addons                   BookingAddon[]
   payments                 Payment[]
   refunds                  Refund[]
   jobs                     Job[]
+  jobAssignments           JobAssignment[]
   complaints               Complaint[]
   scoreLogs                CleanerScoreLog[]
   cancellations            JobCancellation[]
+  priceSnapshot            BookingPriceSnapshot?
+  paymentRecords           PaymentRecord[]
+  refundRecords            RefundRecord[]
+  disputeRecords           DisputeRecord[]
+  payoutRecords            PayoutRecord[]
+  ledgerEntries            LedgerEntry[]
+  invoiceRecords           InvoiceRecord[]
+  notificationLogsV2       NotificationLogV2[]
 
   @@index([customerId])
   @@index([quoteId])
   @@index([bookingStatus])
   @@index([scheduledDate])
   @@index([servicePostcode])
+  @@index([providerCompanyId])
 }
 
 model BookingAddon {
@@ -897,4 +910,410 @@ model SeoLandingPage {
 
   @@index([locationName])
   @@index([serviceName])
+}
+
+enum ProviderCompanyStatus {
+  INVITED
+  PROFILE_STARTED
+  AGREEMENT_SIGNED
+  STRIPE_PENDING
+  STRIPE_RESTRICTED
+  STRIPE_ACTIVE
+  ACTIVE
+  SUSPENDED
+}
+
+enum ConnectAccountMode {
+  EXPRESS
+  STANDARD
+  CUSTOM
+}
+
+enum ChargeModel {
+  DIRECT_CHARGES
+  DESTINATION_CHARGES
+  SEPARATE_CHARGES_AND_TRANSFERS
+}
+
+enum InvoiceStrategy {
+  PROVIDER_SERVICE_PLUS_PLATFORM_FEE_RECEIPT
+  COMBINED_CUSTOMER_RECEIPT
+}
+
+enum RefundLiability {
+  PROVIDER
+  PLATFORM
+  SHARED
+}
+
+enum DisputeCaseStatus {
+  OPEN
+  NEEDS_EVIDENCE
+  SUBMITTED
+  WON
+  LOST
+  CLOSED
+}
+
+enum ProviderPayoutStatus {
+  PENDING
+  CREATED
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum LedgerEntryKind {
+  BOOKING_CREATED
+  PAYMENT_SUCCEEDED
+  APPLICATION_FEE_RECOGNIZED
+  REFUND_CREATED
+  REFUND_SUCCEEDED
+  DISPUTE_OPENED
+  DISPUTE_WON
+  DISPUTE_LOST
+  PAYOUT_CREATED
+  PAYOUT_PAID
+  PAYOUT_FAILED
+  MANUAL_ADJUSTMENT
+}
+
+enum WebhookProvider {
+  STRIPE
+}
+
+enum WebhookProcessingStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+model User {
+  id            String           @id @default(cuid())
+  email         String           @unique
+  passwordHash  String?
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  roles         UserRoleAssignment[]
+  providerCompany ProviderCompany?
+}
+
+model Role {
+  id          String              @id @default(cuid())
+  key         String              @unique
+  label       String
+  createdAt   DateTime            @default(now())
+  assignments UserRoleAssignment[]
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+}
+
+model ProviderCompany {
+  id                       String                 @id @default(cuid())
+  userId                   String?                @unique
+  legalName                String
+  tradingName              String?
+  companyNumber            String                 @unique
+  registeredAddress        String
+  contactEmail             String
+  phone                    String
+  vatNumber                String?
+  insuranceExpiry          DateTime?
+  complianceNotes          String?
+  status                   ProviderCompanyStatus  @default(INVITED)
+  paymentReady             Boolean                @default(false)
+  stripeRequirementsJson   Json?
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+
+  user                     User?                  @relation(fields: [userId], references: [id])
+  serviceCategories        ProviderServiceCategory[]
+  coverageAreas            ProviderCoverageArea[]
+  pricingRules             ProviderPricingRule[]
+  pricingAreaOverrides     PricingAreaOverride[]
+  pricingAuditLogs         PricingAuditLog[]
+  invites                  ProviderInvite[]
+  agreements               ProviderAgreement[]
+  stripeConnectedAccount   StripeConnectedAccount?
+  bookingAssignments       Booking[]              @relation("MarketplaceProviderCompany")
+  payoutRecords            PayoutRecord[]
+  disputeRecords           DisputeRecord[]
+  invoiceRecords           InvoiceRecord[]
+  notificationLogs         NotificationLogV2[]
+}
+
+model ProviderServiceCategory {
+  id                String          @id @default(cuid())
+  providerCompanyId String
+  categoryKey       String
+  active            Boolean         @default(true)
+  providerCompany   ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+
+  @@unique([providerCompanyId, categoryKey])
+}
+
+model ProviderCoverageArea {
+  id                String          @id @default(cuid())
+  providerCompanyId String
+  postcodePrefix    String
+  categoryKey       String
+  active            Boolean         @default(true)
+  providerCompany   ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+
+  @@unique([postcodePrefix, categoryKey])
+}
+
+model ProviderPricingRule {
+  id                  String          @id @default(cuid())
+  providerCompanyId   String
+  categoryKey         String
+  serviceKey          String
+  pricingMode         String
+  flatPrice           Decimal?        @db.Decimal(10, 2)
+  hourlyPrice         Decimal?        @db.Decimal(10, 2)
+  minimumCharge       Decimal?        @db.Decimal(10, 2)
+  travelFee           Decimal?        @db.Decimal(10, 2)
+  sameDayUplift       Decimal?        @db.Decimal(10, 2)
+  weekendUplift       Decimal?        @db.Decimal(10, 2)
+  customQuoteRequired Boolean         @default(false)
+  pricingJson         Json?
+  active              Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  providerCompany     ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+  auditLogs           PricingAuditLog[]
+
+  @@unique([providerCompanyId, categoryKey, serviceKey])
+}
+
+model PricingAreaOverride {
+  id                String          @id @default(cuid())
+  providerCompanyId String
+  categoryKey       String
+  postcodePrefix    String
+  surchargeAmount   Decimal         @db.Decimal(10, 2)
+  bookingFeeOverride Decimal?       @db.Decimal(10, 2)
+  commissionPercentOverride Decimal? @db.Decimal(10, 2)
+  active            Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  providerCompany   ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+
+  @@unique([providerCompanyId, categoryKey, postcodePrefix])
+}
+
+model PricingAuditLog {
+  id                String               @id @default(cuid())
+  providerCompanyId String
+  providerPricingRuleId String?
+  actorType         ActorType
+  actorId           String?
+  action            String
+  beforeJson        Json?
+  afterJson         Json?
+  createdAt         DateTime             @default(now())
+
+  providerCompany   ProviderCompany      @relation(fields: [providerCompanyId], references: [id])
+  providerPricingRule ProviderPricingRule? @relation(fields: [providerPricingRuleId], references: [id])
+}
+
+model ProviderInvite {
+  id                String          @id @default(cuid())
+  providerCompanyId String?
+  email             String
+  token             String          @unique
+  expiresAt         DateTime
+  acceptedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  providerCompany   ProviderCompany? @relation(fields: [providerCompanyId], references: [id])
+}
+
+model ProviderAgreement {
+  id                String                @id @default(cuid())
+  providerCompanyId String
+  version           String
+  status            ContractStatus        @default(DRAFT)
+  documentUrl       String?
+  signedAt          DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  providerCompany   ProviderCompany       @relation(fields: [providerCompanyId], references: [id])
+}
+
+model StripeConnectedAccount {
+  id                   String             @id @default(cuid())
+  providerCompanyId    String             @unique
+  stripeAccountId      String             @unique
+  mode                 ConnectAccountMode @default(EXPRESS)
+  chargeModel          ChargeModel        @default(DIRECT_CHARGES)
+  chargesEnabled       Boolean            @default(false)
+  payoutsEnabled       Boolean            @default(false)
+  detailsSubmitted     Boolean            @default(false)
+  requirementsJson     Json?
+  onboardingUrl        String?
+  lastSyncedAt         DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  providerCompany      ProviderCompany    @relation(fields: [providerCompanyId], references: [id])
+}
+
+model BookingPriceSnapshot {
+  id                         String   @id @default(cuid())
+  bookingId                  String   @unique
+  providerServiceAmount      Decimal  @db.Decimal(10, 2)
+  platformBookingFee         Decimal  @db.Decimal(10, 2)
+  platformCommissionAmount   Decimal  @db.Decimal(10, 2)
+  platformMarkupAmount       Decimal  @db.Decimal(10, 2)
+  optionalExtrasAmount       Decimal  @db.Decimal(10, 2)
+  customerTotalAmount        Decimal  @db.Decimal(10, 2)
+  providerExpectedPayout     Decimal  @db.Decimal(10, 2)
+  pricingJson                Json?
+  createdAt                  DateTime @default(now())
+  booking                    Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model PaymentRecord {
+  id                         String          @id @default(cuid())
+  bookingId                  String
+  stripeAccountId            String?
+  stripeCheckoutSessionId    String?         @unique
+  stripePaymentIntentId      String?         @unique
+  stripeChargeId             String?         @unique
+  stripeBalanceTransactionId String?         @unique
+  paymentState               PaymentStatus   @default(PENDING)
+  grossAmount                Decimal         @db.Decimal(10, 2)
+  applicationFeeAmount       Decimal?        @db.Decimal(10, 2)
+  stripeFeeEstimate          Decimal?        @db.Decimal(10, 2)
+  stripeFeeActual            Decimal?        @db.Decimal(10, 2)
+  metadataJson               Json?
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+  booking                    Booking         @relation(fields: [bookingId], references: [id])
+}
+
+model RefundRecord {
+  id                    String          @id @default(cuid())
+  bookingId             String
+  paymentRecordId       String?
+  stripeRefundId        String?         @unique
+  refundReason          String?
+  amount                Decimal         @db.Decimal(10, 2)
+  liability             RefundLiability @default(PLATFORM)
+  refundApplicationFee  Boolean         @default(false)
+  status                RefundStatus    @default(PENDING)
+  actorId               String?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  booking               Booking         @relation(fields: [bookingId], references: [id])
+}
+
+model DisputeRecord {
+  id                      String             @id @default(cuid())
+  bookingId               String
+  providerCompanyId       String?
+  stripeDisputeId         String?            @unique
+  status                  DisputeCaseStatus  @default(OPEN)
+  amount                  Decimal            @db.Decimal(10, 2)
+  reason                  String?
+  evidenceJson            Json?
+  platformAbsorbsLoss     Boolean            @default(false)
+  recoverableFromProvider Decimal?           @db.Decimal(10, 2)
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  booking                 Booking            @relation(fields: [bookingId], references: [id])
+  providerCompany         ProviderCompany?   @relation(fields: [providerCompanyId], references: [id])
+}
+
+model PayoutRecord {
+  id                String               @id @default(cuid())
+  bookingId         String
+  providerCompanyId String
+  stripePayoutId    String?              @unique
+  status            ProviderPayoutStatus @default(PENDING)
+  amount            Decimal              @db.Decimal(10, 2)
+  availableOn       DateTime?
+  paidAt            DateTime?
+  failureCode       String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  booking           Booking              @relation(fields: [bookingId], references: [id])
+  providerCompany   ProviderCompany      @relation(fields: [providerCompanyId], references: [id])
+}
+
+model LedgerEntry {
+  id          String          @id @default(cuid())
+  bookingId   String
+  kind        LedgerEntryKind
+  amount      Decimal         @db.Decimal(10, 2)
+  currency    String          @default("GBP")
+  description String
+  metadataJson Json?
+  createdAt   DateTime        @default(now())
+  booking     Booking         @relation(fields: [bookingId], references: [id])
+}
+
+model InvoiceRecord {
+  id                String          @id @default(cuid())
+  bookingId         String?
+  providerCompanyId String?
+  number            String          @unique
+  strategy          InvoiceStrategy
+  issuer            String
+  recipient         String
+  totalAmount       Decimal         @db.Decimal(10, 2)
+  currency          String          @default("GBP")
+  pdfUrl            String?
+  metadataJson      Json?
+  createdAt         DateTime        @default(now())
+  booking           Booking?        @relation(fields: [bookingId], references: [id])
+  providerCompany   ProviderCompany? @relation(fields: [providerCompanyId], references: [id])
+}
+
+model NotificationLogV2 {
+  id                String              @id @default(cuid())
+  bookingId         String?
+  providerCompanyId String?
+  channel           NotificationChannel
+  status            NotificationStatus  @default(QUEUED)
+  recipient         String
+  subject           String?
+  templateCode      String?
+  payloadJson       Json?
+  createdAt         DateTime            @default(now())
+  booking           Booking?            @relation(fields: [bookingId], references: [id])
+  providerCompany   ProviderCompany?    @relation(fields: [providerCompanyId], references: [id])
+}
+
+model WebhookEvent {
+  id              String          @id @default(cuid())
+  provider        WebhookProvider
+  externalEventId String          @unique
+  eventType       String
+  status          WebhookProcessingStatus @default(RECEIVED)
+  processed       Boolean         @default(false)
+  payloadJson     Json
+  receivedAt      DateTime        @default(now())
+  processedAt     DateTime?
+  errorMessage    String?
+}
+
+model AdminSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  valueJson   Json
+  description String?
+  updatedAt   DateTime @updatedAt
 }

@@ -1,21 +1,20 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getProviderSessionCompanyId } from "@/lib/provider-auth";
 import { deleteProviderPricingRule, disableProviderPricingRule, savePricingAreaOverride, saveProviderPricingRule } from "@/lib/pricing/prisma-pricing";
-import { getPrisma } from "@/lib/db";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   const parsed = Number(value ?? fallback);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export async function savePricingConfigAction(formData: FormData) {
-  const authenticated = await isAdminAuthenticated();
-  if (!authenticated) redirect("/admin/login");
+export async function saveProviderPricingAction(formData: FormData) {
+  const providerCompanyId = await getProviderSessionCompanyId();
+  if (!providerCompanyId) redirect("/provider/login");
 
   await saveProviderPricingRule({
-    providerCompanyId: String(formData.get("providerCompanyId") || ""),
+    providerCompanyId,
     categoryKey: String(formData.get("categoryKey") || ""),
     serviceKey: String(formData.get("serviceKey") || ""),
     pricingMode: String(formData.get("pricingMode") || "flat"),
@@ -27,58 +26,45 @@ export async function savePricingConfigAction(formData: FormData) {
     weekendUplift: parseNumber(formData.get("weekendUplift"), 0),
     customQuoteRequired: formData.get("customQuoteRequired") === "on",
     active: formData.get("active") === "on",
-    actorType: "ADMIN",
+    actorType: "PROVIDER",
   });
 }
 
-export async function disablePricingConfigAction(formData: FormData) {
-  const authenticated = await isAdminAuthenticated();
-  if (!authenticated) redirect("/admin/login");
+export async function disableProviderPricingAction(formData: FormData) {
+  const providerCompanyId = await getProviderSessionCompanyId();
+  if (!providerCompanyId) redirect("/provider/login");
 
   await disableProviderPricingRule({
     providerPricingRuleId: String(formData.get("providerPricingRuleId") || ""),
-    actorType: "ADMIN",
+    actorType: "PROVIDER",
+    actorId: providerCompanyId,
   });
 }
 
-export async function deletePricingConfigAction(formData: FormData) {
-  const authenticated = await isAdminAuthenticated();
-  if (!authenticated) redirect("/admin/login");
+export async function deleteProviderPricingAction(formData: FormData) {
+  const providerCompanyId = await getProviderSessionCompanyId();
+  if (!providerCompanyId) redirect("/provider/login");
 
   await deleteProviderPricingRule({
     providerPricingRuleId: String(formData.get("providerPricingRuleId") || ""),
-    actorType: "ADMIN",
+    actorType: "PROVIDER",
+    actorId: providerCompanyId,
   });
 }
 
-export async function saveAreaOverrideAction(formData: FormData) {
-  const authenticated = await isAdminAuthenticated();
-  if (!authenticated) redirect("/admin/login");
+export async function saveProviderAreaOverrideAction(formData: FormData) {
+  const providerCompanyId = await getProviderSessionCompanyId();
+  if (!providerCompanyId) redirect("/provider/login");
 
   await savePricingAreaOverride({
-    providerCompanyId: String(formData.get("providerCompanyId") || ""),
+    providerCompanyId,
     categoryKey: String(formData.get("categoryKey") || ""),
     postcodePrefix: String(formData.get("postcodePrefix") || ""),
     surchargeAmount: parseNumber(formData.get("surchargeAmount"), 0),
     bookingFeeOverride: parseNumber(formData.get("bookingFeeOverride"), 0),
     commissionPercentOverride: parseNumber(formData.get("commissionPercentOverride"), 0),
     active: formData.get("active") === "on",
-    actorType: "ADMIN",
-  });
-}
-
-export async function saveMarketplaceSettingAction(formData: FormData) {
-  const authenticated = await isAdminAuthenticated();
-  if (!authenticated) redirect("/admin/login");
-
-  const prisma = getPrisma();
-  const key = String(formData.get("key") || "");
-  const value = parseNumber(formData.get("value"), 0);
-  if (!key) return;
-
-  await prisma.adminSetting.upsert({
-    where: { key },
-    update: { valueJson: { value } },
-    create: { key, valueJson: { value } },
+    actorType: "PROVIDER",
+    actorId: providerCompanyId,
   });
 }
