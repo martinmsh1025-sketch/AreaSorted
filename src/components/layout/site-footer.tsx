@@ -51,10 +51,10 @@ export function SiteFooter() {
               <WashHubLogo />
             </div>
             <p className="footer-brand-copy">
-              Trusted cleaning across London with verified cleaners, clear booking, and practical support for customers and applicants.
+              Trusted local services across London with postcode-first matching, clear booking, and practical support from quote to follow-up.
             </p>
             <ul className="list-clean" style={{ color: "var(--color-text-muted)" }}>
-              <li>support@washhub.co.uk</li>
+              <li>support@areasorted.com</li>
               <li>020 0000 0000</li>
               <li>Mon-Fri, 9am-6pm</li>
             </ul>
@@ -76,7 +76,7 @@ export function SiteFooter() {
             <LinkList items={sitemapLinks} />
           </div>
         </div>
-        <div className="footer-bottom">© 2026 WashHub. Company number to be added before launch.</div>
+        <div className="footer-bottom">© 2026 AreaSorted.com. Company number to be added before launch.</div>
       </div>
     </footer>
   );

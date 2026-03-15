@@ -24,6 +24,12 @@ export default async function AdminBookingsPage({ searchParams }: AdminBookingsP
 
   const bookings = await listBookingRecords();
   const summary = await getBookingDashboardSummary();
+  const today = new Date().toISOString().slice(0, 10);
+  const todaysJobs = bookings
+    .filter((booking) => booking.preferredDate === today)
+    .sort((left, right) => (left.preferredTime > right.preferredTime ? 1 : -1));
+  const todaysNoShows = todaysJobs.filter((booking) => booking.jobStatus === "no_show").length;
+  const todaysCompleted = todaysJobs.filter((booking) => booking.jobStatus === "completed").length;
   const params = (await searchParams) ?? {};
   const query = typeof params.q === "string" ? params.q.trim().toLowerCase() : "";
   const paymentFilter = typeof params.payment === "string" ? params.payment : "";
@@ -87,6 +93,69 @@ export default async function AdminBookingsPage({ searchParams }: AdminBookingsP
             <div className="eyebrow">Refunded</div>
             <strong className="admin-stat-number">GBP {summary.totalRefundAmount.toFixed(2)}</strong>
             <p className="lead" style={{ marginBottom: 0 }}>Refunded amount today</p>
+          </div>
+        </section>
+
+        <section className="panel card admin-filter-shell" style={{ marginBottom: "1.5rem" }}>
+          <div className="admin-filter-header">
+            <div>
+              <div className="eyebrow">Today jobs monitor</div>
+              <div className="admin-filter-title">Live operational view for {today}</div>
+              <p className="admin-filter-subtitle">See how many jobs are due today, what time they are scheduled, whether they are completed, and whether any have become no-shows.</p>
+            </div>
+          </div>
+
+          <div className="section-card-grid" style={{ marginBottom: "1rem" }}>
+            <div className="span-4 panel card admin-stat-card">
+              <div className="eyebrow">Jobs today</div>
+              <strong className="admin-stat-number">{todaysJobs.length}</strong>
+              <p className="lead" style={{ marginBottom: 0 }}>Scheduled service visits today</p>
+            </div>
+            <div className="span-4 panel card admin-stat-card">
+              <div className="eyebrow">Completed today</div>
+              <strong className="admin-stat-number">{todaysCompleted}</strong>
+              <p className="lead" style={{ marginBottom: 0 }}>Jobs already marked completed</p>
+            </div>
+            <div className="span-4 panel card admin-stat-card">
+              <div className="eyebrow">No-shows</div>
+              <strong className="admin-stat-number">{todaysNoShows}</strong>
+              <p className="lead" style={{ marginBottom: 0 }}>Jobs currently marked no-show</p>
+            </div>
+          </div>
+
+          <div className="admin-table-shell" style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
+              <thead className="admin-table-head">
+                <tr style={{ textAlign: "left", borderBottom: "1px solid var(--color-border)" }}>
+                  <th style={{ padding: "0.9rem 0.75rem" }}>Time</th>
+                  <th style={{ padding: "0.9rem 0.75rem" }}>Booking</th>
+                  <th style={{ padding: "0.9rem 0.75rem" }}>Customer</th>
+                  <th style={{ padding: "0.9rem 0.75rem" }}>Cleaner</th>
+                  <th style={{ padding: "0.9rem 0.75rem" }}>Job state</th>
+                  <th style={{ padding: "0.9rem 0.75rem" }}>Payment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {todaysJobs.length ? (
+                  todaysJobs.map((booking) => (
+                    <tr key={`today-${booking.bookingReference}`} style={{ borderBottom: "1px solid var(--color-border)" }}>
+                      <td style={{ padding: "0.95rem 0.75rem", fontWeight: 700 }}>{booking.preferredTime || "-"}</td>
+                      <td style={{ padding: "0.95rem 0.75rem" }}>
+                        <a href={`/admin/bookings/${booking.bookingReference}`} className="admin-booking-link">{booking.bookingReference}</a>
+                      </td>
+                      <td style={{ padding: "0.95rem 0.75rem" }}>{booking.customerName || "-"}</td>
+                      <td style={{ padding: "0.95rem 0.75rem" }}>{booking.cleanerName || "Unassigned"}</td>
+                      <td style={{ padding: "0.95rem 0.75rem" }}><span className="admin-status-pill">{booking.jobStatus || "pending"}</span></td>
+                      <td style={{ padding: "0.95rem 0.75rem" }}><span className="admin-status-pill">{booking.stripePaymentStatus || "pending"}</span></td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} style={{ padding: "1rem 0.75rem", color: "var(--color-text-muted)" }}>No jobs scheduled for today.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
 

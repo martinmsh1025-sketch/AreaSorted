@@ -2,96 +2,45 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Address3DMap } from "@/components/quote/address-3d-map";
 import { saveBookingDraft } from "@/lib/booking-draft";
-
-const serviceOptions = [
-  { value: "regular-home-cleaning", label: "Regular cleaning" },
-  { value: "deep-cleaning", label: "Deep cleaning" },
-  { value: "office-cleaning", label: "Office cleaning" },
-  { value: "airbnb-turnover-cleaning", label: "Airbnb turnover cleaning" },
-];
-
-const propertyOptions = [
-  { value: "flat", label: "Flat / apartment" },
-  { value: "detached", label: "Detached house" },
-  { value: "semi-detached", label: "Semi-detached house" },
-  { value: "terraced", label: "Terraced house" },
-  { value: "bungalow", label: "Bungalow" },
-  { value: "office", label: "Office" },
-];
-
-const roomOptions = Array.from({ length: 8 }, (_, index) => `${index}`);
-
-const hourOptions = Array.from({ length: 16 }, (_, index) => `${String(index + 6).padStart(2, "0")}`);
-const minuteOptions = ["00", "15", "30", "45"];
-
-const baseRates = {
-  "regular-home-cleaning": { customer: 24, cleaner: 27 },
-  "deep-cleaning": { customer: 30, cleaner: 33 },
-  "office-cleaning": { customer: 26, cleaner: 29 },
-  "airbnb-turnover-cleaning": { customer: 28, cleaner: 31 },
-} as const;
-
-const addOnFees = {
-  oven: 20,
-  fridge: 15,
-  windows: 20,
-  ironing: 5,
-  eco: 5,
-} as const;
+import {
+  calculateQuote,
+  cleaningConditionOptions,
+  defaultJobTypeByService,
+  formatCurrency,
+  getJobTypeByValue,
+  getJobTypesByService,
+  getServiceByValue,
+  propertyTypeOptions,
+  serviceCatalog,
+  type CleaningConditionValue,
+  type JobSizeValue,
+  type PropertyTypeValue,
+  type ServiceValue,
+} from "@/lib/service-catalog";
 
 type VisitEntry = {
   date: string;
-  hour: string;
-  minute: string;
+  time: string;
 };
 
-function formatGBP(value: number) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
+const quoteSteps = [
+  { key: "address", label: "Address" },
+  { key: "service", label: "Service" },
+  { key: "booking", label: "Booking" },
+  { key: "extras", label: "Extras & notes" },
+  { key: "customer", label: "Customer" },
+  { key: "terms", label: "Terms" },
+] as const;
+
+function formatEstimatedHours(hours: number) {
+  const roundedDown = Math.max(0.5, Math.floor(hours * 2) / 2);
+  return Number.isInteger(roundedDown) ? `${roundedDown.toFixed(0)} hours` : `${roundedDown.toFixed(1)} hours`;
 }
 
-function calculateEstimatedHours({
-  propertyType,
-  bedrooms,
-  bathrooms,
-  kitchens,
-  service,
-}: {
-  propertyType: string;
-  bedrooms: string;
-  bathrooms: string;
-  kitchens: string;
-  service: string;
-}) {
-  const bedCount = Number(bedrooms) || 0;
-  const bathCount = Number(bathrooms) || 0;
-  const kitchenCount = Number(kitchens) || 0;
-
-  let total = 1.5;
-
-  const propertyWeight: Record<string, number> = {
-    flat: 0.3,
-    detached: 1.2,
-    "semi-detached": 0.8,
-    terraced: 0.7,
-    bungalow: 0.6,
-    office: 1,
-  };
-
-  total += propertyWeight[propertyType] ?? 0.5;
-  total += bedCount * 0.9;
-  total += bathCount * 0.7;
-  total += kitchenCount * 0.8;
-
-  if (service === "deep-cleaning") total += 1.5;
-  if (service === "office-cleaning") total += 1;
-  if (service === "airbnb-turnover-cleaning") total += 0.75;
-
-  return Math.max(2, Math.round(total * 2) / 2);
+function floorCurrency(value: number) {
+  return Math.floor(value);
 }
 
 type InstantQuoteFormProps = {
@@ -110,367 +59,477 @@ export function InstantQuoteForm({
   initialService,
 }: InstantQuoteFormProps) {
   const router = useRouter();
+  const today = new Date().toISOString().slice(0, 10);
+  const timeOptions = Array.from({ length: 24 }, (_, index) => {
+    const hour = String(Math.floor(index / 2)).padStart(2, "0");
+    const minute = index % 2 === 0 ? "00" : "30";
+    return `${hour}:${minute}`;
+  }).filter((value) => value >= "08:00" && value <= "20:30");
+
+  const safeInitialService = serviceCatalog.some((option) => option.value === initialService) ? (initialService as ServiceValue) : "";
+  const [service, setService] = useState<ServiceValue | "">(safeInitialService);
+  const serviceDefinition = service ? getServiceByValue(service) : null;
+  const serviceJobTypes = service ? getJobTypesByService(service) : [];
+  const [jobType, setJobType] = useState(service ? defaultJobTypeByService[service] : "");
+  const activeJobType = service && jobType ? getJobTypeByValue(jobType, service as ServiceValue) : null;
+  const [selectedSubcategory, setSelectedSubcategory] = useState(service && jobType ? getJobTypeByValue(jobType, service as ServiceValue).subcategory : "");
+  const initialPropertyType = activeJobType?.propertyTypes[0] ?? "flat";
   const [postcode, setPostcode] = useState(initialPostcode);
   const [addressLine1, setAddressLine1] = useState(initialAddressLine1);
   const [addressLine2, setAddressLine2] = useState(initialAddressLine2);
-  const [city, setCity] = useState(initialCity);
-  const [propertyType, setPropertyType] = useState("flat");
+  const [city, setCity] = useState(initialCity || "London");
+  const [propertyType, setPropertyType] = useState<PropertyTypeValue>(initialPropertyType);
+  const [jobSize, setJobSize] = useState<JobSizeValue>("small");
+  const [preferredDate, setPreferredDate] = useState("");
+  const [preferredTime, setPreferredTime] = useState("10:00");
+  const [visits, setVisits] = useState<VisitEntry[]>([{ date: "", time: "10:00" }]);
   const [bedrooms, setBedrooms] = useState("1");
   const [bathrooms, setBathrooms] = useState("1");
   const [kitchens, setKitchens] = useState("1");
-  const [service, setService] = useState(initialService || "regular-home-cleaning");
-  const [visits, setVisits] = useState<VisitEntry[]>([{ date: "", hour: "10", minute: "00" }]);
-  const [supplies, setSupplies] = useState<"customer" | "cleaner">("customer");
+  const [areaSize, setAreaSize] = useState("");
+  const [cleaningCondition, setCleaningCondition] = useState<CleaningConditionValue>("standard");
+  const [suppliesProvidedBy, setSuppliesProvidedBy] = useState<"customer" | "provider">("customer");
   const [customerName, setCustomerName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [pets, setPets] = useState("no");
-  const [oven, setOven] = useState(false);
-  const [fridge, setFridge] = useState(false);
-  const [windows, setWindows] = useState(false);
-  const [ironing, setIroning] = useState(false);
-  const [eco, setEco] = useState(false);
+  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [additionalRequests, setAdditionalRequests] = useState("");
   const [entryNotes, setEntryNotes] = useState("");
-  const [parkingNotes, setParkingNotes] = useState("");
-  const [billingSameAsService, setBillingSameAsService] = useState(true);
-  const [billingAddressLine1, setBillingAddressLine1] = useState("");
-  const [billingAddressLine2, setBillingAddressLine2] = useState("");
-  const [billingCity, setBillingCity] = useState("");
-  const [billingPostcode, setBillingPostcode] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [quoteError, setQuoteError] = useState("");
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasPrefilledAddress = Boolean(initialAddressLine1 || initialCity);
+  const activeSteps = hasPrefilledAddress ? quoteSteps.slice(1) : quoteSteps;
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const cleanedVisits = visits
-    .map((visit) => ({
-      date: visit.date.trim(),
-      hour: visit.hour,
-      minute: visit.minute,
-    }))
-    .filter((visit) => visit.date);
-  const primaryVisit = cleanedVisits[0] || { date: "", hour: "10", minute: "00" };
-  const preferredTime = `${primaryVisit.hour}:${primaryVisit.minute}`;
+  const availablePropertyTypes = propertyTypeOptions.filter((option) => activeJobType?.propertyTypes.includes(option.value));
+  const isCleaningService = service === "cleaning";
+  const activeVisits = isCleaningService ? visits.filter((visit) => visit.date) : [{ date: preferredDate, time: preferredTime }];
+  const primaryVisit = activeVisits[0] ?? { date: preferredDate, time: preferredTime };
+  const progressPercent = Math.round(((currentStep + 1) / activeSteps.length) * 100);
 
-  const estimatedHours = useMemo(
+  const pricing = useMemo(
     () =>
-      calculateEstimatedHours({
-        propertyType,
-        bedrooms,
-        bathrooms,
-        kitchens,
+      service && activeJobType ? calculateQuote({
         service,
-      }),
-    [propertyType, bedrooms, bathrooms, kitchens, service],
+        jobType,
+        postcode,
+        propertyType,
+        jobSize,
+        urgency: "planned",
+        preferredDate: primaryVisit?.date || preferredDate,
+        preferredTime: primaryVisit?.time || preferredTime,
+        selectedAddOns,
+        bedrooms: Number(bedrooms) || 0,
+        bathrooms: Number(bathrooms) || 0,
+        kitchens: Number(kitchens) || 0,
+        areaSize: Number(areaSize) || 0,
+        cleaningCondition,
+        visitCount: activeVisits.length,
+        suppliesProvidedBy,
+      }) : null,
+    [service, activeJobType, jobType, postcode, propertyType, jobSize, preferredDate, preferredTime, selectedAddOns, bedrooms, bathrooms, kitchens, areaSize, cleaningCondition, activeVisits.length, primaryVisit?.date, primaryVisit?.time, suppliesProvidedBy],
   );
 
-  const pricing = useMemo(() => {
-    const parsedHours = estimatedHours;
-    const rateTable = baseRates[service as keyof typeof baseRates] ?? baseRates["regular-home-cleaning"];
-    const hourlyRate = rateTable[supplies];
-    const perVisitBaseAmount = hourlyRate * parsedHours;
-    const dateCount = Math.max(cleanedVisits.length, 1);
-    const weekendSurcharge = cleanedVisits.reduce((total, visit) => {
-      const bookingDate = new Date(`${visit.date}T${visit.hour}:${visit.minute}:00`);
-      const day = bookingDate.getDay();
-      return total + (day === 0 || day === 6 ? parsedHours * 3 : 0);
-    }, 0);
-    const eveningSurcharge = cleanedVisits.reduce((total, visit) => {
-      const hour = Number(visit.hour || "0");
-      return total + (hour >= 18 ? parsedHours * 3 : 0);
-    }, 0);
-    const urgentSurcharge = cleanedVisits.reduce((total, visit) => {
-      const bookingDate = new Date(`${visit.date}T${visit.hour}:${visit.minute}:00`);
-      return total + (bookingDate.getTime() - Date.now() <= 1000 * 60 * 60 * 48 ? 15 : 0);
-    }, 0);
-    const addOns =
-      (oven ? addOnFees.oven : 0) +
-      (fridge ? addOnFees.fridge : 0) +
-      (windows ? addOnFees.windows : 0) +
-      (ironing ? addOnFees.ironing * parsedHours : 0) +
-      (eco ? addOnFees.eco : 0);
+  const quoteReady = pricing
+    ? (isCleaningService
+        ? Boolean(Number(bedrooms) > 0 && Number(bathrooms) >= 0 && Number(kitchens) > 0 && pricing.coverage.supported)
+        : Boolean(pricing.coverage.supported))
+    : false;
 
-    const addOnsTotal = addOns * dateCount;
-    const baseAmount = perVisitBaseAmount * dateCount;
+  const canAdvanceFromServiceStep = Boolean(service && activeJobType);
 
-    return {
-      parsedHours,
-      dateCount,
-      hourlyRate,
-      perVisitBaseAmount,
-      baseAmount,
-      addOns: addOnsTotal,
-      weekendSurcharge,
-      eveningSurcharge,
-      urgentSurcharge,
-      total: baseAmount + addOnsTotal + weekendSurcharge + eveningSurcharge + urgentSurcharge,
-    };
-  }, [estimatedHours, service, supplies, oven, fridge, windows, ironing, eco, cleanedVisits]);
+  function toggleAddOn(value: string) {
+    setSelectedAddOns((current) => (current.includes(value) ? current.filter((item) => item !== value) : [...current, value]));
+  }
 
-  function handleContinueToBooking() {
+  async function nextStep() {
+    if (isAdvancing) return;
+    if (currentStep === (hasPrefilledAddress ? 0 : 1) && !canAdvanceFromServiceStep) {
+      setQuoteError("Please choose a service and service option first.");
+      return;
+    }
+    setQuoteError("");
+    setIsAdvancing(true);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    setCurrentStep((value) => Math.min(value + 1, activeSteps.length - 1));
+    setIsAdvancing(false);
+  }
+
+  async function previousStep() {
+    if (isAdvancing) return;
+    setQuoteError("");
+    setIsAdvancing(true);
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    setCurrentStep((value) => Math.max(value - 1, 0));
+    setIsAdvancing(false);
+  }
+
+  async function handleContinueToBooking() {
+    if (!pricing || !serviceDefinition || !activeJobType || isSubmitting) return;
+
     const missingFields: string[] = [];
 
     if (!postcode.trim()) missingFields.push("postcode");
     if (!addressLine1.trim()) missingFields.push("address line 1");
     if (!city.trim()) missingFields.push("city");
-    if (!propertyType) missingFields.push("property type");
-    if (!service) missingFields.push("service type");
-    if (!bedrooms) missingFields.push("bedrooms");
-    if (!bathrooms) missingFields.push("bathrooms");
-    if (!kitchens) missingFields.push("kitchens");
-    if (!cleanedVisits.length) missingFields.push("cleaning date");
-    if (cleanedVisits.some((visit) => !visit.hour || !visit.minute)) missingFields.push("cleaning time");
+    if (isCleaningService) {
+      if (!activeVisits.length) missingFields.push("at least one visit date");
+    } else if (!preferredDate.trim()) {
+      missingFields.push("preferred date");
+    }
     if (!customerName.trim()) missingFields.push("customer name");
     if (!contactPhone.trim()) missingFields.push("contact phone");
     if (!email.trim()) missingFields.push("email");
 
-    if (!acceptedTerms) {
-      setQuoteError("Please complete all mandatory fields and agree to the Terms & Conditions before continuing.");
+    if (!pricing.coverage.supported) {
+      setQuoteError("This postcode is outside the current London launch coverage. Please try a supported London postcode.");
       return;
     }
+
+    if (!acceptedTerms) missingFields.push("Terms & Conditions");
 
     if (missingFields.length) {
-      setQuoteError(`Please complete all mandatory fields before continuing. Missing: ${missingFields.join(", ")}.`);
+      setQuoteError(`Please complete: ${missingFields.join(", ")}.`);
       return;
     }
 
-    setQuoteError("");
+    setIsSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, 350));
 
-    const bookingDraft = {
+    saveBookingDraft({
       postcode,
       addressLine1,
       addressLine2,
       city,
+      service,
+      jobType,
       propertyType,
+      jobSize,
+      urgency: "planned",
+      preferredDate: primaryVisit?.date || preferredDate,
+      preferredTime: primaryVisit?.time || preferredTime,
+      visits: activeVisits,
       bedrooms,
       bathrooms,
       kitchens,
-      service,
-      estimatedHours,
-      preferredDate: primaryVisit.date,
-      selectedDates: cleanedVisits.map((visit) => visit.date),
-      visits: cleanedVisits.map((visit) => ({
-        date: visit.date,
-        time: `${visit.hour}:${visit.minute}`,
-      })),
-      preferredTime,
-      supplies,
+      areaSize,
+      cleaningCondition,
+      suppliesProvidedBy,
       customerName,
       contactPhone,
       email,
-      pets,
-      oven,
-      fridge,
-      windows,
-      ironing,
-      eco,
+      selectedAddOns,
       additionalRequests,
       entryNotes,
-      parkingNotes,
-      billingSameAsService,
-      billingAddressLine1: billingSameAsService ? addressLine1 : billingAddressLine1,
-      billingAddressLine2: billingSameAsService ? addressLine2 : billingAddressLine2,
-      billingCity: billingSameAsService ? city : billingCity,
-      billingPostcode: billingSameAsService ? postcode : billingPostcode,
       acceptedTerms,
       pricing,
-    };
+    });
 
-    saveBookingDraft(bookingDraft);
     router.push("/book");
   }
 
   return (
     <main className="section">
+      {isAdvancing || isSubmitting ? (
+        <div className="page-loading-overlay" role="status" aria-live="polite">
+          <div className="page-loading-card">
+            <span className="page-loading-spinner" />
+            <strong>Loading...</strong>
+            <span>Please wait...</span>
+          </div>
+        </div>
+      ) : null}
       <div className="container">
         <div style={{ maxWidth: 760, marginBottom: "2rem" }}>
           <div className="eyebrow">Instant quote</div>
           <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2.2rem, 4vw, 4rem)" }}>
-            Build a clear cleaning quote before you book.
+            Build a clear service quote before you book.
           </h1>
-          <p className="lead">Pricing updates as the customer changes service, timing, supplies, and add-ons.</p>
-          <div className="badge-row" style={{ marginTop: "1rem" }}>
-            <span className="badge-pill">Verified cleaners</span>
-            <span className="badge-pill">Transparent pricing</span>
-            <span className="badge-pill">London launch coverage</span>
-            <span className="badge-pill">Secure payment flow</span>
+          <p className="lead">Choose the service first, then refine the job details, slot, and add-ons.</p>
+          <div className="quote-progress-wrap">
+            <div className="quote-progress-topline">
+              <strong>{activeSteps[currentStep]?.label}</strong>
+              <span>{progressPercent}% completed</span>
+            </div>
+            <div className="quote-progress-track">
+              <div className="quote-progress-fill" style={{ width: `${progressPercent}%` }} />
+            </div>
           </div>
         </div>
 
         <div className="quote-page-grid">
           <form className="quote-form-sections">
-            <section className="panel mini-form quote-section-card">
+            {!hasPrefilledAddress && currentStep === 0 ? <section className="panel mini-form quote-section-card">
               <div className="quote-section-head">
                 <div className="eyebrow">Section A</div>
                 <strong>Address</strong>
-                <p>Check the address first, then move on to property and service details.</p>
+                <p>Check the postcode first, then move on to the property and service details.</p>
               </div>
               <input placeholder="Postcode" value={postcode} onChange={(event) => setPostcode(event.target.value.toUpperCase())} />
               <input placeholder="Address line 1" value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} />
               <input placeholder="Address line 2" value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} />
               <input placeholder="City" value={city} onChange={(event) => setCity(event.target.value)} />
-            </section>
+            </section> : null}
 
-            <section className="panel mini-form quote-section-card">
+            {currentStep === (hasPrefilledAddress ? 0 : 1) ? <section className="panel mini-form quote-section-card">
               <div className="quote-section-head">
                 <div className="eyebrow">Section B</div>
-                <strong>Property details</strong>
-                <p>Choose the property and room counts. WashHub calculates the estimated hours automatically.</p>
+                <strong>Service details</strong>
+                <p>Choose the service type first, then the exact service option. The rest appears after that.</p>
               </div>
-              <div className="quote-two-col-fields">
+              <div className="quote-field-stack">
+                <span>Service type</span>
+                <div className="service-chip-grid">
+                  {serviceCatalog.map((option) => {
+                    const isSelected = service === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`service-chip ${isSelected ? "service-chip-selected" : ""}`}
+                        onClick={() => {
+                          const nextService = option.value;
+                          const nextJobTypeValue = defaultJobTypeByService[nextService];
+                          const nextJobType = getJobTypeByValue(nextJobTypeValue, nextService);
+                          setService(nextService);
+                          setSelectedSubcategory("");
+                          setJobType(nextJobTypeValue);
+                          setPropertyType(nextJobType.propertyTypes[0] ?? "flat");
+                          setSelectedAddOns([]);
+                          setQuoteError("");
+                        }}
+                      >
+                        <strong>{option.label}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {service ? <div className="quote-field-stack" style={{ marginTop: "1rem" }}>
+                <span>Service option</span>
+                <div className="service-chip-grid service-subcategory-grid">
+                  {serviceDefinition?.subcategories.map((subcategory) => {
+                    const isSelected = selectedSubcategory === subcategory.value;
+                    return (
+                      <button
+                        key={subcategory.value}
+                        type="button"
+                        className={`service-chip ${isSelected ? "service-chip-selected" : ""}`}
+                        onClick={() => {
+                          setSelectedSubcategory(subcategory.value);
+                          setJobType("");
+                          setSelectedAddOns([]);
+                        }}
+                      >
+                        <strong>{subcategory.label}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div> : null}
+
+              {service && selectedSubcategory ? <div className="quote-field-stack" style={{ marginTop: "1rem" }}>
+                <span>Job list</span>
+                <div className="service-option-list">
+                  {serviceJobTypes
+                    .filter((option) => option.subcategory === selectedSubcategory)
+                    .map((option) => {
+                      const isSelected = jobType === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`service-option-item ${isSelected ? "service-option-item-selected" : ""}`}
+                          onClick={() => {
+                            const nextJobType = getJobTypeByValue(option.value, service as ServiceValue);
+                            setJobType(nextJobType.value);
+                            setPropertyType(nextJobType.propertyTypes[0] ?? "flat");
+                            setSelectedAddOns([]);
+                          }}
+                        >
+                          <strong>{option.label}</strong>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div> : null}
+
+              {activeJobType ? <label className="quote-field-stack" style={{ gridColumn: "1 / -1", marginTop: "1rem" }}>
+                <span>Details</span>
+                <textarea value={activeJobType.strapline} readOnly aria-readonly="true" rows={2} />
+              </label> : null}
+
+              {activeJobType ? <div className="quote-two-col-fields" style={{ marginTop: "0.2rem" }}>
                 <label className="quote-field-stack">
                   <span>Property type *</span>
-                  <select value={propertyType} onChange={(event) => setPropertyType(event.target.value)}>
-                    {propertyOptions.map((option) => (
+                  <select value={propertyType} onChange={(event) => setPropertyType(event.target.value as PropertyTypeValue)}>
+                    {availablePropertyTypes.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
                 </label>
-                <label className="quote-field-stack">
-                  <span>Service type *</span>
-                  <select value={service} onChange={(event) => setService(event.target.value)}>
-                    {serviceOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="quote-field-stack">
-                  <span>Bedrooms *</span>
-                  <select value={bedrooms} onChange={(event) => setBedrooms(event.target.value)}>
-                    {roomOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="quote-field-stack">
-                  <span>Bathrooms *</span>
-                  <select value={bathrooms} onChange={(event) => setBathrooms(event.target.value)}>
-                    {roomOptions.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="quote-field-stack">
-                  <span>Kitchens *</span>
-                  <select value={kitchens} onChange={(event) => setKitchens(event.target.value)}>
-                    {roomOptions.slice(1, 5).map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="quote-field-stack">
-                  <span>Estimated hours</span>
-                  <input value={`${estimatedHours} hours`} readOnly aria-readonly="true" />
-                </label>
-              </div>
-            </section>
+                {!isCleaningService ? (
+                  <label className="quote-field-stack">
+                    <span>Job size *</span>
+                    <select value={jobSize} onChange={(event) => setJobSize(event.target.value as JobSizeValue)}>
+                      {activeJobType.sizeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </div> : null}
 
-            <section className="panel mini-form quote-section-card">
+              {activeJobType && isCleaningService ? (
+                <div className="quote-two-col-fields" style={{ marginTop: "0.2rem" }}>
+                  <label className="quote-field-stack">
+                    <span>Bedrooms</span>
+                    <select value={bedrooms} onChange={(event) => setBedrooms(event.target.value)}>
+                      {Array.from({ length: 8 }, (_, index) => String(index)).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Bathrooms</span>
+                    <select value={bathrooms} onChange={(event) => setBathrooms(event.target.value)}>
+                      {Array.from({ length: 6 }, (_, index) => String(index)).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Kitchens</span>
+                    <select value={kitchens} onChange={(event) => setKitchens(event.target.value)}>
+                      {Array.from({ length: 4 }, (_, index) => String(index + 1)).map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Approx area (sq ft)</span>
+                    <input type="number" min="0" step="10" value={areaSize} onChange={(event) => setAreaSize(event.target.value)} placeholder="650" />
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Condition</span>
+                    <select value={cleaningCondition} onChange={(event) => setCleaningCondition(event.target.value as CleaningConditionValue)}>
+                      {cleaningConditionOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                    <span>Supplies</span>
+                    <select value={suppliesProvidedBy} onChange={(event) => setSuppliesProvidedBy(event.target.value as "customer" | "provider")}>
+                      <option value="customer">Customer provides supplies</option>
+                      <option value="provider">Provider brings supplies</option>
+                    </select>
+                  </label>
+                  <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                    <span>Estimated provider time</span>
+                    <input value={pricing ? formatEstimatedHours(pricing.estimatedDurationHours) : "Pending"} readOnly aria-readonly="true" />
+                  </label>
+                </div>
+              ) : activeJobType ? (
+                <div className="quote-two-col-fields" style={{ marginTop: "0.2rem" }}>
+                  <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
+                    <span>Estimated provider time</span>
+                    <input value={pricing ? formatEstimatedHours(pricing.estimatedDurationHours) : "Pending"} readOnly aria-readonly="true" />
+                  </label>
+                </div>
+              ) : null}
+
+              {hasPrefilledAddress ? (
+                <div style={{ marginTop: "1rem" }}>
+                  <Address3DMap addressLine1={addressLine1} addressLine2={addressLine2} city={city} postcode={postcode} />
+                </div>
+              ) : null}
+            </section> : null}
+
+            {currentStep === (hasPrefilledAddress ? 1 : 2) ? <section className="panel mini-form quote-section-card">
               <div className="quote-section-head">
                 <div className="eyebrow">Section C</div>
                 <strong>Booking details</strong>
-                <p>Select one or more cleaning dates. WashHub will calculate the total across all selected visits.</p>
+                <p>{isCleaningService ? "Cleaning can include multiple visits. Past dates are blocked and time choices run in 30-minute steps only." : "Select the preferred slot. Past dates are blocked and time choices run in 30-minute steps only."}</p>
               </div>
-              <div className="quote-two-col-fields">
-                <div className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
-                  <span>Cleaning dates and times *</span>
-                  <div style={{ display: "grid", gap: "0.8rem" }}>
-                    {visits.map((visit, index) => (
-                      <div key={`${index}-${visit.date}-${visit.hour}-${visit.minute}`} style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr auto", gap: "0.75rem", alignItems: "start" }}>
+              {isCleaningService ? (
+                <div style={{ display: "grid", gap: "0.8rem" }}>
+                  {visits.map((visit, index) => (
+                    <div key={`${index}-${visit.date}-${visit.time}`} className="quote-two-col-fields">
+                      <label className="quote-field-stack">
+                        <span>{index === 0 ? "Preferred date" : `Additional date ${index}`}</span>
                         <input
                           type="date"
+                          min={today}
                           value={visit.date}
                           onChange={(event) => {
-                            const nextVisits = [...visits];
-                            nextVisits[index] = { ...nextVisits[index], date: event.target.value };
-                            setVisits(nextVisits);
+                            const next = [...visits];
+                            next[index] = { ...next[index], date: event.target.value };
+                            setVisits(next);
                           }}
                         />
-                        <div className="quote-time-grid">
-                          <select
-                            value={visit.hour}
-                            onChange={(event) => {
-                              const nextVisits = [...visits];
-                              nextVisits[index] = { ...nextVisits[index], hour: event.target.value };
-                              setVisits(nextVisits);
-                            }}
-                          >
-                            {hourOptions.map((hour) => (
-                              <option key={hour} value={hour}>{hour}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={visit.minute}
-                            onChange={(event) => {
-                              const nextVisits = [...visits];
-                              nextVisits[index] = { ...nextVisits[index], minute: event.target.value };
-                              setVisits(nextVisits);
-                            }}
-                          >
-                            {minuteOptions.map((minute) => (
-                              <option key={minute} value={minute}>{minute}</option>
-                            ))}
-                          </select>
-                        </div>
-                        {visits.length > 1 ? (
-                          <button type="button" className="button button-secondary" onClick={() => setVisits(visits.filter((_, itemIndex) => itemIndex !== index))}>
-                            Remove
-                          </button>
-                        ) : null}
-                      </div>
-                    ))}
-                    <div>
-                      <button type="button" className="button button-secondary" onClick={() => setVisits([...visits, { date: "", hour: "10", minute: "00" }])}>
-                        Add another date
-                      </button>
+                      </label>
+                      <label className="quote-field-stack">
+                        <span>{index === 0 ? "Preferred time" : `Additional time ${index}`}</span>
+                        <select
+                          value={visit.time}
+                          onChange={(event) => {
+                            const next = [...visits];
+                            next[index] = { ...next[index], time: event.target.value };
+                            setVisits(next);
+                          }}
+                        >
+                          {timeOptions.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </label>
                     </div>
+                  ))}
+                  <div className="button-row">
+                    <button type="button" className="button button-secondary" onClick={() => setVisits([...visits, { date: "", time: "10:00" }])}>Add another visit</button>
+                    {visits.length > 1 ? <button type="button" className="button button-secondary" onClick={() => setVisits(visits.slice(0, -1))}>Remove last visit</button> : null}
                   </div>
                 </div>
-                <label className="quote-field-stack">
-                  <span>Cleaning supplies *</span>
-                  <select value={supplies} onChange={(event) => setSupplies(event.target.value as "customer" | "cleaner")}>
-                    <option value="customer">Customer provides supplies</option>
-                    <option value="cleaner">Cleaner brings supplies</option>
-                  </select>
-                </label>
-                <label className="quote-field-stack">
-                  <span>Pets</span>
-                  <select value={pets} onChange={(event) => setPets(event.target.value)}>
-                    <option value="no">No pets</option>
-                    <option value="yes">Pets at property</option>
-                  </select>
-                </label>
-              </div>
-            </section>
+              ) : (
+                <div className="quote-two-col-fields">
+                  <label className="quote-field-stack">
+                    <span>Preferred date *</span>
+                    <input type="date" min={today} value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} />
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Preferred time *</span>
+                    <select value={preferredTime} onChange={(event) => setPreferredTime(event.target.value)}>
+                      {timeOptions.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              )}
+            </section> : null}
 
-            <section className="panel mini-form quote-section-card">
+            {currentStep === (hasPrefilledAddress ? 2 : 3) ? <section className="panel mini-form quote-section-card">
               <div className="quote-section-head">
                 <div className="eyebrow">Section D</div>
-                <strong>Add-ons</strong>
-                <p>Optional extras stay visible so nothing feels hidden before checkout.</p>
+                <strong>Extras & notes</strong>
+                <p>Optional extras and notes stay together so customers only fill one extra-details step.</p>
               </div>
-              <div className="quote-check-grid">
-                <label className="quote-check-item"><input type="checkbox" checked={oven} onChange={() => setOven((value) => !value)} /><span>Oven + GBP 20</span></label>
-                <label className="quote-check-item"><input type="checkbox" checked={fridge} onChange={() => setFridge((value) => !value)} /><span>Fridge + GBP 15</span></label>
-                <label className="quote-check-item"><input type="checkbox" checked={windows} onChange={() => setWindows((value) => !value)} /><span>Inside windows + GBP 20</span></label>
-                <label className="quote-check-item"><input type="checkbox" checked={ironing} onChange={() => setIroning((value) => !value)} /><span>Ironing + GBP 5 per hour</span></label>
-                <label className="quote-check-item"><input type="checkbox" checked={eco} onChange={() => setEco((value) => !value)} /><span>Eco products + GBP 5</span></label>
-              </div>
+              {activeJobType ? <div className="quote-check-grid">
+                {activeJobType.addOns.map((addOn) => (
+                  <label key={addOn.value} className="quote-check-item"><input type="checkbox" checked={selectedAddOns.includes(addOn.value)} onChange={() => toggleAddOn(addOn.value)} /><span>{`${addOn.label} + ${formatCurrency(addOn.amount)}`}</span></label>
+                ))}
+              </div> : null}
               <textarea placeholder="Additional requests" rows={4} value={additionalRequests} onChange={(event) => setAdditionalRequests(event.target.value)} />
-            </section>
+              <textarea placeholder="Entry notes, access instructions, or photo guidance" rows={3} value={entryNotes} onChange={(event) => setEntryNotes(event.target.value)} />
+            </section> : null}
 
-            <section className="panel mini-form quote-section-card">
+            {currentStep === (hasPrefilledAddress ? 3 : 4) ? <section className="panel mini-form quote-section-card">
               <div className="quote-section-head">
                 <div className="eyebrow">Section E</div>
-                <strong>Access notes</strong>
-                <p>These details help with matching and reduce operational issues later.</p>
-              </div>
-              <textarea placeholder="Entry notes" rows={3} value={entryNotes} onChange={(event) => setEntryNotes(event.target.value)} />
-              <textarea placeholder="Parking notes" rows={3} value={parkingNotes} onChange={(event) => setParkingNotes(event.target.value)} />
-            </section>
-
-            <section className="panel mini-form quote-section-card">
-              <div className="quote-section-head">
-                <div className="eyebrow">Section F</div>
                 <strong>Customer details</strong>
                 <p>These details are needed for confirmation, updates, receipts, and payment.</p>
               </div>
@@ -488,48 +547,11 @@ export function InstantQuoteForm({
                   <input placeholder="Email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
                 </label>
               </div>
-            </section>
+            </section> : null}
 
-            <section className="panel mini-form quote-section-card">
+            {currentStep === (hasPrefilledAddress ? 4 : 5) ? <section className="panel mini-form quote-section-card">
               <div className="quote-section-head">
-                <div className="eyebrow">Section G</div>
-                <strong>Billing address</strong>
-                <p>By default, the billing address is the same as the cleaning address, but the customer can change it.</p>
-              </div>
-              <label className="quote-check-item">
-                <input
-                  type="checkbox"
-                  checked={billingSameAsService}
-                  onChange={() => setBillingSameAsService((value) => !value)}
-                />
-                <span>Billing address is the same as the cleaning address</span>
-              </label>
-
-              {!billingSameAsService ? (
-                <div className="quote-two-col-fields">
-                  <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
-                    <span>Billing address line 1</span>
-                    <input value={billingAddressLine1} onChange={(event) => setBillingAddressLine1(event.target.value)} />
-                  </label>
-                  <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
-                    <span>Billing address line 2</span>
-                    <input value={billingAddressLine2} onChange={(event) => setBillingAddressLine2(event.target.value)} />
-                  </label>
-                  <label className="quote-field-stack">
-                    <span>Billing city</span>
-                    <input value={billingCity} onChange={(event) => setBillingCity(event.target.value)} />
-                  </label>
-                  <label className="quote-field-stack">
-                    <span>Billing postcode</span>
-                    <input value={billingPostcode} onChange={(event) => setBillingPostcode(event.target.value.toUpperCase())} />
-                  </label>
-                </div>
-              ) : null}
-            </section>
-
-            <section className="panel mini-form quote-section-card">
-              <div className="quote-section-head">
-                <div className="eyebrow">Section H</div>
+                <div className="eyebrow">Section F</div>
                 <strong>Terms & Conditions</strong>
                 <p>The customer must agree to the booking terms before payment.</p>
               </div>
@@ -539,84 +561,54 @@ export function InstantQuoteForm({
                   I agree to the <a href="/terms-and-conditions" style={{ color: "var(--color-accent)", fontWeight: 700 }}>Terms & Conditions</a>. *
                 </span>
               </label>
-            </section>
+            </section> : null}
+
+            <div className="button-row" style={{ justifyContent: currentStep === 0 ? "flex-end" : "space-between" }}>
+              {currentStep > 0 ? <button type="button" className="button button-secondary" onClick={previousStep}>Back</button> : null}
+              {currentStep < activeSteps.length - 1 ? <button type="button" className="button button-primary" onClick={nextStep} disabled={isAdvancing}>{isAdvancing ? <span className="button-spinner-wrap"><span className="button-spinner" />Loading</span> : "Next"}</button> : null}
+            </div>
           </form>
 
           <aside className="quote-sidebar-stack">
             <section className="panel card quote-summary-panel">
               <div className="eyebrow">Quote summary</div>
-              <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>Estimated total</h2>
-              <div className="quote-total-number">{formatGBP(pricing.total)}</div>
-              <div className="quote-summary-list">
-                <div><span>Hourly rate</span><strong>{formatGBP(pricing.hourlyRate)}</strong></div>
-                <div><span>Per visit</span><strong>{formatGBP(pricing.perVisitBaseAmount)}</strong></div>
-                <div><span>Selected visits</span><strong>{pricing.dateCount}</strong></div>
-                <div><span>Base amount</span><strong>{formatGBP(pricing.baseAmount)}</strong></div>
-                <div><span>Add-ons</span><strong>{formatGBP(pricing.addOns)}</strong></div>
-                <div><span>Weekend surcharge</span><strong>{formatGBP(pricing.weekendSurcharge)}</strong></div>
-                <div><span>Evening surcharge</span><strong>{formatGBP(pricing.eveningSurcharge)}</strong></div>
-                <div><span>Urgent booking surcharge</span><strong>{formatGBP(pricing.urgentSurcharge)}</strong></div>
-              </div>
-              {pricing.parsedHours > 6 ? (
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    padding: "0.95rem 1rem",
-                    borderRadius: "16px",
-                    background: "rgba(217, 37, 42, 0.06)",
-                    border: "1px solid rgba(217, 37, 42, 0.14)",
-                    color: "var(--color-text)",
-                    lineHeight: 1.65,
-                    fontSize: "0.95rem",
-                  }}
-                >
-                  For larger bookings over 6 hours, we may assign additional cleaners to help complete the job more efficiently.
-                </div>
-              ) : null}
-              <ul className="list-clean quote-meta-list">
-                <li>{pricing.parsedHours || 0} planned hours per visit</li>
-                <li>{pricing.dateCount} visit(s) selected</li>
-                <li>Price changes stay visible as the customer edits the form</li>
-                <li>End of tenancy or unusual jobs may still need a manual review</li>
-              </ul>
-              {quoteError ? <p style={{ color: "var(--color-error)", lineHeight: 1.6 }}>{quoteError}</p> : null}
-              <button className="button button-primary quote-summary-button" type="button" onClick={handleContinueToBooking}>Continue to Booking</button>
-            </section>
-
-            <section className="panel card">
-              <div className="eyebrow">Why customers trust WashHub</div>
-              <ul className="list-clean quote-meta-list">
-                <li>Cleaner verification happens before activation.</li>
-                <li>Secure Stripe payment is planned for the booking step.</li>
-                <li>One reschedule is allowed if requested at least 48 hours before the start time.</li>
-                <li>If a cleaner cancels, the team handles reassignment operationally.</li>
-              </ul>
+              {quoteReady && pricing && activeJobType ? (
+                <>
+                  <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>Estimated total</h2>
+                  <div className="quote-total-number">{formatCurrency(floorCurrency(pricing.total))}</div>
+                  <div className="quote-summary-list">
+                    <div><span>Base amount</span><strong>{formatCurrency(floorCurrency(pricing.basePrice))}</strong></div>
+                    {pricing.showJobSize ? <div><span>Job size uplift</span><strong>{formatCurrency(floorCurrency(pricing.jobSizeAdjustment))}</strong></div> : null}
+                    {pricing.scopeAdjustment ? <div><span>{isCleaningService ? "Room count & condition" : "Scope adjustment"}</span><strong>{formatCurrency(floorCurrency(pricing.scopeAdjustment))}</strong></div> : null}
+                    <div><span>Property uplift</span><strong>{formatCurrency(floorCurrency(pricing.propertyAdjustment))}</strong></div>
+                    <div><span>Timing uplift</span><strong>{formatCurrency(floorCurrency(pricing.timingAdjustment))}</strong></div>
+                    <div><span>Postcode uplift</span><strong>{formatCurrency(floorCurrency(pricing.postcodeAdjustment))}</strong></div>
+                    <div><span>Add-ons</span><strong>{formatCurrency(floorCurrency(pricing.addOnsTotal))}</strong></div>
+                    {isCleaningService ? <div><span>Visits</span><strong>{pricing.visitCount}</strong></div> : null}
+                    <div><span>Booking fee</span><strong>{formatCurrency(floorCurrency(pricing.bookingFee))}</strong></div>
+                  </div>
+                  <ul className="list-clean quote-meta-list">
+                    <li>{pricing.jobTypeLabel}</li>
+                    <li>{formatEstimatedHours(pricing.estimatedDurationHours)} estimated provider time</li>
+                    {pricing.coverage.supported ? <li>{pricing.coverage.zoneLabel}</li> : <li>{pricing.coverage.leadTimeLabel}</li>}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>Estimate pending</h2>
+                  <p className="lead" style={{ marginBottom: 0 }}>Complete the service details and booking step first. We will show the estimate once there is enough information to price the job properly.</p>
+                </>
+              )}
+              {currentStep === activeSteps.length - 1 ? (
+                <>
+                  {quoteError ? <p style={{ color: "var(--color-error)", lineHeight: 1.6 }}>{quoteError}</p> : null}
+                  <button className="button button-primary quote-summary-button" type="button" onClick={handleContinueToBooking} disabled={isSubmitting}>{isSubmitting ? <span className="button-spinner-wrap"><span className="button-spinner" />Preparing booking</span> : "Continue to Booking"}</button>
+                </>
+              ) : (
+                <p className="lead" style={{ marginTop: "1rem", marginBottom: 0 }}>Complete the remaining steps to continue to booking.</p>
+              )}
             </section>
           </aside>
-        </div>
-
-        <div className="section-card-grid" style={{ marginTop: "2rem" }}>
-          <section className="panel card span-7">
-            <div className="eyebrow">Pricing transparency</div>
-            <h2 className="title" style={{ marginTop: "0.75rem", fontSize: "clamp(1.8rem, 3vw, 2.4rem)" }}>What affects the quote</h2>
-            <ul className="list-clean quote-meta-list">
-              <li>Service type and estimated hours make up the main cost.</li>
-              <li>Cleaner-supplied materials increase the hourly rate.</li>
-              <li>Weekend, evening, and urgent bookings can add surcharges.</li>
-              <li>Add-ons like oven, fridge, windows, ironing, and eco products are shown clearly.</li>
-            </ul>
-          </section>
-
-          <section className="panel card span-5">
-            <div className="eyebrow">Support</div>
-            <h2 className="title" style={{ marginTop: "0.75rem", fontSize: "clamp(1.8rem, 3vw, 2.4rem)" }}>Need help before booking?</h2>
-            <ul className="list-clean quote-meta-list">
-              <li>support@washhub.co.uk</li>
-              <li>020 0000 0000</li>
-              <li>Mon-Sat, 9am-6pm</li>
-              <li>Customers can contact the team before payment if anything is unclear.</li>
-            </ul>
-          </section>
         </div>
       </div>
     </main>

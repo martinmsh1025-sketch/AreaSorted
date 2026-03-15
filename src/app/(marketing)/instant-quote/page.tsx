@@ -21,8 +21,11 @@ export default async function InstantQuotePage({ searchParams }: InstantQuotePag
   const params = (await searchParams) ?? {};
   const postcode = typeof params.postcode === "string" ? params.postcode : "";
   const address = typeof params.address === "string" ? params.address : "";
+  const line1 = typeof params.line1 === "string" ? params.line1 : "";
+  const line2 = typeof params.line2 === "string" ? params.line2 : "";
+  const city = typeof params.city === "string" ? params.city : "";
   const service = typeof params.service === "string" ? params.service : "";
-  const addressParts = splitAddressParts(address);
+  const addressParts = line1 || line2 || city ? { line1, line2, city } : splitAddressParts(address);
 
   return (
     <InstantQuoteForm

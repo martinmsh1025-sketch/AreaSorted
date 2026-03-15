@@ -7,6 +7,9 @@ export type CleanerApplicationStatus = "submitted" | "under_review" | "more_info
 export type CleanerApplicationRecord = {
   applicationId: string;
   password: string;
+  acceptSelfEmployed?: string;
+  confirmAccuracy?: string;
+  acceptTerms?: string;
   status: CleanerApplicationStatus;
   submittedAt: string;
   updatedAt: string;

@@ -254,11 +254,15 @@ export default function CleanerApplyPage() {
   const [selectedSupplyItems, setSelectedSupplyItems] = useState<string[]>([]);
   const [selectedAvailabilityPreset, setSelectedAvailabilityPreset] = useState("");
   const [availability, setAvailability] = useState<Record<string, AvailabilityDay>>(buildAvailabilityState);
+  const [acceptSelfEmployed, setAcceptSelfEmployed] = useState(false);
+  const [confirmAccuracy, setConfirmAccuracy] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "done" | "error">("idle");
   const [submitMessage, setSubmitMessage] = useState("");
+  const [stepError, setStepError] = useState("");
 
   const totalSteps = 7;
-  const progress = Math.round(((step - 1) / totalSteps) * 100);
+  const progress = emailGate.trim() ? (emailChecked ? Math.round((step / totalSteps) * 100) : 3) : 0;
 
   const boroughOptions = useMemo(() => {
     if (!selectedRegion) return [];
@@ -340,6 +344,8 @@ export default function CleanerApplyPage() {
     event.preventDefault();
     if (step !== totalSteps) return;
 
+    if (!validateStep(step)) return;
+
     setSubmitState("submitting");
     setSubmitMessage("");
 
@@ -365,6 +371,9 @@ export default function CleanerApplyPage() {
     formData.set("ownSuppliesLevel", ownSuppliesLevel);
     formData.set("supplyItems", JSON.stringify(selectedSupplyItems));
     formData.set("availability", JSON.stringify(availability));
+    formData.set("acceptSelfEmployed", String(acceptSelfEmployed));
+    formData.set("confirmAccuracy", String(confirmAccuracy));
+    formData.set("acceptTerms", String(acceptTerms));
 
     try {
       const response = await fetch("/api/cleaner-applications", {
@@ -411,6 +420,57 @@ export default function CleanerApplyPage() {
     }
 
     setEmailChecked(true);
+  }
+
+  function validateStep(currentStep: number) {
+    if (currentStep === 1) {
+      if (!fullName.trim() || !dateOfBirth || !emailGate.trim() || !phone.trim() || !addressLine1.trim() || !city.trim() || !postcode.trim()) {
+        setStepError("Please complete all required personal details before continuing.");
+        return false;
+      }
+      if (password.length < 12) {
+        setStepError("Password must be at least 12 characters.");
+        return false;
+      }
+    }
+
+    if (currentStep === 2 && (!nationality || !rightToWork)) {
+      setStepError("Please complete the work eligibility details before continuing.");
+      return false;
+    }
+
+    if (currentStep === 3 && !selectedRegion) {
+      setStepError("Please choose the main UK region you cover.");
+      return false;
+    }
+
+    if (currentStep === 4 && !selectedBoroughs.length) {
+      setStepError("Please choose at least one borough or county.");
+      return false;
+    }
+
+    if (currentStep === 5 && !selectedPostcodes.length) {
+      setStepError("Please choose at least one postcode area.");
+      return false;
+    }
+
+    if (currentStep === 6 && (!selectedTransportModes.length || !selectedServiceTypes.length || !ownSuppliesLevel)) {
+      setStepError("Please complete transport, service type, and equipment details before continuing.");
+      return false;
+    }
+
+    if (currentStep === 7 && (!acceptSelfEmployed || !confirmAccuracy || !acceptTerms)) {
+      setStepError("Please complete the required declarations before submitting the application.");
+      return false;
+    }
+
+    setStepError("");
+    return true;
+  }
+
+  function handleNextStep() {
+    if (!validateStep(step)) return;
+    setStep((current) => Math.min(current + 1, totalSteps));
   }
 
   return (
@@ -484,7 +544,7 @@ export default function CleanerApplyPage() {
                 </label>
                 <label className="quote-field-stack">
                   <span>Create password *</span>
-                  <input name="password" type="password" placeholder="Create password" value={password} onChange={(event) => setPassword(event.target.value)} />
+                  <input name="password" type="password" placeholder="Create password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} />
                 </label>
                 <label className="quote-field-stack" style={{ gridColumn: "1 / -1" }}>
                   <span>Home address *</span>
@@ -573,7 +633,7 @@ export default function CleanerApplyPage() {
                   onToggle={(value) => {
                     const nextBoroughs = toggleValue(selectedBoroughs, value);
                     setSelectedBoroughs(nextBoroughs);
-                    const validPostcodes = Array.from(new Set(nextBoroughs.flatMap((borough) => regions[selectedRegion].areas[borough as keyof typeof regions[typeof selectedRegion]["areas"]] || [])));
+                    const validPostcodes: string[] = Array.from(new Set(nextBoroughs.flatMap((borough) => regions[selectedRegion].areas[borough as keyof typeof regions[typeof selectedRegion]["areas"]] || [])));
                     setSelectedPostcodes((current) => current.filter((postcode) => validPostcodes.includes(postcode)));
                   }}
                 />
@@ -761,15 +821,15 @@ export default function CleanerApplyPage() {
               </div>
 
               <label className="quote-check-item">
-                <input type="checkbox" />
+                <input type="checkbox" checked={acceptSelfEmployed} onChange={() => setAcceptSelfEmployed((value) => !value)} />
                 <span>I understand that WashHub treats approved cleaners as self-employed contractors, not employees.</span>
               </label>
               <label className="quote-check-item">
-                <input type="checkbox" />
+                <input type="checkbox" checked={confirmAccuracy} onChange={() => setConfirmAccuracy((value) => !value)} />
                 <span>I confirm my details and uploads are accurate and can be reviewed by admin.</span>
               </label>
               <label className="quote-check-item">
-                <input type="checkbox" />
+                <input type="checkbox" checked={acceptTerms} onChange={() => setAcceptTerms((value) => !value)} />
                 <span>I agree to the privacy policy, GDPR policy, and contractor onboarding terms.</span>
               </label>
             </>
@@ -782,7 +842,7 @@ export default function CleanerApplyPage() {
               </button>
             ) : null}
             {step < totalSteps ? (
-              <button key={`next-${step}`} className="button button-primary" type="button" onClick={() => setStep((current) => Math.min(current + 1, totalSteps))}>
+              <button key={`next-${step}`} className="button button-primary" type="button" onClick={handleNextStep}>
                 Next step
               </button>
             ) : (
@@ -790,7 +850,10 @@ export default function CleanerApplyPage() {
                 {submitState === "submitting" ? "Submitting..." : "Submit application"}
               </button>
             )}
-            </div>
+          </div>
+            {stepError ? (
+              <p style={{ color: "var(--color-error)", marginTop: "0.4rem" }}>{stepError}</p>
+            ) : null}
             {submitMessage ? (
               <p style={{ color: submitState === "error" ? "var(--color-error)" : "var(--color-success)", marginTop: "0.4rem" }}>
                 {submitMessage}

@@ -14,6 +14,8 @@ export function buildBookingConfirmationEmail(booking: BookingRecord) {
     "Your WashHub booking has been confirmed.",
     `Booking reference: ${booking.bookingReference}`,
     `Service: ${booking.service}`,
+    `Job type: ${booking.jobType || "To be confirmed"}`,
+    `Coverage zone: ${booking.coverageZone || "To be confirmed"}`,
     `Date: ${booking.preferredDate}`,
     `Time: ${booking.preferredTime}`,
     `Postcode: ${booking.postcode}`,

@@ -2,69 +2,54 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { readBookingDraft, saveBookingDraft } from "@/lib/booking-draft";
+import { formatCurrency, getJobTypeByValue, getPropertyTypeOption, getServiceByValue } from "@/lib/service-catalog";
 
 type BookingDraft = {
   bookingReference?: string;
   postcode: string;
   addressLine1: string;
-  addressLine2: string;
+  addressLine2?: string;
   city: string;
   propertyType: string;
-  bedrooms: string;
-  bathrooms: string;
-  kitchens: string;
   service: string;
-  estimatedHours: number;
+  jobType: string;
+  jobSize: string;
+  urgency: string;
   preferredDate: string;
-  selectedDates?: string[];
-  visits?: Array<{ date: string; time: string }>;
   preferredTime: string;
-  supplies: string;
+  visits?: Array<{ date: string; time: string }>;
+  bedrooms?: string;
+  bathrooms?: string;
+  kitchens?: string;
+  areaSize?: string;
+  cleaningCondition?: string;
+  suppliesProvidedBy?: string;
   customerName: string;
   contactPhone: string;
   email: string;
-  pets?: string;
+  selectedAddOns: string[];
   additionalRequests?: string;
   entryNotes?: string;
-  parkingNotes?: string;
-  oven?: boolean;
-  fridge?: boolean;
-  windows?: boolean;
-  ironing?: boolean;
-  eco?: boolean;
-  billingSameAsService: boolean;
-  billingAddressLine1: string;
-  billingAddressLine2: string;
-  billingCity: string;
-  billingPostcode: string;
-    pricing: {
-      hourlyRate: number;
-      dateCount?: number;
-      perVisitBaseAmount?: number;
-      baseAmount: number;
-      addOns: number;
-      weekendSurcharge: number;
-      eveningSurcharge: number;
-      urgentSurcharge: number;
-      total: number;
-    };
+  pricing: {
+    total: number;
+    subtotal: number;
+    bookingFee: number;
+    estimatedDurationHours: number;
+    estimatedProviderPayout: number;
+    estimatedPlatformMargin: number;
+    serviceLabel: string;
+    jobTypeLabel: string;
+    coverage: { zoneLabel: string; leadTimeLabel: string };
+  };
 };
 
-function formatGBP(value: number) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
+function formatEstimatedHours(hours: number) {
+  const roundedDown = Math.max(0.5, Math.floor(hours * 2) / 2);
+  return Number.isInteger(roundedDown) ? `${roundedDown.toFixed(0)} hours` : `${roundedDown.toFixed(1)} hours`;
 }
 
-function formatLabel(value?: string) {
-  if (!value) return "To be confirmed";
-
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function floorCurrency(value: number) {
+  return Math.floor(value);
 }
 
 export default function BookingPage() {
@@ -87,22 +72,6 @@ export default function BookingPage() {
     return [draft.addressLine1, draft.addressLine2, draft.city, draft.postcode].filter(Boolean).join(", ");
   }, [draft]);
 
-  const billingAddress = useMemo(() => {
-    if (!draft) return "";
-    return [draft.billingAddressLine1, draft.billingAddressLine2, draft.billingCity, draft.billingPostcode].filter(Boolean).join(", ");
-  }, [draft]);
-
-  const selectedAddOns = useMemo(() => {
-    if (!draft) return [];
-    return [
-      draft.oven ? "Oven" : null,
-      draft.fridge ? "Fridge" : null,
-      draft.windows ? "Inside windows" : null,
-      draft.ironing ? "Ironing" : null,
-      draft.eco ? "Eco products" : null,
-    ].filter(Boolean) as string[];
-  }, [draft]);
-
   async function handleContinueToStripe() {
     if (!draft || isSubmitting) return;
 
@@ -115,6 +84,7 @@ export default function BookingPage() {
     setError("");
 
     try {
+      await new Promise((resolve) => setTimeout(resolve, 350));
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
@@ -151,13 +121,28 @@ export default function BookingPage() {
     );
   }
 
+  const service = getServiceByValue(draft.service);
+  const jobType = getJobTypeByValue(draft.jobType, service.value);
+  const propertyType = getPropertyTypeOption(draft.propertyType);
+  const jobSize = jobType.sizeOptions.find((option) => option.value === draft.jobSize);
+  const selectedAddOns = jobType.addOns.filter((item) => draft.selectedAddOns.includes(item.value));
+
   return (
     <main className="section">
+      {isSubmitting ? (
+        <div className="page-loading-overlay" role="status" aria-live="polite">
+          <div className="page-loading-card">
+            <span className="page-loading-spinner" />
+            <strong>Loading...</strong>
+            <span>Please wait...</span>
+          </div>
+        </div>
+      ) : null}
       <div className="container">
         <div style={{ maxWidth: 760, marginBottom: "2rem" }}>
           <div className="eyebrow">Booking review</div>
           <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2.1rem, 4vw, 3.6rem)" }}>Review the booking before payment.</h1>
-          <p className="lead">This page keeps the flow simple: review the job, review the customer and billing details, then move into payment.</p>
+          <p className="lead">This page keeps the flow simple: review the job, review the customer details, then move into payment.</p>
         </div>
 
         <div className="quote-page-grid">
@@ -165,31 +150,18 @@ export default function BookingPage() {
             <section className="panel card quote-section-card">
               <div className="quote-section-head">
                 <div className="eyebrow">Service</div>
-                <strong>Cleaning summary</strong>
+                <strong>Booking summary</strong>
               </div>
               <div className="quote-summary-list">
                 <div><span>Booking reference</span><strong>{draft.bookingReference || "Pending"}</strong></div>
-                <div><span>Service</span><strong>{formatLabel(draft.service)}</strong></div>
-                <div><span>Property type</span><strong>{formatLabel(draft.propertyType)}</strong></div>
-                <div><span>Bedrooms</span><strong>{draft.bedrooms}</strong></div>
-                <div><span>Bathrooms</span><strong>{draft.bathrooms}</strong></div>
-                <div><span>Kitchens</span><strong>{draft.kitchens}</strong></div>
-                <div><span>Estimated hours</span><strong>{draft.estimatedHours} hours</strong></div>
-                <div><span>Supplies</span><strong>{draft.supplies === "cleaner" ? "Cleaner brings supplies" : "Customer provides supplies"}</strong></div>
+                <div><span>Service</span><strong>{draft.pricing.serviceLabel}</strong></div>
+                <div><span>Specific job</span><strong>{draft.pricing.jobTypeLabel}</strong></div>
+                <div><span>Property type</span><strong>{propertyType.label}</strong></div>
+                {draft.service !== "cleaning" ? <div><span>Job size</span><strong>{jobSize?.label || draft.jobSize}</strong></div> : null}
+                {draft.service === "cleaning" ? <div><span>Bedrooms / bathrooms / kitchens</span><strong>{`${draft.bedrooms || 0} / ${draft.bathrooms || 0} / ${draft.kitchens || 0}`}</strong></div> : null}
+                <div><span>Estimated hours</span><strong>{formatEstimatedHours(draft.pricing.estimatedDurationHours)}</strong></div>
               </div>
             </section>
-
-            {draft.estimatedHours > 6 ? (
-              <section className="panel card quote-section-card">
-                <div className="quote-section-head">
-                  <div className="eyebrow">Operations note</div>
-                  <strong>Large booking</strong>
-                </div>
-                <p className="lead" style={{ fontSize: "1rem", margin: 0 }}>
-                  Because this booking is over 6 hours, WashHub may assign more than one cleaner to help complete the service more efficiently.
-                </p>
-              </section>
-            ) : null}
 
             <section className="panel card quote-section-card">
               <div className="quote-section-head">
@@ -197,35 +169,26 @@ export default function BookingPage() {
                 <strong>Service and timing</strong>
               </div>
               <div className="quote-summary-list">
-                <div><span>Cleaning address</span><strong>{serviceAddress || "To be confirmed"}</strong></div>
-                <div>
-                  <span>Selected visits</span>
-                  <strong>
-                    {draft.visits?.length
-                      ? draft.visits.map((visit) => `${visit.date} ${visit.time}`).join(", ")
-                      : draft.selectedDates?.length
-                        ? draft.selectedDates.join(", ")
-                        : draft.preferredDate || "To be confirmed"}
-                  </strong>
-                </div>
-                <div><span>Pets</span><strong>{draft.pets === "yes" ? "Pets at property" : "No pets"}</strong></div>
+                <div><span>Service address</span><strong>{serviceAddress || "To be confirmed"}</strong></div>
+                <div><span>Coverage zone</span><strong>{draft.pricing.coverage.zoneLabel}</strong></div>
+                <div><span>Date</span><strong>{draft.visits?.length ? draft.visits.map((visit) => visit.date).join(", ") : draft.preferredDate || "To be confirmed"}</strong></div>
+                <div><span>Time</span><strong>{draft.visits?.length ? draft.visits.map((visit) => visit.time).join(", ") : draft.preferredTime || "To be confirmed"}</strong></div>
+                <div><span>Availability note</span><strong>{draft.pricing.coverage.leadTimeLabel}</strong></div>
               </div>
             </section>
 
             <section className="panel card quote-section-card">
               <div className="quote-section-head">
                 <div className="eyebrow">Customer</div>
-                <strong>Contact and billing</strong>
+                <strong>Contact details</strong>
               </div>
               <div className="quote-summary-list">
                 <div><span>Customer name</span><strong>{draft.customerName || "To be confirmed"}</strong></div>
                 <div><span>Phone</span><strong>{draft.contactPhone || "To be confirmed"}</strong></div>
                 <div><span>Email</span><strong>{draft.email || "To be confirmed"}</strong></div>
-                <div><span>Billing address</span><strong>{billingAddress || "Same as service address"}</strong></div>
-                <div><span>Add-ons</span><strong>{selectedAddOns.length ? selectedAddOns.join(", ") : "No add-ons selected"}</strong></div>
+                <div><span>Add-ons</span><strong>{selectedAddOns.length ? selectedAddOns.map((item) => item.label).join(", ") : "No add-ons selected"}</strong></div>
                 <div><span>Additional requests</span><strong>{draft.additionalRequests || "None"}</strong></div>
                 <div><span>Entry notes</span><strong>{draft.entryNotes || "None"}</strong></div>
-                <div><span>Parking notes</span><strong>{draft.parkingNotes || "None"}</strong></div>
               </div>
             </section>
           </div>
@@ -234,22 +197,19 @@ export default function BookingPage() {
             <section className="panel card quote-summary-panel">
               <div className="eyebrow">Payment</div>
               <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>Pay securely with Stripe</h2>
-              <div className="quote-total-number">{formatGBP(draft.pricing.total)}</div>
+              <div className="quote-total-number">{formatCurrency(floorCurrency(draft.pricing.total))}</div>
               <div className="quote-summary-list">
-                <div><span>Per visit</span><strong>{formatGBP(draft.pricing.perVisitBaseAmount || 0)}</strong></div>
-                <div><span>Selected dates</span><strong>{draft.pricing.dateCount || draft.selectedDates?.length || 1}</strong></div>
-                <div><span>Base amount</span><strong>{formatGBP(draft.pricing.baseAmount)}</strong></div>
-                <div><span>Add-ons</span><strong>{formatGBP(draft.pricing.addOns)}</strong></div>
-                <div><span>Weekend surcharge</span><strong>{formatGBP(draft.pricing.weekendSurcharge)}</strong></div>
-                <div><span>Evening surcharge</span><strong>{formatGBP(draft.pricing.eveningSurcharge)}</strong></div>
-                <div><span>Urgent booking surcharge</span><strong>{formatGBP(draft.pricing.urgentSurcharge)}</strong></div>
+                <div><span>Service subtotal</span><strong>{formatCurrency(floorCurrency(draft.pricing.subtotal))}</strong></div>
+                <div><span>Booking fee</span><strong>{formatCurrency(floorCurrency(draft.pricing.bookingFee))}</strong></div>
+                <div><span>Estimated provider payout</span><strong>{formatCurrency(floorCurrency(draft.pricing.estimatedProviderPayout))}</strong></div>
+                <div><span>Estimated platform margin</span><strong>{formatCurrency(floorCurrency(draft.pricing.estimatedPlatformMargin))}</strong></div>
               </div>
               {error ? <p style={{ color: "var(--color-error)", lineHeight: 1.6 }}>{error}</p> : null}
               <div className="button-row" style={{ marginTop: "1rem" }}>
                 <a className="button button-secondary" href="/instant-quote">Edit details</a>
               </div>
               <button className="button button-primary quote-summary-button" type="button" disabled={isSubmitting} onClick={handleContinueToStripe}>
-                {isSubmitting ? "Redirecting to Stripe..." : "Continue to Stripe"}
+                {isSubmitting ? <span className="button-spinner-wrap"><span className="button-spinner" />Redirecting to Stripe</span> : "Continue to Stripe"}
               </button>
             </section>
 
@@ -258,7 +218,7 @@ export default function BookingPage() {
               <ul className="list-clean quote-meta-list">
                 <li>Review the booking details carefully before payment.</li>
                 <li>Stripe will collect billing and card details securely.</li>
-                <li>Billing stays the same as the service address unless the customer changes it.</li>
+                <li>The booking will move into provider dispatch after payment succeeds.</li>
               </ul>
             </section>
           </aside>

@@ -15,7 +15,11 @@ export type BookingRecord = {
   email: string;
   contactPhone: string;
   service: string;
+  jobType?: string;
   postcode: string;
+  jobSize?: string;
+  urgency?: string;
+  coverageZone?: string;
   addressLine1?: string;
   addressLine2?: string;
   city?: string;

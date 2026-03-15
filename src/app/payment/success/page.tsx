@@ -47,7 +47,7 @@ export default async function PaymentSuccessPage({ searchParams }: PaymentSucces
             Payment received.
           </h1>
           <p className="lead">
-            Stripe has confirmed the payment. The next implementation step will turn this into a full booking confirmation and dispatch flow.
+            Stripe has confirmed the payment. The booking can now move into provider dispatch and slot confirmation.
           </p>
           {bookingReference ? (
             <p style={{ color: "var(--color-text)", fontWeight: 700 }}>
@@ -76,9 +76,11 @@ export default async function PaymentSuccessPage({ searchParams }: PaymentSucces
                   </div>
                   <div className="quote-summary-list">
                     <div><span>Service</span><strong>{bookingDetails.service}</strong></div>
+                    <div><span>Job type</span><strong>{bookingDetails.jobType || "Pending"}</strong></div>
                     <div><span>Address</span><strong>{serviceAddress || bookingDetails.postcode}</strong></div>
                     <div><span>Date</span><strong>{bookingDetails.preferredDate}</strong></div>
                     <div><span>Time</span><strong>{bookingDetails.preferredTime}</strong></div>
+                    <div><span>Coverage zone</span><strong>{bookingDetails.coverageZone || "Pending"}</strong></div>
                     <div><span>Estimated hours</span><strong>{bookingDetails.estimatedHours ? `${bookingDetails.estimatedHours} hours` : "Pending"}</strong></div>
                     <div><span>Add-ons</span><strong>{bookingDetails.addOns?.length ? bookingDetails.addOns.join(", ") : "None"}</strong></div>
                     <div><span>Billing address</span><strong>{billingAddress || "Same as service address"}</strong></div>
@@ -93,7 +95,7 @@ export default async function PaymentSuccessPage({ searchParams }: PaymentSucces
                     GBP {bookingDetails.totalAmount.toFixed(2)}
                   </h2>
                   <p className="lead" style={{ marginBottom: 0 }}>
-                    This local confirmation step now has enough detail for customer support and payment reconciliation.
+                    This local confirmation step now carries the booking data needed for customer support and dispatch.
                   </p>
                 </section>
               </aside>

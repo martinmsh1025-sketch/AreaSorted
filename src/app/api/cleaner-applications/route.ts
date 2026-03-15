@@ -20,6 +20,9 @@ export async function POST(request: NextRequest) {
   const application = await createCleanerApplication({
     fullName: String(formData.get("fullName") || ""),
     password: String(formData.get("password") || ""),
+    acceptSelfEmployed: String(formData.get("acceptSelfEmployed") || "false"),
+    confirmAccuracy: String(formData.get("confirmAccuracy") || "false"),
+    acceptTerms: String(formData.get("acceptTerms") || "false"),
     dateOfBirth: String(formData.get("dateOfBirth") || ""),
     email: String(formData.get("email") || ""),
     phone: String(formData.get("phone") || ""),

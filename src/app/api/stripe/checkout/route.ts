@@ -8,34 +8,25 @@ type CheckoutDraft = {
   email?: string;
   contactPhone?: string;
   service?: string;
+  jobType?: string;
   postcode?: string;
+  jobSize?: string;
+  urgency?: string;
   addressLine1?: string;
   addressLine2?: string;
   city?: string;
   propertyType?: string;
-  bedrooms?: string;
-  bathrooms?: string;
-  kitchens?: string;
-  estimatedHours?: number;
   preferredDate?: string;
   preferredTime?: string;
-  frequency?: string;
-  supplies?: string;
-  pets?: string;
-  billingAddressLine1?: string;
-  billingAddressLine2?: string;
-  billingCity?: string;
-  billingPostcode?: string;
   additionalRequests?: string;
   entryNotes?: string;
-  parkingNotes?: string;
-  oven?: boolean;
-  fridge?: boolean;
-  windows?: boolean;
-  ironing?: boolean;
-  eco?: boolean;
+  selectedAddOns?: string[];
   pricing?: {
     total?: number;
+    estimatedDurationHours?: number;
+    estimatedProviderPayout?: number;
+    estimatedPlatformMargin?: number;
+    coverage?: { zoneLabel?: string };
   };
 };
 
@@ -71,8 +62,8 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "gbp",
             product_data: {
-              name: `WashHub ${formatServiceLabel(draft.service)}`,
-              description: [draft.postcode, draft.preferredDate, draft.preferredTime].filter(Boolean).join(" - "),
+               name: `WashHub ${formatServiceLabel(draft.service)}`,
+               description: [draft.postcode, draft.preferredDate, draft.preferredTime].filter(Boolean).join(" - "),
             },
             unit_amount: Math.round(draft.pricing.total * 100),
           },
@@ -84,6 +75,7 @@ export async function POST(request: NextRequest) {
         customerName: draft.customerName || "",
         contactPhone: draft.contactPhone || "",
         service: draft.service || "",
+        jobType: draft.jobType || "",
         postcode: draft.postcode || "",
       },
     });
@@ -93,40 +85,28 @@ export async function POST(request: NextRequest) {
       accessToken: createAccessToken(),
       customerName: draft.customerName || "",
       email: draft.email || "",
-      contactPhone: draft.contactPhone || "",
-      service: draft.service || "",
-      postcode: draft.postcode || "",
-      addressLine1: draft.addressLine1 || "",
-      addressLine2: draft.addressLine2 || "",
-      city: draft.city || "",
-      propertyType: draft.propertyType || "",
-      bedrooms: draft.bedrooms || "",
-      bathrooms: draft.bathrooms || "",
-      kitchens: draft.kitchens || "",
-      estimatedHours: draft.estimatedHours || 0,
-      preferredDate: draft.preferredDate || "",
-      preferredTime: draft.preferredTime || "",
-      frequency: draft.frequency || "",
-      supplies: draft.supplies || "",
-      pets: draft.pets || "",
-      billingAddressLine1: draft.billingAddressLine1 || "",
-      billingAddressLine2: draft.billingAddressLine2 || "",
-      billingCity: draft.billingCity || "",
-      billingPostcode: draft.billingPostcode || "",
-      additionalRequests: draft.additionalRequests || "",
-      entryNotes: draft.entryNotes || "",
-      parkingNotes: draft.parkingNotes || "",
-      addOns: [
-        draft.oven ? "Oven" : null,
-        draft.fridge ? "Fridge" : null,
-        draft.windows ? "Inside windows" : null,
-        draft.ironing ? "Ironing" : null,
-        draft.eco ? "Eco products" : null,
-      ].filter(Boolean) as string[],
-      totalAmount: draft.pricing.total,
-      stripeSessionId: session.id,
-      stripePaymentStatus: "pending",
-    });
+       contactPhone: draft.contactPhone || "",
+       service: draft.service || "",
+       postcode: draft.postcode || "",
+       jobSize: draft.jobSize || "",
+       urgency: draft.urgency || "",
+       coverageZone: draft.pricing?.coverage?.zoneLabel || "",
+       addressLine1: draft.addressLine1 || "",
+       addressLine2: draft.addressLine2 || "",
+       city: draft.city || "",
+       propertyType: draft.propertyType || "",
+       estimatedHours: draft.pricing?.estimatedDurationHours || 0,
+       preferredDate: draft.preferredDate || "",
+       preferredTime: draft.preferredTime || "",
+       additionalRequests: draft.additionalRequests || "",
+       entryNotes: draft.entryNotes || "",
+       addOns: draft.selectedAddOns || [],
+       totalAmount: draft.pricing.total,
+       cleanerPayoutAmount: draft.pricing.estimatedProviderPayout,
+       platformEarningsAmount: draft.pricing.estimatedPlatformMargin,
+       stripeSessionId: session.id,
+       stripePaymentStatus: "pending",
+     });
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
