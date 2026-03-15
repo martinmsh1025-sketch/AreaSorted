@@ -190,18 +190,12 @@ function StepThreeIcon({ className = "" }: IconProps) {
 }
 
 const serviceItems = [
-  { label: "Cleaning", description: "Regular, deep, and move-out cleaning.", image: "/images/homepage/services/cleaning.jpg" },
-  { label: "Pest control", description: "Inspections and common pest treatments.", image: "/images/homepage/services/pest-control.jpg" },
-  { label: "Handyman", description: "Repairs, fittings, and home fixes.", image: "/images/homepage/services/handyman-better.jpg" },
-  { label: "Furniture assembly", description: "Flat-pack assembly and setup work.", image: "/images/homepage/services/furniture-assembly-better.jpg" },
-  { label: "Waste removal", description: "Bulky waste, rubbish, and clearances.", image: "/images/homepage/services/waste-removal.jpg" },
-  { label: "Garden maintenance", description: "Lawn care, tidy-ups, and trimming.", image: "/images/homepage/services/garden-maintenance-better.jpg" },
-];
-
-const trustPoints = [
-  "Clear service availability by postcode",
-  "Structured booking flow",
-  "One support contact from booking to follow-up",
+  { label: "Cleaning", description: "Regular, deep, and move-out cleaning.", image: "/images/homepage/chatgpt-services-notext/cleaning.jpg" },
+  { label: "Pest control", description: "Inspections and common pest treatments.", image: "/images/homepage/chatgpt-services-notext/pest-control.jpg" },
+  { label: "Handyman", description: "Repairs, fittings, and home fixes.", image: "/images/homepage/chatgpt-services-notext/handyman.jpg" },
+  { label: "Furniture assembly", description: "Flat-pack assembly and setup work.", image: "/images/homepage/chatgpt-services-notext/furniture-assembly.jpg" },
+  { label: "Waste removal", description: "Bulky waste, rubbish, and clearances.", image: "/images/homepage/chatgpt-services-notext/waste-removal.jpg" },
+  { label: "Garden maintenance", description: "Lawn care, tidy-ups, and trimming.", image: "/images/homepage/chatgpt-services-notext/garden-maintenance.jpg" },
 ];
 
 const howItWorks = [
@@ -222,13 +216,6 @@ const howItWorks = [
   },
 ];
 
-const statItems = [
-  { value: "15k+", label: "Jobs completed" },
-  { value: "4.9/5", label: "Average rating" },
-  { value: "120+", label: "Vetted pros" },
-  { value: "100%", label: "Booking support" },
-];
-
 export default function HomePage() {
   const router = useRouter();
   const [postcode, setPostcode] = useState("");
@@ -240,18 +227,22 @@ export default function HomePage() {
   const [manualCity, setManualCity] = useState("London");
   const [submitMessage, setSubmitMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
 
   const coverage = useMemo(() => getCoverageForPostcode(postcode), [postcode]);
   const selectedAddress = addresses.find((item) => item.ID === addressId);
 
   async function lookupAddresses() {
+    if (isLookingUp) return;
+
     if (!postcode.trim()) {
       setSubmitMessage("Please enter a postcode first.");
       return;
     }
 
     try {
+      setIsLookingUp(true);
       const response = await fetch(`/api/postcode-search?query=${encodeURIComponent(postcode.trim())}`);
       const data = await response.json();
       setAddresses(data.results || []);
@@ -259,6 +250,8 @@ export default function HomePage() {
       setSubmitMessage(data.results?.length ? "Select your address from the list." : "No addresses found. You can use manual address instead.");
     } catch {
       setSubmitMessage("Unable to look up addresses right now.");
+    } finally {
+      setIsLookingUp(false);
     }
   }
 
@@ -307,6 +300,11 @@ export default function HomePage() {
       return;
     }
 
+    if (entryMode === "lookup" && !selectedAddress) {
+      await lookupAddresses();
+      return;
+    }
+
     let address = "";
     let line1 = "";
     let line2 = "";
@@ -352,21 +350,21 @@ export default function HomePage() {
       ) : null}
       <section className="homepage-hero">
         <div className="homepage-hero-surface">
-          <div className="homepage-hero-center">
-            <div className="homepage-hero-copy homepage-hero-copy-centered">
+          <div className="homepage-hero-layout">
+            <div className="homepage-hero-copy homepage-hero-copy-left">
               <div className="homepage-hero-kicker">Trusted local services booking</div>
-              <h1 className="homepage-hero-title">Find local services in your area.</h1>
+              <h1 className="homepage-hero-title">Find trusted local services in your area.</h1>
               <p className="homepage-hero-text">
-                Enter your postcode to check coverage for cleaning, handyman, waste removal, pest control, and garden work.
+                Check postcode coverage for cleaning, handyman, waste removal, pest control, and garden work.
               </p>
 
               <form
-                className="panel mini-form homepage-quote-card homepage-quote-card-centered"
+                className="panel mini-form homepage-quote-card homepage-quote-card-left"
                 onSubmit={(event) => {
                   event.preventDefault();
                 }}
               >
-                <div className="homepage-quote-head homepage-quote-head-centered">
+                <div className="homepage-quote-head">
                   <div className="homepage-quote-icon">
                     <PinIcon className="homepage-service-icon" />
                   </div>
@@ -399,13 +397,11 @@ export default function HomePage() {
                 </label>
 
                 <div className="button-row" style={{ justifyContent: "center", marginTop: "-0.2rem" }}>
-                  <button type="button" className={`button button-secondary${entryMode === "lookup" ? " button-secondary-active" : ""}`} onClick={() => setEntryMode("lookup")}>Find address</button>
-                  <button type="button" className={`button button-secondary${entryMode === "manual" ? " button-secondary-active" : ""}`} onClick={() => setEntryMode("manual")}>Manual address</button>
+                  <button type="button" className="button button-secondary" onClick={() => setEntryMode(entryMode === "lookup" ? "manual" : "lookup")}>{entryMode === "lookup" ? "Use manual address" : "Use postcode finder"}</button>
                 </div>
 
                 {entryMode === "lookup" ? (
                   <>
-                    <button type="button" className="button button-secondary homepage-quote-button-secondary" onClick={lookupAddresses}>Find address</button>
                     {addresses.length ? (
                       <label className="quote-field-stack">
                         <span>Address</span>
@@ -439,18 +435,13 @@ export default function HomePage() {
                 {submitMessage ? <p className="hero-minimal-note" style={{ color: "var(--color-error)" }}>{submitMessage}</p> : null}
 
                 <button type="button" className="button button-primary homepage-quote-button" onClick={handleCoverageCheck} disabled={isSubmitting}>
-                  {isSubmitting ? <span className="button-spinner-wrap"><span className="button-spinner" />Checking coverage</span> : "Check coverage"}
+                  {isSubmitting || isLookingUp ? <span className="button-spinner-wrap"><span className="button-spinner" />Please wait</span> : entryMode === "lookup" && !selectedAddress ? "Find address" : "Check coverage"}
                 </button>
               </form>
+            </div>
 
-              <ul className="homepage-trust-list list-clean homepage-trust-list-centered">
-                {trustPoints.map((item) => (
-                  <li key={item}>
-                    <CheckIcon className="homepage-inline-icon" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="homepage-hero-art">
+              <Image src="/images/homepage/hero.png" alt="Home services at work" fill className="homepage-hero-art-image" sizes="(max-width: 960px) 100vw, 50vw" />
             </div>
           </div>
         </div>
@@ -476,17 +467,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="homepage-stats-strip">
-        <div className="homepage-stats-grid">
-          {statItems.map((item) => (
-            <div key={item.label} className="homepage-stat-item">
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="homepage-section homepage-coverage-section">
         <div className="homepage-coverage-copy">
           <div className="homepage-coverage-kicker">Covering all of London</div>
@@ -508,7 +488,7 @@ export default function HomePage() {
 
       <section className="homepage-section homepage-how-section">
         <div className="homepage-how-media panel">
-          <Image src="/images/homepage/services/cleaning.jpg" alt="Book trusted home services" fill className="homepage-how-media-image" sizes="(max-width: 960px) 100vw, 50vw" />
+          <Image src="/images/homepage/howitworks.png" alt="Book trusted home services" fill className="homepage-how-media-image" sizes="(max-width: 960px) 100vw, 50vw" />
           <div className="homepage-how-badge">
             <div className="homepage-how-badge-icon">
               <CheckIcon className="homepage-service-icon" />
@@ -527,12 +507,11 @@ export default function HomePage() {
           </div>
           <div className="homepage-how-steps">
             {howItWorks.map((item, index) => {
-              const Icon = item.icon;
               return (
                 <article key={item.title} className="homepage-step-row">
                   <div className="homepage-step-watermark">{index + 1}</div>
                   <div className="homepage-step-icon">
-                    <Icon className="homepage-service-icon" />
+                    <Image src={`/images/how-it-works-icons/step-${index + 1}.png`} alt={item.title} width={56} height={56} className="homepage-step-icon-image" />
                   </div>
                   <div className="homepage-step-content">
                     <strong>{item.title}</strong>

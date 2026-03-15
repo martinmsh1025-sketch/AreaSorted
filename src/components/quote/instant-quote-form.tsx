@@ -7,7 +7,6 @@ import { saveBookingDraft } from "@/lib/booking-draft";
 import {
   calculateQuote,
   cleaningConditionOptions,
-  defaultJobTypeByService,
   formatCurrency,
   getJobTypeByValue,
   getJobTypesByService,
@@ -70,9 +69,9 @@ export function InstantQuoteForm({
   const [service, setService] = useState<ServiceValue | "">(safeInitialService);
   const serviceDefinition = service ? getServiceByValue(service) : null;
   const serviceJobTypes = service ? getJobTypesByService(service) : [];
-  const [jobType, setJobType] = useState(service ? defaultJobTypeByService[service] : "");
+  const [jobType, setJobType] = useState("");
   const activeJobType = service && jobType ? getJobTypeByValue(jobType, service as ServiceValue) : null;
-  const [selectedSubcategory, setSelectedSubcategory] = useState(service && jobType ? getJobTypeByValue(jobType, service as ServiceValue).subcategory : "");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const initialPropertyType = activeJobType?.propertyTypes[0] ?? "flat";
   const [postcode, setPostcode] = useState(initialPostcode);
   const [addressLine1, setAddressLine1] = useState(initialAddressLine1);
@@ -132,13 +131,13 @@ export function InstantQuoteForm({
     [service, activeJobType, jobType, postcode, propertyType, jobSize, preferredDate, preferredTime, selectedAddOns, bedrooms, bathrooms, kitchens, areaSize, cleaningCondition, activeVisits.length, primaryVisit?.date, primaryVisit?.time, suppliesProvidedBy],
   );
 
-  const quoteReady = pricing
+  const quoteReady = pricing && activeJobType
     ? (isCleaningService
         ? Boolean(Number(bedrooms) > 0 && Number(bathrooms) >= 0 && Number(kitchens) > 0 && pricing.coverage.supported)
         : Boolean(pricing.coverage.supported))
     : false;
 
-  const canAdvanceFromServiceStep = Boolean(service && activeJobType);
+  const canAdvanceFromServiceStep = Boolean(service && selectedSubcategory && activeJobType);
 
   function toggleAddOn(value: string) {
     setSelectedAddOns((current) => (current.includes(value) ? current.filter((item) => item !== value) : [...current, value]));
@@ -291,12 +290,10 @@ export function InstantQuoteForm({
                         className={`service-chip ${isSelected ? "service-chip-selected" : ""}`}
                         onClick={() => {
                           const nextService = option.value;
-                          const nextJobTypeValue = defaultJobTypeByService[nextService];
-                          const nextJobType = getJobTypeByValue(nextJobTypeValue, nextService);
                           setService(nextService);
                           setSelectedSubcategory("");
-                          setJobType(nextJobTypeValue);
-                          setPropertyType(nextJobType.propertyTypes[0] ?? "flat");
+                          setJobType("");
+                          setPropertyType("flat");
                           setSelectedAddOns([]);
                           setQuoteError("");
                         }}

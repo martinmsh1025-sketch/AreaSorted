@@ -300,8 +300,12 @@ img {
   overflow: hidden;
 }
 
-.homepage-hero-center {
-  max-width: 860px;
+.homepage-hero-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.95fr);
+  gap: 2.4rem;
+  align-items: center;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
@@ -322,9 +326,10 @@ img {
   z-index: 1;
 }
 
-.homepage-hero-copy-centered {
-  justify-items: center;
-  text-align: center;
+.homepage-hero-copy-left {
+  justify-items: start;
+  text-align: left;
+  gap: 0.9rem;
 }
 
 .homepage-hero-kicker {
@@ -344,18 +349,18 @@ img {
 .homepage-hero-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(3.4rem, 5.4vw, 6rem);
-  line-height: 1.02;
+  font-size: clamp(2.2rem, 3.6vw, 3.8rem);
+  line-height: 1.08;
   letter-spacing: -0.05em;
-  max-width: 760px;
+  max-width: 680px;
 }
 
 .homepage-hero-text {
   margin: 0;
-  max-width: 560px;
+  max-width: 500px;
   color: var(--color-text-muted);
-  font-size: 1.15rem;
-  line-height: 1.72;
+  font-size: 0.96rem;
+  line-height: 1.68;
 }
 
 .homepage-trust-list {
@@ -365,8 +370,8 @@ img {
   max-width: 560px;
 }
 
-.homepage-trust-list-centered {
-  margin-top: 0.75rem;
+.homepage-trust-list-left {
+  margin-top: 0.45rem;
 }
 
 .homepage-trust-list li {
@@ -561,9 +566,9 @@ img {
   z-index: 1;
 }
 
-.homepage-quote-card-centered {
+.homepage-quote-card-left {
   width: min(540px, 100%);
-  margin-top: 1.2rem;
+  margin-top: 0.8rem;
 }
 
 .homepage-quote-head {
@@ -572,14 +577,21 @@ img {
   align-items: center;
 }
 
-.homepage-quote-head-centered {
-  justify-content: center;
-  text-align: left;
-}
-
 .homepage-quote-button {
   width: 100%;
   box-shadow: 0 16px 30px rgba(230, 46, 45, 0.28);
+}
+
+.homepage-hero-art {
+  position: relative;
+  min-height: 540px;
+  border-radius: 36px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f8fafc, #eef2f7);
+}
+
+.homepage-hero-art-image {
+  object-fit: cover;
 }
 
 .homepage-section {
@@ -591,66 +603,6 @@ img {
 
 .homepage-section-gap-large {
   margin-top: 4rem;
-}
-
-.homepage-stats-strip {
-  margin-top: 4rem;
-  background: var(--color-accent);
-  position: relative;
-  overflow: hidden;
-}
-
-.homepage-stats-strip::before,
-.homepage-stats-strip::after {
-  content: "";
-  position: absolute;
-  border-radius: 999px;
-  border: 18px solid rgba(255,255,255,0.08);
-}
-
-.homepage-stats-strip::before {
-  width: 220px;
-  height: 220px;
-  left: -90px;
-  top: -100px;
-}
-
-.homepage-stats-strip::after {
-  width: 240px;
-  height: 240px;
-  right: -110px;
-  bottom: -130px;
-}
-
-.homepage-stats-grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 2.2rem 1rem;
-}
-
-.homepage-stat-item {
-  text-align: center;
-  padding: 0 1rem;
-}
-
-.homepage-stat-item strong {
-  display: block;
-  color: #fff;
-  font-size: clamp(2rem, 3vw, 3.1rem);
-  font-weight: 900;
-  letter-spacing: -0.05em;
-}
-
-.homepage-stat-item span {
-  color: rgba(255,255,255,0.78);
-  font-size: 0.92rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
 }
 
 .homepage-section-head {
@@ -677,21 +629,24 @@ img {
 .homepage-service-card {
   position: relative;
   overflow: hidden;
+  border: 0;
 }
 
 .homepage-service-illustration-wrap {
   position: relative;
   margin: -1.35rem -1.35rem 1rem;
-  padding: 0.8rem 0.8rem 0;
-  min-height: 156px;
+  padding: 0.8rem;
+  min-height: 210px;
+  background: #f5f7fb;
 }
 
 .homepage-service-illustration,
 .homepage-service-photo {
   width: 100%;
-  height: 156px;
+  height: 210px;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   border-radius: 20px 20px 12px 12px;
 }
 
@@ -801,6 +756,13 @@ img {
   color: var(--color-accent);
   position: relative;
   z-index: 1;
+}
+
+.homepage-step-icon-image {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  display: block;
 }
 
 .homepage-step-content {
@@ -1742,72 +1704,46 @@ img {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 1.5rem;
-  min-height: 88px;
+  min-height: 86px;
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
 }
 
 .site-header-brand {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   white-space: nowrap;
+  justify-self: start;
+  align-self: center;
+  line-height: 0;
+  min-height: 86px;
 }
 
 .washhub-logo {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.8rem;
+  height: 100%;
 }
 
 .washhub-logo-compact {
   gap: 0.55rem;
 }
 
-.washhub-logo-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-accent);
-  color: #fff;
-  font-weight: 900;
-  font-size: 1.25rem;
-  line-height: 1;
+.washhub-logo-image {
+  display: block;
+  width: auto;
+  height: 78px;
+  object-fit: contain;
+  transform: translateY(4px);
+  transform-origin: center;
 }
 
-.washhub-logo-wordmark {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.08rem;
-  color: var(--color-accent);
-  line-height: 1;
-}
-
-.washhub-logo-wordmark strong {
-  font-family: var(--font-display);
-  font-size: 1.55rem;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-}
-
-.washhub-logo-wordmark small {
-  font-size: 0.95rem;
-  font-weight: 800;
-}
-
-.washhub-logo-compact .washhub-logo-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  font-size: 1.05rem;
-}
-
-.washhub-logo-compact .washhub-logo-wordmark strong {
-  font-size: 1.3rem;
-}
-
-.washhub-logo-compact .washhub-logo-wordmark small {
-  display: none;
+.washhub-logo-compact .washhub-logo-image {
+  height: 70px;
+  transform: translateY(2px);
 }
 
 .site-header-nav {
@@ -1872,7 +1808,9 @@ img {
 
 .footer-brand-mark {
   display: inline-flex;
-  margin-bottom: 0.9rem;
+  margin-bottom: 1.1rem;
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
 }
 
 .footer-title {
@@ -2185,7 +2123,6 @@ img {
   .homepage-hero,
   .homepage-hero-surface,
   .homepage-how-section,
-  .homepage-stats-grid,
   .homepage-coverage-section,
   .homepage-app-section,
   .hero-wrap,
@@ -2233,8 +2170,13 @@ img {
     bottom: -18px;
   }
 
-  .homepage-hero-center {
+  .homepage-hero-layout {
+    grid-template-columns: 1fr;
     max-width: none;
+  }
+
+  .homepage-hero-art {
+    min-height: 360px;
   }
 
   .homepage-phone-shell {
@@ -2282,8 +2224,8 @@ img {
     justify-content: center;
   }
 
-  .washhub-logo-wordmark strong {
-    font-size: 1.2rem;
+  .washhub-logo-image {
+    height: 64px;
   }
 
   .site-header-nav {
