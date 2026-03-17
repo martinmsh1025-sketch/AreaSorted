@@ -1,14 +1,22 @@
-# London Cleaning Platform - Brand Identity v1
+# AreaSorted - Brand Identity v1
+
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
 
 ## Working Brand
 
-- Primary working name: `Alder London`
-- Service descriptor: `Alder London Cleaning`
-- Recruitment descriptor: `Work with Alder London`
+- Primary brand name: `AreaSorted`
+- Service descriptor: `Trusted local services across London`
+- Provider descriptor: `AreaSorted Provider Portal`
 
 ## Brand Position
 
-`Alder London` should feel like a modern London service company with real operational standards.
+`AreaSorted` should feel like a modern London local-services marketplace with real operational standards.
 
 It should communicate:
 - trust
@@ -103,10 +111,10 @@ It should not feel like:
 Start with a wordmark.
 
 Primary lockup:
-- `Alder London`
+- `AreaSorted`
 
 Secondary lockup:
-- `Alder London Cleaning`
+- `Trusted local services across London`
 
 ### Logo Style
 
@@ -270,7 +278,7 @@ Avoid copy that sounds:
 ## Final Recommendation
 
 Move forward with this identity for v1:
-- brand: `Alder London`
+- brand: `AreaSorted`
 - visual tone: premium local London service brand
 - palette: stone, deep green, muted brass
 - typography: `Fraunces` + `Manrope`

@@ -1,4 +1,12 @@
-# WashHub - Customer Trust Badges v1
+# AreaSorted - Customer Trust Badges v1
+
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
 
 ## Purpose
 
@@ -12,7 +20,7 @@ Customers should see simple trust signals, not raw internal cleaner scores.
 
 ## Recommended Customer-Facing Badges
 
-- `Verified by WashHub`
+- `Verified by AreaSorted`
 - `Reliable cleaner`
 - `Experienced cleaner`
 - `Low cancellation history`
@@ -20,7 +28,7 @@ Customers should see simple trust signals, not raw internal cleaner scores.
 
 ## Badge Sources
 
-### Verified by WashHub
+### Verified by AreaSorted
 Use when:
 - cleaner identity reviewed
 - right-to-work reviewed
@@ -52,7 +60,7 @@ Use when:
 
 ## Good Customer Display Examples
 
-- `Verified by WashHub`
+- `Verified by AreaSorted`
 - `Reliable cleaner`
 - `50+ completed jobs`
 - `Excellent customer rating`
@@ -69,3 +77,7 @@ Use when:
 - customer sees simplified trust badges
 - cleaner sees own score and score log
 - admin sees full operational detail
+## Scope Status
+
+- This is a secondary trust-display document for workforce or fulfilment visibility
+- It must not override the authoritative provider-company marketplace model

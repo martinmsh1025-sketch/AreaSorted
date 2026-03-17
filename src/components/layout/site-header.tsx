@@ -3,8 +3,7 @@ import { WashHubLogo } from "@/components/branding/washhub-logo";
 const navItems = [
   { href: "/services", label: "Services", icon: "spark" },
   { href: "/pricing", label: "Pricing", icon: "tag" },
-  { href: "/instant-quote", label: "Quote", icon: "pin" },
-  { href: "/become-a-cleaner", label: "Cleaners", icon: "people" },
+  { href: "/quote", label: "Quote", icon: "pin" },
   { href: "/faq", label: "FAQ", icon: "chat" },
   { href: "/contact", label: "Contact", icon: "phone" },
 ];

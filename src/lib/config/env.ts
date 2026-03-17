@@ -12,6 +12,7 @@ const envSchema = z.object({
   STRIPE_DEFAULT_CURRENCY: z.string().default("gbp"),
   STRIPE_PAYOUT_HOLD_DAYS: z.coerce.number().int().nonnegative().default(7),
   STRIPE_MANUAL_PAYOUTS: z.coerce.boolean().default(true),
+  ALLOW_MOCK_STRIPE_CHECKOUT: z.coerce.boolean().default(false),
   MARKETPLACE_DEFAULT_BOOKING_FEE_GBP: z.coerce.number().nonnegative().default(12),
   MARKETPLACE_DEFAULT_COMMISSION_PERCENT: z.coerce.number().nonnegative().default(18),
   MARKETPLACE_DEFAULT_MARKUP_ENABLED: z.coerce.boolean().default(false),

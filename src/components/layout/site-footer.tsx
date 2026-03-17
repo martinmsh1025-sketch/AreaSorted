@@ -3,16 +3,9 @@ import { WashHubLogo } from "@/components/branding/washhub-logo";
 const customerLinks = [
   ["/services", "Services"],
   ["/pricing", "Pricing"],
-  ["/instant-quote", "Instant Quote"],
+  ["/quote", "Quote"],
   ["/faq", "FAQ"],
   ["/contact", "Contact Us"],
-];
-
-const cleanerLinks = [
-  ["/become-a-cleaner", "Become a Cleaner"],
-  ["/cleaner/apply", "Cleaner Application"],
-  ["/cleaner/faq", "Cleaner FAQ"],
-  ["/cleaner-terms", "Cleaner Terms"],
 ];
 
 const legalLinks = [
@@ -62,10 +55,6 @@ export function SiteFooter() {
           <div className="footer-column">
             <div className="footer-title">Customer</div>
             <LinkList items={customerLinks} />
-          </div>
-          <div className="footer-column">
-            <div className="footer-title">Cleaners</div>
-            <LinkList items={cleanerLinks} />
           </div>
           <div className="footer-column">
             <div className="footer-title">Legal</div>

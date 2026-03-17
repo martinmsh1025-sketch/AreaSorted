@@ -1,4 +1,12 @@
-# London Cleaning Platform - API Routes v1
+# AreaSorted - API Routes v1
+
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
 
 ## Purpose
 
@@ -8,11 +16,17 @@ It is designed for a `Next.js` app with route handlers, server actions where use
 ## API Principles
 
 - public endpoints should be minimal and rate-limited
-- authenticated customer and cleaner routes should use session-based auth
+- authenticated provider routes should use session-based auth with status gating
+- authenticated customer routes should prefer secure access-link or session-based auth depending on flow
 - admin routes should require role-based access
 - file uploads should use signed upload flow where possible
 - all state-changing admin actions should create audit logs
 - booking, payment, scoring, cancellation, and refund logic should run server-side only
+
+## Alignment Clarification
+
+- `ProviderCompany` routes are the primary protected business actor APIs for the marketplace
+- Cleaner or workforce APIs remain secondary operational APIs and should not redefine the top-level provider model
 
 ## Route Groups
 

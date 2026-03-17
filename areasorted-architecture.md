@@ -1,5 +1,13 @@
 # AreaSorted Architecture
 
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
+
 ## Final Architecture Decisions
 
 ### Marketplace Positioning
@@ -10,8 +18,16 @@
 ### Provider Model
 - `ProviderCompany` is the main commercial entity
 - Workers are not modeled as the commercial counterparty in MVP
+- Worker or cleaner records, where retained, belong to a secondary workforce / fulfilment module under provider-company operations
 - One active provider per `area + service category` in customer assignment logic
 - Backup providers can be stored later in operational tables
+
+### Provider Auth Lifecycle
+- Provider access begins with admin invite only
+- Provider must verify invited email before password setup
+- Provider must complete onboarding before admin review
+- Provider must pass admin review before Stripe and pricing are unlocked
+- Provider becomes fully active only after Stripe readiness and pricing readiness are both satisfied
 
 ### Finance Model
 - Every booking stores an immutable `BookingPriceSnapshot`
@@ -93,7 +109,6 @@ src/
 
 prisma/
   schema.prisma
-  marketplace.prisma
   migrations/
 
 docker-compose.yml

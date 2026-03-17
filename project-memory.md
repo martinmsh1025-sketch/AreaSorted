@@ -1,23 +1,36 @@
-# London Cleaning Platform - Project Memory
+# AreaSorted - Project Memory
+
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
 
 ## Project Purpose
 
-Build a London-focused cleaning platform for a UK limited company that handles:
-- cleaner recruitment and onboarding
-- document verification and right-to-work review
-- DocuSign contractor agreements
-- SEO-driven cleaning services website
-- instant quotes and bookings
-- Stripe payments and refunds
-- job dispatch to cleaners via WhatsApp/SMS/email
-- cleaner scoring, cancellation penalties, complaints, and no-show rules
-- admin operations and audit history
+Build `AreaSorted` as a London-first managed marketplace for local home and property services with:
+- customer-facing postcode-first discovery, quote, booking, and payment flows
+- provider-company onboarding, review, Stripe setup, pricing, and protected portal access
+- admin operations for provider management, pricing control, booking oversight, and audit history
+- secondary workforce and cleaner operations retained only where needed for fulfilment and dispatch
+
+## Authoritative Product Decision Record
+
+- Active brand: `AreaSorted`
+- Primary provider model: `ProviderCompany`
+- Marketplace model: provider company is primary commercial counterparty; platform is booking, pricing, support, and operational orchestration layer
+- Provider auth lifecycle: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`
+- `Cleaner` remains a secondary workforce / dispatch module and must not override provider-company marketplace architecture
+- When older docs conflict with this section, this section wins
 
 ## Confirmed Business Decisions
 
 - Company structure: UK Limited Company
 - Geography: London first
-- Cleaner model: self-employed contractors
+- Marketplace provider model: provider-company network
+- Cleaner / worker model: secondary fulfilment workforce module only
 - GDPR/privacy policy: required
 - Insurance: company will purchase insurance
 - DBS: available, paid by cleaner
@@ -244,7 +257,7 @@ When the user asks to roll back, present saved versions by date + version label 
 
 - `2026-03-12 / v1-homepage-address-complete / 57b70a7`
   - homepage kept in the approved layout
-  - WashHub logo integrated in header and footer
+  - AreaSorted logo integrated in header and footer
   - postcode lookup connected on homepage
   - manual address mode added with fields for address line 1, address line 2, address line 3, postcode, and country
   - this is the approved restore point to offer first if the user asks to go back

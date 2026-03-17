@@ -1,5 +1,13 @@
 # AreaSorted Backend MVP Scope
 
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
+
 This file records the agreed backend development scope so the project can continue safely across sessions.
 
 ## Commercial Model
@@ -31,6 +39,14 @@ This file records the agreed backend development scope so the project can contin
 - Do not redesign the current customer-facing booking flow unless explicitly requested
 - Backend work must be added behind the scenes first
 - Keep wording compatible with provider-as-seller mode
+
+## Auth And Portal Direction
+
+- Provider portal access is invite-only for MVP
+- Provider lifecycle is `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`
+- Provider pages must be gated by provider status, not only by whether a session exists
+- Admin pages must use authenticated user sessions with roles; shared-password access is not the target architecture
+- Customer booking management should prefer secure access-link flows over mandatory pre-booking account creation
 
 ## Required Capability Areas
 

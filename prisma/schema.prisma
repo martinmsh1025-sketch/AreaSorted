@@ -110,6 +110,11 @@ enum ServiceType {
   OFFICE_CLEANING
   AIRBNB_TURNOVER
   END_OF_TENANCY
+  PEST_CONTROL
+  HANDYMAN
+  FURNITURE_ASSEMBLY
+  WASTE_REMOVAL
+  GARDEN_MAINTENANCE
 }
 
 enum PropertyType {
@@ -253,6 +258,15 @@ enum NotificationStatus {
   FAILED
   DELIVERED
   READ
+}
+
+enum PublicQuoteState {
+  DRAFT
+  PRICED
+  MANUAL_REVIEW_REQUIRED
+  REQUEST_SUBMITTED
+  BOOKING_CREATED
+  EXPIRED
 }
 
 enum ContentStatus {
@@ -619,6 +633,7 @@ model Booking {
   customer                 Customer           @relation(fields: [customerId], references: [id])
   customerAddress          CustomerAddress?   @relation(fields: [customerAddressId], references: [id])
   marketplaceProviderCompany ProviderCompany? @relation("MarketplaceProviderCompany", fields: [providerCompanyId], references: [id])
+  quoteRequest             QuoteRequest?
   addons                   BookingAddon[]
   payments                 Payment[]
   refunds                  Refund[]
@@ -642,6 +657,62 @@ model Booking {
   @@index([scheduledDate])
   @@index([servicePostcode])
   @@index([providerCompanyId])
+}
+
+model QuoteRequest {
+  id                        String           @id @default(cuid())
+  reference                 String           @unique
+  customerName              String
+  customerEmail             String
+  customerPhone             String
+  postcode                  String
+  postcodePrefix            String
+  addressLine1              String
+  addressLine2              String?
+  city                      String
+  categoryKey               String
+  serviceKey                String
+  providerCompanyId         String?
+  bookingId                 String?          @unique
+  state                     PublicQuoteState @default(DRAFT)
+  quoteRequired             Boolean          @default(false)
+  scheduledDate             DateTime?
+  scheduledTimeLabel        String?
+  inputJson                 Json?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+
+  providerCompany           ProviderCompany? @relation(fields: [providerCompanyId], references: [id])
+  booking                   Booking?         @relation(fields: [bookingId], references: [id])
+  priceSnapshot             QuotePriceSnapshot?
+
+  @@index([postcode])
+  @@index([postcodePrefix])
+  @@index([categoryKey])
+  @@index([serviceKey])
+  @@index([state])
+}
+
+model QuotePriceSnapshot {
+  id                               String       @id @default(cuid())
+  quoteRequestId                   String       @unique
+  providerCompanyId                String?
+  pricingRuleId                    String?
+  providerBasePrice                Decimal      @db.Decimal(10, 2)
+  bookingFee                       Decimal      @db.Decimal(10, 2)
+  commissionAmount                 Decimal      @db.Decimal(10, 2)
+  postcodeSurcharge                Decimal      @db.Decimal(10, 2)
+  totalCustomerPay                 Decimal      @db.Decimal(10, 2)
+  expectedProviderPayoutBeforeFees Decimal      @db.Decimal(10, 2)
+  quantity                         Int          @default(1)
+  estimatedHours                   Decimal      @db.Decimal(5, 2)
+  sameDay                          Boolean      @default(false)
+  weekend                          Boolean      @default(false)
+  quoteRequired                    Boolean      @default(false)
+  inputJson                        Json?
+  createdAt                        DateTime     @default(now())
+
+  quoteRequest                     QuoteRequest @relation(fields: [quoteRequestId], references: [id])
 }
 
 model BookingAddon {
@@ -914,13 +985,31 @@ model SeoLandingPage {
 
 enum ProviderCompanyStatus {
   INVITED
-  PROFILE_STARTED
-  AGREEMENT_SIGNED
+  EMAIL_VERIFICATION_PENDING
+  PASSWORD_SETUP_PENDING
+  ONBOARDING_IN_PROGRESS
+  SUBMITTED_FOR_REVIEW
+  UNDER_REVIEW
+  CHANGES_REQUESTED
+  REJECTED
+  APPROVED
   STRIPE_PENDING
   STRIPE_RESTRICTED
-  STRIPE_ACTIVE
+  PRICING_PENDING
   ACTIVE
   SUSPENDED
+}
+
+enum ProviderDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_RESUBMISSION
+}
+
+enum ProviderAuthTokenPurpose {
+  PASSWORD_SETUP
+  PASSWORD_RESET
 }
 
 enum ConnectAccountMode {
@@ -998,6 +1087,7 @@ model User {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   roles         UserRoleAssignment[]
+  providerAuthTokens ProviderAuthToken[]
   providerCompany ProviderCompany?
 }
 
@@ -1023,35 +1113,102 @@ model UserRoleAssignment {
 model ProviderCompany {
   id                       String                 @id @default(cuid())
   userId                   String?                @unique
-  legalName                String
+  legalName                String?
   tradingName              String?
-  companyNumber            String                 @unique
-  registeredAddress        String
+  companyNumber            String?                @unique
+  registeredAddress        String?
   contactEmail             String
-  phone                    String
+  phone                    String?
   vatNumber                String?
   insuranceExpiry          DateTime?
   complianceNotes          String?
   status                   ProviderCompanyStatus  @default(INVITED)
   paymentReady             Boolean                @default(false)
   stripeRequirementsJson   Json?
+  emailVerifiedAt          DateTime?
+  passwordSetAt            DateTime?
+  onboardingSubmittedAt    DateTime?
+  reviewStartedAt          DateTime?
+  changesRequestedAt       DateTime?
+  rejectedAt               DateTime?
+  approvedAt               DateTime?
+  reviewNotes              String?
   createdAt                DateTime               @default(now())
   updatedAt                DateTime               @updatedAt
 
   user                     User?                  @relation(fields: [userId], references: [id])
   serviceCategories        ProviderServiceCategory[]
   coverageAreas            ProviderCoverageArea[]
+  documents                ProviderOnboardingDocument[]
   pricingRules             ProviderPricingRule[]
   pricingAreaOverrides     PricingAreaOverride[]
   pricingAuditLogs         PricingAuditLog[]
+  authTokens               ProviderAuthToken[]
   invites                  ProviderInvite[]
+  emailVerifications       ProviderEmailVerification[]
   agreements               ProviderAgreement[]
   stripeConnectedAccount   StripeConnectedAccount?
   bookingAssignments       Booking[]              @relation("MarketplaceProviderCompany")
+  quoteRequests            QuoteRequest[]
   payoutRecords            PayoutRecord[]
   disputeRecords           DisputeRecord[]
   invoiceRecords           InvoiceRecord[]
   notificationLogs         NotificationLogV2[]
+}
+
+model ProviderEmailVerification {
+  id                String          @id @default(cuid())
+  providerCompanyId String?
+  email             String
+  code              String
+  purpose           String
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  createdAt         DateTime        @default(now())
+
+  providerCompany   ProviderCompany? @relation(fields: [providerCompanyId], references: [id])
+
+  @@index([email, purpose])
+}
+
+model ProviderAuthToken {
+  id                String                   @id @default(cuid())
+  providerCompanyId String?
+  userId            String?
+  email             String
+  token             String                   @unique
+  purpose           ProviderAuthTokenPurpose
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  createdAt         DateTime                 @default(now())
+
+  providerCompany   ProviderCompany?         @relation(fields: [providerCompanyId], references: [id])
+  user              User?                    @relation(fields: [userId], references: [id])
+
+  @@index([email, purpose])
+}
+
+model ProviderOnboardingDocument {
+  id                String                 @id @default(cuid())
+  providerCompanyId String
+  documentKey       String
+  label             String
+  fileName          String
+  storedFileName    String
+  storagePath       String
+  mimeType          String?
+  sizeBytes         Int?
+  status            ProviderDocumentStatus @default(PENDING)
+  reviewNotes       String?
+  uploadedAt        DateTime               @default(now())
+  reviewedAt        DateTime?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  providerCompany   ProviderCompany        @relation(fields: [providerCompanyId], references: [id])
+
+  @@index([providerCompanyId, documentKey])
+  @@unique([providerCompanyId, documentKey])
 }
 
 model ProviderServiceCategory {
@@ -1134,6 +1291,8 @@ model ProviderInvite {
   id                String          @id @default(cuid())
   providerCompanyId String?
   email             String
+  approvedCategoryKey String?
+  approvedServiceKeysJson Json?
   token             String          @unique
   expiresAt         DateTime
   acceptedAt        DateTime?

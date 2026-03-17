@@ -1,25 +1,49 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { createProviderCompanyFromInvite } from "@/server/services/providers/onboarding";
-import { markProviderAgreementSigned } from "@/lib/providers/repository";
+import { buildProviderVerifyEmailUrl, createProviderOtp } from "@/lib/providers/email-verification";
+
+const schema = z.object({
+  inviteToken: z.string().min(1),
+  contactEmail: z.string().email(),
+});
 
 export async function acceptProviderInviteAction(formData: FormData) {
-  const inviteToken = String(formData.get("inviteToken") || "");
-  const provider = await createProviderCompanyFromInvite({
-    inviteToken,
-    legalName: String(formData.get("legalName") || ""),
-    tradingName: String(formData.get("tradingName") || ""),
-    companyNumber: String(formData.get("companyNumber") || ""),
-    registeredAddress: String(formData.get("registeredAddress") || ""),
+  const parsed = schema.safeParse({
+    inviteToken: String(formData.get("inviteToken") || ""),
     contactEmail: String(formData.get("contactEmail") || ""),
-    phone: String(formData.get("phone") || ""),
-    vatNumber: String(formData.get("vatNumber") || ""),
   });
 
-  if (formData.get("agreementAccepted") === "on") {
-    await markProviderAgreementSigned(provider.id);
+  if (!parsed.success) {
+    redirect(`/provider/invite/${String(formData.get("inviteToken") || "")}?error=invalid_fields`);
   }
 
-  redirect("/provider/login");
+  let provider;
+
+  try {
+    provider = await createProviderCompanyFromInvite({
+      inviteToken: parsed.data.inviteToken,
+      contactEmail: parsed.data.contactEmail,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "invalid_fields";
+    redirect(`/provider/invite/${parsed.data.inviteToken}?error=${encodeURIComponent(message)}`);
+  }
+
+  const otp = await createProviderOtp({
+    providerCompanyId: provider.id,
+    email: parsed.data.contactEmail,
+    purpose: "INVITE",
+  });
+
+  redirect(
+    buildProviderVerifyEmailUrl({
+      email: parsed.data.contactEmail,
+      code: otp.code,
+      deliveryMethod: otp.deliveryMethod,
+      deliveryReason: otp.deliveryReason,
+    }),
+  );
 }

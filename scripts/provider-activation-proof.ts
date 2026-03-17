@@ -8,8 +8,18 @@ async function main() {
   const complete = await prisma.providerCompany.upsert({
     where: { companyNumber: "AS-DEMO-001" },
     update: {
-      status: "PROFILE_STARTED",
+      status: "PRICING_PENDING",
       paymentReady: false,
+      emailVerifiedAt: new Date(),
+      passwordSetAt: new Date(),
+      onboardingSubmittedAt: new Date(),
+      approvedAt: new Date(),
+      legalName: "AreaSorted Demo Provider Ltd",
+      tradingName: "Demo Provider",
+      companyNumber: "AS-DEMO-001",
+      registeredAddress: "1 Demo Street, London",
+      contactEmail: "provider@example.com",
+      phone: "02000000000",
     },
     create: {
       legalName: "AreaSorted Demo Provider Ltd",
@@ -18,35 +28,50 @@ async function main() {
       registeredAddress: "1 Demo Street, London",
       contactEmail: "provider@example.com",
       phone: "02000000000",
-      status: "PROFILE_STARTED",
+      status: "PRICING_PENDING",
+      emailVerifiedAt: new Date(),
+      passwordSetAt: new Date(),
+      onboardingSubmittedAt: new Date(),
+      approvedAt: new Date(),
     },
   });
 
-  const incomplete = await prisma.providerCompany.upsert({
-    where: { companyNumber: "AS-DEMO-002" },
-    update: {
-      status: "PROFILE_STARTED",
-      paymentReady: false,
-    },
-    create: {
-      legalName: "AreaSorted Incomplete Provider Ltd",
-      tradingName: "Incomplete Provider",
-      companyNumber: "AS-DEMO-002",
-      registeredAddress: "2 Missing Street, London",
-      contactEmail: "provider-incomplete@example.com",
-      phone: "02000000001",
-      status: "PROFILE_STARTED",
-    },
-  });
+  let incomplete = await prisma.providerCompany.findFirst({ where: { contactEmail: "provider-incomplete@example.com" } });
+  if (incomplete) {
+    incomplete = await prisma.providerCompany.update({
+      where: { id: incomplete.id },
+      data: {
+        status: "ONBOARDING_IN_PROGRESS",
+        paymentReady: false,
+        contactEmail: "provider-incomplete@example.com",
+      },
+    });
+  } else {
+    incomplete = await prisma.providerCompany.create({
+      data: {
+        contactEmail: "provider-incomplete@example.com",
+        status: "ONBOARDING_IN_PROGRESS",
+      },
+    });
+  }
 
   await prisma.providerServiceCategory.deleteMany({ where: { providerCompanyId: { in: [complete.id, incomplete.id] } } });
   await prisma.providerCoverageArea.deleteMany({ where: { providerCompanyId: { in: [complete.id, incomplete.id] } } });
   await prisma.providerAgreement.deleteMany({ where: { providerCompanyId: { in: [complete.id, incomplete.id] } } });
   await prisma.stripeConnectedAccount.deleteMany({ where: { providerCompanyId: { in: [complete.id, incomplete.id] } } });
+  await prisma.providerOnboardingDocument.deleteMany({ where: { providerCompanyId: { in: [complete.id, incomplete.id] } } });
+  await prisma.providerPricingRule.deleteMany({ where: { providerCompanyId: { in: [complete.id, incomplete.id] } } });
 
   await prisma.providerServiceCategory.create({ data: { providerCompanyId: complete.id, categoryKey: "CLEANING" } });
   await prisma.providerCoverageArea.create({ data: { providerCompanyId: complete.id, postcodePrefix: "SW6", categoryKey: "CLEANING" } });
   await prisma.providerAgreement.create({ data: { providerCompanyId: complete.id, version: "v1", status: "SIGNED", signedAt: new Date() } });
+  await prisma.providerOnboardingDocument.createMany({
+    data: [
+      { providerCompanyId: complete.id, documentKey: "company_registration_proof", label: "Company registration proof", fileName: "company.pdf", storedFileName: "company.pdf", storagePath: "/tmp/company.pdf", status: "APPROVED" },
+      { providerCompanyId: complete.id, documentKey: "insurance_proof", label: "Insurance proof", fileName: "insurance.pdf", storedFileName: "insurance.pdf", storagePath: "/tmp/insurance.pdf", status: "APPROVED" },
+      { providerCompanyId: complete.id, documentKey: "representative_id_document", label: "Representative ID document", fileName: "id.pdf", storedFileName: "id.pdf", storagePath: "/tmp/id.pdf", status: "APPROVED" },
+    ],
+  });
   await prisma.stripeConnectedAccount.create({
     data: {
       providerCompanyId: complete.id,
@@ -58,15 +83,27 @@ async function main() {
       detailsSubmitted: true,
     },
   });
+  await prisma.providerPricingRule.create({
+    data: {
+      providerCompanyId: complete.id,
+      categoryKey: "CLEANING",
+      serviceKey: "regular-home-cleaning",
+      pricingMode: "hourly",
+      hourlyPrice: 16,
+      minimumCharge: 48,
+      active: true,
+      customQuoteRequired: false,
+    },
+  });
 
   const incompleteCheck = await getProviderActivationCheck(incomplete.id);
   const completeCheck = await getProviderActivationCheck(complete.id);
 
-  let incompleteError: string[] = [];
+  let incompleteError = [] as string[];
   try {
     await activateProviderCompany(incomplete.id);
   } catch (error) {
-    incompleteError = error instanceof Error && "missing" in error ? (error as any).missing : [String(error)];
+    incompleteError = error instanceof Error && "missing" in error ? (error as { missing: string[] }).missing : [String(error)];
   }
 
   await activateProviderCompany(complete.id);
@@ -76,7 +113,7 @@ async function main() {
 
   console.log(JSON.stringify({
     failingProvider: {
-      companyNumber: incomplete.companyNumber,
+      companyEmail: incomplete.contactEmail,
       canActivate: incompleteCheck.canActivate,
       missing: incompleteCheck.checklist.missingLabels,
       activationBlockedWith: incompleteError,

@@ -1,18 +1,26 @@
-# London Cleaning Platform - Homepage Design Spec v1
+# AreaSorted - Homepage Design Spec v1
+
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
 
 ## Purpose
 
 The homepage must act as:
 - the main customer conversion page
-- the main trust page for Indeed and cleaner applicants
+- the main trust page for the brand and prospective provider partners
 - the main brand page for SEO and legitimacy
 
 It must not only look good. It must also prove the company is real, contactable, and professionally run.
 
 ## Brand To Use
 
-- Working brand: `Alder London`
-- Descriptor: `Alder London Cleaning`
+- Brand: `AreaSorted`
+- Descriptor: `Trusted local services across London`
 
 ## Core Homepage Goals
 
@@ -145,7 +153,7 @@ Content:
 - add-ons examples
 - link to full pricing page
 
-### 8. Why Choose Alder London
+### 8. Why Choose AreaSorted
 Purpose:
 - position the business above cheap or unreliable operators
 
@@ -251,7 +259,7 @@ Purpose:
 Footer columns recommended:
 
 Column 1 - Brand
-- Alder London
+- AreaSorted
 - short company description
 - support email
 - phone

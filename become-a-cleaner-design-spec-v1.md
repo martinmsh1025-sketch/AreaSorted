@@ -1,4 +1,12 @@
-# London Cleaning Platform - Become a Cleaner Design Spec v1
+# AreaSorted - Become a Cleaner Design Spec v1
+
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
 
 ## Purpose
 
@@ -50,7 +58,7 @@ Right-side panel:
   - onboarding steps count
   - company support message
 
-### 3. Why Work With Alder London
+### 3. Why Work With AreaSorted
 Purpose:
 - show value beyond just “job board ad”
 
@@ -219,3 +227,7 @@ The page is successful when a visitor can quickly understand:
 - how the self-employed model works
 - how jobs are assigned
 - how to contact the company if unsure
+## Scope Status
+
+- This page is secondary or legacy workforce-acquisition scope
+- It should not be treated as the primary public conversion path over customer booking or provider-company onboarding

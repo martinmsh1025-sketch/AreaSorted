@@ -1,0 +1,7 @@
+{
+  "/provider/onboarding/page": "app/provider/onboarding/page.js",
+  "/provider/reset-password/[token]/page": "app/provider/reset-password/[token]/page.js",
+  "/provider/verify-email/page": "app/provider/verify-email/page.js",
+  "/provider/application-status/page": "app/provider/application-status/page.js",
+  "/provider/page": "app/provider/page.js"
+}

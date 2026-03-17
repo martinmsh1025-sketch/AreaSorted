@@ -1,8 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getProviderSessionCompanyId } from "@/lib/provider-auth";
+import { requireProviderPricingAccess } from "@/lib/provider-auth";
 import { deleteProviderPricingRule, disableProviderPricingRule, savePricingAreaOverride, saveProviderPricingRule } from "@/lib/pricing/prisma-pricing";
+import { syncProviderLifecycleState } from "@/server/services/providers/activation";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   const parsed = Number(value ?? fallback);
@@ -10,8 +11,8 @@ function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
 }
 
 export async function saveProviderPricingAction(formData: FormData) {
-  const providerCompanyId = await getProviderSessionCompanyId();
-  if (!providerCompanyId) redirect("/provider/login");
+  const session = await requireProviderPricingAccess();
+  const providerCompanyId = session.providerCompany.id;
 
   await saveProviderPricingRule({
     providerCompanyId,
@@ -27,34 +28,41 @@ export async function saveProviderPricingAction(formData: FormData) {
     customQuoteRequired: formData.get("customQuoteRequired") === "on",
     active: formData.get("active") === "on",
     actorType: "PROVIDER",
+    actorId: providerCompanyId,
   });
+
+  await syncProviderLifecycleState(providerCompanyId);
 }
 
 export async function disableProviderPricingAction(formData: FormData) {
-  const providerCompanyId = await getProviderSessionCompanyId();
-  if (!providerCompanyId) redirect("/provider/login");
+  const session = await requireProviderPricingAccess();
+  const providerCompanyId = session.providerCompany.id;
 
   await disableProviderPricingRule({
     providerPricingRuleId: String(formData.get("providerPricingRuleId") || ""),
     actorType: "PROVIDER",
     actorId: providerCompanyId,
   });
+
+  await syncProviderLifecycleState(providerCompanyId);
 }
 
 export async function deleteProviderPricingAction(formData: FormData) {
-  const providerCompanyId = await getProviderSessionCompanyId();
-  if (!providerCompanyId) redirect("/provider/login");
+  const session = await requireProviderPricingAccess();
+  const providerCompanyId = session.providerCompany.id;
 
   await deleteProviderPricingRule({
     providerPricingRuleId: String(formData.get("providerPricingRuleId") || ""),
     actorType: "PROVIDER",
     actorId: providerCompanyId,
   });
+
+  await syncProviderLifecycleState(providerCompanyId);
 }
 
 export async function saveProviderAreaOverrideAction(formData: FormData) {
-  const providerCompanyId = await getProviderSessionCompanyId();
-  if (!providerCompanyId) redirect("/provider/login");
+  const session = await requireProviderPricingAccess();
+  const providerCompanyId = session.providerCompany.id;
 
   await savePricingAreaOverride({
     providerCompanyId,
@@ -67,4 +75,6 @@ export async function saveProviderAreaOverrideAction(formData: FormData) {
     actorType: "PROVIDER",
     actorId: providerCompanyId,
   });
+
+  redirect("/provider/pricing?status=saved");
 }

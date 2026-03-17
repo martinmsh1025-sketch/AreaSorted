@@ -36,7 +36,7 @@ async function syncAccountUpdated(event: Stripe.Event) {
     where: { id: connected.providerCompanyId },
     data: {
       paymentReady: account.charges_enabled && account.payouts_enabled,
-      status: account.charges_enabled && account.payouts_enabled ? "STRIPE_ACTIVE" : "STRIPE_RESTRICTED",
+      status: account.charges_enabled && account.payouts_enabled ? "PRICING_PENDING" : "STRIPE_RESTRICTED",
     },
   });
 

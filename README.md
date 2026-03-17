@@ -1,8 +1,24 @@
 # AreaSorted
 
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
+
 AreaSorted is a managed marketplace for local home and property services.
 
 This codebase keeps the provider as the primary service seller by default and treats the platform as the booking facilitator / marketplace layer.
+
+## Authoritative product decisions
+
+- Active brand: `AreaSorted`
+- Authoritative business model: managed marketplace with `ProviderCompany` as the primary commercial entity
+- Primary protected backoffice flow: `admin invite -> provider email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`
+- `Cleaner` or worker flows are legacy or secondary workforce modules and must not override provider-company marketplace decisions
+- Customer-facing booking and quote UX remains customer-first; provider onboarding and provider portal are separate protected flows
 
 ## Local development bootstrap
 

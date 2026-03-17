@@ -1,4 +1,12 @@
-# WashHub - Cleaner Onboarding Master Spec v1
+# AreaSorted - Cleaner Onboarding Master Spec v1
+
+> Alignment note (2026-03-16)
+> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
+> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
+> - Where this document still references older names such as `WashHub`, `Alder London`, or `London Cleaning Platform`, treat them as legacy wording pending full content rewrite; `AreaSorted` is the active brand.
+
 
 ## Purpose
 
@@ -22,7 +30,7 @@ Build a cleaner onboarding flow that:
 
 ## Core Operating Principle
 
-WashHub should not behave like a traditional employer if the intention is to keep cleaners genuinely self-employed.
+AreaSorted should not behave like a traditional employer if the intention is to keep workers genuinely self-employed within any retained workforce module.
 
 This means the onboarding, contract, and day-to-day operations should support:
 - cleaner-provided availability
@@ -289,3 +297,8 @@ Cleaner profile model should support:
 3. build admin cleaner review list and detail page
 4. connect DocuSign contract state to onboarding
 5. connect active cleaner records to dispatch
+## Scope Status
+
+- This is a secondary workforce onboarding specification
+- It remains relevant only where AreaSorted retains direct cleaner or worker onboarding for fulfilment operations
+- It must not override provider-company onboarding, provider auth, provider pricing, or provider portal decisions

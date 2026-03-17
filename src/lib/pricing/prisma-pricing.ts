@@ -78,6 +78,16 @@ export async function listProviderPricingRules(providerCompanyId: string): Promi
   }));
 }
 
+export async function countActiveProviderPricingRules(providerCompanyId: string) {
+  const prisma = getPrisma();
+  return prisma.providerPricingRule.count({
+    where: {
+      providerCompanyId,
+      active: true,
+    },
+  });
+}
+
 export async function listPricingAuditLogs(providerCompanyId: string) {
   const prisma = getPrisma();
   return prisma.pricingAuditLog.findMany({
