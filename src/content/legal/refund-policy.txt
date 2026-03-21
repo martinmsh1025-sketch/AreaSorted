@@ -1,0 +1,124 @@
+[PLATFORM NAME]
+CUSTOMER CANCELLATION & REFUND POLICY
+Version 1.0
+Effective Date: [DATE]
+
+This Cancellation & Refund Policy explains how cancellations, booking fees, payment holds, and refunds are handled for bookings made through [PLATFORM NAME].
+
+This Policy should be read together with our Customer Terms and Conditions and any booking-specific information shown to you at checkout.
+
+1. GENERAL
+
+1.1 A booking request is not confirmed until we send written confirmation to you.
+
+1.2 Before confirmation, your payment method may be subject to a payment hold or pre-authorisation.
+
+1.3 If your booking request is not confirmed, any applicable payment hold will be released. The timing of release depends on your bank, card issuer, or payment provider.
+
+1.4 This Policy does not exclude or limit any statutory rights you may have under applicable consumer law.
+
+2. CUSTOMER CANCELLATION BEFORE BOOKING CONFIRMATION
+
+2.1 If you cancel before your booking is confirmed, we will not treat the booking as confirmed.
+
+2.2 Where only a payment hold or pre-authorisation has been placed, we will release that hold in accordance with our payment process. The time taken for the released amount to appear available to you may depend on your bank or card provider.
+
+2.3 No cancellation fee will apply if you cancel before your booking is confirmed, unless a charge was clearly disclosed to you before you submitted your booking request and is permitted by law.
+
+3. CUSTOMER CANCELLATION AFTER BOOKING CONFIRMATION
+
+3.1 If you cancel more than 24 hours before the scheduled booking start time:
+(a) we may cancel the booking; and
+(b) you will receive a full refund of any booking fee already captured, unless a different refund outcome was clearly disclosed to you at checkout and is permitted by law.
+
+3.2 If you cancel within 24 hours of the scheduled booking start time:
+(a) the booking fee is non-refundable; and
+(b) any other captured amount will be handled in accordance with the checkout information shown to you, our Customer Terms, and applicable law.
+
+3.3 If you fail to provide access, do not answer, or the service cannot proceed because of inaccurate details, unsafe conditions, or undisclosed issues, we may treat this as a late cancellation or failed attendance and apply the same refund rules as a cancellation within 24 hours.
+
+4. PROVIDER NON-ACCEPTANCE
+
+4.1 If no provider accepts your booking request before confirmation:
+(a) your booking request will lapse; and
+(b) any applicable payment hold will be released.
+
+4.2 If any amount has already been captured before confirmation in error or contrary to the booking flow shown to you, we will refund that amount as appropriate.
+
+5. PROVIDER CANCELLATION AFTER CONFIRMATION
+
+5.1 If a confirmed booking is cancelled by the provider, we may, acting reasonably:
+(a) offer a replacement provider;
+(b) offer to reschedule the booking;
+(c) issue a full refund;
+(d) issue a partial refund or credit where appropriate; or
+(e) offer another reasonable resolution.
+
+5.2 If you do not wish to accept a replacement or rescheduled booking offered after provider cancellation, we will deal with your refund in accordance with applicable law and the circumstances of the booking.
+
+6. DELAYS AND NO-SHOWS
+
+6.1 If a provider is materially delayed, we may contact you with an updated arrival time or offer an alternative resolution.
+
+6.2 If a provider fails to attend and no reasonable alternative is provided, we may offer:
+(a) a replacement booking;
+(b) a rescheduled service;
+(c) a full refund;
+(d) a partial refund; or
+(e) a credit.
+
+7. COMPLAINTS AFTER SERVICE COMPLETION
+
+7.1 If you are dissatisfied with the service, please contact us as soon as possible and, where possible, within 24 hours after completion.
+
+7.2 Please provide reasonable details of the complaint and any supporting evidence, such as photos.
+
+7.3 We may investigate the issue with you and the provider.
+
+7.4 Where appropriate, we may offer:
+(a) repeat performance;
+(b) a full refund;
+(c) a partial refund;
+(d) a credit; or
+(e) another reasonable resolution.
+
+7.5 We may refuse a refund or reduce the amount refunded where:
+(a) the complaint relates to matters outside the booked scope;
+(b) the issue was caused by inaccurate booking information or unsafe conditions;
+(c) no reasonable evidence is provided;
+(d) the complaint is made so late that fair investigation is no longer reasonably possible; or
+(e) the claim is abusive, fraudulent, or clearly unfounded.
+
+8. STATUTORY CANCELLATION RIGHTS
+
+8.1 Where your booking is a distance contract and the law gives you a statutory right to cancel, that right will apply in addition to this Policy.
+
+8.2 If you ask us to begin arranging or supplying the service during any applicable statutory cancellation period, you expressly request us to begin performance during that period.
+
+8.3 Where permitted by law, if the service has been fully performed after your express request during the cancellation period, your statutory cancellation right may no longer apply.
+
+8.4 Where the law allows, if you cancel after performance has begun during the statutory cancellation period, you may be required to pay an amount that is proportionate to what has already been supplied or reasonably incurred.
+
+9. REFUND METHOD AND TIMING
+
+9.1 Where a refund is due, we will aim to process it promptly.
+
+9.2 Where the law requires a specific refund deadline, we will comply with that deadline.
+
+9.3 Refunds will usually be made back to the original payment method unless otherwise agreed or required by law.
+
+9.4 The time taken for the refund to appear in your account may depend on your bank, card issuer, or payment provider.
+
+10. CHANGES TO THIS POLICY
+
+We may update this Cancellation & Refund Policy from time to time. The latest version will be made available on our website or platform.
+
+11. CONTACT
+
+If you have any questions about a cancellation, refund, or complaint, please contact:
+
+[LEGAL ENTITY NAME / PLATFORM NAME]
+[ADDRESS]
+[SUPPORT EMAIL]
+[PHONE]
+[WEBSITE]

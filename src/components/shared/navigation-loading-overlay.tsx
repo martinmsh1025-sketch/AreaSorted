@@ -48,7 +48,7 @@ export function NavigationLoadingOverlay() {
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       fallbackTimerRef.current = setTimeout(() => {
         setLoading(false);
-      }, 8000);
+      }, 2500);
     };
 
     const handleSubmit = (event: Event) => {
@@ -63,7 +63,7 @@ export function NavigationLoadingOverlay() {
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       fallbackTimerRef.current = setTimeout(() => {
         setLoading(false);
-      }, 8000);
+      }, 2500);
     };
 
     document.addEventListener("click", handleClick, true);

@@ -1,0 +1,115 @@
+[PLATFORM NAME]
+COOKIE POLICY
+Version 1.0
+Effective Date: [DATE]
+
+This Cookie Policy explains how [LEGAL ENTITY NAME] trading as [PLATFORM NAME] ("Platform", "we", "us", "our") uses cookies and similar technologies on our website, app, portal, and related online services.
+
+1. WHAT ARE COOKIES?
+
+Cookies are small text files placed on your device when you visit a website or use an online service. Similar technologies may also be used to store or access information on your device.
+
+2. WHY WE USE COOKIES
+
+We may use cookies and similar technologies to:
+(a) make our website and platform work properly;
+(b) keep you logged in where applicable;
+(c) remember your preferences and settings;
+(d) support security and fraud prevention;
+(e) understand how our website and services are used;
+(f) improve performance and user experience; and
+(g) where you consent, support analytics, advertising, and marketing activities.
+
+3. TYPES OF COOKIES WE USE
+
+3.1 Strictly Necessary Cookies
+These cookies are required for the operation, security, and core functionality of our website or platform. For example, they may:
+(a) enable page navigation;
+(b) remember items added during a booking process;
+(c) keep your session secure; or
+(d) support load balancing or fraud prevention.
+
+Because these cookies are necessary for the service you request, they may be used without consent where the law allows.
+
+3.2 Functional Cookies
+These cookies help remember your settings and choices, such as language, region, or other preferences.
+
+3.3 Analytics / Performance Cookies
+These cookies help us understand how visitors use our website or platform, such as which pages are visited and how users move through the booking process. We use this information to improve our website and services.
+
+Where required by law, we only use analytics or performance cookies with your consent unless a lawful exemption applies.
+
+3.4 Advertising / Marketing Cookies
+These cookies may be used to:
+(a) measure advertising performance;
+(b) limit how often you see an ad;
+(c) understand the effectiveness of campaigns; or
+(d) personalise marketing content.
+
+We only use advertising or marketing cookies where you have given consent.
+
+4. COOKIE CONSENT
+
+4.1 When you first visit our website, we may show you a cookie banner or similar consent tool.
+
+4.2 You can choose whether to accept or reject non-essential cookies.
+
+4.3 Strictly necessary cookies do not require consent, but we still provide information about them in this Policy.
+
+4.4 You can change your cookie preferences at any time through our cookie settings tool or by contacting us, where applicable.
+
+5. MANAGING COOKIES
+
+You can usually control or delete cookies through your browser settings. Please note that disabling strictly necessary cookies may affect the operation, security, or functionality of our website or booking process.
+
+6. THIRD-PARTY COOKIES
+
+Some cookies or similar technologies may be set by third-party services we use, such as analytics, payment, chat, customer support, or advertising providers.
+
+Where third-party non-essential cookies are used, we will seek consent where required by law.
+
+7. HOW LONG COOKIES LAST
+
+Some cookies last only for your browsing session and are deleted when you close your browser. Others may remain on your device for a longer period so that your preferences or settings can be recognised when you return.
+
+We aim to keep cookie duration appropriate to the purpose for which the cookie is used.
+
+8. COOKIE LIST
+
+Our website may use one or more of the following categories of cookies:
+
+(a) Strictly Necessary
+Purpose: website operation, security, booking flow, fraud prevention
+Typical duration: session / short-term
+
+(b) Functional
+Purpose: remembering settings and preferences
+Typical duration: session / medium-term
+
+(c) Analytics / Performance
+Purpose: measuring and improving website and service usage
+Typical duration: short-term / medium-term / as configured
+
+(d) Advertising / Marketing
+Purpose: ad measurement, campaign attribution, and marketing
+Typical duration: as configured by the relevant provider
+
+We may update this list from time to time as our website and tools change.
+
+9. DO NOT TRACK
+
+Our website may not respond to all browser-based "Do Not Track" signals. Where legally required, our cookie choices and consent mechanisms will apply instead.
+
+10. CHANGES TO THIS POLICY
+
+We may update this Cookie Policy from time to time. The latest version will be published on our website.
+
+11. CONTACT
+
+If you have questions about our use of cookies or similar technologies, please contact:
+
+[LEGAL ENTITY NAME / PLATFORM NAME]
+[ADDRESS]
+[PRIVACY EMAIL]
+[PHONE]
+[WEBSITE]

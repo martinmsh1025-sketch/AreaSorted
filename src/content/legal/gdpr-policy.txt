@@ -1,0 +1,126 @@
+[PLATFORM NAME]
+INTERNAL DATA PROTECTION POLICY
+Version 1.0
+Effective Date: [DATE]
+
+1. PURPOSE
+
+This Internal Data Protection Policy explains how [LEGAL ENTITY NAME] trading as [PLATFORM NAME] ("Platform", "we", "us", "our") handles personal data in accordance with applicable data protection laws, including the UK GDPR and the Data Protection Act 2018.
+
+2. SCOPE
+
+This Policy applies to all directors, employees, contractors, consultants, temporary staff, and any other personnel who process personal data on behalf of the Platform.
+
+3. DATA PROTECTION PRINCIPLES
+
+We will process personal data in accordance with the following principles:
+(a) lawfully, fairly, and transparently;
+(b) for specified, explicit, and legitimate purposes;
+(c) only to the extent necessary for those purposes;
+(d) accurately and, where necessary, kept up to date;
+(e) retained only for as long as necessary; and
+(f) securely, using appropriate technical and organisational measures.
+
+4. TYPES OF PERSONAL DATA WE MAY PROCESS
+
+We may process personal data relating to:
+(a) customers;
+(b) prospective customers;
+(c) sole trader providers;
+(d) company provider contacts and personnel;
+(e) staff and contractors;
+(f) website visitors; and
+(g) complainants and enquirers.
+
+The types of data may include name, address, email, phone number, booking details, payment-related information, account records, communications, ID documents, insurance documents, and service history.
+
+5. PURPOSES OF PROCESSING
+
+We may process personal data for the following purposes:
+(a) onboarding providers;
+(b) creating and managing accounts;
+(c) processing booking requests and confirmed bookings;
+(d) customer support, complaints handling, and dispute resolution;
+(e) payment processing, refunds, chargebacks, and payouts;
+(f) fraud prevention, identity verification, and security;
+(g) legal and regulatory compliance;
+(h) service improvement, record-keeping, and business administration; and
+(i) direct marketing where permitted by law.
+
+6. LAWFUL BASES
+
+We will identify and document at least one lawful basis for each processing activity, which may include:
+(a) contract;
+(b) steps requested before entering into a contract;
+(c) legal obligation;
+(d) legitimate interests; and
+(e) consent, where required.
+
+7. DATA SHARING
+
+We may share personal data only where necessary and lawful, including with:
+(a) payment processors;
+(b) IT and software providers;
+(c) customer support providers;
+(d) identity verification providers;
+(e) insurers, legal advisers, accountants, and professional advisers;
+(f) regulators, law enforcement, or courts where required; and
+(g) service providers where necessary to fulfil a booking.
+
+We must identify a lawful basis for data sharing before sharing personal data.
+
+8. ACCESS CONTROL
+
+Access to personal data must be restricted on a need-to-know basis.
+Staff must not access, copy, export, or share personal data unless required for their role.
+
+9. DATA RETENTION
+
+Personal data must not be kept for longer than necessary.
+Retention periods must be documented and reviewed periodically.
+Where data is no longer needed, it must be securely deleted or anonymised.
+
+10. ACCURACY
+
+Reasonable steps must be taken to ensure personal data is accurate and kept up to date.
+Inaccurate or outdated data must be corrected promptly.
+
+11. SECURITY
+
+We will implement appropriate technical and organisational measures to protect personal data, including as appropriate:
+(a) access controls;
+(b) password protection;
+(c) role-based permissions;
+(d) secure storage;
+(e) encryption where appropriate;
+(f) audit logs; and
+(g) incident response procedures.
+
+12. INDIVIDUAL RIGHTS
+
+We will have processes in place to respond to requests relating to:
+(a) access;
+(b) rectification;
+(c) erasure;
+(d) restriction;
+(e) objection;
+(f) portability, where applicable; and
+(g) complaints.
+
+13. DATA INCIDENTS
+
+Any actual or suspected personal data breach must be reported internally immediately to [DATA PROTECTION CONTACT / PRIVACY LEAD].
+The Platform will assess, investigate, contain, document, and where required report the incident.
+
+14. TRAINING AND AWARENESS
+
+Relevant personnel must receive appropriate privacy and data protection guidance or training.
+
+15. RESPONSIBILITIES
+
+Management is responsible for ensuring this Policy is implemented.
+All personnel must comply with this Policy and report concerns promptly.
+
+16. REVIEW
+
+This Policy may be updated from time to time.

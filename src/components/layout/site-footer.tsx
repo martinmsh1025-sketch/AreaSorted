@@ -17,6 +17,7 @@ const cleanerLinks = [
 const legalLinks = [
   ["/terms-and-conditions", "Terms & Conditions"],
   ["/privacy-policy", "Privacy Policy"],
+  ["/refund-policy", "Cancellation & Refund"],
   ["/gdpr-policy", "GDPR Policy"],
   ["/cookie-policy", "Cookie Policy"],
 ];

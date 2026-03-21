@@ -1,11 +1,7 @@
-export default function GdprPolicyPage() {
-  return (
-    <main className="section">
-      <div className="container" style={{ maxWidth: 860 }}>
-        <div className="eyebrow">Legal</div>
-        <h1 className="title" style={{ marginTop: "0.6rem" }}>GDPR Policy</h1>
-        <p className="lead">Placeholder page for GDPR, data rights, retention, lawful basis, and identity-document handling.</p>
-      </div>
-    </main>
-  );
+import { RawLegalPage } from "@/components/legal/raw-legal-page";
+import { readRawLegalFile } from "@/lib/legal/raw-legal";
+
+export default async function GdprPolicyPage() {
+  const content = await readRawLegalFile("gdpr-policy.txt");
+  return <RawLegalPage title="GDPR Policy" content={content} />;
 }
