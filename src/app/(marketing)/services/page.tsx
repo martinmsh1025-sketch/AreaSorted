@@ -42,8 +42,15 @@ export default function ServicesPage() {
             Every service is arranged through AreaSorted and carried out by an independent, vetted provider 
             in your area. Browse the full catalogue below, then get a quote in minutes.
           </p>
+          <p style={{ color: "var(--color-text-muted)", marginTop: "0.9rem", lineHeight: 1.7 }}>
+            We currently support bookings across London for cleaning, pest control, handyman jobs,
+            furniture assembly, waste removal, and garden maintenance. If you are comparing local service
+            options in Camden, Islington, Westminster, Hackney, Lambeth, or nearby boroughs, AreaSorted is
+            designed to help you check coverage, pricing, and booking terms quickly in one place.
+          </p>
           <div className="button-row" style={{ marginTop: "1.5rem" }}>
             <Link className="button button-primary" href="/quote">Continue booking</Link>
+            <Link className="button button-secondary" href="/faq">See booking FAQ</Link>
           </div>
         </div>
       </section>
@@ -94,6 +101,11 @@ export default function ServicesPage() {
                 <p style={{ color: "var(--color-text-muted)", marginTop: "0.4rem" }}>
                   {jobs.length} job types across {cat.subcategories.length} subcategories. 
                   All services arranged through AreaSorted.
+                </p>
+                <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.6, maxWidth: 860 }}>
+                  Looking for {cat.label.toLowerCase()} in London? Use AreaSorted to check postcode coverage,
+                  compare job sizes, understand what affects pricing, and continue booking with a temporary
+                  card hold before provider confirmation.
                 </p>
               </div>
 
@@ -190,6 +202,9 @@ export default function ServicesPage() {
           <h2 className="title">Ready to book?</h2>
           <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.6 }}>
             Enter your postcode to check coverage and get an instant quote for any of the {jobTypeCatalog.length} services above.
+          </p>
+          <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.6 }}>
+            You can also review <Link href="/pricing" style={{ color: "var(--color-brand)", fontWeight: 600 }}>how pricing works</Link> or visit the <Link href="/faq" style={{ color: "var(--color-brand)", fontWeight: 600 }}>help centre</Link> before continuing.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
             <Link className="button button-primary" href="/quote">Continue booking</Link>

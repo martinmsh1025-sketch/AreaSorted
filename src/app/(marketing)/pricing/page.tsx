@@ -69,6 +69,15 @@ export default function PricingPage() {
             Every quote shows the full breakdown — base price, add-ons, adjustments, and booking fee — before you pay. 
             The price you see at checkout is the price you pay.
           </p>
+          <p style={{ color: "var(--color-text-muted)", marginTop: "0.9rem", lineHeight: 1.7 }}>
+            If you are researching local service pricing in London, this page explains how AreaSorted builds a
+            quote for cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance.
+            Final pricing depends on postcode, service type, job size, timing, and any add-ons you choose.
+          </p>
+          <div className="button-row" style={{ marginTop: "1.5rem" }}>
+            <Link className="button button-primary" href="/quote">Continue booking</Link>
+            <Link className="button button-secondary" href="/services">Browse services</Link>
+          </div>
         </div>
       </section>
 
@@ -130,6 +139,9 @@ export default function PricingPage() {
               </div>
             ))}
           </div>
+          <p style={{ color: "var(--color-text-muted)", margin: "1.2rem auto 0", maxWidth: 860, textAlign: "center", lineHeight: 1.6 }}>
+            AreaSorted places a temporary card hold when you continue booking. Payment is only captured once the matched provider confirms the job.
+          </p>
         </div>
       </section>
 
@@ -314,6 +326,9 @@ export default function PricingPage() {
           <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.6 }}>
             Enter your postcode and job details. The pricing engine calculates your total with a full breakdown — 
             no surprises, no callbacks.
+          </p>
+          <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.6 }}>
+            For more detail on booking rules, payment holds, and confirmation timing, see the <Link href="/faq" style={{ color: "var(--color-brand)", fontWeight: 600 }}>FAQ</Link> and <Link href="/refund-policy" style={{ color: "var(--color-brand)", fontWeight: 600 }}>cancellation policy</Link>.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
             <Link className="button button-primary" href="/quote">Continue booking</Link>

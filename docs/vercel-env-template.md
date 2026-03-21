@@ -30,6 +30,7 @@ These are usually needed for the full customer and provider experience.
 
 ```env
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+NEXT_PUBLIC_GA_MEASUREMENT_ID=
 
 RESEND_API_KEY=
 EMAIL_FROM=

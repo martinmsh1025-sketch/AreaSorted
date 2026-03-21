@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { boroughPages } from "@/lib/seo/borough-pages";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://areasorted.com";
 
@@ -42,6 +43,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.6,
+    },
+    {
+      url: `${BASE_URL}/london`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
     },
     {
       url: `${BASE_URL}/become-a-cleaner`,
@@ -103,5 +110,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  return [...staticPages, ...authPages];
+  const boroughLandingPages: MetadataRoute.Sitemap = boroughPages.map((page) => ({
+    url: `${BASE_URL}/london/${page.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...boroughLandingPages, ...authPages];
 }

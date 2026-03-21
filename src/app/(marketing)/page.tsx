@@ -219,6 +219,7 @@ const howItWorks = [
 
 export default function HomePage() {
   const router = useRouter();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://areasorted.com";
   const [postcode, setPostcode] = useState("");
   const [addressId, setAddressId] = useState("");
   const [addresses, setAddresses] = useState<Array<{ ID: string; Line: string }>>([]);
@@ -315,6 +316,25 @@ export default function HomePage() {
     },
   ];
 
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "HomeAndConstructionBusiness",
+    name: "AreaSorted",
+    url: siteUrl,
+    areaServed: ["Greater London"],
+    description:
+      "AreaSorted helps customers book trusted local services across London, including cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance.",
+    makesOffer: serviceItems.map((service) => ({
+      "@type": "Offer",
+      itemOffered: {
+        "@type": "Service",
+        name: service.label,
+        description: service.description,
+        areaServed: "London",
+      },
+    })),
+  };
+
   async function handleCoverageCheck() {
     if (isSubmitting) return;
 
@@ -363,6 +383,10 @@ export default function HomePage() {
 
   return (
     <main className="homepage-shell">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
       {isSubmitting ? (
         <PageLoading fullscreen title="Loading..." message="Please wait..." />
       ) : null}
