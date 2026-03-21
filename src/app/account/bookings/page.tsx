@@ -12,6 +12,10 @@ export default async function AccountBookingsPage() {
     include: {
       quoteRequest: { select: { reference: true, serviceKey: true } },
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      counterOffers: {
+        where: { status: "PENDING" },
+        select: { id: true },
+      },
     },
   });
 
@@ -47,6 +51,7 @@ export default async function AccountBookingsPage() {
                   day: "numeric", month: "short", year: "numeric",
                 });
                 const payment = booking.paymentRecords?.[0]?.paymentState ?? "UNKNOWN";
+                const hasPendingOffer = booking.counterOffers.length > 0;
 
                 return (
                   <Link
@@ -58,15 +63,37 @@ export default async function AccountBookingsPage() {
                       alignItems: "center",
                       padding: "0.75rem 1rem",
                       borderRadius: "0.5rem",
-                      border: "1px solid var(--color-border)",
+                      border: hasPendingOffer
+                        ? "2px solid var(--color-brand, #d9252a)"
+                        : "1px solid var(--color-border)",
                       textDecoration: "none",
                       color: "inherit",
                       gap: "1rem",
                       flexWrap: "wrap",
+                      background: hasPendingOffer ? "linear-gradient(135deg, #fef3f3 0%, #fff 100%)" : undefined,
                     }}
                   >
                     <div>
                       <strong style={{ fontSize: "0.95rem" }}>{service}</strong>
+                      {hasPendingOffer && (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            marginLeft: "0.5rem",
+                            background: "var(--color-brand, #d9252a)",
+                            color: "#fff",
+                            fontSize: "0.65rem",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            padding: "0.1rem 0.45rem",
+                            borderRadius: "0.2rem",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          Offer pending
+                        </span>
+                      )}
                       <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginTop: "0.15rem" }}>
                         {ref} &middot; {date} at {booking.scheduledStartTime}
                       </div>

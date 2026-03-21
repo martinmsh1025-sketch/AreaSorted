@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { requireProviderOrdersAccess } from "@/lib/provider-auth";
-import { createProviderNotification } from "@/lib/providers/notifications";
+import { sendTransactionalEmail } from "@/lib/notifications/email";
 
 /**
  * Provider submits a counter offer on a booking.
  * Only allowed when booking is PAID or PENDING_ASSIGNMENT.
+ * The customer is notified via email and can accept/reject from their dashboard.
  */
 export async function createCounterOfferAction(formData: FormData) {
   const session = await requireProviderOrdersAccess();
@@ -39,6 +40,10 @@ export async function createCounterOfferAction(formData: FormData) {
       providerCompanyId: session.providerCompany.id,
       bookingStatus: { in: ["PAID", "PENDING_ASSIGNMENT"] },
     },
+    include: {
+      customer: { select: { email: true, firstName: true } },
+      quoteRequest: { select: { reference: true } },
+    },
   });
 
   if (!booking) return { error: "Booking not found or not eligible for counter offer" };
@@ -64,6 +69,46 @@ export async function createCounterOfferAction(formData: FormData) {
       message,
     },
   });
+
+  // Notify customer via email
+  const ref = booking.quoteRequest?.reference ?? booking.id;
+  const providerName = session.providerCompany.tradingName ?? session.providerCompany.legalName ?? "Your provider";
+  const changes: string[] = [];
+  if (proposedPrice !== null) {
+    changes.push(`New price: £${proposedPrice.toFixed(2)}`);
+  }
+  if (proposedDate) {
+    changes.push(`New date: ${proposedDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`);
+  }
+  if (proposedStartTime) {
+    changes.push(`New start time: ${proposedStartTime}`);
+  }
+
+  try {
+    await sendTransactionalEmail({
+      to: booking.customer.email,
+      subject: `Counter offer for your booking ${ref} — AreaSorted`,
+      text: [
+        `Hi ${booking.customer.firstName ?? "there"},`,
+        "",
+        `${providerName} has proposed a change to your booking (ref: ${ref}):`,
+        "",
+        ...changes,
+        ...(message ? ["", `Provider's message: "${message}"`] : []),
+        "",
+        "Please log in to your AreaSorted account to accept or decline this offer:",
+        `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://areasorted.com"}/account/bookings/${ref}`,
+        "",
+        "If you take no action, the original booking terms remain in place.",
+        "",
+        "Best regards,",
+        "AreaSorted",
+      ].join("\n"),
+    });
+  } catch {
+    // Email sending is non-critical — the customer can still see it in their dashboard
+    console.warn("[counter-offer] Failed to send email notification to customer");
+  }
 
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);

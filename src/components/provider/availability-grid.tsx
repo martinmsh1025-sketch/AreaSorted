@@ -10,7 +10,6 @@ import {
   X,
   Calendar,
   Clock,
-  Settings2,
   CalendarOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,10 +55,7 @@ type DateOverride = {
 type AvailabilityGridProps = {
   initialSchedule: DaySchedule[];
   initialOverrides: DateOverride[];
-  maxJobsPerDay: number | null;
-  leadTimeHours: number;
   saveAllAction: (formData: FormData) => Promise<void>;
-  saveSettingsAction: (formData: FormData) => Promise<void>;
   saveDateOverrideAction: (formData: FormData) => Promise<void>;
   deleteDateOverrideAction: (formData: FormData) => Promise<void>;
 };
@@ -69,10 +65,7 @@ type AvailabilityGridProps = {
 export function AvailabilityGrid({
   initialSchedule,
   initialOverrides,
-  maxJobsPerDay,
-  leadTimeHours,
   saveAllAction,
-  saveSettingsAction,
   saveDateOverrideAction,
   deleteDateOverrideAction,
 }: AvailabilityGridProps) {
@@ -82,12 +75,6 @@ export function AvailabilityGrid({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
-
-  // Settings state
-  const [maxJobs, setMaxJobs] = useState(maxJobsPerDay != null ? String(maxJobsPerDay) : "");
-  const [leadTime, setLeadTime] = useState(String(leadTimeHours));
-  const [settingsDirty, setSettingsDirty] = useState(false);
-  const [settingsSaved, setSettingsSaved] = useState(false);
 
   // Date override form
   const [showAddOverride, setShowAddOverride] = useState(false);
@@ -132,23 +119,6 @@ export function AvailabilityGrid({
         setTimeout(() => setSaved(false), 4000);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to save.");
-      }
-    });
-  }
-
-  function handleSaveSettings() {
-    const fd = new FormData();
-    fd.set("maxJobsPerDay", maxJobs);
-    fd.set("leadTimeHours", leadTime);
-
-    startTransition(async () => {
-      try {
-        await saveSettingsAction(fd);
-        setSettingsSaved(true);
-        setSettingsDirty(false);
-        setTimeout(() => setSettingsSaved(false), 4000);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to save settings.");
       }
     });
   }
@@ -527,89 +497,6 @@ export function AvailabilityGrid({
         )}
       </div>
 
-      {/* ── Booking Settings Section ─── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Settings2 className="size-4 text-blue-600 dark:text-blue-400" />
-          <h2 className="text-sm font-semibold">Booking Settings</h2>
-        </div>
-
-        <div className="rounded-lg border bg-card p-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Max jobs per day
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="20"
-                value={maxJobs}
-                onChange={(e) => {
-                  setMaxJobs(e.target.value);
-                  setSettingsDirty(true);
-                  setSettingsSaved(false);
-                }}
-                placeholder="Unlimited"
-                className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Maximum number of bookings you can accept per day. Leave blank for unlimited.
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Minimum lead time (hours)
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="168"
-                value={leadTime}
-                onChange={(e) => {
-                  setLeadTime(e.target.value);
-                  setSettingsDirty(true);
-                  setSettingsSaved(false);
-                }}
-                className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                How far in advance must customers book? Default is 24 hours.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 mt-4">
-            {settingsDirty && (
-              <span className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-                <AlertCircle className="size-3" />
-                Unsaved
-              </span>
-            )}
-            {settingsSaved && (
-              <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                <Check className="size-3" />
-                Saved
-              </span>
-            )}
-            <Button
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
-              onClick={handleSaveSettings}
-              disabled={isPending || !settingsDirty}
-            >
-              {isPending ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Save className="size-3.5" />
-              )}
-              Save Settings
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Error */}
       {error && (
         <div className="rounded-md bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:bg-red-950/20 dark:text-red-400">
@@ -626,10 +513,6 @@ export function AvailabilityGrid({
         <p>
           <strong>Date overrides</strong> let you block specific dates (e.g. holidays)
           or set different hours for a particular day.
-        </p>
-        <p>
-          <strong>Lead time</strong> prevents last-minute bookings. If set to 24 hours,
-          customers must book at least 24 hours in advance.
         </p>
       </div>
 

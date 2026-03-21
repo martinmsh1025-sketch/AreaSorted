@@ -30,7 +30,7 @@ interface CounterOffer {
   proposedStartTime: string | null;
   message: string | null;
   status: string;
-  adminNotes: string | null;
+  responseNotes: string | null;
   createdAt: string;
   respondedAt: string | null;
 }
@@ -38,7 +38,7 @@ interface CounterOffer {
 /* ── Status helpers ─────────────────────────── */
 
 const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string; icon: React.ComponentType<{ className?: string }> }> = {
-  PENDING: { variant: "secondary", label: "Pending Review", icon: Clock },
+  PENDING: { variant: "secondary", label: "Awaiting Customer", icon: Clock },
   ACCEPTED: { variant: "default", label: "Accepted", icon: CheckCircle2 },
   REJECTED: { variant: "destructive", label: "Declined", icon: XCircle },
   WITHDRAWN: { variant: "outline", label: "Withdrawn", icon: XCircle },
@@ -104,7 +104,7 @@ export function CounterOfferButton({
         <DialogHeader>
           <DialogTitle>Make a Counter Offer</DialogTitle>
           <DialogDescription>
-            Propose a different price or date for this booking. The admin team will review your offer.
+            Propose a different price or date for this booking. The customer will be notified and can accept or decline your offer.
           </DialogDescription>
         </DialogHeader>
 
@@ -294,9 +294,9 @@ export function CounterOffersList({ offers }: { offers: CounterOffer[] }) {
               </p>
             )}
 
-            {offer.adminNotes && (
+            {offer.responseNotes && (
               <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
-                <span className="font-medium">Admin response:</span> {offer.adminNotes}
+                <span className="font-medium">Customer response:</span> {offer.responseNotes}
               </div>
             )}
 

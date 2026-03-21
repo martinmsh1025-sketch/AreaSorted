@@ -1278,7 +1278,7 @@ model CounterOffer {
   proposedStartTime String?                                  // "09:00"
   message           String?                                  // provider's message explaining the change
   status            CounterOfferStatus @default(PENDING)
-  adminNotes        String?
+  responseNotes     String?                                  // customer's reason when rejecting
   respondedAt       DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt

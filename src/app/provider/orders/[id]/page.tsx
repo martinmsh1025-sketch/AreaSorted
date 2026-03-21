@@ -124,7 +124,7 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
     proposedStartTime: co.proposedStartTime,
     message: co.message,
     status: co.status,
-    adminNotes: co.adminNotes,
+    responseNotes: co.responseNotes,
     createdAt: co.createdAt.toISOString(),
     respondedAt: co.respondedAt ? co.respondedAt.toISOString() : null,
   }));

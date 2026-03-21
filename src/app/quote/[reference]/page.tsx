@@ -97,7 +97,7 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
                                 {Number(option.postcodeSurcharge) > 0 && (
                                   <div><span>Area surcharge</span><strong>{money(option.postcodeSurcharge)}</strong></div>
                                 )}
-                                <div><span>Est. duration</span><strong>{Number(option.estimatedHours)}h</strong></div>
+
                               </div>
                               {!option.paymentReady && (
                                 <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--color-warning, #d97706)", lineHeight: 1.5 }}>

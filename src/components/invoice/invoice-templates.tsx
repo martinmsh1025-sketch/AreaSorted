@@ -398,7 +398,10 @@ function ServiceSummary({ data }: { data: InvoiceData }) {
         </div>
         <div>
           <p className="invoice-label">Duration</p>
-          <p className="invoice-value">{data.durationHours} hours</p>
+          <p className="invoice-value">Approx. {data.durationHours <= 1 ? "1-2" : `${data.durationHours}-${data.durationHours + 1}`} hours</p>
+          <p className="invoice-value" style={{ fontSize: "0.7rem", color: "#888", marginTop: "0.15rem" }}>
+            Estimate only. Actual time may vary. The service is complete when the agreed tasks are finished.
+          </p>
         </div>
         <div className="invoice-service-address">
           <p className="invoice-label">Address</p>

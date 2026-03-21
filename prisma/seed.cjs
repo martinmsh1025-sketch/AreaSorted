@@ -236,7 +236,10 @@ async function main() {
       // Sparkle Clean: uses HOURLY pricing mode (system estimates hours from bedrooms/bathrooms)
       email: 'sparkle-clean@example.com',
       tradingName: 'Sparkle Clean London',
+      legalName: 'Sparkle Clean London Ltd',
       companyNumber: 'AS-ACTIVE-001',
+      registeredAddress: '10 Downing Street, London SW1A 2AA',
+      phone: '+44 20 7946 0001',
       categories: ['CLEANING'],
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1X', 'SW1Y', 'SW1P', 'SW1H', 'SW1E', 'SW3', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'EC1', 'EC1A', 'EC1M', 'EC1N', 'EC1R', 'EC1V', 'EC1Y', 'N1'],
       pricingRules: [
@@ -251,7 +254,10 @@ async function main() {
       // Pristine Maids: uses FIXED_PER_SIZE pricing mode (provider sets prices per property size)
       email: 'pristine-maids@example.com',
       tradingName: 'Pristine Maids',
+      legalName: 'Pristine Maids Services Ltd',
       companyNumber: 'AS-ACTIVE-002',
+      registeredAddress: '221B Baker Street, London NW1 6XE',
+      phone: '+44 20 7946 0002',
       categories: ['CLEANING'],
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1P', 'SW3', 'SW5', 'SW6', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W'],
       pricingRules: [
@@ -265,7 +271,10 @@ async function main() {
       // Fresh Start: uses HOURLY pricing mode (budget-friendly option)
       email: 'fresh-start-cleaners@example.com',
       tradingName: 'Fresh Start Cleaners',
+      legalName: 'Fresh Start Cleaners Ltd',
       companyNumber: 'AS-ACTIVE-003',
+      registeredAddress: '1 Oxford Street, London W1D 1AN',
+      phone: '+44 20 7946 0003',
       categories: ['CLEANING'],
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'WC1', 'WC1A', 'WC1B', 'WC1E', 'WC1H', 'WC1N', 'WC1R', 'WC1V', 'WC1X', 'WC2', 'WC2A', 'WC2B', 'WC2E', 'WC2H', 'WC2N', 'WC2R'],
       pricingRules: [
@@ -280,7 +289,10 @@ async function main() {
       // London Pest Solutions: uses FIXED_PER_SIZE pricing (size-based treatment pricing)
       email: 'london-pest-solutions@example.com',
       tradingName: 'London Pest Solutions',
+      legalName: 'London Pest Solutions Ltd',
       companyNumber: 'AS-ACTIVE-004',
+      registeredAddress: '50 Broadway, London SW1H 0BL',
+      phone: '+44 20 7946 0004',
       categories: ['PEST_CONTROL'],
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1X', 'SW1Y', 'SW1P', 'SW1H', 'SW1E', 'SW3', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'EC1', 'EC1A', 'EC1M', 'EC1N', 'EC1R', 'EC1V', 'EC1Y', 'N1', 'SE1', 'E1', 'E2', 'E14', 'NW1'],
       pricingRules: [
@@ -366,8 +378,11 @@ async function main() {
       data: {
         userId: user.id,
         tradingName: prov.tradingName,
+        legalName: prov.legalName,
         companyNumber: prov.companyNumber,
+        registeredAddress: prov.registeredAddress,
         contactEmail: prov.email,
+        phone: prov.phone,
         status: 'ACTIVE',
         paymentReady: true,
         emailVerifiedAt: new Date(),
@@ -387,6 +402,34 @@ async function main() {
         payoutsEnabled: true,
         detailsSubmitted: true,
         lastSyncedAt: new Date(),
+      },
+    });
+
+    // Required document — company registration proof (approved)
+    await prisma.providerOnboardingDocument.create({
+      data: {
+        providerCompanyId: company.id,
+        documentKey: 'company_registration_proof',
+        label: 'Company registration proof',
+        fileName: 'company_registration.pdf',
+        storedFileName: 'mock_company_registration.pdf',
+        storagePath: '/mock/documents/company_registration.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 102400,
+        status: 'APPROVED',
+        uploadedAt: new Date(),
+        reviewedAt: new Date(),
+      },
+    });
+
+    // Provider agreement (signed)
+    await prisma.providerAgreement.create({
+      data: {
+        providerCompanyId: company.id,
+        version: '1.0',
+        status: 'SIGNED',
+        documentUrl: '/mock/agreements/provider-agreement-v1.pdf',
+        signedAt: new Date(),
       },
     });
 

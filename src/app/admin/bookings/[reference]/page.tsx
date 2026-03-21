@@ -3,7 +3,7 @@ import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
-import { updateBookingStatusAction, acceptCounterOfferAction, rejectCounterOfferAction } from "./actions";
+import { updateBookingStatusAction } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -292,19 +292,18 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
             </CardContent>
           </Card>
 
-          {/* Counter Offers */}
+          {/* Counter Offers (read-only — customers respond directly) */}
           {booking.counterOffers.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Counter offers</CardTitle>
                 <CardDescription>
-                  {booking.counterOffers.length} offer{booking.counterOffers.length !== 1 ? "s" : ""} from provider
+                  {booking.counterOffers.length} offer{booking.counterOffers.length !== 1 ? "s" : ""} from provider — customers respond directly
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {booking.counterOffers.map((offer) => {
                   const provName = offer.providerCompany.tradingName || offer.providerCompany.legalName || "Provider";
-                  const isPending = offer.status === "PENDING";
                   return (
                     <div key={offer.id} className="rounded-lg border p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -319,10 +318,10 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
                                   ? "bg-gray-100 text-gray-600"
                                   : offer.status === "EXPIRED"
                                     ? "bg-yellow-100 text-yellow-800"
-                                    : ""
+                                    : "bg-blue-100 text-blue-800"
                           }
                         >
-                          {offer.status}
+                          {offer.status === "PENDING" ? "AWAITING CUSTOMER" : offer.status}
                         </Badge>
                       </div>
 
@@ -351,8 +350,8 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
                         <p className="text-sm text-muted-foreground italic">&ldquo;{offer.message}&rdquo;</p>
                       )}
 
-                      {offer.adminNotes && (
-                        <p className="text-xs text-muted-foreground">Admin notes: {offer.adminNotes}</p>
+                      {offer.responseNotes && (
+                        <p className="text-xs text-muted-foreground">Customer response: {offer.responseNotes}</p>
                       )}
 
                       <p className="text-xs text-muted-foreground">
@@ -360,29 +359,10 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
                         {offer.respondedAt && ` · Responded ${offer.respondedAt.toISOString().slice(0, 19).replace("T", " ")}`}
                       </p>
 
-                      {isPending && (
-                        <div className="flex gap-2 pt-1">
-                          <form action={acceptCounterOfferAction} className="flex-1 space-y-2">
-                            <input type="hidden" name="counterOfferId" value={offer.id} />
-                            <Input name="adminNotes" placeholder="Admin notes (optional)" className="text-xs" />
-                            <button
-                              type="submit"
-                              className="inline-flex h-8 w-full items-center justify-center rounded-md bg-green-600 px-3 text-sm font-medium text-white shadow hover:bg-green-700"
-                            >
-                              Accept
-                            </button>
-                          </form>
-                          <form action={rejectCounterOfferAction} className="flex-1 space-y-2">
-                            <input type="hidden" name="counterOfferId" value={offer.id} />
-                            <Input name="adminNotes" placeholder="Reason for rejection (optional)" className="text-xs" />
-                            <button
-                              type="submit"
-                              className="inline-flex h-8 w-full items-center justify-center rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow hover:bg-red-700"
-                            >
-                              Reject
-                            </button>
-                          </form>
-                        </div>
+                      {offer.status === "PENDING" && (
+                        <p className="text-xs text-amber-600 font-medium">
+                          Awaiting customer response — counter offers are now handled directly between provider and customer.
+                        </p>
                       )}
                     </div>
                   );

@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { AvailabilityGrid } from "@/components/provider/availability-grid";
 import {
   saveAllAvailabilityAction,
-  saveAvailabilitySettingsAction,
   saveDateOverrideAction,
   deleteDateOverrideAction,
 } from "./actions";
@@ -24,12 +23,6 @@ export default async function ProviderAvailabilityPage() {
   const session = await requireProviderPricingAccess();
   const providerCompanyId = session.providerCompany.id;
   const prisma = getPrisma();
-
-  // Load provider company for settings
-  const providerCompany = await prisma.providerCompany.findUniqueOrThrow({
-    where: { id: providerCompanyId },
-    select: { maxJobsPerDay: true, leadTimeHours: true },
-  });
 
   // Load existing rules
   let rules = await prisma.providerAvailability.findMany({
@@ -119,10 +112,7 @@ export default async function ProviderAvailabilityPage() {
       <AvailabilityGrid
         initialSchedule={schedule}
         initialOverrides={overridesForClient}
-        maxJobsPerDay={providerCompany.maxJobsPerDay}
-        leadTimeHours={providerCompany.leadTimeHours}
         saveAllAction={saveAllAvailabilityAction}
-        saveSettingsAction={saveAvailabilitySettingsAction}
         saveDateOverrideAction={saveDateOverrideAction}
         deleteDateOverrideAction={deleteDateOverrideAction}
       />

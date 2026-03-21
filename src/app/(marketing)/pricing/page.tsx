@@ -8,9 +8,10 @@ export default function PricingPage() {
         </div>
         <div className="panel card">
           <ul className="list-clean" style={{ color: "var(--color-text-muted)" }}>
-            <li>Basic cleaning with customer supplies: from GBP 24/hour</li>
-            <li>Basic cleaning with cleaner supplies: from GBP 27/hour</li>
-            <li>Deep cleaning: from GBP 30/hour</li>
+            <li>Basic cleaning with customer supplies: from £48</li>
+            <li>Basic cleaning with cleaner supplies: from £54</li>
+            <li>Deep cleaning: from £60</li>
+            <li>Final price based on property size and requirements</li>
             <li>Add-ons and surcharges shown before checkout</li>
           </ul>
         </div>

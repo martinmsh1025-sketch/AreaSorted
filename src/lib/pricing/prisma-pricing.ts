@@ -1,6 +1,7 @@
 import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
-import { jobTypeCatalog, cleaningConditionOptions } from "@/lib/service-catalog";
+import { jobTypeCatalog } from "@/lib/service-catalog";
+import { estimateCleaningHours, roundMoney } from "@/lib/pricing/shared-pricing";
 
 export type ProviderPricingPortalRow = {
   id: string;
@@ -59,10 +60,6 @@ function asNumber(value: unknown) {
   if (value == null) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function roundMoney(value: number) {
-  return Math.round(value * 100) / 100;
 }
 
 export async function listProviderPricingRules(providerCompanyId: string): Promise<ProviderPricingPortalRow[]> {
@@ -321,48 +318,6 @@ export async function savePricingAreaOverride(input: {
   });
 
   return saved;
-}
-
-/**
- * Estimate hours for cleaning based on bedrooms, bathrooms, kitchens, property type, and condition.
- * This mirrors the logic in `service-catalog.ts` `calculateQuote`.
- */
-function estimateCleaningHours(
-  bedrooms: number,
-  bathrooms: number,
-  kitchens: number,
-  propertyType?: string,
-  cleaningCondition?: "light" | "standard" | "heavy" | "very-heavy",
-): number {
-  const baseHours = 0.8;
-  const bedroomHours = Math.max(bedrooms, 0) * 0.95;
-  const bathroomHours = Math.max(bathrooms, 0) * 0.55;
-  const kitchenHours = Math.max(kitchens, 1) * 0.45;
-  let total = baseHours + bedroomHours + bathroomHours + kitchenHours;
-
-  // Property type multiplier
-  switch (propertyType) {
-    case "terraced":
-      total *= 1.05;
-      break;
-    case "semi-detached":
-      total *= 1.1;
-      break;
-    case "detached":
-      total *= 1.2;
-      break;
-    case "commercial":
-      total *= 1.3;
-      break;
-    // flat / default: no multiplier
-  }
-
-  // Cleaning condition multiplier
-  const conditionOption = cleaningConditionOptions.find((o) => o.value === cleaningCondition);
-  const conditionMultiplier = conditionOption?.multiplier ?? 1;
-  total *= conditionMultiplier;
-
-  return Math.round(total * 10) / 10; // round to 1 decimal
 }
 
 /**

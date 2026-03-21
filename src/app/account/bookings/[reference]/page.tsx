@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCustomerSession } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
+import { CustomerCounterOfferBanner } from "@/components/customer/counter-offer-response";
 
 type BookingDetailPageProps = {
   params: Promise<{ reference: string }>;
@@ -25,6 +26,9 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
       priceSnapshot: true,
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
       marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
+      counterOffers: {
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -39,6 +43,19 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     ?? "Pending assignment";
 
   const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+
+  // Prepare counter offers for client component
+  const counterOffers = booking.counterOffers.map((co) => ({
+    id: co.id,
+    proposedPrice: co.proposedPrice ? Number(co.proposedPrice) : null,
+    proposedDate: co.proposedDate ? co.proposedDate.toISOString() : null,
+    proposedStartTime: co.proposedStartTime,
+    message: co.message,
+    status: co.status,
+    createdAt: co.createdAt.toISOString(),
+  }));
+
+  const hasPendingOffer = counterOffers.some((o) => o.status === "PENDING");
 
   return (
     <main className="section">
@@ -59,6 +76,16 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           </p>
         </div>
 
+        {/* Counter offer banner — shown prominently if pending */}
+        {counterOffers.length > 0 && (
+          <div style={{ marginBottom: "1.5rem" }}>
+            <CustomerCounterOfferBanner
+              offers={counterOffers}
+              providerName={providerName}
+            />
+          </div>
+        )}
+
         <div className="panel card" style={{ marginBottom: "1.5rem" }}>
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Service details</h2>
           <div className="quote-summary-list">
@@ -66,9 +93,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             <div><span>Payment</span><strong>{String(payment).replace(/_/g, " ")}</strong></div>
             <div><span>Date</span><strong>{booking.scheduledDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong></div>
             <div><span>Time</span><strong>{booking.scheduledStartTime}</strong></div>
-            <div><span>Duration</span><strong>{Number(booking.durationHours)} hours</strong></div>
+            <div><span>Duration</span><strong>Approx. {Number(booking.durationHours) <= 1 ? "1-2" : `${Number(booking.durationHours)}-${Number(booking.durationHours) + 1}`} hours</strong></div>
             <div><span>Provider</span><strong>{providerName}</strong></div>
           </div>
+          <p style={{ marginTop: "0.75rem", fontSize: "0.75rem", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
+            Duration shown is an estimate only. Actual time may vary depending on property condition and scope of work. The service is complete when the agreed tasks are finished, regardless of time taken.
+          </p>
         </div>
 
         <div className="panel card" style={{ marginBottom: "1.5rem" }}>
@@ -94,6 +124,11 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
                 <strong>&pound;{Number(booking.priceSnapshot.customerTotalAmount).toFixed(2)}</strong>
               </div>
             </div>
+            {hasPendingOffer && (
+              <p style={{ fontSize: "0.8rem", color: "var(--color-brand, #d9252a)", fontWeight: 500, marginTop: "0.75rem" }}>
+                A price change has been proposed — see above to accept or decline.
+              </p>
+            )}
             {showInvoice && (
               <div style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px solid var(--color-border)" }}>
                 <Link

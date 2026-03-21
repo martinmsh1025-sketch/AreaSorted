@@ -655,9 +655,8 @@ export function PublicQuoteForm() {
                 </h2>
                 <div className="quote-summary-list">
                   <div><span>Service</span><strong>{estimate.serviceName}</strong></div>
-                  <div><span>Duration</span><strong>{estimate.hours}h estimated</strong></div>
                   <div>
-                    <span>Provider rate</span>
+                    <span>Service price</span>
                     <strong>
                       {money(estimate.minBase)}
                       {estimate.minBase !== estimate.maxBase ? ` – ${money(estimate.maxBase)}` : ""}
@@ -680,12 +679,12 @@ export function PublicQuoteForm() {
                 </div>
                 {isCleaning && roomCount && (
                   <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                    Duration is estimated from your property details. Your final price will be confirmed after matching with an available provider.
+                    Price is based on your property details. Your final price will be confirmed after matching with an available provider. Duration is an estimate only — the service is complete when the agreed tasks are finished.
                   </p>
                 )}
                 {isCleaning && !roomCount && (
                   <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                    Price is based on job scope and provider rates. Your final price will be confirmed after matching.
+                    Price is based on job scope and provider rates. Your final price will be confirmed after matching. Duration is an estimate only — the service is complete when the agreed tasks are finished.
                   </p>
                 )}
                 {isPestControl && (
@@ -695,7 +694,7 @@ export function PublicQuoteForm() {
                 )}
                 {!isCleaning && !isPestControl && (
                   <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                    This is an estimate based on typical provider rates for this service. Your final price will be confirmed after matching with an available provider.
+                    This is an estimate based on typical provider rates for this service. Your final price will be confirmed after matching with an available provider. Duration is an estimate only — the service is complete when the agreed tasks are finished.
                   </p>
                 )}
               </>
