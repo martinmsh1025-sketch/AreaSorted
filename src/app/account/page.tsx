@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireCustomerSession } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
 import { customerLogoutAction } from "@/app/customer/login/actions";
+import { EditProfileSection } from "./edit-profile-section";
 
 export default async function AccountDashboardPage() {
   const customer = await requireCustomerSession();
@@ -108,11 +109,17 @@ export default async function AccountDashboardPage() {
         </div>
 
         <div className="panel card">
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Account details</h2>
-          <div className="quote-summary-list">
-            <div><span>Name</span><strong>{customer.firstName} {customer.lastName}</strong></div>
-            <div><span>Email</span><strong>{customer.email}</strong></div>
-            <div><span>Phone</span><strong>{customer.phone}</strong></div>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Account details</h2>
+          <EditProfileSection
+            customer={{
+              id: customer.id,
+              firstName: customer.firstName,
+              lastName: customer.lastName,
+              email: customer.email,
+              phone: customer.phone,
+            }}
+          />
+          <div className="quote-summary-list" style={{ marginTop: "0.75rem" }}>
             <div><span>Member since</span><strong>{customer.createdAt.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></div>
           </div>
         </div>

@@ -6,6 +6,72 @@ import { requireCustomerSession } from "@/lib/customer-auth";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
 
+/** Statuses from which a customer can self-cancel */
+const CANCELLABLE_STATUSES = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"];
+
+/**
+ * Customer cancels their own booking.
+ */
+export async function cancelBookingAction(formData: FormData) {
+  const customer = await requireCustomerSession();
+  const bookingId = String(formData.get("bookingId") || "");
+  const reason = String(formData.get("reason") || "").trim();
+  if (!bookingId) return { error: "Missing booking ID" };
+
+  const prisma = getPrisma();
+
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      customerId: customer.id,
+      bookingStatus: { in: CANCELLABLE_STATUSES as any },
+    },
+    include: {
+      quoteRequest: { select: { reference: true } },
+    },
+  });
+
+  if (!booking) return { error: "Booking not found or cannot be cancelled" };
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      bookingStatus: "CANCELLED",
+      cancelledByType: "CUSTOMER",
+      cancelledReason: reason || "Cancelled by customer",
+    },
+  });
+
+  // Send status email to customer
+  try {
+    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    await sendBookingStatusEmail(bookingId, "CANCELLED");
+  } catch { /* non-critical */ }
+
+  // Notify provider if one was assigned
+  if (booking.providerCompanyId) {
+    try {
+      await createProviderNotification({
+        providerCompanyId: booking.providerCompanyId,
+        type: "ORDER_CANCELLED",
+        title: "Booking cancelled by customer",
+        message: reason
+          ? `The customer cancelled the booking. Reason: "${reason}"`
+          : "The customer cancelled the booking.",
+        link: `/provider/orders/${bookingId}`,
+        bookingId,
+      });
+    } catch { /* non-critical */ }
+  }
+
+  const ref = booking.quoteRequest?.reference ?? bookingId;
+  revalidatePath(`/account/bookings/${ref}`);
+  revalidatePath("/account/bookings");
+  revalidatePath("/admin/orders");
+  revalidatePath("/provider/orders");
+  return { success: true };
+}
+
 /**
  * Customer accepts a counter offer from a provider.
  * Updates the booking with proposed changes and notifies the provider.

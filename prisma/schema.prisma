@@ -331,6 +331,22 @@ model Customer {
   bookings         Booking[]
   payments         Payment[]
   complaints       Complaint[]
+  authTokens       CustomerAuthToken[]
+}
+
+model CustomerAuthToken {
+  id           String    @id @default(cuid())
+  customerId   String
+  email        String
+  token        String    @unique
+  purpose      String    // PASSWORD_RESET
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  customer     Customer  @relation(fields: [customerId], references: [id])
+
+  @@index([email, purpose])
 }
 
 model CustomerAddress {

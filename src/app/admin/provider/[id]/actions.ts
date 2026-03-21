@@ -1,10 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { updateProviderDocumentReview, updateProviderReview } from "@/lib/providers/repository";
 import { syncProviderLifecycleState } from "@/server/services/providers/activation";
+import { deleteProviderPricingRule, toggleProviderPricingRule, savePricingAreaOverride, saveProviderPricingRule } from "@/lib/pricing/prisma-pricing";
 import { getPrisma } from "@/lib/db";
+
+function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
 
 export async function reviewProviderStatusAction(formData: FormData) {
   const authenticated = await isAdminAuthenticated();
@@ -76,4 +83,94 @@ export async function deleteCoverageAreaAction(formData: FormData) {
   });
 
   redirect(`/admin/provider/${providerCompanyId}?status=coverage_area_removed`);
+}
+
+// ── Pricing actions (scoped to provider detail page) ──
+
+export async function providerSavePricingConfigAction(formData: FormData) {
+  const authenticated = await isAdminAuthenticated();
+  if (!authenticated) redirect("/admin/login");
+
+  const providerCompanyId = String(formData.get("providerCompanyId") || "");
+
+  await saveProviderPricingRule({
+    providerCompanyId,
+    categoryKey: String(formData.get("categoryKey") || ""),
+    serviceKey: String(formData.get("serviceKey") || ""),
+    pricingMode: String(formData.get("pricingMode") || "flat"),
+    flatPrice: parseNumber(formData.get("flatPrice"), 0),
+    hourlyPrice: parseNumber(formData.get("hourlyPrice"), 0),
+    minimumCharge: parseNumber(formData.get("minimumCharge"), 0),
+    travelFee: parseNumber(formData.get("travelFee"), 0),
+    sameDayUplift: parseNumber(formData.get("sameDayUplift"), 0),
+    weekendUplift: parseNumber(formData.get("weekendUplift"), 0),
+    customQuoteRequired: formData.get("customQuoteRequired") === "on",
+    active: formData.get("active") === "on",
+    actorType: "ADMIN",
+  });
+
+  revalidatePath(`/admin/provider/${providerCompanyId}`);
+  revalidatePath("/admin/pricing");
+}
+
+export async function providerDisablePricingConfigAction(formData: FormData) {
+  const authenticated = await isAdminAuthenticated();
+  if (!authenticated) redirect("/admin/login");
+
+  const ruleId = String(formData.get("providerPricingRuleId") || "");
+
+  const prisma = getPrisma();
+  const rule = await prisma.providerPricingRule.findUnique({ where: { id: ruleId } });
+
+  await toggleProviderPricingRule({
+    providerPricingRuleId: ruleId,
+    actorType: "ADMIN",
+  });
+
+  if (rule) {
+    revalidatePath(`/admin/provider/${rule.providerCompanyId}`);
+  }
+  revalidatePath("/admin/pricing");
+}
+
+export async function providerDeletePricingConfigAction(formData: FormData) {
+  const authenticated = await isAdminAuthenticated();
+  if (!authenticated) redirect("/admin/login");
+
+  const ruleId = String(formData.get("providerPricingRuleId") || "");
+
+  const prisma = getPrisma();
+  const rule = await prisma.providerPricingRule.findUnique({ where: { id: ruleId } });
+  const companyId = rule?.providerCompanyId;
+
+  await deleteProviderPricingRule({
+    providerPricingRuleId: ruleId,
+    actorType: "ADMIN",
+  });
+
+  if (companyId) {
+    revalidatePath(`/admin/provider/${companyId}`);
+  }
+  revalidatePath("/admin/pricing");
+}
+
+export async function providerSaveAreaOverrideAction(formData: FormData) {
+  const authenticated = await isAdminAuthenticated();
+  if (!authenticated) redirect("/admin/login");
+
+  const providerCompanyId = String(formData.get("providerCompanyId") || "");
+
+  await savePricingAreaOverride({
+    providerCompanyId,
+    categoryKey: String(formData.get("categoryKey") || ""),
+    postcodePrefix: String(formData.get("postcodePrefix") || ""),
+    surchargeAmount: parseNumber(formData.get("surchargeAmount"), 0),
+    bookingFeeOverride: parseNumber(formData.get("bookingFeeOverride"), 0),
+    commissionPercentOverride: parseNumber(formData.get("commissionPercentOverride"), 0),
+    active: formData.get("active") === "on",
+    actorType: "ADMIN",
+  });
+
+  revalidatePath(`/admin/provider/${providerCompanyId}`);
+  revalidatePath("/admin/pricing");
 }

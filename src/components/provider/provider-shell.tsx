@@ -17,6 +17,7 @@ import {
   Clock,
   Briefcase,
   Bell,
+  Receipt,
 } from "lucide-react";
 
 import {
@@ -65,6 +66,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Account: UserCircle,
   Business: Briefcase,
   Notifications: Bell,
+  Invoices: Receipt,
 };
 
 /* ── Helpers ───────────────────────────────── */

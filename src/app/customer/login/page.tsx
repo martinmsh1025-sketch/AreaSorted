@@ -48,7 +48,13 @@ export default async function CustomerLoginPage({ searchParams }: CustomerLoginP
             </button>
           </form>
 
-          <p style={{ textAlign: "center", marginTop: "1.25rem", fontSize: "0.9rem" }}>
+          <p style={{ textAlign: "center", marginTop: "0.75rem", fontSize: "0.85rem" }}>
+            <Link href="/customer/forgot-password" style={{ color: "var(--color-brand)", fontWeight: 500 }}>
+              Forgot your password?
+            </Link>
+          </p>
+
+          <p style={{ textAlign: "center", marginTop: "0.5rem", fontSize: "0.9rem" }}>
             Don&apos;t have an account?{" "}
             <Link href="/customer/register" style={{ color: "var(--color-brand)", fontWeight: 600 }}>
               Create one

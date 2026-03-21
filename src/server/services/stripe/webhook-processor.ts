@@ -98,6 +98,14 @@ async function syncPaymentIntent(event: Stripe.Event) {
       // Non-critical — invoices can be generated on-demand
     }
 
+    // Send booking confirmation email to the customer
+    try {
+      const { sendBookingConfirmationEmail } = await import("@/lib/notifications/booking-emails");
+      await sendBookingConfirmationEmail(updated.bookingId);
+    } catch {
+      // Non-critical
+    }
+
     // Notify the assigned provider about the new paid booking
     try {
       const booking = await prisma.booking.findUnique({

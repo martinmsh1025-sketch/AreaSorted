@@ -4,9 +4,18 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getProviderCompanyById } from "@/lib/providers/repository";
 import { providerStatusLabels } from "@/lib/providers/service-catalog-mapping";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
-import { deleteCoverageAreaAction, reviewProviderDocumentAction } from "./actions";
+import { listProviderPricingRules } from "@/lib/pricing/prisma-pricing";
+import {
+  deleteCoverageAreaAction,
+  reviewProviderDocumentAction,
+  providerSavePricingConfigAction,
+  providerDisablePricingConfigAction,
+  providerDeletePricingConfigAction,
+  providerSaveAreaOverrideAction,
+} from "./actions";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { ReviewDecisionForm } from "./review-decision-form";
+import { ProviderPricingSection } from "./provider-pricing-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,6 +71,24 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
   const stripeReady =
     provider.stripeConnectedAccount?.chargesEnabled &&
     provider.stripeConnectedAccount?.payoutsEnabled;
+
+  // Fetch pricing rules for this provider
+  const pricingRules = await listProviderPricingRules(id);
+  const pricingRulesData = pricingRules.map((r) => ({
+    id: r.id,
+    categoryKey: r.categoryKey,
+    serviceKey: r.serviceKey,
+    pricingMode: r.pricingMode,
+    flatPrice: r.flatPrice,
+    hourlyPrice: r.hourlyPrice,
+    minimumCharge: r.minimumCharge,
+    travelFee: r.travelFee,
+    sameDayUplift: r.sameDayUplift,
+    weekendUplift: r.weekendUplift,
+    customQuoteRequired: r.customQuoteRequired,
+    active: r.active,
+    pricingJson: (r.pricingJson as Record<string, number> | null) ?? null,
+  }));
 
   return (
     <div className="space-y-6">
@@ -325,6 +352,17 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
           </Card>
         </div>
       </div>
+
+      {/* Pricing rules — full width */}
+      <ProviderPricingSection
+        providerCompanyId={provider.id}
+        providerName={provider.tradingName || provider.legalName || provider.contactEmail}
+        rules={pricingRulesData}
+        savePricingConfigAction={providerSavePricingConfigAction}
+        disablePricingConfigAction={providerDisablePricingConfigAction}
+        deletePricingConfigAction={providerDeletePricingConfigAction}
+        saveAreaOverrideAction={providerSaveAreaOverrideAction}
+      />
     </div>
   );
 }

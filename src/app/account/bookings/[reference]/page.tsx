@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireCustomerSession } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
 import { CustomerCounterOfferBanner } from "@/components/customer/counter-offer-response";
+import { CancelBookingSection } from "./cancel-booking-section";
 
 type BookingDetailPageProps = {
   params: Promise<{ reference: string }>;
@@ -43,6 +44,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     ?? "Pending assignment";
 
   const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const canCancel = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
 
   // Prepare counter offers for client component
   const counterOffers = booking.counterOffers.map((co) => ({
@@ -144,13 +146,35 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
         )}
 
         <div className="panel card">
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Need help?</h2>
-          <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.75rem" }}>
-            If you need to change or cancel this booking, please contact our support team.
-          </p>
-          <Link href="/contact" className="button button-secondary">
-            Contact support
-          </Link>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Manage booking</h2>
+          {canCancel ? (
+            <>
+              <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.75rem" }}>
+                Need to cancel? You can cancel this booking below. For other changes, contact our support team.
+              </p>
+              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+                <CancelBookingSection bookingId={booking.id} />
+                <Link href="/contact" className="button button-secondary">
+                  Contact support
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.75rem" }}>
+                {booking.bookingStatus === "CANCELLED"
+                  ? "This booking has been cancelled."
+                  : booking.bookingStatus === "COMPLETED"
+                    ? "This booking is complete. Thank you for using AreaSorted!"
+                    : "If you need help with this booking, please contact our support team."}
+              </p>
+              {booking.bookingStatus !== "CANCELLED" && (
+                <Link href="/contact" className="button button-secondary">
+                  Contact support
+                </Link>
+              )}
+            </>
+          )}
         </div>
       </div>
     </main>

@@ -109,6 +109,13 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
                       {provider.tradingName || provider.legalName || provider.contactEmail}
                     </strong>
                     <p className="mt-1 text-sm text-muted-foreground">{provider.contactEmail}</p>
+                    {provider.phone && (
+                      <p className="text-sm text-muted-foreground">
+                        <a href={`tel:${provider.phone}`} className="hover:underline">
+                          {provider.phone}
+                        </a>
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <Badge variant={statusBadgeVariant[provider.status] ?? "secondary"}>
@@ -149,6 +156,34 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
                     </strong>
                   </div>
                 </div>
+
+                {/* Coverage areas */}
+                {provider.coverageAreas.length > 0 && (
+                  <div>
+                    <span className="block text-xs text-muted-foreground mb-1">Coverage areas</span>
+                    <div className="flex flex-wrap gap-1">
+                      {[...new Set(provider.coverageAreas.map((a) => a.postcodePrefix))].map((prefix) => (
+                        <Badge key={prefix} variant="outline" className="text-xs font-mono">
+                          {prefix}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Service categories */}
+                {provider.serviceCategories.length > 0 && (
+                  <div>
+                    <span className="block text-xs text-muted-foreground mb-1">Services</span>
+                    <div className="flex flex-wrap gap-1">
+                      {provider.serviceCategories.map((cat) => (
+                        <Badge key={cat.categoryKey} variant="secondary" className="text-xs">
+                          {cat.categoryKey.replace(/_/g, " ")}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap items-center gap-2">
                   <Link

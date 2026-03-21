@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getPrisma } from "@/lib/db";
+
+/**
+ * Cron endpoint for cleaning up stale data:
+ * 1. Abandoned checkouts — bookings stuck in AWAITING_PAYMENT for >2 hours
+ * 2. Expired counter-offers — PENDING offers older than 48 hours
+ * 3. Expired auth tokens cleanup
+ *
+ * Intended to be called via Vercel cron or external scheduler.
+ * Protected by CRON_SECRET env var.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET;
+
+    // In production, require CRON_SECRET; in dev, allow without
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const prisma = getPrisma();
+    const now = new Date();
+    const results: Record<string, number> = {};
+
+    // 1. Abandoned checkouts — AWAITING_PAYMENT for >2 hours
+    const abandonedCutoff = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const abandonedResult = await prisma.booking.updateMany({
+      where: {
+        bookingStatus: "AWAITING_PAYMENT",
+        createdAt: { lt: abandonedCutoff },
+      },
+      data: {
+        bookingStatus: "CANCELLED",
+        cancelledByType: "SYSTEM",
+        cancelledReason: "Payment not completed within 2 hours",
+      },
+    });
+    results.abandonedCheckouts = abandonedResult.count;
+
+    // 2. Expired counter-offers — PENDING for >48 hours
+    const offerCutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const expiredOffers = await prisma.counterOffer.updateMany({
+      where: {
+        status: "PENDING",
+        createdAt: { lt: offerCutoff },
+      },
+      data: {
+        status: "EXPIRED",
+        respondedAt: now,
+      },
+    });
+    results.expiredCounterOffers = expiredOffers.count;
+
+    // Notify providers about expired offers
+    if (expiredOffers.count > 0) {
+      try {
+        const justExpired = await prisma.counterOffer.findMany({
+          where: {
+            status: "EXPIRED",
+            respondedAt: { gte: new Date(now.getTime() - 60 * 1000) },
+          },
+          select: { providerCompanyId: true, bookingId: true },
+        });
+
+        const { createProviderNotification } = await import("@/lib/providers/notifications");
+        for (const offer of justExpired) {
+          try {
+            await createProviderNotification({
+              providerCompanyId: offer.providerCompanyId,
+              type: "COUNTER_OFFER_RESPONSE",
+              title: "Counter offer expired",
+              message: "Your counter offer has expired because the customer did not respond within 48 hours.",
+              link: `/provider/orders/${offer.bookingId}`,
+              bookingId: offer.bookingId,
+            });
+          } catch {
+            // Non-critical
+          }
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+
+    // 3. Clean up old consumed/expired auth tokens (>7 days)
+    const tokenCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const deletedCustomerTokens = await prisma.customerAuthToken.deleteMany({
+      where: {
+        OR: [
+          { consumedAt: { not: null }, createdAt: { lt: tokenCutoff } },
+          { expiresAt: { lt: now }, createdAt: { lt: tokenCutoff } },
+        ],
+      },
+    });
+    results.cleanedCustomerTokens = deletedCustomerTokens.count;
+
+    const deletedProviderTokens = await prisma.providerAuthToken.deleteMany({
+      where: {
+        OR: [
+          { consumedAt: { not: null }, createdAt: { lt: tokenCutoff } },
+          { expiresAt: { lt: now }, createdAt: { lt: tokenCutoff } },
+        ],
+      },
+    });
+    results.cleanedProviderTokens = deletedProviderTokens.count;
+
+    return NextResponse.json({
+      ok: true,
+      timestamp: now.toISOString(),
+      results,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[CRON] Error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

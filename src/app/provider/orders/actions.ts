@@ -31,6 +31,12 @@ export async function acceptBookingAction(formData: FormData) {
     data: { bookingStatus: "ASSIGNED" },
   });
 
+  // Notify customer
+  try {
+    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    await sendBookingStatusEmail(bookingId, "ASSIGNED");
+  } catch { /* non-critical */ }
+
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);
 }
@@ -124,6 +130,12 @@ export async function startBookingAction(formData: FormData) {
     data: { bookingStatus: "IN_PROGRESS" },
   });
 
+  // Notify customer
+  try {
+    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    await sendBookingStatusEmail(bookingId, "IN_PROGRESS");
+  } catch { /* non-critical */ }
+
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);
 }
@@ -152,6 +164,12 @@ export async function completeBookingAction(formData: FormData) {
     where: { id: bookingId },
     data: { bookingStatus: "COMPLETED" },
   });
+
+  // Notify customer
+  try {
+    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    await sendBookingStatusEmail(bookingId, "COMPLETED");
+  } catch { /* non-critical */ }
 
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);

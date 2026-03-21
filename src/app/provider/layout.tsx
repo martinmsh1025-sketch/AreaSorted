@@ -25,6 +25,10 @@ function buildProviderNav(status: string): NavGroup[] {
     mainItems.push({ href: "/provider/orders", label: "My Orders", icon: "Orders" });
   }
 
+  if (canProviderAccessOrders(status)) {
+    mainItems.push({ href: "/provider/invoices", label: "Invoices", icon: "Invoices" });
+  }
+
   groups.push({ label: null, items: mainItems });
 
   /* ── Onboarding (pre-approval only) ─────── */

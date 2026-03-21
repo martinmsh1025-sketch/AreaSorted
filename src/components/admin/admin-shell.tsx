@@ -5,10 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Users,
-  ClipboardList,
+  ShoppingCart,
   Settings,
-  PoundSterling,
-  MapPin,
+  Banknote,
   LogOut,
   ShieldCheck,
 } from "lucide-react";
@@ -36,9 +35,8 @@ const adminNavItems = [
     group: "Marketplace",
     items: [
       { href: "/admin/providers", label: "Providers", icon: Users },
-      { href: "/admin/bookings", label: "Bookings", icon: ClipboardList },
-      { href: "/admin/pricing", label: "Pricing", icon: PoundSterling },
-      { href: "/admin/coverage", label: "Coverage", icon: MapPin },
+      { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+      { href: "/admin/payouts", label: "Payouts", icon: Banknote },
     ],
   },
   {
@@ -97,7 +95,7 @@ export function AdminShell({ children, adminEmail, logoutAction }: AdminShellPro
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" render={<Link href="/admin/providers" />}>
+              <SidebarMenuButton size="lg" render={<Link href="/admin" />}>
                 <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <ShieldCheck className="size-4" />
                 </div>
