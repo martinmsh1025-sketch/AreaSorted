@@ -83,11 +83,13 @@ export function PublicQuoteForm() {
   const [step, setStep] = useState(0);
   const [categoryKey, setCategoryKey] = useState<PublicCategoryKey>((categories[0]?.key || "CLEANING") as PublicCategoryKey);
   const options = useMemo(() => listJobTypesForCategory(categoryKey), [categoryKey]);
-  const [serviceKey, setServiceKey] = useState(options[0]?.value || "");
+  const [serviceKey, setServiceKey] = useState("");
   const [form, setForm] = useState({
     customerName: "",
     customerEmail: "",
     customerPhone: "",
+    password: "",
+    confirmPassword: "",
     postcode: "",
     addressLine1: "",
     addressLine2: "",
@@ -331,6 +333,9 @@ export function PublicQuoteForm() {
         if (!form.customerName.trim()) return "Please enter your name.";
         if (!form.customerEmail.trim()) return "Please enter your email.";
         if (!/\S+@\S+\.\S+/.test(form.customerEmail)) return "Please enter a valid email address.";
+        if (!form.password) return "Please create a password for your account.";
+        if (form.password.length < 8) return "Password must be at least 8 characters.";
+        if (form.password !== form.confirmPassword) return "Passwords do not match.";
         return null;
       default:
         return null;
@@ -390,6 +395,7 @@ export function PublicQuoteForm() {
       customerName: form.customerName,
       customerEmail: form.customerEmail,
       customerPhone: form.customerPhone,
+      password: form.password,
       postcode: form.postcode,
       addressLine1: form.addressLine1,
       addressLine2: form.addressLine2,
@@ -550,53 +556,75 @@ export function PublicQuoteForm() {
             {/* ═══════ STEP 1: SERVICE SELECTION ═══════ */}
             {step === 1 && (
               <div className="panel card quote-section-card">
-                <div className="quote-section-head">
-                  <strong>Choose a service</strong>
-                  <p>Select a category, then pick the specific service you need.</p>
-                </div>
+                {/* Sub-step A: pick a category (show when no serviceKey yet) */}
+                {!serviceKey ? (
+                  <>
+                    <div className="quote-section-head">
+                      <strong>What do you need help with?</strong>
+                    </div>
+                    <div className="service-chip-grid">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.key}
+                          type="button"
+                          className={`service-chip ${categoryKey === cat.key ? "service-chip-selected" : ""}`}
+                          onClick={() => {
+                            const nextCategory = cat.key as PublicCategoryKey;
+                            setCategoryKey(nextCategory);
+                            /* Don't auto-select a job — let user pick */
+                          }}
+                        >
+                          <strong>{cat.label}</strong>
+                        </button>
+                      ))}
+                    </div>
 
-                <div className="service-chip-grid">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.key}
-                      type="button"
-                      className={`service-chip ${categoryKey === cat.key ? "service-chip-selected" : ""}`}
-                      onClick={() => {
-                        const nextCategory = cat.key as PublicCategoryKey;
-                        setCategoryKey(nextCategory);
-                        const nextOptions = listJobTypesForCategory(nextCategory);
-                        setServiceKey(nextOptions[0]?.value || "");
-                      }}
-                    >
-                      <strong>{cat.label}</strong>
-                      <span>{cat.strapline}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="job-type-groups" style={{ marginTop: "1.5rem" }}>
-                  {currentServiceCatalog.map((sub) => (
-                    sub.jobs.length > 0 && (
-                      <div key={sub.value} className="job-type-group">
-                        <div className="job-type-group-title">{sub.label}</div>
-                        <div className="job-type-grid">
-                          {sub.jobs.map((job) => (
-                            <button
-                              key={job.value}
-                              type="button"
-                              className={`job-type-card ${serviceKey === job.value ? "job-type-card-active" : ""}`}
-                              onClick={() => setServiceKey(job.value)}
-                            >
-                              <strong>{job.label}</strong>
-                              <span>{job.strapline}</span>
-                              <span className="job-type-card-price">From {money(job.startingPrice)}</span>
-                            </button>
-                          ))}
-                        </div>
+                    {/* Show job types for selected category as list rows */}
+                    {categoryKey && (
+                      <div className="job-list" style={{ marginTop: "1.5rem" }}>
+                        {currentServiceCatalog.map((sub) => (
+                          sub.jobs.length > 0 && (
+                            <div key={sub.value} className="job-list-group">
+                              <div className="job-list-group-title">{sub.label}</div>
+                              {sub.jobs.map((job) => (
+                                <button
+                                  key={job.value}
+                                  type="button"
+                                  className="job-list-row"
+                                  onClick={() => setServiceKey(job.value)}
+                                >
+                                  <span className="job-list-row-name">{job.label}</span>
+                                  <span className="job-list-row-price">From {money(job.startingPrice)}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )
+                        ))}
                       </div>
-                    )
-                  ))}
-                </div>
+                    )}
+                  </>
+                ) : (
+                  /* Sub-step B: category chosen + job selected — show summary with change option */
+                  <>
+                    <div className="quote-section-head">
+                      <strong>Your selection</strong>
+                    </div>
+                    <div className="quote-service-chosen">
+                      <div className="quote-service-chosen-info">
+                        <span className="muted">{categories.find((c) => c.key === categoryKey)?.label}</span>
+                        <strong>{selectedJob?.label}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        className="button button-secondary"
+                        style={{ whiteSpace: "nowrap" }}
+                        onClick={() => setServiceKey("")}
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -825,6 +853,20 @@ export function PublicQuoteForm() {
                   <label className="quote-field-stack">
                     <span>Phone</span>
                     <input type="tel" placeholder="07700 900 000" value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
+                  </label>
+                </div>
+                <div className="quote-section-head" style={{ marginTop: "1.5rem" }}>
+                  <strong>Create your account</strong>
+                  <p>Set a password so you can track your booking and manage your account.</p>
+                </div>
+                <div className="quote-two-col-fields">
+                  <label className="quote-field-stack">
+                    <span>Password *</span>
+                    <input required type="password" placeholder="Min 8 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                  </label>
+                  <label className="quote-field-stack">
+                    <span>Confirm password *</span>
+                    <input required type="password" placeholder="Re-enter password" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} />
                   </label>
                 </div>
               </div>

@@ -1634,6 +1634,64 @@ img {
   font-weight: 700;
 }
 
+/* ── Job list rows (service selection) ── */
+
+.job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.job-list-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.job-list-group-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  padding: 0 0.25rem 0.4rem;
+}
+
+.job-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.job-list-group .job-list-row:last-child {
+  border-bottom: none;
+}
+
+.job-list-row:hover {
+  background: rgba(217, 37, 42, 0.04);
+}
+
+.job-list-row-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.job-list-row-price {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-brand);
+  white-space: nowrap;
+}
+
 .quote-check-item input {
   width: 18px;
   height: 18px;
@@ -1924,6 +1982,29 @@ img {
 
 .quote-step-skip:hover {
   color: var(--color-text);
+}
+
+.quote-service-chosen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 2px solid var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 5%, white);
+}
+.quote-service-chosen-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.quote-service-chosen-info .muted {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+.quote-service-chosen-info strong {
+  font-size: 1.05rem;
 }
 
 .footer a:hover,

@@ -459,8 +459,11 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
   const postcodeSurcharge = asNumber(areaOverride?.surchargeAmount) ?? 0;
 
   const commissionAmount = roundMoney(providerBasePrice * (commissionPercent / 100));
-  const totalCustomerPay = roundMoney(providerBasePrice + bookingFee + commissionAmount + postcodeSurcharge);
-  const expectedProviderPayoutBeforeStripeFees = roundMoney(providerBasePrice + postcodeSurcharge);
+  // Commission is an internal platform margin — NOT charged to the customer.
+  // Customer pays: providerBasePrice + bookingFee + postcodeSurcharge only.
+  // Commission is deducted from provider payout at settlement time.
+  const totalCustomerPay = roundMoney(providerBasePrice + bookingFee + postcodeSurcharge);
+  const expectedProviderPayoutBeforeStripeFees = roundMoney(providerBasePrice - commissionAmount + postcodeSurcharge);
 
   return {
     providerBasePrice: roundMoney(providerBasePrice),

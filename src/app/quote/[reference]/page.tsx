@@ -64,7 +64,6 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
                 <div className="quote-summary-list">
                   <div><span>Service price</span><strong>{money(quote.priceSnapshot.providerBasePrice)}</strong></div>
                   <div><span>Booking fee</span><strong>{money(quote.priceSnapshot.bookingFee)}</strong></div>
-                  <div><span>Service fee</span><strong>{money(quote.priceSnapshot.commissionAmount)}</strong></div>
                   {Number(quote.priceSnapshot.postcodeSurcharge) > 0 && (
                     <div><span>Area surcharge</span><strong>{money(quote.priceSnapshot.postcodeSurcharge)}</strong></div>
                   )}

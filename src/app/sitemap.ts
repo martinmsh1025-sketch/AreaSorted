@@ -84,13 +84,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Customer auth pages (indexable for SEO)
   const authPages: MetadataRoute.Sitemap = [
     {
-      url: `${BASE_URL}/login`,
+      url: `${BASE_URL}/customer/login`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
     },
     {
-      url: `${BASE_URL}/register`,
+      url: `${BASE_URL}/customer/register`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,

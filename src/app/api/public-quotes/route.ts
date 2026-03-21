@@ -6,6 +6,7 @@ const schema = z.object({
   customerName: z.string().min(1),
   customerEmail: z.string().email(),
   customerPhone: z.string().min(1),
+  password: z.string().min(8),
   postcode: z.string().min(1),
   addressLine1: z.string().min(1),
   addressLine2: z.string().optional().default(""),

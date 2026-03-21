@@ -6,6 +6,7 @@ import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import { jobTypeCatalog } from "@/lib/service-catalog";
+import { hashPassword } from "@/lib/security/password";
 
 function mapCategoryToServiceType(categoryKey: string) {
   switch (categoryKey) {
@@ -30,6 +31,7 @@ type CreateQuoteInput = {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  password: string;
   postcode: string;
   addressLine1: string;
   addressLine2?: string;
@@ -113,6 +115,36 @@ export async function createPublicQuote(input: CreateQuoteInput) {
   const prisma = getPrisma();
   const reference = createReference("QR");
   const quoteRequired = preview.quoteRequired || !matchedProvider.paymentReady;
+
+  // Create or update customer with password hash at quote time
+  const passwordHash = await hashPassword(input.password);
+  const existingCustomer = await prisma.customer.findUnique({
+    where: { email: input.customerEmail },
+    select: { id: true, passwordHash: true },
+  });
+
+  if (existingCustomer) {
+    // Update name/phone; only set password if they don't already have one
+    await prisma.customer.update({
+      where: { id: existingCustomer.id },
+      data: {
+        firstName: input.customerName.split(" ")[0] || input.customerName,
+        lastName: input.customerName.split(" ").slice(1).join(" ") || input.customerName,
+        phone: input.customerPhone,
+        ...(existingCustomer.passwordHash ? {} : { passwordHash }),
+      },
+    });
+  } else {
+    await prisma.customer.create({
+      data: {
+        email: input.customerEmail,
+        firstName: input.customerName.split(" ")[0] || input.customerName,
+        lastName: input.customerName.split(" ").slice(1).join(" ") || input.customerName,
+        phone: input.customerPhone,
+        passwordHash,
+      },
+    });
+  }
 
   const quoteRequest = await prisma.quoteRequest.create({
     data: {
@@ -378,7 +410,7 @@ export async function createInstantBookingFromQuote(reference: string) {
         },
       ],
       applicationFeeAmount: Math.round((Number(quote.priceSnapshot.bookingFee) + Number(quote.priceSnapshot.commissionAmount)) * 100),
-      successUrl: `${appUrl}/booking/confirmation/${bookingReference}?session_id={CHECKOUT_SESSION_ID}`,
+      successUrl: `${appUrl}/api/auth/post-payment/${bookingReference}?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${appUrl}/quote/${quote.reference}`,
       metadata: {
         bookingId: booking.id,
@@ -387,14 +419,14 @@ export async function createInstantBookingFromQuote(reference: string) {
       },
     });
     sessionId = session.id;
-    sessionUrl = session.url || `${appUrl}/booking/confirmation/${bookingReference}`;
+    sessionUrl = session.url || `${appUrl}/api/auth/post-payment/${bookingReference}`;
   } catch (error) {
     if (!getEnv().ALLOW_MOCK_STRIPE_CHECKOUT) {
       throw error;
     }
 
     sessionId = `mock_${bookingReference}`;
-    sessionUrl = `${appUrl}/booking/confirmation/${bookingReference}`;
+    sessionUrl = `${appUrl}/api/auth/post-payment/${bookingReference}`;
 
     // Mock checkout: mark booking as PAID and payment as PAID
     await prisma.booking.update({

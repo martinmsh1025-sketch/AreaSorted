@@ -303,6 +303,146 @@ async function main() {
       ],
       stripeAccountId: 'acct_mock_pest_004',
     },
+    {
+      // AreaSorted Test Provider: SUPER PROVIDER — covers ALL London postcodes, ALL 6 categories, ALL 57 services
+      // Purpose: end-to-end testing of the full quote flow for any postcode/service combination
+      email: 'test-provider@areasorted.test',
+      tradingName: 'AreaSorted Test Provider',
+      legalName: 'AreaSorted Test Services Ltd',
+      companyNumber: 'AS-TEST-999',
+      registeredAddress: '1 Test Street, London EC1A 1BB',
+      phone: '+44 20 7946 9999',
+      categories: ['CLEANING', 'PEST_CONTROL', 'HANDYMAN', 'FURNITURE_ASSEMBLY', 'WASTE_REMOVAL', 'GARDEN_MAINTENANCE'],
+      postcodes: [
+        // E postcodes
+        'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9', 'E10', 'E11', 'E12', 'E13', 'E14', 'E15', 'E16', 'E17', 'E18', 'E20',
+        'E1W',
+        // EC postcodes
+        'EC1', 'EC1A', 'EC1M', 'EC1N', 'EC1R', 'EC1V', 'EC1Y',
+        'EC2', 'EC2A', 'EC2M', 'EC2N', 'EC2R', 'EC2V', 'EC2Y',
+        'EC3', 'EC3A', 'EC3M', 'EC3N', 'EC3R', 'EC3V',
+        'EC4', 'EC4A', 'EC4M', 'EC4N', 'EC4R', 'EC4V', 'EC4Y',
+        // N postcodes
+        'N1', 'N1C', 'N1P', 'N2', 'N3', 'N4', 'N5', 'N6', 'N7', 'N8', 'N9', 'N10', 'N11', 'N12', 'N13', 'N14', 'N15', 'N16', 'N17', 'N18', 'N19', 'N20', 'N21', 'N22',
+        // NW postcodes
+        'NW1', 'NW1W', 'NW2', 'NW3', 'NW4', 'NW5', 'NW6', 'NW7', 'NW8', 'NW9', 'NW10', 'NW11',
+        // SE postcodes
+        'SE1', 'SE1P', 'SE2', 'SE3', 'SE4', 'SE5', 'SE6', 'SE7', 'SE8', 'SE9', 'SE10', 'SE11', 'SE12', 'SE13', 'SE14', 'SE15', 'SE16', 'SE17', 'SE18', 'SE19', 'SE20', 'SE21', 'SE22', 'SE23', 'SE24', 'SE25', 'SE26', 'SE27', 'SE28',
+        // SW postcodes
+        'SW1', 'SW1A', 'SW1E', 'SW1H', 'SW1P', 'SW1V', 'SW1W', 'SW1X', 'SW1Y',
+        'SW2', 'SW3', 'SW4', 'SW5', 'SW6', 'SW7', 'SW8', 'SW9', 'SW10', 'SW11', 'SW12', 'SW13', 'SW14', 'SW15', 'SW16', 'SW17', 'SW18', 'SW19', 'SW20',
+        // W postcodes
+        'W1', 'W1A', 'W1B', 'W1C', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W',
+        'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12', 'W13', 'W14',
+        // WC postcodes
+        'WC1', 'WC1A', 'WC1B', 'WC1E', 'WC1H', 'WC1N', 'WC1R', 'WC1V', 'WC1X',
+        'WC2', 'WC2A', 'WC2B', 'WC2E', 'WC2H', 'WC2N', 'WC2R',
+        // Outer London — BR, CR, DA, EN, HA, IG, KT, RM, SM, TN, TW, UB
+        'BR1', 'BR2', 'BR3', 'BR4', 'BR5', 'BR6', 'BR7', 'BR8',
+        'CR0', 'CR2', 'CR3', 'CR4', 'CR5', 'CR6', 'CR7', 'CR8', 'CR9',
+        'DA1', 'DA2', 'DA3', 'DA4', 'DA5', 'DA6', 'DA7', 'DA8', 'DA9', 'DA10', 'DA11', 'DA12', 'DA13', 'DA14', 'DA15', 'DA16', 'DA17', 'DA18',
+        'EN1', 'EN2', 'EN3', 'EN4', 'EN5', 'EN6', 'EN7', 'EN8', 'EN9', 'EN10', 'EN11',
+        'HA0', 'HA1', 'HA2', 'HA3', 'HA4', 'HA5', 'HA6', 'HA7', 'HA8', 'HA9',
+        'IG1', 'IG2', 'IG3', 'IG4', 'IG5', 'IG6', 'IG7', 'IG8', 'IG9', 'IG10', 'IG11',
+        'KT1', 'KT2', 'KT3', 'KT4', 'KT5', 'KT6', 'KT7', 'KT8', 'KT9', 'KT10', 'KT11', 'KT12', 'KT13', 'KT14', 'KT15', 'KT16', 'KT17', 'KT18', 'KT19', 'KT20', 'KT21', 'KT22', 'KT23', 'KT24',
+        'RM1', 'RM2', 'RM3', 'RM4', 'RM5', 'RM6', 'RM7', 'RM8', 'RM9', 'RM10', 'RM11', 'RM12', 'RM13', 'RM14', 'RM15', 'RM16', 'RM17', 'RM18', 'RM19', 'RM20',
+        'SM1', 'SM2', 'SM3', 'SM4', 'SM5', 'SM6', 'SM7',
+        'TN1', 'TN2', 'TN3', 'TN4', 'TN13', 'TN14', 'TN15', 'TN16',
+        'TW1', 'TW2', 'TW3', 'TW4', 'TW5', 'TW6', 'TW7', 'TW8', 'TW9', 'TW10', 'TW11', 'TW12', 'TW13', 'TW14', 'TW15', 'TW16', 'TW17', 'TW18', 'TW19', 'TW20',
+        'UB1', 'UB2', 'UB3', 'UB4', 'UB5', 'UB6', 'UB7', 'UB8', 'UB9', 'UB10', 'UB11', 'UB18',
+      ],
+      pricingRules: [
+        // CLEANING (14 services) — hourly pricing based on catalog basePrice
+        { categoryKey: 'CLEANING', serviceKey: 'regular-home-cleaning', pricingMode: 'hourly', hourlyPrice: 18, minimumCharge: 36 },
+        { categoryKey: 'CLEANING', serviceKey: 'deep-cleaning', pricingMode: 'hourly', hourlyPrice: 22, minimumCharge: 66 },
+        { categoryKey: 'CLEANING', serviceKey: 'end-of-tenancy-cleaning', pricingMode: 'hourly', hourlyPrice: 25, minimumCharge: 100 },
+        { categoryKey: 'CLEANING', serviceKey: 'office-commercial-cleaning', pricingMode: 'hourly', hourlyPrice: 22, minimumCharge: 66 },
+        { categoryKey: 'CLEANING', serviceKey: 'airbnb-turnover-cleaning', pricingMode: 'hourly', hourlyPrice: 20, minimumCharge: 60 },
+        { categoryKey: 'CLEANING', serviceKey: 'after-builders-cleaning', pricingMode: 'hourly', hourlyPrice: 28, minimumCharge: 84 },
+        { categoryKey: 'CLEANING', serviceKey: 'carpet-upholstery-cleaning', pricingMode: 'hourly', hourlyPrice: 24, minimumCharge: 48 },
+        { categoryKey: 'CLEANING', serviceKey: 'sofa-upholstery-cleaning', pricingMode: 'hourly', hourlyPrice: 22, minimumCharge: 44 },
+        { categoryKey: 'CLEANING', serviceKey: 'oven-cleaning', pricingMode: 'hourly', hourlyPrice: 20, minimumCharge: 46 },
+        { categoryKey: 'CLEANING', serviceKey: 'fridge-cleaning', pricingMode: 'hourly', hourlyPrice: 18, minimumCharge: 28 },
+        { categoryKey: 'CLEANING', serviceKey: 'window-cleaning-interior', pricingMode: 'hourly', hourlyPrice: 18, minimumCharge: 36 },
+        { categoryKey: 'CLEANING', serviceKey: 'window-cleaning-exterior-ground-floor', pricingMode: 'hourly', hourlyPrice: 20, minimumCharge: 40 },
+        { categoryKey: 'CLEANING', serviceKey: 'bathroom-deep-clean', pricingMode: 'hourly', hourlyPrice: 20, minimumCharge: 40 },
+        { categoryKey: 'CLEANING', serviceKey: 'kitchen-deep-clean', pricingMode: 'hourly', hourlyPrice: 22, minimumCharge: 54 },
+        // PEST_CONTROL (14 services) — flat pricing
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'rat-mouse-treatment', pricingMode: 'hourly', hourlyPrice: 60, minimumCharge: 118 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'mice-treatment', pricingMode: 'hourly', hourlyPrice: 55, minimumCharge: 108 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'rat-treatment', pricingMode: 'hourly', hourlyPrice: 62, minimumCharge: 124 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'cockroach-treatment', pricingMode: 'hourly', hourlyPrice: 68, minimumCharge: 136 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'wasp-nest-removal', pricingMode: 'hourly', hourlyPrice: 44, minimumCharge: 88 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'ant-treatment', pricingMode: 'hourly', hourlyPrice: 44, minimumCharge: 88 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'flea-treatment', pricingMode: 'hourly', hourlyPrice: 61, minimumCharge: 122 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'bed-bug-treatment', pricingMode: 'hourly', hourlyPrice: 78, minimumCharge: 156 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'moth-treatment', pricingMode: 'hourly', hourlyPrice: 48, minimumCharge: 96 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'silverfish-treatment', pricingMode: 'hourly', hourlyPrice: 42, minimumCharge: 84 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'pigeon-proofing-inspection', pricingMode: 'hourly', hourlyPrice: 36, minimumCharge: 72 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'proofing-sealing-entry-points', pricingMode: 'hourly', hourlyPrice: 41, minimumCharge: 82 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'pest-follow-up-visit', pricingMode: 'hourly', hourlyPrice: 27, minimumCharge: 54 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'pest-survey-report', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 76 },
+        // HANDYMAN (17 services)
+        { categoryKey: 'HANDYMAN', serviceKey: 'tv-mounting', pricingMode: 'hourly', hourlyPrice: 40, minimumCharge: 79 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'mirror-picture-hanging', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 46 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'shelf-installation', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 48 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'shelf-curtain-fitting', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 54 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'tap-toilet-seat-replacement', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 58 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'curtain-blind-installation', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 54 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'door-handle-lock-replacement', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 48 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'cabinet-fixing', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 54 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'minor-plumbing-repair', pricingMode: 'hourly', hourlyPrice: 40, minimumCharge: 66 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'sealant-resealing', pricingMode: 'hourly', hourlyPrice: 32, minimumCharge: 49 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'minor-home-repairs', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 72 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'minor-wall-repair-filling', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 54 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'draft-excluder-sealing-work', pricingMode: 'hourly', hourlyPrice: 30, minimumCharge: 46 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'furniture-moving-within-property', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 58 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'flat-pack-adjustment', pricingMode: 'hourly', hourlyPrice: 30, minimumCharge: 46 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'light-fitting-replacement', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 58 },
+        { categoryKey: 'HANDYMAN', serviceKey: 'smoke-alarm-installation', pricingMode: 'hourly', hourlyPrice: 28, minimumCharge: 40 },
+        // FURNITURE_ASSEMBLY (15 services)
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'wardrobe-bed-assembly', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 78 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'bed-assembly', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 58 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'wardrobe-assembly', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 78 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'chest-of-drawers-assembly', pricingMode: 'hourly', hourlyPrice: 32, minimumCharge: 48 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'desk-storage-assembly', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 59 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'desk-assembly', pricingMode: 'hourly', hourlyPrice: 32, minimumCharge: 48 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'bookcase-assembly', pricingMode: 'hourly', hourlyPrice: 32, minimumCharge: 48 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'dining-table-assembly', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 54 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'chair-assembly', pricingMode: 'hourly', hourlyPrice: 25, minimumCharge: 28 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'nursery-furniture-assembly', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 58 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'ikea-assembly', pricingMode: 'hourly', hourlyPrice: 32, minimumCharge: 48 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'multiple-item-assembly', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 82 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'disassembly-reassembly', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 82 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'disassembly', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 58 },
+        { categoryKey: 'FURNITURE_ASSEMBLY', serviceKey: 'assembly-wall-fixing', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 76 },
+        // WASTE_REMOVAL (10 services)
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'bagged-household-waste', pricingMode: 'hourly', hourlyPrice: 40, minimumCharge: 64 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'general-household-waste-removal', pricingMode: 'hourly', hourlyPrice: 40, minimumCharge: 64 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'bulky-item-removal', pricingMode: 'hourly', hourlyPrice: 42, minimumCharge: 74 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'furniture-disposal', pricingMode: 'hourly', hourlyPrice: 42, minimumCharge: 74 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'property-clearance', pricingMode: 'hourly', hourlyPrice: 50, minimumCharge: 112 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'garage-shed-clearance', pricingMode: 'hourly', hourlyPrice: 48, minimumCharge: 102 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'office-clearance', pricingMode: 'hourly', hourlyPrice: 52, minimumCharge: 128 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'builders-waste-removal', pricingMode: 'hourly', hourlyPrice: 50, minimumCharge: 112 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'mattress-removal', pricingMode: 'hourly', hourlyPrice: 30, minimumCharge: 36 },
+        { categoryKey: 'WASTE_REMOVAL', serviceKey: 'appliance-removal', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 54 },
+        // GARDEN_MAINTENANCE (12 services)
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'lawn-mowing', pricingMode: 'hourly', hourlyPrice: 32, minimumCharge: 54 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'hedge-trimming', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 66 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'pruning', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 58 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'small-tree-trimming', pricingMode: 'hourly', hourlyPrice: 42, minimumCharge: 82 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'garden-tidy-up', pricingMode: 'hourly', hourlyPrice: 35, minimumCharge: 62 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'weeding', pricingMode: 'hourly', hourlyPrice: 28, minimumCharge: 48 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'leaf-clearance', pricingMode: 'hourly', hourlyPrice: 28, minimumCharge: 46 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'garden-waste-bagging', pricingMode: 'hourly', hourlyPrice: 25, minimumCharge: 36 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'seasonal-garden-maintenance', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 76 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'pressure-washing-patio-driveway', pricingMode: 'hourly', hourlyPrice: 42, minimumCharge: 82 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'fence-painting', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 82 },
+        { categoryKey: 'GARDEN_MAINTENANCE', serviceKey: 'deck-cleaning', pricingMode: 'hourly', hourlyPrice: 38, minimumCharge: 72 },
+      ],
+      stripeAccountId: 'acct_mock_test_999',
+    },
   ];
 
   const activeProviderEmails = activeProviders.map((p) => p.email);
@@ -350,6 +490,8 @@ async function main() {
     await prisma.providerAuthToken.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.stripeConnectedAccount.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.providerAvailability.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerDateOverride.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerNotification.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.providerCompany.deleteMany({ where: { id: { in: existingActiveCompanyIds } } });
   }
 
@@ -485,7 +627,9 @@ async function main() {
   console.log('  - Cleaning (hourly mode): Sparkle Clean London (£18/hr), Fresh Start Cleaners (£15/hr)');
   console.log('  - Cleaning (fixed per size mode): Pristine Maids (£55/£85/£125 per size)');
   console.log('  - Pest Control (fixed per size): London Pest Solutions (e.g. rats £129/£171/£224)');
-  console.log('  - Test postcode: SW1A 1AA (or any SW1 prefix)');
+  console.log('  - ★ SUPER PROVIDER: AreaSorted Test Provider — ALL postcodes, ALL 6 categories, ALL 57 services');
+  console.log('  - Login: test-provider@areasorted.test / Provider123!');
+  console.log('  - Test postcode: any London postcode (e.g. SW1A 1AA, E1 6AN, HA5 2AH)');
   console.log('  - All provider passwords: Provider123!');
 }
 
