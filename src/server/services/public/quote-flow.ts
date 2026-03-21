@@ -79,6 +79,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
   const match = await matchProvidersForPublicQuote({
     postcode: input.postcode,
     categoryKey: input.categoryKey,
+    serviceKey: input.serviceKey,
   });
 
   if (match.status !== "matched") {

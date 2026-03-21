@@ -18,6 +18,8 @@ const schema = z.object({
   sameDay: z.boolean().optional().default(false),
   weekend: z.boolean().optional().default(false),
   weekendCount: z.number().int().min(0).optional().default(0),
+  scheduledDate: z.string().optional(),
+  scheduledTimeLabel: z.string().optional(),
   bedrooms: z.number().int().min(0).optional(),
   bathrooms: z.number().int().min(0).optional(),
   kitchens: z.number().int().min(0).optional(),
@@ -36,6 +38,9 @@ export async function POST(request: NextRequest) {
     const match = await matchProvidersForPublicQuote({
       postcode: payload.postcode,
       categoryKey: payload.categoryKey,
+      serviceKey: payload.serviceKey,
+      scheduledDate: payload.scheduledDate ? new Date(payload.scheduledDate) : undefined,
+      scheduledTime: payload.scheduledTimeLabel,
     });
 
     if (match.status !== "matched" || !match.providers.length) {

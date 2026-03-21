@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getAgreementContent, onboardingBusinessTypeOptions } from "@/lib/providers/onboarding-legal";
+import type { ProviderOnboardingMetadata } from "@/lib/providers/onboarding-profile";
 
 type ChecklistItem = {
   key: string;
@@ -49,6 +51,7 @@ type ProviderOnboardingClientProps = {
   };
   inviteCategoryKey: string | null;
   inviteServiceKeys: string[];
+  onboardingMetadata: ProviderOnboardingMetadata;
   checklist: ChecklistItem[];
   canEdit: boolean;
   initialStep?: number;
@@ -177,6 +180,7 @@ export function ProviderOnboardingClient({
   provider,
   inviteCategoryKey,
   inviteServiceKeys,
+  onboardingMetadata,
   checklist,
   canEdit,
   initialStep = 1,
@@ -202,6 +206,8 @@ export function ProviderOnboardingClient({
   const initialCouncils = londonCouncilOptions.filter((council) =>
     getPostcodesForCouncils([council]).some((postcode) => initialPostcodes.includes(postcode)),
   );
+  const [businessType, setBusinessType] = useState<"company" | "sole_trader">(onboardingMetadata.businessType || "company");
+  const agreement = getAgreementContent(businessType);
   const agreementSigned = provider.agreements.some((agreement) => agreement.status === "SIGNED");
   const initialUnlockedStep = (() => {
     const hasStep1 = Boolean(provider.legalName?.trim() && provider.companyNumber?.trim() && provider.registeredAddress?.trim() && provider.contactEmail.trim() && provider.phone?.trim());
@@ -221,6 +227,30 @@ export function ProviderOnboardingClient({
   const [phone, setPhone] = useState(provider.phone || "");
   const [registeredAddress, setRegisteredAddress] = useState(provider.registeredAddress || "");
   const [vatNumber, setVatNumber] = useState(provider.vatNumber || "");
+  const [companyCountry, setCompanyCountry] = useState(onboardingMetadata.companyCountry || "United Kingdom");
+  const [companyIncorporationDate, setCompanyIncorporationDate] = useState(onboardingMetadata.companyIncorporationDate || "");
+  const [companyType, setCompanyType] = useState(onboardingMetadata.companyType || "Private Limited Company (Ltd)");
+  const [website, setWebsite] = useState(onboardingMetadata.website || "");
+  const [authorisedSignatoryName, setAuthorisedSignatoryName] = useState(onboardingMetadata.authorisedSignatoryName || "");
+  const [authorisedSignatoryTitle, setAuthorisedSignatoryTitle] = useState(onboardingMetadata.authorisedSignatoryTitle || "");
+  const [authorisedSignatoryEmail, setAuthorisedSignatoryEmail] = useState(onboardingMetadata.authorisedSignatoryEmail || "");
+  const [authorisedSignatoryPhone, setAuthorisedSignatoryPhone] = useState(onboardingMetadata.authorisedSignatoryPhone || "");
+  const [authorisedSignatoryAuthority, setAuthorisedSignatoryAuthority] = useState(onboardingMetadata.authorisedSignatoryAuthority || "");
+  const [operationsContactName, setOperationsContactName] = useState(onboardingMetadata.operationsContactName || "");
+  const [operationsContactRole, setOperationsContactRole] = useState(onboardingMetadata.operationsContactRole || "");
+  const [operationsContactPhone, setOperationsContactPhone] = useState(onboardingMetadata.operationsContactPhone || "");
+  const [operationsContactEmail, setOperationsContactEmail] = useState(onboardingMetadata.operationsContactEmail || "");
+  const [emergencyContactName, setEmergencyContactName] = useState(onboardingMetadata.emergencyContactName || "");
+  const [emergencyContactRole, setEmergencyContactRole] = useState(onboardingMetadata.emergencyContactRole || "");
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState(onboardingMetadata.emergencyContactPhone || "");
+  const [emergencyContactEmail, setEmergencyContactEmail] = useState(onboardingMetadata.emergencyContactEmail || "");
+  const [workerCount, setWorkerCount] = useState(onboardingMetadata.workerCount || "");
+  const [dateOfBirth, setDateOfBirth] = useState(onboardingMetadata.dateOfBirth || "");
+  const [nationality, setNationality] = useState(onboardingMetadata.nationality || "");
+  const [businessAddress, setBusinessAddress] = useState(onboardingMetadata.businessAddress || "");
+  const [nationalInsuranceNumber, setNationalInsuranceNumber] = useState(onboardingMetadata.nationalInsuranceNumber || "");
+  const [utrNumber, setUtrNumber] = useState(onboardingMetadata.utrNumber || "");
+  const [hmrcStatus, setHmrcStatus] = useState(onboardingMetadata.hmrcStatus || "");
   const [selectedCategories] = useState<string[]>(initialCategories);
   const [selectedServices, setSelectedServices] = useState<string[]>(savedServiceKeys);
   const [selectedCouncils, setSelectedCouncils] = useState<string[]>(initialCouncils);
@@ -236,7 +266,9 @@ export function ProviderOnboardingClient({
   const isReviewSubmitted = ["SUBMITTED_FOR_REVIEW", "UNDER_REVIEW", "APPROVED", "CHANGES_REQUESTED", "REJECTED"].includes(provider.status);
   const availablePostcodes = useMemo(() => getPostcodesForCouncils(selectedCouncils), [selectedCouncils]);
   const takenPostcodesSet = useMemo(() => new Set(takenPostcodes), [takenPostcodes]);
-  const profileComplete = Boolean(legalName.trim() && companyNumber.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim());
+  const profileComplete = businessType === "sole_trader"
+    ? Boolean(legalName.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && dateOfBirth.trim() && nationality.trim())
+    : Boolean(legalName.trim() && companyNumber.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && authorisedSignatoryName.trim() && authorisedSignatoryEmail.trim());
   const servicesComplete = selectedCategories.length > 0 && selectedServices.length > 0;
   const coverageComplete = selectedPostcodes.length > 0;
   const readyForConfirmation = profileComplete && servicesComplete && coverageComplete && agreementAccepted;
@@ -322,37 +354,80 @@ export function ProviderOnboardingClient({
         {/* ─── Form area ─── */}
         <form id="provider-onboarding-form" action={saveAction}>
           <input type="hidden" name="currentStep" value={String(step)} />
+          <input type="hidden" name="businessType" value={businessType} />
           {selectedCategories.map((category) => (
             <input key={`hidden-category-${category}`} type="hidden" name="categories" value={category} />
           ))}
           {selectedServices.map((serviceKey) => (
             <input key={`hidden-service-${serviceKey}`} type="hidden" name="serviceKeys" value={serviceKey} />
           ))}
+          <input type="hidden" name="companyCountry" value={companyCountry} />
+          <input type="hidden" name="companyIncorporationDate" value={companyIncorporationDate} />
+          <input type="hidden" name="companyType" value={companyType} />
+          <input type="hidden" name="website" value={website} />
+          <input type="hidden" name="authorisedSignatoryName" value={authorisedSignatoryName} />
+          <input type="hidden" name="authorisedSignatoryTitle" value={authorisedSignatoryTitle} />
+          <input type="hidden" name="authorisedSignatoryEmail" value={authorisedSignatoryEmail} />
+          <input type="hidden" name="authorisedSignatoryPhone" value={authorisedSignatoryPhone} />
+          <input type="hidden" name="authorisedSignatoryAuthority" value={authorisedSignatoryAuthority} />
+          <input type="hidden" name="operationsContactName" value={operationsContactName} />
+          <input type="hidden" name="operationsContactRole" value={operationsContactRole} />
+          <input type="hidden" name="operationsContactPhone" value={operationsContactPhone} />
+          <input type="hidden" name="operationsContactEmail" value={operationsContactEmail} />
+          <input type="hidden" name="emergencyContactName" value={emergencyContactName} />
+          <input type="hidden" name="emergencyContactRole" value={emergencyContactRole} />
+          <input type="hidden" name="emergencyContactPhone" value={emergencyContactPhone} />
+          <input type="hidden" name="emergencyContactEmail" value={emergencyContactEmail} />
+          <input type="hidden" name="workerCount" value={workerCount} />
+          <input type="hidden" name="dateOfBirth" value={dateOfBirth} />
+          <input type="hidden" name="nationality" value={nationality} />
+          <input type="hidden" name="businessAddress" value={businessAddress} />
+          <input type="hidden" name="nationalInsuranceNumber" value={nationalInsuranceNumber} />
+          <input type="hidden" name="utrNumber" value={utrNumber} />
+          <input type="hidden" name="hmrcStatus" value={hmrcStatus} />
           <input type="hidden" name="postcodePrefixes" value={selectedPostcodes.join(", ")} />
           {agreementAccepted && <input type="hidden" name="agreementAccepted" value="on" />}
 
-          {/* ─── Step 1: Company details ─── */}
+          {/* ─── Step 1: Business details ─── */}
           <Card style={{ display: step === 1 ? "flex" : "none" }}>
             <CardHeader>
-              <CardTitle>Company details</CardTitle>
-              <CardDescription>Provide your registered company information.</CardDescription>
+              <CardTitle>{businessType === "sole_trader" ? "Provider details" : "Company details"}</CardTitle>
+              <CardDescription>{businessType === "sole_trader" ? "Complete your sole trader onboarding profile." : "Provide your registered company information and signatory details."}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              <div className="space-y-3">
+                <Label>Business type <span className="text-red-500">*</span></Label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {onboardingBusinessTypeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      disabled={!canEdit}
+                      onClick={() => canEdit && setBusinessType(option.value)}
+                      className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${businessType === option.value ? "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100" : "border-border bg-background text-foreground hover:border-blue-200 hover:bg-muted/50"} ${!canEdit ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
+                    >
+                      <div className="font-medium">{option.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="legalName">Legal company name <span className="text-red-500">*</span></Label>
-                  <Input id="legalName" name="legalName" value={legalName} onChange={(event) => setLegalName(event.target.value)} required disabled={!canEdit} placeholder="e.g. ABC Cleaning Ltd" />
+                  <Label htmlFor="legalName">{businessType === "sole_trader" ? "Full legal name" : "Legal company name"} <span className="text-red-500">*</span></Label>
+                  <Input id="legalName" name="legalName" value={legalName} onChange={(event) => setLegalName(event.target.value)} required disabled={!canEdit} placeholder={businessType === "sole_trader" ? "e.g. Jane Smith" : "e.g. ABC Cleaning Ltd"} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tradingName">Trading name</Label>
                   <Input id="tradingName" name="tradingName" value={tradingName} onChange={(event) => setTradingName(event.target.value)} disabled={!canEdit} placeholder="Leave blank if same as legal name" />
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="companyNumber">Company number <span className="text-red-500">*</span></Label>
-                  <Input id="companyNumber" name="companyNumber" value={companyNumber} onChange={(event) => setCompanyNumber(event.target.value)} required disabled={!canEdit} placeholder="e.g. 12345678" />
-                </div>
+              <div className={`grid gap-4 ${businessType === "sole_trader" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+                {businessType === "company" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="companyNumber">Company number <span className="text-red-500">*</span></Label>
+                    <Input id="companyNumber" name="companyNumber" value={companyNumber} onChange={(event) => setCompanyNumber(event.target.value)} required disabled={!canEdit} placeholder="e.g. 12345678" />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="contactEmail">Email <span className="text-red-500">*</span></Label>
                   <input type="hidden" name="contactEmail" value={contactEmail} />
@@ -363,16 +438,112 @@ export function ProviderOnboardingClient({
                   <Input id="phone" name="phone" value={phone} onChange={(event) => setPhone(event.target.value)} required disabled={!canEdit} placeholder="e.g. 07123 456789" />
                 </div>
               </div>
+              {businessType === "sole_trader" ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of birth <span className="text-red-500">*</span></Label>
+                    <Input id="dateOfBirth" type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} disabled={!canEdit} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nationality">Nationality <span className="text-red-500">*</span></Label>
+                    <Input id="nationality" value={nationality} onChange={(event) => setNationality(event.target.value)} disabled={!canEdit} placeholder="e.g. British" />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyCountry">Country of incorporation</Label>
+                    <Input id="companyCountry" value={companyCountry} onChange={(event) => setCompanyCountry(event.target.value)} disabled={!canEdit} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyIncorporationDate">Date of incorporation</Label>
+                    <Input id="companyIncorporationDate" type="date" value={companyIncorporationDate} onChange={(event) => setCompanyIncorporationDate(event.target.value)} disabled={!canEdit} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyType">Company type</Label>
+                    <Input id="companyType" value={companyType} onChange={(event) => setCompanyType(event.target.value)} disabled={!canEdit} placeholder="e.g. Ltd, PLC, LLP" />
+                  </div>
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="registeredAddress">Registered address <span className="text-red-500">*</span></Label>
-                <Input id="registeredAddress" name="registeredAddress" value={registeredAddress} onChange={(event) => setRegisteredAddress(event.target.value)} required disabled={!canEdit} placeholder="Full registered address" />
+                <Label htmlFor="registeredAddress">{businessType === "sole_trader" ? "Home address" : "Registered address"} <span className="text-red-500">*</span></Label>
+                <Input id="registeredAddress" name="registeredAddress" value={registeredAddress} onChange={(event) => setRegisteredAddress(event.target.value)} required disabled={!canEdit} placeholder={businessType === "sole_trader" ? "Home address" : "Full registered address"} />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="vatNumber">VAT number <span className="text-muted-foreground text-xs">(optional)</span></Label>
                   <Input id="vatNumber" name="vatNumber" value={vatNumber} onChange={(event) => setVatNumber(event.target.value)} disabled={!canEdit} placeholder="e.g. GB123456789" />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input id="website" value={website} onChange={(event) => setWebsite(event.target.value)} disabled={!canEdit} placeholder="https://example.com" />
+                </div>
               </div>
+              {businessType === "sole_trader" ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="businessAddress">Business address</Label>
+                      <Input id="businessAddress" value={businessAddress} onChange={(event) => setBusinessAddress(event.target.value)} disabled={!canEdit} placeholder="If different from home address" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nationalInsuranceNumber">National Insurance no.</Label>
+                      <Input id="nationalInsuranceNumber" value={nationalInsuranceNumber} onChange={(event) => setNationalInsuranceNumber(event.target.value)} disabled={!canEdit} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="utrNumber">UTR</Label>
+                      <Input id="utrNumber" value={utrNumber} onChange={(event) => setUtrNumber(event.target.value)} disabled={!canEdit} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hmrcStatus">HMRC self-employed status</Label>
+                    <Input id="hmrcStatus" value={hmrcStatus} onChange={(event) => setHmrcStatus(event.target.value)} disabled={!canEdit} placeholder="Yes / No / In progress" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="authorisedSignatoryName">Authorised signatory name <span className="text-red-500">*</span></Label>
+                      <Input id="authorisedSignatoryName" value={authorisedSignatoryName} onChange={(event) => setAuthorisedSignatoryName(event.target.value)} disabled={!canEdit} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="authorisedSignatoryTitle">Authorised signatory title</Label>
+                      <Input id="authorisedSignatoryTitle" value={authorisedSignatoryTitle} onChange={(event) => setAuthorisedSignatoryTitle(event.target.value)} disabled={!canEdit} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="authorisedSignatoryEmail">Authorised signatory email <span className="text-red-500">*</span></Label>
+                      <Input id="authorisedSignatoryEmail" type="email" value={authorisedSignatoryEmail} onChange={(event) => setAuthorisedSignatoryEmail(event.target.value)} disabled={!canEdit} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="authorisedSignatoryPhone">Authorised signatory phone</Label>
+                      <Input id="authorisedSignatoryPhone" value={authorisedSignatoryPhone} onChange={(event) => setAuthorisedSignatoryPhone(event.target.value)} disabled={!canEdit} />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="authorisedSignatoryAuthority">Authority basis</Label>
+                      <Input id="authorisedSignatoryAuthority" value={authorisedSignatoryAuthority} onChange={(event) => setAuthorisedSignatoryAuthority(event.target.value)} disabled={!canEdit} placeholder="Director / Manager / Owner" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="operationsContactName">Operations contact</Label>
+                      <Input id="operationsContactName" value={operationsContactName} onChange={(event) => setOperationsContactName(event.target.value)} disabled={!canEdit} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="operationsContactEmail">Operations email</Label>
+                      <Input id="operationsContactEmail" type="email" value={operationsContactEmail} onChange={(event) => setOperationsContactEmail(event.target.value)} disabled={!canEdit} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="operationsContactPhone">Operations phone</Label>
+                      <Input id="operationsContactPhone" value={operationsContactPhone} onChange={(event) => setOperationsContactPhone(event.target.value)} disabled={!canEdit} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="workerCount">Workers / cleaners available</Label>
+                      <Input id="workerCount" value={workerCount} onChange={(event) => setWorkerCount(event.target.value)} disabled={!canEdit} />
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -447,18 +618,24 @@ export function ProviderOnboardingClient({
 
               <div className="space-y-3">
                 <Label>Boroughs <span className="text-red-500">*</span></Label>
-                <ChipSelector
-                  options={londonCouncilOptions}
-                  selected={selectedCouncils}
-                  disabled={!canEdit}
-                  onToggle={(value) => {
-                    const nextCouncils = toggleValue(selectedCouncils, value);
-                    setSelectedCouncils(nextCouncils);
-                    const validPostcodes = getPostcodesForCouncils(nextCouncils);
-                    setSelectedPostcodes((current) => current.filter((postcode) => validPostcodes.includes(postcode)));
-                  }}
-                />
-              </div>
+                  <ChipSelector
+                    options={londonCouncilOptions}
+                    selected={selectedCouncils}
+                    disabled={!canEdit}
+                    onToggle={(value) => {
+                      const nextCouncils = toggleValue(selectedCouncils, value);
+                      setSelectedCouncils(nextCouncils);
+                      const validPostcodes = getPostcodesForCouncils(nextCouncils);
+                      setSelectedPostcodes((current) => {
+                        const retained = current.filter((postcode) => validPostcodes.includes(postcode));
+                        return Array.from(new Set([...retained, ...validPostcodes]));
+                      });
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Selecting a borough automatically preselects its postcode prefixes. You can remove any individual postcode below if needed.
+                  </p>
+                </div>
 
               <div className="space-y-3">
                 <Label>Postcodes <span className="text-red-500">*</span></Label>
@@ -474,7 +651,7 @@ export function ProviderOnboardingClient({
                     />
                     {Object.keys(competitorPostcodes).length > 0 && (
                       <p className="text-xs text-muted-foreground">
-                        Postcodes showing a provider count already have active providers. You can still select them — customers will be able to compare and choose.
+                        Postcodes showing a provider count already have active providers in the wider network view. Your final approved coverage is still controlled by AreaSorted.
                       </p>
                     )}
                   </>
@@ -596,7 +773,57 @@ export function ProviderOnboardingClient({
               )}
 
               {/* Agreement checkbox */}
-              <div className="rounded-lg border p-4">
+              <div className="rounded-lg border p-4 space-y-4">
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <FileText className="size-4" />
+                    {agreement.title}
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">{agreement.version}</Badge>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{agreement.intro}</p>
+                  <div className="mt-4 max-h-72 space-y-4 overflow-y-auto pr-2">
+                    {agreement.sections.map((section) => (
+                      <div key={section.heading} className="space-y-2">
+                        <h4 className="text-sm font-semibold">{section.heading}</h4>
+                        <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                          {section.points.map((point) => (
+                            <li key={point}>{point}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <details className="rounded-lg border bg-background p-4">
+                  <summary className="cursor-pointer text-sm font-medium">Read full agreement text</summary>
+                  <div className="mt-3 space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      Open the full agreement in a dedicated page, download a copy, or print it to PDF before accepting.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={businessType === "sole_trader" ? "/provider/agreements/sole-trader" : "/provider/agreements/company"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                      >
+                        Open full agreement
+                      </a>
+                      <a
+                        href={businessType === "sole_trader" ? "/provider-agreements/sole-trader-v1.txt" : "/provider-agreements/company-provider-v1.txt"}
+                        download
+                        className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                      >
+                        Download text
+                      </a>
+                    </div>
+                    <iframe
+                      src={businessType === "sole_trader" ? "/provider-agreements/sole-trader-v1.txt" : "/provider-agreements/company-provider-v1.txt"}
+                      title={`${agreement.title} full text`}
+                      className="h-72 w-full rounded-lg border bg-white"
+                    />
+                  </div>
+                </details>
                 <label className={`flex items-start gap-3 ${canEdit ? "cursor-pointer" : "pointer-events-none opacity-70"}`}>
                   <input
                     type="checkbox"
@@ -607,9 +834,9 @@ export function ProviderOnboardingClient({
                     className="mt-0.5 size-4 rounded border-muted-foreground/30 text-blue-600 focus:ring-blue-500"
                   />
                   <div className="space-y-0.5">
-                    <p className="text-sm font-medium">I accept the provider agreement</p>
+                    <p className="text-sm font-medium">I accept the {agreement.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      By checking this box, you agree to the terms and conditions of the AreaSorted provider partnership.
+                      By checking this box, you confirm you have read version {agreement.version} and agree to the provider terms for your business type.
                     </p>
                   </div>
                 </label>

@@ -41,6 +41,7 @@ async function main() {
 
   await updateProviderCompanyProfile({
     providerCompanyId: acceptedProvider.id,
+    businessType: "company",
     legalName: "AreaSorted Proof Provider Ltd",
     tradingName: "Proof Provider",
     companyNumber: "AS-PROOF-INVITE-001",

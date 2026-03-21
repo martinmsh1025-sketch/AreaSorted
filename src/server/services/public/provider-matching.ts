@@ -5,6 +5,7 @@ export type MatchedProvider = {
   providerName: string;
   postcodePrefix: string;
   paymentReady: boolean;
+  hasActivePricing: boolean;
 };
 
 export type ProviderMatchResult =
@@ -22,6 +23,7 @@ export async function matchProvidersForPublicQuote(
   input: {
     postcode: string;
     categoryKey: string;
+    serviceKey?: string;
     scheduledDate?: Date;
     scheduledTime?: string;
     excludeProviderIds?: string[];
@@ -51,6 +53,14 @@ export async function matchProvidersForPublicQuote(
         include: {
           stripeConnectedAccount: true,
           availabilityRules: true,
+          pricingRules: {
+            where: {
+              active: true,
+              categoryKey: input.categoryKey,
+              ...(input.serviceKey ? { serviceKey: input.serviceKey } : {}),
+            },
+            select: { id: true },
+          },
         },
       },
     },
@@ -64,14 +74,15 @@ export async function matchProvidersForPublicQuote(
     const company = row.providerCompany;
     return {
       providerCompanyId: company.id,
-      providerName: company.tradingName || company.legalName || "Service provider",
-      postcodePrefix,
-      paymentReady: Boolean(
-        company.stripeConnectedAccount?.chargesEnabled &&
-        company.stripeConnectedAccount?.payoutsEnabled,
-      ),
-    };
-  });
+        providerName: company.tradingName || company.legalName || "Service provider",
+        postcodePrefix,
+        paymentReady: Boolean(
+          company.stripeConnectedAccount?.chargesEnabled &&
+          company.stripeConnectedAccount?.payoutsEnabled,
+        ),
+        hasActivePricing: company.pricingRules.length > 0,
+      };
+    });
 
   // Filter by provider availability if date/time provided
   if (input.scheduledDate && input.scheduledTime) {
@@ -98,8 +109,21 @@ export async function matchProvidersForPublicQuote(
     return { status: "no_coverage" };
   }
 
-  // Single-provider model: pick the matched provider.
-  const chosen = providers[0];
+  // Allow multiple providers to cover the same postcode internally,
+  // but pick a single best provider for the customer-facing flow.
+  const rankedProviders = [...providers].sort((left, right) => {
+    if (left.hasActivePricing !== right.hasActivePricing) {
+      return Number(right.hasActivePricing) - Number(left.hasActivePricing);
+    }
+
+    if (left.paymentReady !== right.paymentReady) {
+      return Number(right.paymentReady) - Number(left.paymentReady);
+    }
+
+    return left.providerName.localeCompare(right.providerName);
+  });
+
+  const chosen = rankedProviders[0];
 
   return { status: "matched", providers: [chosen] };
 }

@@ -7,6 +7,7 @@ import { continueProviderSubmissionAction, saveProviderProfileAction, submitProv
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
 import { ProviderOnboardingClient } from "./client";
 import { getPrisma } from "@/lib/db";
+import { getProviderOnboardingMetadata } from "@/lib/providers/onboarding-profile";
 
 type ProviderOnboardingPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -28,6 +29,7 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
   const lockedCategoryKey = session.latestInvite?.approvedCategoryKey || provider.serviceCategories[0]?.categoryKey || null;
   const lockedCategory = getProviderCategoryByKey(lockedCategoryKey || "");
   const inviteServiceKeys = Array.isArray(session.latestInvite?.approvedServiceKeysJson) ? session.latestInvite?.approvedServiceKeysJson.map((item) => String(item)) : [];
+  const onboardingMetadata = getProviderOnboardingMetadata(provider.stripeRequirementsJson);
   const savedServiceKeys = provider.stripeRequirementsJson && typeof provider.stripeRequirementsJson === "object" && !Array.isArray(provider.stripeRequirementsJson) && Array.isArray((provider.stripeRequirementsJson as { approvedServiceKeys?: JsonValue }).approvedServiceKeys)
     ? ((provider.stripeRequirementsJson as { approvedServiceKeys: JsonValue[] }).approvedServiceKeys || []).map((item) => String(item)).filter(Boolean)
     : [];
@@ -35,7 +37,13 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
     if (item.key === "profile") {
       return {
         ...item,
-        complete: Boolean(provider.legalName?.trim() && provider.companyNumber?.trim() && provider.registeredAddress?.trim() && (provider.contactEmail?.trim() || session.user.email?.trim()) && provider.phone?.trim()),
+        complete: Boolean(
+          provider.legalName?.trim() &&
+          provider.registeredAddress?.trim() &&
+          (provider.contactEmail?.trim() || session.user.email?.trim()) &&
+          provider.phone?.trim() &&
+          (onboardingMetadata.businessType === "sole_trader" || provider.companyNumber?.trim()),
+        ),
       };
     }
 
@@ -73,6 +81,7 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
       provider={provider}
       inviteCategoryKey={lockedCategoryKey}
       inviteServiceKeys={inviteServiceKeys}
+      onboardingMetadata={onboardingMetadata}
       checklist={filteredChecklist}
       canEdit={canProviderEditOnboarding(provider.status)}
       initialStep={Number.isFinite(currentStep) ? currentStep : 1}

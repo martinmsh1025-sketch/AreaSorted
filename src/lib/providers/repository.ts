@@ -130,13 +130,15 @@ export async function findProviderInviteByEmail(email: string) {
 
 export async function updateProviderCompanyProfile(input: {
   providerCompanyId: string;
+  businessType: "company" | "sole_trader";
   legalName: string;
   tradingName?: string;
-  companyNumber: string;
+  companyNumber?: string;
   registeredAddress: string;
   contactEmail: string;
   phone: string;
   vatNumber?: string;
+  onboardingMetadata?: Record<string, unknown>;
   insuranceExpiry?: Date | null;
   complianceNotes?: string;
   categories: string[];
@@ -145,12 +147,29 @@ export async function updateProviderCompanyProfile(input: {
 }) {
   const prisma = getPrisma();
 
+  const existing = await prisma.providerCompany.findUnique({
+    where: { id: input.providerCompanyId },
+    select: { stripeRequirementsJson: true },
+  });
+
+  const existingJson =
+    existing?.stripeRequirementsJson && typeof existing.stripeRequirementsJson === "object" && !Array.isArray(existing.stripeRequirementsJson)
+      ? (existing.stripeRequirementsJson as Record<string, unknown>)
+      : {};
+
+  const nextStripeRequirementsJson = {
+    ...existingJson,
+    businessType: input.businessType,
+    ...(input.onboardingMetadata || {}),
+    ...(input.serviceKeys.length ? { approvedServiceKeys: input.serviceKeys } : {}),
+  };
+
   await prisma.providerCompany.update({
     where: { id: input.providerCompanyId },
     data: {
       legalName: input.legalName || null,
       tradingName: input.tradingName || null,
-      companyNumber: input.companyNumber || null,
+      companyNumber: input.businessType === "sole_trader" ? null : input.companyNumber || null,
       registeredAddress: input.registeredAddress || null,
       contactEmail: input.contactEmail.toLowerCase(),
       phone: input.phone || null,
@@ -160,7 +179,7 @@ export async function updateProviderCompanyProfile(input: {
       status: "ONBOARDING_IN_PROGRESS",
       changesRequestedAt: null,
       rejectedAt: null,
-      stripeRequirementsJson: input.serviceKeys.length ? { approvedServiceKeys: input.serviceKeys } : undefined,
+      stripeRequirementsJson: nextStripeRequirementsJson,
     },
   });
 

@@ -1,0 +1,173 @@
+[PLATFORM NAME]
+PROVIDER TERMS FOR SOLE TRADERS
+Version 1.0
+Effective Date: [DATE]
+
+These Provider Terms for Sole Traders ("Terms") govern the relationship between [LEGAL ENTITY NAME], trading as [PLATFORM NAME] ("Platform", "we", "us", "our"), and the sole trader service provider identified during onboarding ("Provider", "you", "your").
+
+By clicking "I agree", signing electronically, completing onboarding, accepting a Booking Opportunity, performing Services, or otherwise using the Platform after these Terms take effect, you agree to be bound by these Terms.
+
+1. DEFINITIONS
+
+1.1 In these Terms:
+
+"Account" means the Provider account on the Platform.
+"Applicable Laws" means all laws, regulations, regulatory requirements, codes of practice, and guidance applicable to the Provider, the Services, or these Terms.
+"Booking" means a service booking confirmed through the Platform.
+"Booking Opportunity" means a request or opportunity to provide Services that is made available to the Provider through the Platform.
+"Cancellation Policy" means the Platform's cancellation and refund rules in force from time to time.
+"Chargeback" means any chargeback, payment reversal, card dispute, or similar transaction reversal relating to a Booking.
+"Customer" means a customer who requests or books Services through the Platform.
+"Customer Data" means any information relating to a Customer, including name, address, contact details, booking details, access instructions, and any other personal data shared through or in connection with the Platform.
+"Fees Schedule" means the fees, commissions, charges, payout rules, and related commercial terms set out in the Platform portal, a pricing schedule, or otherwise agreed in writing between the parties from time to time.
+"Provider Payout" means the amount payable by the Platform to the Provider for a completed Booking, after applying any agreed deductions under these Terms.
+"Provider Materials" means any equipment, products, consumables, tools, uniforms, documents, content, logos, trade names, photos, or information supplied by the Provider.
+"Provider Standards" means the Platform's service, quality, conduct, safety, and operational standards notified to the Provider from time to time.
+"Services" means the cleaning or related services provided by the Provider to Customers through the Platform.
+"VAT" means value added tax or any equivalent sales tax.
+
+1.2 References to "including" or "includes" mean "including without limitation".
+1.3 Headings do not affect interpretation.
+
+2. THE PLATFORM
+
+2.1 The Platform operates a marketplace and booking platform through which Customers may request or book Services from independent service providers.
+
+2.2 The Platform may:
+(a) advertise and market the Services;
+(b) receive booking requests from Customers;
+(c) hold or process Customer payments;
+(d) present pricing or estimated pricing to Customers;
+(e) send Booking Opportunities to the Provider;
+(f) collect and administer fees, commissions, refunds, and payouts; and
+(g) communicate with Customers and Providers regarding Bookings.
+
+2.3 Unless expressly agreed otherwise in writing, the Platform does not employ the Provider and does not guarantee any minimum number of Booking Opportunities, Bookings, earnings, or revenue.
+
+3. PROVIDER STATUS
+
+3.1 The Provider enters into these Terms as an independent sole trader business.
+3.2 Nothing in these Terms creates or is intended to create any employment, worker, agency, joint venture, partnership, fiduciary, or similar relationship between the Platform and the Provider.
+3.3 The Provider is free to determine whether to make themselves available for Booking Opportunities and, unless otherwise expressly agreed in writing, whether to accept or reject any Booking Opportunity.
+3.4 The relationship is non-exclusive. Subject to these Terms, the Provider may provide services to other customers, agencies, marketplaces, platforms, or businesses.
+3.5 The Provider is in business on their own account and is responsible for the manner in which they operate their business, subject to compliance with these Terms, Applicable Laws, and any reasonable Platform requirements relating to safety, quality, customer experience, data protection, and lawful operation of the Platform.
+
+4. ELIGIBILITY, ONBOARDING, AND ACCOUNT
+
+4.1 To use the Platform, the Provider must complete the onboarding process required by the Platform and provide all information, documents, and verifications reasonably requested by the Platform.
+4.2 The Platform may require the Provider to provide, or keep up to date:
+(a) full legal name and trading name (if any);
+(b) current address and contact details;
+(c) bank account details for payouts;
+(d) proof of identity and proof of address;
+(e) evidence of right to work in the United Kingdom, where requested;
+(f) tax or VAT information, where applicable;
+(g) insurance documents;
+(h) service areas, pricing, availability, and service categories; and
+(i) any other information reasonably required for onboarding, compliance, fraud prevention, customer safety, or payment processing.
+4.3 The Provider must ensure that all information submitted to the Platform is true, accurate, complete, and not misleading.
+4.4 The Provider must promptly notify the Platform of any material changes to their information, business status, legal name, trading name, tax status, VAT status, insurance status, service areas, or bank details.
+4.5 The Platform may approve, decline, suspend, or remove any Provider application or Account at its discretion, acting reasonably and in accordance with these Terms.
+4.6 The Provider must keep login credentials and Account access details secure and confidential and must promptly notify the Platform of any unauthorised access or suspected security incident.
+
+5. BOOKING OPPORTUNITIES AND BOOKINGS
+
+5.1 The Platform may send Booking Opportunities to the Provider through the portal, dashboard, email, SMS, WhatsApp, telephone, app notification, or other communication channels used by the Platform.
+5.2 A Booking Opportunity may include some or all of the following:
+(a) postcode or service area;
+(b) service type;
+(c) date and time or requested time window;
+(d) estimated duration;
+(e) pricing or payout information;
+(f) property details or job summary; and
+(g) any other relevant booking information.
+5.3 The Provider may accept or reject a Booking Opportunity within the time period specified by the Platform. If the Provider does not accept within that period, the Platform may treat the Booking Opportunity as rejected or expired.
+5.4 A Booking becomes confirmed only when the Platform confirms the Booking to the Provider and/or the Customer in accordance with the Platform's booking process.
+5.5 The Platform may use a payment hold, pre-authorisation, delayed capture, deposit, booking fee, or other payment mechanism before a Booking is confirmed. The Provider acknowledges that the Platform controls the Customer payment process and related timing.
+5.6 The Platform may withdraw, reassign, or cancel a Booking Opportunity before confirmation.
+5.7 The Platform may share only limited job information before confirmation and may share fuller Customer details after confirmation where reasonably necessary for performance of the Services.
+5.8 The Provider must not contact a Customer before the Platform has authorised such contact.
+
+6. PRICING, FEES, COMMISSION, AND PAYOUTS
+
+6.1 The pricing structure applicable to the Provider shall be as set out in the Fees Schedule, the Provider portal, or otherwise agreed in writing.
+6.2 The Platform may display to Customers the Provider's agreed service rates, quotes, booking fees, surcharges, and taxes where applicable.
+6.3 Unless otherwise agreed in writing:
+(a) the Customer shall pay a booking fee at checkout;
+(b) the Platform may place a pre-authorisation or payment hold on the Customer's card before a Booking is confirmed and may capture the applicable booking fee once the Booking is confirmed;
+(c) the Platform may collect payments from Customers in its own name or through its payment processor;
+(d) the Platform shall retain the commission agreed with the Provider from each completed Booking;
+(e) the Platform may deduct commission, refunds, discounts, credits, Chargebacks, payment processing costs, complaint credits, re-performance costs, or other sums properly due under these Terms; and
+(f) the Provider will receive the Provider Payout for completed Bookings.
+6.4 The Platform may issue statements, payout summaries, remittance notices, or self-billing records through the portal or by email.
+6.5 The Platform may withhold, delay, adjust, or set off payouts where reasonably necessary for investigations, disputes, missing compliance items, deductions, or legal/payment-processor requirements.
+6.6 Subject to these Terms, the Fees Schedule, any complaint, refund, Chargeback, investigation, or other permitted deduction, the Platform will pay the Provider within 5 working days after the Booking is marked complete.
+6.7 The Provider is not entitled to any fee or payout for any Booking not completed, except to the extent expressly stated in the Fees Schedule or agreed in writing by the Platform.
+
+7. TAX, VAT, AND INVOICING
+
+The Provider is solely responsible for all taxes, National Insurance contributions, duties, levies, charges, and filings arising from the Provider's business and the Services, including any VAT for which the Provider is liable. The Provider must keep proper records, notify the Platform if VAT registration changes, and provide invoices, self-billing confirmations, VAT information, or other tax information reasonably requested by the Platform.
+
+8. PROVIDER OBLIGATIONS
+
+The Provider must perform the Services with reasonable care, skill, and diligence, comply with all Applicable Laws and the Provider Standards, attend confirmed Bookings on time, communicate professionally, maintain any required licences or approvals, use suitable products and equipment, and cooperate with complaints or investigations. The Provider must not misrepresent the Services, accept unauthorised off-platform payments, engage in unlawful or abusive conduct, misuse Customer Data, or damage the Platform's reputation.
+
+9. AVAILABILITY, ACCEPTANCE, AND REJECTION
+
+The Provider may set or update service areas, service categories, pricing inputs, and availability through the Platform. The Provider is responsible for maintaining accurate availability and service information. Repeated late responses, no responses, cancellations, no-shows, poor performance, or failure to meet Provider Standards may affect the Provider's ranking, visibility, service area access, payout timing, or continued access to the Platform.
+
+10. PERSONNEL AND SUBSTITUTION
+
+The Provider may personally perform the Services or, where permitted by the Platform, arrange for suitably qualified personnel or a substitute to perform the Services on the Provider's behalf. No substitute or personnel may attend a Customer unless approved by the Platform where required, fully onboarded, and fully compliant. The Provider remains responsible for their acts, omissions, conduct, and performance.
+
+11. CUSTOMER RELATIONSHIP, DATA, AND CONFIDENTIALITY
+
+Customer Data is shared only for the purpose of enabling and performing Platform Bookings. The Provider must use Customer Data only as necessary, keep it secure, not retain it unnecessarily, comply with data protection law, and must not copy, scrape, sell, share, or exploit Customer Data or Platform data for unauthorised purposes.
+
+12. CANCELLATIONS, REFUNDS, CHARGEBACKS, AND COMPLAINTS
+
+The Provider must comply with the Cancellation Policy. The Platform may issue refunds, credits, or other remedies for cancellations, no-shows, lateness, incomplete or poor-quality Services, property damage, safety issues, complaints, or suspicious activity, and may make corresponding deductions or recoveries from the Provider where permitted under these Terms.
+
+13. INSURANCE, SAFETY, AND COMPLIANCE
+
+The Provider must maintain any insurance reasonably required by the Platform, including public liability insurance unless the Platform agrees otherwise in writing, and must notify the Platform immediately if insurance lapses or changes materially. The Provider must comply with health and safety obligations and report accidents, injuries, damage, safeguarding concerns, criminal allegations, or other material incidents promptly.
+
+14. NON-CIRCUMVENTION AND CUSTOMER NON-SOLICITATION
+
+The Provider must not, without the Platform's prior written consent, solicit or accept off-platform work from Customers introduced through the Platform for 6 months from the date of the last completed Platform Booking for that Customer, except for general advertising not specifically targeting Platform Customers.
+
+15. INTELLECTUAL PROPERTY AND MARKETING MATERIALS
+
+The Platform owns all rights in the Platform, portal, software, branding, systems, workflows, and related intellectual property, excluding Provider Materials. The Provider grants the Platform a non-exclusive, worldwide, royalty-free licence during the term of these Terms to use Provider Materials for onboarding, verification, platform operations, listings, marketing, and Booking administration.
+
+16. RATINGS, REVIEWS, AND PERFORMANCE
+
+The Platform may collect, display, use, and analyse ratings, reviews, complaints, response times, completion rates, cancellation rates, and other performance data relating to the Provider for ranking, quality control, fraud prevention, customer support, and operational decision-making.
+
+17. SUSPENSION AND TERMINATION
+
+The Platform may suspend, restrict, or terminate the Provider's Account where it reasonably believes the Provider has breached these Terms, supplied false or incomplete onboarding information, poses a safety or fraud risk, lacks valid insurance, or has shown repeated poor performance or non-compliance. Termination does not affect accrued rights, ongoing investigations, refund or chargeback processes, or clauses intended to survive.
+
+18. LIABILITY AND INDEMNITY
+
+Nothing in these Terms excludes liability that cannot lawfully be excluded. Subject to that, the Platform is not liable for loss of profit, revenue, business opportunity, goodwill, anticipated savings, or indirect or consequential loss. The Platform's aggregate liability in any 12-month period is capped at the greater of the commissions and fees retained from the Provider's Bookings in that period or GBP500. The Provider indemnifies the Platform for losses arising from the Provider's breach, negligence, misconduct, misuse of Customer Data, fraud, or tax liabilities arising from the Provider's business.
+
+19. CHANGES TO THESE TERMS
+
+The Platform may amend these Terms from time to time and will take reasonable steps to notify the Provider of material changes. Continued use of the Platform after the effective date of updated Terms constitutes acceptance unless express re-acceptance is required.
+
+20. GENERAL
+
+These Terms, together with any Fees Schedule, Provider Standards, policies incorporated by reference, and any written booking or commercial terms expressly agreed between the parties, form the entire agreement. The Provider may not assign these Terms without prior written consent. These Terms are governed by the laws of England and Wales and disputes are subject to the exclusive jurisdiction of the courts of England and Wales, except that the Platform may seek urgent injunctive relief in any court of competent jurisdiction.
+
+SCHEDULE 1 - FEES AND PAYOUTS
+
+The Customer shall pay a booking fee at checkout. The Platform may place a pre-authorisation or payment hold on the Customer's card before a Booking is confirmed and may capture the applicable booking fee once the Booking is confirmed. The Platform retains the agreed commission from each completed Booking. Subject to the Terms and any permitted deductions, the Platform will pay the Provider within 5 working days after the Booking is marked complete.
+
+SCHEDULE 2 - CANCELLATIONS, REFUNDS, AND NO-SHOWS
+
+Customer cancellations, Provider non-acceptance before confirmation, cancellations after confirmation, no-shows, late arrival, and upheld complaints may all affect refunds, deductions, and payout entitlement in accordance with the Terms, the Fees Schedule, and the Cancellation Policy.
+
+SCHEDULE 3 - PROVIDER STANDARDS
+
+The Provider must act professionally, arrive within the agreed booking window, use suitable and lawful equipment and products, follow the Platform's instructions for evidence, keys and access, report incidents promptly, comply with customer service timelines, avoid misrepresentation, and comply with all onboarding, insurance, and compliance requirements at all times.

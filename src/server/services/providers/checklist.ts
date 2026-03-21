@@ -20,6 +20,7 @@ type ProviderChecklistSource = {
   registeredAddress: string | null;
   contactEmail: string;
   phone: string | null;
+  stripeRequirementsJson?: unknown;
   emailVerifiedAt?: Date | null;
   passwordSetAt?: Date | null;
   onboardingSubmittedAt?: Date | null;
@@ -40,12 +41,30 @@ function hasValue(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
 
+function getBusinessType(provider: ProviderChecklistSource | null) {
+  const metadata =
+    provider?.stripeRequirementsJson &&
+    typeof provider.stripeRequirementsJson === "object" &&
+    !Array.isArray(provider.stripeRequirementsJson)
+      ? (provider.stripeRequirementsJson as Record<string, unknown>)
+      : null;
+
+  if (
+    metadata?.businessType === "sole_trader"
+  ) {
+    return "sole_trader";
+  }
+
+  return "company";
+}
+
 function getMissingProfileFields(provider: ProviderChecklistSource | null) {
-  if (!provider) return ["company name", "company number", "registered address", "email", "phone"];
+  if (!provider) return ["business name", "registered address", "email", "phone"];
 
   const missing: string[] = [];
-  if (!hasValue(provider.legalName)) missing.push("company name");
-  if (!hasValue(provider.companyNumber)) missing.push("company number");
+  const businessType = getBusinessType(provider);
+  if (!hasValue(provider.legalName)) missing.push(businessType === "sole_trader" ? "full legal name" : "company name");
+  if (businessType !== "sole_trader" && !hasValue(provider.companyNumber)) missing.push("company number");
   if (!hasValue(provider.registeredAddress)) missing.push("registered address");
   if (!hasValue(provider.contactEmail)) missing.push("email");
   if (!hasValue(provider.phone)) missing.push("phone");
@@ -95,9 +114,9 @@ export function buildProviderChecklist(provider: ProviderChecklistSource | null)
     },
     {
       key: "profile",
-      label: "Company details",
+      label: getBusinessType(provider) === "sole_trader" ? "Provider details" : "Company details",
       complete: isProfileComplete(provider),
-      detail: getMissingProfileFields(provider).length ? `Missing: ${getMissingProfileFields(provider).join(", ")}` : "Company details complete",
+      detail: getMissingProfileFields(provider).length ? `Missing: ${getMissingProfileFields(provider).join(", ")}` : `${getBusinessType(provider) === "sole_trader" ? "Provider" : "Company"} details complete`,
     },
     {
       key: "categories",

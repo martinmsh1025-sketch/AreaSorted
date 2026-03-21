@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { requireProviderOnboardingAccess } from "@/lib/provider-auth";
 import { canProviderEditOnboarding } from "@/lib/providers/status";
+import { getProviderAgreementVersion } from "@/lib/providers/onboarding-profile";
 import { markProviderAgreementSigned, submitProviderForReview, updateProviderCompanyProfile } from "@/lib/providers/repository";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
 import { saveProviderDocumentUploads } from "@/server/services/providers/documents";
@@ -92,8 +93,11 @@ function getOnboardingErrorStep(error: unknown, fallbackStep: number) {
 }
 
 async function persistProviderOnboarding(sessionProviderCompanyId: string, formData: FormData) {
+  const businessType = String(formData.get("businessType") || "company") === "sole_trader" ? "sole_trader" : "company";
+
   await updateProviderCompanyProfile({
     providerCompanyId: sessionProviderCompanyId,
+    businessType,
     legalName: String(formData.get("legalName") || "").trim(),
     tradingName: String(formData.get("tradingName") || "").trim(),
     companyNumber: String(formData.get("companyNumber") || "").trim(),
@@ -101,6 +105,33 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
     contactEmail: String(formData.get("contactEmail") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
     vatNumber: String(formData.get("vatNumber") || "").trim(),
+    onboardingMetadata: {
+      businessType,
+      companyCountry: String(formData.get("companyCountry") || "").trim(),
+      companyIncorporationDate: String(formData.get("companyIncorporationDate") || "").trim(),
+      companyType: String(formData.get("companyType") || "").trim(),
+      website: String(formData.get("website") || "").trim(),
+      authorisedSignatoryName: String(formData.get("authorisedSignatoryName") || "").trim(),
+      authorisedSignatoryTitle: String(formData.get("authorisedSignatoryTitle") || "").trim(),
+      authorisedSignatoryEmail: String(formData.get("authorisedSignatoryEmail") || "").trim(),
+      authorisedSignatoryPhone: String(formData.get("authorisedSignatoryPhone") || "").trim(),
+      authorisedSignatoryAuthority: String(formData.get("authorisedSignatoryAuthority") || "").trim(),
+      operationsContactName: String(formData.get("operationsContactName") || "").trim(),
+      operationsContactRole: String(formData.get("operationsContactRole") || "").trim(),
+      operationsContactPhone: String(formData.get("operationsContactPhone") || "").trim(),
+      operationsContactEmail: String(formData.get("operationsContactEmail") || "").trim(),
+      emergencyContactName: String(formData.get("emergencyContactName") || "").trim(),
+      emergencyContactRole: String(formData.get("emergencyContactRole") || "").trim(),
+      emergencyContactPhone: String(formData.get("emergencyContactPhone") || "").trim(),
+      emergencyContactEmail: String(formData.get("emergencyContactEmail") || "").trim(),
+      workerCount: String(formData.get("workerCount") || "").trim(),
+      dateOfBirth: String(formData.get("dateOfBirth") || "").trim(),
+      nationality: String(formData.get("nationality") || "").trim(),
+      businessAddress: String(formData.get("businessAddress") || "").trim(),
+      nationalInsuranceNumber: String(formData.get("nationalInsuranceNumber") || "").trim(),
+      utrNumber: String(formData.get("utrNumber") || "").trim(),
+      hmrcStatus: String(formData.get("hmrcStatus") || "").trim(),
+    },
     insuranceExpiry: formData.get("insuranceExpiry") ? new Date(String(formData.get("insuranceExpiry"))) : null,
     complianceNotes: String(formData.get("complianceNotes") || "").trim(),
     categories: parseMultiValues(formData, "categories"),
@@ -111,7 +142,7 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
   await saveProviderDocumentUploads(sessionProviderCompanyId, formData);
 
   if (formData.get("agreementAccepted") === "on") {
-    await markProviderAgreementSigned(sessionProviderCompanyId);
+    await markProviderAgreementSigned(sessionProviderCompanyId, getProviderAgreementVersion(businessType));
   }
 }
 
