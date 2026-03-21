@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { NavigationLoadingOverlay } from "@/components/shared/navigation-loading-overlay";
 export const metadata: Metadata = {
@@ -41,7 +42,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body>
-        <NavigationLoadingOverlay />
+        <Suspense fallback={null}>
+          <NavigationLoadingOverlay />
+        </Suspense>
         <div className="page-shell">{children}</div>
       </body>
     </html>
