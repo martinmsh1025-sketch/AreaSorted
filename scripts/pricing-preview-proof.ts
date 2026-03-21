@@ -4,8 +4,18 @@ import { getPrisma } from "@/lib/db";
 
 async function main() {
   const prisma = getPrisma();
-  const provider = await prisma.providerCompany.findUnique({ where: { companyNumber: "AS-DEMO-001" } });
-  if (!provider) throw new Error("Seeded provider not found");
+  const provider = await prisma.providerCompany.findFirst({
+    where: {
+      OR: [
+        { companyNumber: "AS-TEST-999" },
+        { contactEmail: "test-provider@areasorted.test" },
+        { companyNumber: "AS-DEMO-001" },
+      ],
+    },
+  });
+  if (!provider) {
+    throw new Error("Seeded provider not found. Run `npm run prisma:seed` first.");
+  }
 
   const preview = await previewProviderPricing({
     providerCompanyId: provider.id,

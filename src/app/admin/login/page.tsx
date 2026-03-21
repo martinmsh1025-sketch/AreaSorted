@@ -13,7 +13,7 @@ type AdminLoginPageProps = {
 
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
   const session = await getAdminSession();
-  if (session) redirect("/admin/bookings");
+  if (session) redirect("/admin/orders");
 
   const params = (await searchParams) ?? {};
   const error = typeof params.error === "string" ? params.error : "";

@@ -28,6 +28,8 @@ export async function updateBookingStatusAction(formData: FormData) {
     },
   });
 
+  revalidatePath(`/admin/orders/${bookingId}`);
+  revalidatePath("/admin/orders");
   revalidatePath(`/admin/bookings/${bookingId}`);
   revalidatePath("/admin/bookings");
 }

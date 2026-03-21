@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/db";
+import { getEnv } from "@/lib/config/env";
 
 /**
  * Cron endpoint for cleaning up stale data:
@@ -12,10 +13,15 @@ import { getPrisma } from "@/lib/db";
  */
 export async function GET(request: NextRequest) {
   try {
+    const env = getEnv();
     const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
+    const cronSecret = env.CRON_SECRET;
 
-    // In production, require CRON_SECRET; in dev, allow without
+    if (env.NODE_ENV === "production" && !cronSecret) {
+      return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
+    }
+
+    // In development, allow unauthenticated calls only when no secret is configured.
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

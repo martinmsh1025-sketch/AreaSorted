@@ -6,10 +6,6 @@ async function main() {
   process.env.ALLOW_MOCK_STRIPE_CHECKOUT = "true";
   const prisma = getPrisma();
 
-  await prisma.quotePriceSnapshot.deleteMany({});
-  await prisma.quoteRequest.deleteMany({});
-  await prisma.paymentRecord.deleteMany({ where: { metadataJson: { path: ["quoteReference"], string_contains: "QR-" } } }).catch(() => null);
-
   const instantQuote = await createPublicQuote({
     customerName: "Instant Demo",
     customerEmail: "instant-demo@example.com",
