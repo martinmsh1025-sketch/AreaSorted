@@ -45,9 +45,9 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     metadataJson: booking.paymentRecords?.[0]?.metadataJson,
     bookingStatus: booking.bookingStatus,
   });
-  const providerName = booking.marketplaceProviderCompany?.tradingName
-    ?? booking.marketplaceProviderCompany?.legalName
-    ?? "Pending assignment";
+  const providerName = payment === "CAPTURED"
+    ? (booking.marketplaceProviderCompany?.tradingName ?? booking.marketplaceProviderCompany?.legalName ?? "Assigned provider")
+    : "Verified local provider";
 
   const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
   const canCancel = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
@@ -108,6 +108,11 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           <p style={{ marginTop: "0.75rem", fontSize: "0.75rem", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
             Duration shown is an estimate only. Actual time may vary depending on property condition and scope of work. The service is complete when the agreed tasks are finished, regardless of time taken.
           </p>
+          {payment === "AUTHORIZED" && (
+            <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
+              Your temporary card hold is active. We only show the provider company name after the booking is confirmed and payment is captured.
+            </p>
+          )}
         </div>
 
         <div className="panel card" style={{ marginBottom: "1.5rem" }}>
@@ -157,8 +162,8 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           {(canCancel || canReschedule) ? (
             <>
               <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.75rem" }}>
-                You can reschedule or cancel this booking below. For other changes, contact our support team.
-              </p>
+                 You can reschedule or cancel this booking below. If the provider has not confirmed yet, cancelling releases the card hold instead of capturing payment. For other changes, contact our support team.
+               </p>
               <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
                 {canReschedule && (
                   <RescheduleBookingSection

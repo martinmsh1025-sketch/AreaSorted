@@ -299,11 +299,11 @@ export default function HomePage() {
   const faqItems = [
     {
       question: "How does the matching process work?",
-      answer: "Simply enter your postcode and details about the job. The platform connects you with available, vetted professionals in your area before you continue to booking.",
+      answer: "Enter your postcode and job details, and AreaSorted checks coverage, pricing, and provider suitability in one managed flow before you continue to booking.",
     },
     {
       question: "How do I pay for my service?",
-      answer: "Payment is processed securely online. We collect the booking through one managed flow, then move the job into provider matching and support.",
+      answer: "We place a temporary card hold when you continue booking. You are only charged once the matched provider confirms the job.",
     },
     {
       question: "Are the service providers background checked?",
@@ -311,7 +311,7 @@ export default function HomePage() {
     },
     {
       question: "What if I need to cancel or reschedule?",
-      answer: "Bookings can be updated through the managed flow. Support stays in one place if timing or service details need to change.",
+      answer: "Bookings can be updated through your account. If a provider does not confirm or a booking cannot go ahead, the card hold is released or any captured payment is handled under the cancellation and refund policy.",
     },
   ];
 
@@ -546,12 +546,12 @@ export default function HomePage() {
 
       <section className="homepage-section homepage-app-section">
         <div className="homepage-app-copy">
-          <div className="homepage-app-kicker">Now available on mobile</div>
-          <h2 className="homepage-section-title">Match with pros in seconds with our app.</h2>
-          <p className="homepage-app-text">Manage bookings, chat with professionals, and track your service history in one place.</p>
+          <div className="homepage-app-kicker">Built for mobile booking</div>
+          <h2 className="homepage-section-title">Book quickly on your phone, without downloading an app.</h2>
+          <p className="homepage-app-text">Check coverage, continue booking, and manage your AreaSorted account from any modern mobile browser.</p>
           <div className="homepage-app-buttons">
-            <button type="button" className="homepage-store-button">Download on the App Store</button>
-            <button type="button" className="homepage-store-button">Get it on Google Play</button>
+            <button type="button" className="homepage-store-button" onClick={() => router.push("/quote")}>Continue booking</button>
+            <button type="button" className="homepage-store-button" onClick={() => router.push("/services")}>Browse services</button>
           </div>
         </div>
         <div className="homepage-phone-wrap" aria-hidden="true">

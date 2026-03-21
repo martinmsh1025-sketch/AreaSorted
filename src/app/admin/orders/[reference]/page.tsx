@@ -3,7 +3,7 @@ import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
-import { updateBookingStatusAction } from "./actions";
+import { confirmBookingOnBehalfAction, updateBookingStatusAction } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -421,6 +421,31 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
 
         {/* Right column — status controls + amount */}
         <div className="space-y-6">
+          {booking.bookingStatus === "PENDING_ASSIGNMENT" && (
+            <Card className="border-amber-200 bg-amber-50/60">
+              <CardHeader>
+                <CardTitle>Provider confirmation override</CardTitle>
+                <CardDescription>
+                  Use this only if the provider has confirmed offline and you need to capture the card hold on their behalf.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={confirmBookingOnBehalfAction} className="space-y-3">
+                  <input type="hidden" name="bookingId" value={booking.id} />
+                  <button
+                    type="submit"
+                    className="inline-flex h-9 w-full items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white shadow hover:bg-amber-700"
+                  >
+                    Confirm on behalf of provider
+                  </button>
+                  <p className="text-xs text-muted-foreground">
+                    This captures the authorised payment and moves the booking to Assigned, the same way provider acceptance would.
+                  </p>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Update status</CardTitle>

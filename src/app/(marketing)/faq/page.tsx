@@ -20,17 +20,17 @@ const faqCategories: FaqCategory[] = [
       {
         question: "How do I book a service?",
         answer:
-          "Enter your postcode on the homepage or quote page to check coverage. Then select your service, property details, and any add-ons. The pricing engine generates a transparent quote instantly. You can then book and pay securely online.",
+          "Enter your postcode on the homepage or quote page to check coverage. Then select your service, property details, and any add-ons. The pricing engine generates a transparent quote instantly. You can then continue booking and place a temporary card hold securely online.",
       },
       {
         question: "What payment methods do you accept?",
         answer:
-          "We accept all major credit and debit cards through our secure payment provider (Stripe). Payment is taken at the time of booking.",
+          "We accept major credit and debit cards through Stripe. AreaSorted places a temporary card hold when you continue booking, and captures payment only after the matched provider confirms the job.",
       },
       {
-        question: "Can I get an invoice for my booking?",
+        question: "Can I get a receipt for my booking?",
         answer:
-          "Yes. Once your booking is confirmed, you can view and download your invoice from your account dashboard under the booking details page.",
+          "Yes. Once payment has been captured for a confirmed booking, you can view and download your receipt from your account dashboard on the booking details page.",
       },
       {
         question: "What does the booking fee cover?",
@@ -40,7 +40,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Are there any hidden fees?",
         answer:
-          "No. Your quote includes the base service price, any add-ons you select, property type adjustments, and the booking fee. The total you see at checkout is the total you pay.",
+          "No. Your quote includes the base service price, any add-ons you select, property type adjustments, and the booking fee. If a booking never reaches provider confirmation, any temporary card hold is released rather than captured.",
       },
     ],
   },
@@ -50,7 +50,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Can I cancel my booking?",
         answer:
-          "Yes. You can cancel a booking from your account dashboard as long as the booking status is Paid, Pending Assignment, or Assigned. Cancellations are processed through the platform.",
+          "Yes. You can cancel a booking from your account dashboard while the booking is awaiting provider confirmation or still upcoming. If the booking has not yet been confirmed, the card hold is released. If payment has already been captured, the cancellation and refund policy applies.",
       },
       {
         question: "Can I reschedule my booking?",
@@ -60,12 +60,12 @@ const faqCategories: FaqCategory[] = [
       {
         question: "What happens if my provider cancels?",
         answer:
-          "If a provider is unable to complete the job, the platform will attempt to reassign the booking to another available provider in your area. If no replacement is found, you will receive a full refund.",
+          "If a confirmed provider cancels, AreaSorted may offer a replacement provider, reschedule the booking, issue a refund, issue a credit, or provide another reasonable resolution depending on the circumstances.",
       },
       {
         question: "How do refunds work?",
         answer:
-          "Refunds are processed back to the original payment method. Processing times depend on your bank, but typically take 5–10 working days to appear on your statement.",
+          "Refunds are usually processed back to the original payment method. If a booking never reaches confirmation, a temporary card hold is released instead. Timing depends on your bank or card provider.",
       },
     ],
   },
@@ -90,7 +90,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Will I know who my provider is before the booking?",
         answer:
-          "Provider details are shared after your booking is confirmed and payment is processed. Before that, your quote shows that the service will be carried out by a verified local provider.",
+          "Provider details are shared after the booking has been confirmed and payment has been captured. Before that, your quote shows that the service will be carried out by a verified local provider.",
       },
       {
         question: "Do providers bring their own equipment?",
@@ -115,12 +115,12 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Can I book for weekends or evenings?",
         answer:
-          "Weekend and evening slots are available for most services. Note that weekend bookings carry a small surcharge (typically £18) and evening slots carry a surcharge of £16, as shown in your quote.",
+          "Weekend slots are available for most services and may carry a surcharge shown in your quote. Availability depends on provider coverage and the service requested.",
       },
       {
         question: "How far in advance do I need to book?",
         answer:
-          "You can book as early as the next day for planned bookings. Priority (within 24 hours) and same-day response options are also available for an additional fee, subject to provider availability.",
+          "You can usually book from the next day onward for planned work. Priority or urgent availability depends on the service, your postcode, and provider confirmation.",
       },
     ],
   },
@@ -130,7 +130,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Do I need an account to book?",
         answer:
-          "You can get a quote without an account. To complete a booking, you will need to create an account or log in so that the booking is linked to your profile and you can manage it later.",
+          "You can explore pricing first, but to continue booking you need an account so the booking request, payment status, and future updates are linked to your profile.",
       },
       {
         question: "How do I contact support?",

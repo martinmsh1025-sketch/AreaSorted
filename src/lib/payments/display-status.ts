@@ -42,9 +42,9 @@ export function getPaymentStatusVariant(status: string): "default" | "secondary"
 export function getPaymentStatusLabel(status: string) {
   switch (status) {
     case "CAPTURED":
-      return "Captured";
+      return "Payment Captured";
     case "AUTHORIZED":
-      return "Card Hold";
+      return "Card Hold Active";
     case "RELEASED":
       return "Hold Released";
     default:

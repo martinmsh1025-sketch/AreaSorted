@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
+import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
 
 function formatMoney(value: unknown) {
   return new Intl.NumberFormat("en-GB", {
@@ -19,13 +20,17 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
   if (!quote) notFound();
 
   // Only show provider name after payment
-  const isPaid = quote.booking?.paymentRecords?.some((pr) => pr.paymentState === "PAID");
+  const paymentStatus = getDisplayPaymentStatus({
+    paymentState: quote.booking?.paymentRecords[0]?.paymentState,
+    metadataJson: quote.booking?.paymentRecords[0]?.metadataJson,
+    bookingStatus: quote.booking?.bookingStatus,
+  });
+  const isPaid = paymentStatus === "CAPTURED";
   const providerDisplay = isPaid
     ? (quote.providerCompany?.tradingName || quote.providerCompany?.legalName || "Assigned provider")
     : "Verified local provider";
 
   const bookingStatus = quote.booking?.bookingStatus || "Not booked yet";
-  const paymentStatus = quote.booking?.paymentRecords[0]?.paymentState || "Not started";
   const canBookNow = !quote.booking && quote.state === "PRICED";
   const unavailable = quote.state === "EXPIRED";
 
@@ -41,7 +46,7 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
             <div><span>Service</span><strong>{quote.serviceKey.replace(/_/g, " ")}</strong></div>
             <div><span>Address</span><strong>{[quote.addressLine1, quote.addressLine2, quote.city, quote.postcode].filter(Boolean).join(", ")}</strong></div>
             <div><span>Total quoted</span><strong>{formatMoney(quote.priceSnapshot?.totalCustomerPay)}</strong></div>
-            <div><span>Payment</span><strong>{paymentStatus.replace(/_/g, " ")}</strong></div>
+            <div><span>Payment</span><strong>{getPaymentStatusLabel(paymentStatus)}</strong></div>
           </div>
           {canBookNow && (
             <div className="button-row" style={{ marginTop: "1rem" }}>
@@ -53,8 +58,8 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
               {unavailable
                   ? "We could not prepare a quote for this request. Please contact support if you need help with a revised booking."
                   : quote.booking?.bookingStatus === "PENDING_ASSIGNMENT"
-                    ? "Your card hold is in place. The provider has up to 24 hours to confirm before the hold is released automatically."
-                    : "Provider details will be shared once your booking is confirmed and payment is captured."}
+                    ? "Your temporary card hold is active. The provider has up to 24 hours to confirm before the hold is released automatically."
+                    : "Provider details are shared after the booking is confirmed and payment is captured."}
             </p>
           )}
         </div>
