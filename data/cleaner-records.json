@@ -32,7 +32,7 @@
     {
       "cleanerId": "CL-1001",
       "fullName": "Cleaner One",
-      "email": "cleaner1@washhub.test",
+      "email": "cleaner1@areasorted.test",
       "phone": "07900000001",
       "region": "Greater London",
       "boroughs": [
@@ -59,7 +59,7 @@
       "onboardingStatus": "active",
       "score": 120,
       "trustBadges": [
-        "Verified by WashHub",
+        "Verified by AreaSorted",
         "Reliable cleaner",
         "Documents reviewed"
       ],
@@ -79,7 +79,7 @@
     {
       "cleanerId": "CL-1002",
       "fullName": "Cleaner Two",
-      "email": "cleaner2@washhub.test",
+      "email": "cleaner2@areasorted.test",
       "phone": "07900000002",
       "region": "Greater London",
       "boroughs": [
@@ -105,7 +105,7 @@
       "onboardingStatus": "active",
       "score": 95,
       "trustBadges": [
-        "Verified by WashHub",
+        "Verified by AreaSorted",
         "Documents reviewed"
       ],
       "scoreLog": [

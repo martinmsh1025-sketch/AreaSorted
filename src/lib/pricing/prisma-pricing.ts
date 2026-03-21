@@ -1,4 +1,6 @@
 import { getPrisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
+import { jobTypeCatalog, cleaningConditionOptions } from "@/lib/service-catalog";
 
 export type ProviderPricingPortalRow = {
   id: string;
@@ -28,6 +30,17 @@ export type PricingPreviewInput = {
   quantity?: number;
   sameDay?: boolean;
   weekend?: boolean;
+  /** Cleaning-specific inputs */
+  bedrooms?: number;
+  bathrooms?: number;
+  kitchens?: number;
+  cleaningCondition?: "light" | "standard" | "heavy" | "very-heavy";
+  supplies?: "customer" | "provider";
+  propertyType?: string;
+  /** Pest Control / general size selector */
+  jobSize?: "small" | "standard" | "large";
+  /** Add-on keys from the job type catalog */
+  addOns?: string[];
 };
 
 export type PricingPreviewResult = {
@@ -39,6 +52,7 @@ export type PricingPreviewResult = {
   pricingRuleId: string;
   quoteRequired: boolean;
   postcodeSurcharge: number;
+  optionalExtrasAmount: number;
 };
 
 function asNumber(value: unknown) {
@@ -140,6 +154,7 @@ export async function saveProviderPricingRule(input: {
   sameDayUplift?: number | null;
   weekendUplift?: number | null;
   customQuoteRequired: boolean;
+  pricingJson?: Prisma.InputJsonValue | null;
   active: boolean;
   actorType: "ADMIN" | "PROVIDER";
   actorId?: string;
@@ -170,6 +185,7 @@ export async function saveProviderPricingRule(input: {
       sameDayUplift: input.sameDayUplift ?? null,
       weekendUplift: input.weekendUplift ?? null,
       customQuoteRequired: input.customQuoteRequired,
+      pricingJson: input.pricingJson ?? undefined,
       active: input.active,
     },
     create: {
@@ -184,6 +200,7 @@ export async function saveProviderPricingRule(input: {
       sameDayUplift: input.sameDayUplift ?? null,
       weekendUplift: input.weekendUplift ?? null,
       customQuoteRequired: input.customQuoteRequired,
+      pricingJson: input.pricingJson ?? undefined,
       active: input.active,
     },
   });
@@ -201,7 +218,7 @@ export async function saveProviderPricingRule(input: {
   return saved;
 }
 
-export async function disableProviderPricingRule(input: {
+export async function toggleProviderPricingRule(input: {
   providerPricingRuleId: string;
   actorType: "ADMIN" | "PROVIDER";
   actorId?: string;
@@ -210,9 +227,10 @@ export async function disableProviderPricingRule(input: {
   const existing = await prisma.providerPricingRule.findUnique({ where: { id: input.providerPricingRuleId } });
   if (!existing) throw new Error("Pricing rule not found");
 
+  const newActive = !existing.active;
   const updated = await prisma.providerPricingRule.update({
     where: { id: input.providerPricingRuleId },
-    data: { active: false },
+    data: { active: newActive },
   });
 
   await createAuditLog({
@@ -220,7 +238,7 @@ export async function disableProviderPricingRule(input: {
     providerPricingRuleId: existing.id,
     actorType: input.actorType,
     actorId: input.actorId,
-    action: "pricing_rule.disabled",
+    action: newActive ? "pricing_rule.enabled" : "pricing_rule.disabled",
     beforeJson: existing,
     afterJson: updated,
   });
@@ -305,10 +323,80 @@ export async function savePricingAreaOverride(input: {
   return saved;
 }
 
+/**
+ * Estimate hours for cleaning based on bedrooms, bathrooms, kitchens, property type, and condition.
+ * This mirrors the logic in `service-catalog.ts` `calculateQuote`.
+ */
+function estimateCleaningHours(
+  bedrooms: number,
+  bathrooms: number,
+  kitchens: number,
+  propertyType?: string,
+  cleaningCondition?: "light" | "standard" | "heavy" | "very-heavy",
+): number {
+  const baseHours = 0.8;
+  const bedroomHours = Math.max(bedrooms, 0) * 0.95;
+  const bathroomHours = Math.max(bathrooms, 0) * 0.55;
+  const kitchenHours = Math.max(kitchens, 1) * 0.45;
+  let total = baseHours + bedroomHours + bathroomHours + kitchenHours;
+
+  // Property type multiplier
+  switch (propertyType) {
+    case "terraced":
+      total *= 1.05;
+      break;
+    case "semi-detached":
+      total *= 1.1;
+      break;
+    case "detached":
+      total *= 1.2;
+      break;
+    case "commercial":
+      total *= 1.3;
+      break;
+    // flat / default: no multiplier
+  }
+
+  // Cleaning condition multiplier
+  const conditionOption = cleaningConditionOptions.find((o) => o.value === cleaningCondition);
+  const conditionMultiplier = conditionOption?.multiplier ?? 1;
+  total *= conditionMultiplier;
+
+  return Math.round(total * 10) / 10; // round to 1 decimal
+}
+
+/**
+ * Get the price for a pest control job from pricingJson size tiers or fallback to flatPrice.
+ */
+function getPestControlPrice(
+  rule: { flatPrice: unknown; pricingJson: unknown },
+  jobSize: "small" | "standard" | "large",
+): number {
+  const json = rule.pricingJson as Record<string, unknown> | null;
+  if (json && typeof json === "object") {
+    const sizePrice = asNumber(json[jobSize]);
+    if (sizePrice != null && sizePrice > 0) return sizePrice;
+  }
+  // Fallback to flatPrice
+  return asNumber(rule.flatPrice) ?? 0;
+}
+
+/**
+ * Calculate the total add-on price from catalog by matching selected add-on keys.
+ */
+function calculateAddOnsTotal(serviceKey: string, addOnKeys?: string[]): number {
+  if (!addOnKeys || addOnKeys.length === 0) return 0;
+  const jobType = jobTypeCatalog.find((j) => j.value === serviceKey);
+  if (!jobType) return 0;
+  return jobType.addOns
+    .filter((addOn) => addOnKeys.includes(addOn.value))
+    .reduce((sum, addOn) => sum + addOn.amount, 0);
+}
+
 export async function previewProviderPricing(input: PricingPreviewInput): Promise<PricingPreviewResult> {
   const prisma = getPrisma();
 
-  const [rule, bookingFeeSetting, commissionSetting, areaOverride] = await Promise.all([
+  const [rule, bookingFeeSetting, bookingFeeModeSetting, commissionSetting, areaOverride] = await Promise.all([
     prisma.providerPricingRule.findFirst({
       where: {
         providerCompanyId: input.providerCompanyId,
@@ -318,6 +406,7 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
       },
     }),
     prisma.adminSetting.findUnique({ where: { key: "marketplace.booking_fee" } }),
+    prisma.adminSetting.findUnique({ where: { key: "marketplace.booking_fee_mode" } }),
     prisma.adminSetting.findUnique({ where: { key: "marketplace.commission_percent" } }),
     prisma.pricingAreaOverride.findFirst({
       where: {
@@ -332,16 +421,70 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
   if (!rule) throw new Error("Provider pricing rule not found");
 
   let providerBasePrice = 0;
-  const quantity = Math.max(input.quantity ?? 1, 1);
-  const hours = Math.max(input.estimatedHours ?? 1, 1);
+  const pricingMode = rule.pricingMode || "hourly";
 
-  if (rule.pricingMode === "flat") {
-    providerBasePrice = (asNumber(rule.flatPrice) ?? 0) * quantity;
-  } else if (rule.pricingMode === "hourly") {
-    providerBasePrice = (asNumber(rule.hourlyPrice) ?? 0) * hours;
+  // ── Calculate add-ons total from catalog ──
+  const addOnsTotal = calculateAddOnsTotal(input.serviceKey, input.addOns);
+
+  if (input.categoryKey === "CLEANING") {
+    // ── Cleaning: two modes ──
+    if (pricingMode === "fixed_per_size") {
+      // Provider set fixed prices per size in pricingJson
+      const json = rule.pricingJson as Record<string, unknown> | null;
+      const size = input.jobSize || "standard";
+      providerBasePrice = (json && asNumber(json[size])) || asNumber(rule.flatPrice) || 0;
+    } else {
+      // hourly mode: system estimates hours from bedrooms/bathrooms/kitchens/condition/propertyType
+      const hourlyRate = asNumber(rule.hourlyPrice) ?? 0;
+      let hours: number;
+      if (input.bedrooms != null || input.bathrooms != null) {
+        hours = estimateCleaningHours(
+          input.bedrooms ?? 1,
+          input.bathrooms ?? 1,
+          input.kitchens ?? 1,
+          input.propertyType,
+          input.cleaningCondition,
+        );
+      } else {
+        hours = Math.max(input.estimatedHours ?? 2, 1);
+      }
+      providerBasePrice = hourlyRate * hours;
+    }
+
+    // Supplies surcharge: +£12 if provider brings supplies
+    if (input.supplies === "provider") {
+      providerBasePrice += 12;
+    }
+  } else if (input.categoryKey === "PEST_CONTROL") {
+    // ── Pest Control: fixed price per job size ──
+    const size = input.jobSize || "standard";
+    providerBasePrice = getPestControlPrice(rule, size);
+    // If provider only set hourlyPrice (legacy), fall back to hourly * estimated hours
+    if (providerBasePrice <= 0) {
+      const hourlyRate = asNumber(rule.hourlyPrice) ?? 0;
+      const hours = Math.max(input.estimatedHours ?? 2, 1);
+      providerBasePrice = hourlyRate * hours;
+    }
   } else {
-    providerBasePrice = asNumber(rule.minimumCharge) ?? asNumber(rule.flatPrice) ?? 0;
+    // ── All other categories: try fixed_per_size from pricingJson, fallback to hourly ──
+    if (pricingMode === "fixed_per_size" && input.jobSize) {
+      const json = rule.pricingJson as Record<string, unknown> | null;
+      const sizePrice = json && asNumber(json[input.jobSize]);
+      if (sizePrice != null && sizePrice > 0) {
+        providerBasePrice = sizePrice;
+      } else {
+        // Fallback to hourly
+        const hours = Math.max(input.estimatedHours ?? 1, 1);
+        providerBasePrice = (asNumber(rule.hourlyPrice) ?? 0) * hours;
+      }
+    } else {
+      const hours = Math.max(input.estimatedHours ?? 1, 1);
+      providerBasePrice = (asNumber(rule.hourlyPrice) ?? 0) * hours;
+    }
   }
+
+  // Add add-ons to provider base price
+  providerBasePrice += addOnsTotal;
 
   providerBasePrice = Math.max(providerBasePrice, asNumber(rule.minimumCharge) ?? 0);
   providerBasePrice += asNumber(rule.travelFee) ?? 0;
@@ -349,8 +492,15 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
   if (input.weekend) providerBasePrice += asNumber(rule.weekendUplift) ?? 0;
 
   const quoteRequired = rule.customQuoteRequired;
-  const bookingFee = Number((areaOverride?.bookingFeeOverride ?? (bookingFeeSetting?.valueJson as any)?.value) ?? 12);
-  const commissionPercent = Number((areaOverride?.commissionPercentOverride ?? (commissionSetting?.valueJson as any)?.value) ?? 18);
+
+  // Booking fee: supports fixed amount or percentage of provider base price
+  const bookingFeeMode = ((bookingFeeModeSetting?.valueJson as any)?.value as string) || "fixed";
+  const bookingFeeValue = Number((areaOverride?.bookingFeeOverride ?? (bookingFeeSetting?.valueJson as any)?.value) ?? 12);
+  const bookingFee = bookingFeeMode === "percent"
+    ? roundMoney(providerBasePrice * (bookingFeeValue / 100))
+    : bookingFeeValue;
+
+  const commissionPercent = Number((areaOverride?.commissionPercentOverride ?? (commissionSetting?.valueJson as any)?.value) ?? 12);
   const postcodeSurcharge = asNumber(areaOverride?.surchargeAmount) ?? 0;
 
   const commissionAmount = roundMoney(providerBasePrice * (commissionPercent / 100));
@@ -366,5 +516,6 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
     pricingRuleId: rule.id,
     quoteRequired,
     postcodeSurcharge: roundMoney(postcodeSurcharge),
+    optionalExtrasAmount: roundMoney(addOnsTotal),
   };
 }

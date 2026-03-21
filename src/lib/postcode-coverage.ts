@@ -38,8 +38,12 @@ const coverageZones: CoverageZone[] = [
   },
 ];
 
-function normalisePostcode(postcode: string) {
-  return postcode.trim().toUpperCase().replace(/\s+/g, " ");
+export function normalisePostcode(postcode: string) {
+  const compact = postcode.trim().toUpperCase().replace(/\s+/g, "");
+
+  if (compact.length <= 3) return compact;
+
+  return `${compact.slice(0, -3)} ${compact.slice(-3)}`;
 }
 
 function getOutwardCode(postcode: string) {

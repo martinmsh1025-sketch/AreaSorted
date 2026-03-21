@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { Prisma } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
+import { createProviderNotification } from "@/lib/providers/notifications";
 
 function toJsonValue<T>(value: T) {
   return JSON.parse(JSON.stringify(value));
@@ -87,6 +88,39 @@ async function syncPaymentIntent(event: Stripe.Event) {
       bookingStatus: event.type === "payment_intent.succeeded" ? "PAID" : record.booking.bookingStatus,
     },
   });
+
+  // Generate invoices when payment succeeds
+  if (event.type === "payment_intent.succeeded") {
+    try {
+      const { generateInvoicesForBooking } = await import("@/server/services/invoices/generate");
+      await generateInvoicesForBooking(updated.bookingId);
+    } catch {
+      // Non-critical — invoices can be generated on-demand
+    }
+
+    // Notify the assigned provider about the new paid booking
+    try {
+      const booking = await prisma.booking.findUnique({
+        where: { id: updated.bookingId },
+        select: { providerCompanyId: true, servicePostcode: true, scheduledDate: true },
+      });
+      if (booking?.providerCompanyId) {
+        const dateStr = booking.scheduledDate
+          ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+          : "TBC";
+        await createProviderNotification({
+          providerCompanyId: booking.providerCompanyId,
+          type: "NEW_ORDER",
+          title: "New booking received",
+          message: `A new paid booking in ${booking.servicePostcode} for ${dateStr} is waiting for your confirmation.`,
+          link: `/provider/orders/${updated.bookingId}`,
+          bookingId: updated.bookingId,
+        });
+      }
+    } catch {
+      // Non-critical
+    }
+  }
 
   return { ignored: false };
 }
@@ -221,6 +255,62 @@ async function syncPayout(event: Stripe.Event) {
   return { ignored: false };
 }
 
+async function syncCheckoutSessionCompleted(event: Stripe.Event) {
+  const prisma = getPrisma();
+  const session = event.data.object as Stripe.Checkout.Session;
+
+  if (session.mode !== "payment") {
+    return { ignored: true, reason: "non_payment_session" };
+  }
+
+  /* Look up PaymentRecord by the checkout session ID stored during booking creation */
+  const record = await prisma.paymentRecord.findUnique({
+    where: { stripeCheckoutSessionId: session.id },
+    include: { booking: true },
+  });
+
+  if (!record) {
+    return { ignored: true, reason: "payment_record_not_found_for_session" };
+  }
+
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id ?? undefined;
+
+  /* Back-fill the payment intent ID so subsequent PI webhooks can also find this record */
+  await prisma.paymentRecord.update({
+    where: { id: record.id },
+    data: {
+      stripePaymentIntentId: paymentIntentId,
+      stripeAccountId: typeof event.account === "string" ? event.account : record.stripeAccountId,
+      paymentState: session.payment_status === "paid" ? "PAID" : undefined,
+      metadataJson: toJsonValue({
+        ...(typeof record.metadataJson === "object" && record.metadataJson !== null ? record.metadataJson : {}),
+        checkoutSessionStatus: session.status,
+        paymentStatus: session.payment_status,
+      }),
+    },
+  });
+
+  if (session.payment_status === "paid") {
+    await prisma.booking.update({
+      where: { id: record.bookingId },
+      data: { bookingStatus: "PAID" },
+    });
+
+    // Generate invoices for this booking
+    try {
+      const { generateInvoicesForBooking } = await import("@/server/services/invoices/generate");
+      await generateInvoicesForBooking(record.bookingId);
+    } catch {
+      // Non-critical — invoices can be generated on-demand
+    }
+  }
+
+  return { ignored: false };
+}
+
 export async function processStripeWebhookEvent(event: Stripe.Event) {
   const prisma = getPrisma();
 
@@ -284,6 +374,9 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
       case "payment_intent.succeeded":
       case "payment_intent.payment_failed":
         result = await syncPaymentIntent(event);
+        break;
+      case "checkout.session.completed":
+        result = await syncCheckoutSessionCompleted(event);
         break;
       case "charge.refunded":
         result = await syncChargeRefunded(event);

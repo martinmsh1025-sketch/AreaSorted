@@ -1,23 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { londonCouncilCoverage } from "@/lib/providers/london-coverage";
 
 const regions = {
   GreaterLondon: {
     label: "Greater London",
-    areas: {
-      Camden: ["NW1", "NW3", "NW5", "WC1"],
-      Islington: ["EC1", "N1", "N5", "N7"],
-      Barnet: ["EN4", "N2", "N3", "NW4", "NW7"],
-      Harrow: ["HA1", "HA2", "HA3", "HA5", "HA7"],
-      Westminster: ["SW1", "W1", "W2", "WC2"],
-      KensingtonAndChelsea: ["SW3", "SW5", "SW7", "W8", "W10"],
-      Hounslow: ["TW3", "TW4", "TW5", "TW7", "W4"],
-      Ealing: ["UB1", "W3", "W5", "W7", "W13"],
-      Croydon: ["CR0", "CR2", "CR7", "SE25"],
-      Newham: ["E6", "E7", "E13", "E16"],
-    },
+    areas: londonCouncilCoverage as Record<string, readonly string[]>,
   },
   SouthEastEngland: {
     label: "South East England",
@@ -228,7 +217,6 @@ function buildAvailabilityState() {
 }
 
 export default function CleanerApplyPage() {
-  const router = useRouter();
   const [emailGate, setEmailGate] = useState("");
   const [emailChecked, setEmailChecked] = useState(false);
   const [emailGateError, setEmailGateError] = useState("");
@@ -388,7 +376,6 @@ export default function CleanerApplyPage() {
 
       setSubmitState("done");
       setSubmitMessage(`Application submitted. Reference: ${data.applicationId}`);
-      router.push(`/cleaner/application-submitted?applicationId=${encodeURIComponent(data.applicationId || "")}`);
     } catch {
       setSubmitState("error");
       setSubmitMessage("Unable to submit the application right now.");
@@ -479,7 +466,7 @@ export default function CleanerApplyPage() {
         <div style={{ maxWidth: 760, marginBottom: "1.5rem" }}>
           <div className="eyebrow">Cleaner onboarding</div>
           <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3.3rem)" }}>
-            Join WashHub as a self-employed cleaner.
+            Join AreaSorted as a self-employed cleaner.
           </h1>
           <p className="lead">
             We will ask one group of questions at a time so the onboarding stays clear, fast, and professional.
@@ -492,10 +479,10 @@ export default function CleanerApplyPage() {
               <div className="eyebrow">Progress</div>
               <strong style={{ fontSize: "1.15rem" }}>Step {step} of {totalSteps}</strong>
             </div>
-            <div style={{ fontWeight: 800, color: "var(--color-accent)" }}>{progress}% complete</div>
+            <div style={{ fontWeight: 800, color: "var(--color-brand)" }}>{progress}% complete</div>
           </div>
           <div style={{ marginTop: "1rem", height: "10px", borderRadius: "999px", background: "#eef2f7", overflow: "hidden" }}>
-            <div style={{ width: `${progress}%`, height: "100%", background: "var(--color-accent)" }} />
+            <div style={{ width: `${progress}%`, height: "100%", background: "var(--color-brand)" }} />
           </div>
         </div>
 
@@ -513,7 +500,7 @@ export default function CleanerApplyPage() {
             {emailGateError ? <p style={{ color: "var(--color-error)", margin: 0 }}>{emailGateError}</p> : null}
             <div className="button-row">
               <button className="button button-primary" type="button" onClick={handleEmailCheck}>Continue</button>
-              <a className="button button-secondary" href="/cleaner/login">Already registered? Login</a>
+              <a className="button button-secondary" href="/provider/login">Already registered? Login</a>
             </div>
           </div>
         ) : (
@@ -822,7 +809,7 @@ export default function CleanerApplyPage() {
 
               <label className="quote-check-item">
                 <input type="checkbox" checked={acceptSelfEmployed} onChange={() => setAcceptSelfEmployed((value) => !value)} />
-                <span>I understand that WashHub treats approved cleaners as self-employed contractors, not employees.</span>
+                <span>I understand that AreaSorted treats approved cleaners as self-employed contractors, not employees.</span>
               </label>
               <label className="quote-check-item">
                 <input type="checkbox" checked={confirmAccuracy} onChange={() => setConfirmAccuracy((value) => !value)} />

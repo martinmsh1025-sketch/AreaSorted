@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Category = {
   key: string;
@@ -18,31 +20,52 @@ export function InviteForm({ categories, action }: InviteFormProps) {
   const [categoryKey, setCategoryKey] = useState(defaultCategory);
 
   return (
-    <form action={action} className="admin-filter-grid" style={{ marginTop: "1rem" }}>
-      <label className="quote-field-stack admin-filter-span-6">
-        <span>Provider email</span>
-        <input type="email" name="email" placeholder="provider@example.com" />
-      </label>
+    <form action={action} className="grid gap-4 sm:grid-cols-12">
+      <div className="sm:col-span-6">
+        <Label htmlFor="inviteEmail">Provider email</Label>
+        <Input
+          id="inviteEmail"
+          type="email"
+          name="email"
+          placeholder="provider@example.com"
+        />
+      </div>
 
-      <label className="quote-field-stack admin-filter-span-3">
-        <span>Approved category</span>
-        <select name="approvedCategoryKey" value={categoryKey} onChange={(event) => setCategoryKey(event.target.value)}>
+      <div className="sm:col-span-3">
+        <Label htmlFor="inviteCategory">Approved category</Label>
+        <select
+          id="inviteCategory"
+          name="approvedCategoryKey"
+          value={categoryKey}
+          onChange={(event) => setCategoryKey(event.target.value)}
+          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
           {categories.map((category) => (
-            <option key={category.key} value={category.key}>{category.label}</option>
+            <option key={category.key} value={category.key}>
+              {category.label}
+            </option>
           ))}
         </select>
-      </label>
+      </div>
 
-      <div className="quote-field-stack admin-filter-span-12">
-        <span>Service setup</span>
-        <div className="provider-soft-panel">
-          <strong>{categories.find((category) => category.key === categoryKey)?.label || "Category"}</strong>
-          <span>The provider will choose services inside this category during onboarding.</span>
+      <div className="sm:col-span-12">
+        <div className="rounded-lg border bg-muted/40 p-3">
+          <p className="text-sm font-medium">
+            {categories.find((c) => c.key === categoryKey)?.label || "Category"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            The provider will choose services inside this category during onboarding.
+          </p>
         </div>
       </div>
 
-      <div className="admin-filter-actions" style={{ marginTop: 0 }}>
-        <button type="submit" className="button button-primary">Send invite</button>
+      <div className="sm:col-span-12">
+        <button
+          type="submit"
+          className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+        >
+          Send invite
+        </button>
       </div>
     </form>
   );

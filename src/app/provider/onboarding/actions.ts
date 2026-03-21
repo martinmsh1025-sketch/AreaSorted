@@ -51,6 +51,10 @@ function getOnboardingErrorMessage(error: unknown) {
       return "Phone number is already used by another provider account.";
     }
 
+    if (target.includes("postcodePrefix") || target.includes("categoryKey")) {
+      return "A duplicate postcode entry was detected for your account. Please try again.";
+    }
+
     return "This provider record conflicts with an existing account.";
   }
 
@@ -67,6 +71,10 @@ function getOnboardingErrorStep(error: unknown, fallbackStep: number) {
 
     if (target.includes("companyNumber") || target.includes("contactEmail") || target.includes("email")) {
       return 1;
+    }
+
+    if (target.includes("postcodePrefix") || target.includes("categoryKey")) {
+      return 3;
     }
   }
 

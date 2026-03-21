@@ -44,19 +44,22 @@ export async function toggleProviderStatusAction(formData: FormData) {
   const nextStatus = String(formData.get("nextStatus") || "") as "ACTIVE" | "SUSPENDED";
   if (!providerCompanyId || !nextStatus) return;
 
+  let redirectUrl = "/admin/providers";
   try {
     if (nextStatus === "ACTIVE") {
       await activateProviderCompany(providerCompanyId);
-      redirect("/admin/providers?status=activated");
+      redirectUrl = "/admin/providers?status=activated";
+    } else {
+      await suspendProviderCompany(providerCompanyId);
+      redirectUrl = "/admin/providers?status=suspended";
     }
-
-    await suspendProviderCompany(providerCompanyId);
-    redirect("/admin/providers?status=suspended");
   } catch (error) {
     if (error instanceof ProviderActivationError) {
-      redirect(`/admin/providers?error=${encodeURIComponent(error.missing.join(", "))}`);
+      redirectUrl = `/admin/providers?error=${encodeURIComponent(error.missing.join(", "))}`;
+    } else {
+      redirectUrl = "/admin/providers?error=activation_failed";
     }
-
-    redirect("/admin/providers?error=activation_failed");
   }
+
+  redirect(redirectUrl);
 }

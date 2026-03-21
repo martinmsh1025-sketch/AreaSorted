@@ -1,9 +1,12 @@
-import { WashHubLogo } from "@/components/branding/washhub-logo";
+import { AreaSortedLogo } from "@/components/branding/areasorted-logo";
+import { getCustomerSession } from "@/lib/customer-auth";
+import Link from "next/link";
 
 const navItems = [
   { href: "/services", label: "Services", icon: "spark" },
   { href: "/pricing", label: "Pricing", icon: "tag" },
   { href: "/quote", label: "Quote", icon: "pin" },
+  { href: "/become-a-cleaner", label: "Cleaners", icon: "people" },
   { href: "/faq", label: "FAQ", icon: "chat" },
   { href: "/contact", label: "Contact", icon: "phone" },
 ];
@@ -62,6 +65,15 @@ function NavIcon({ icon }: { icon: string }) {
     );
   }
 
+  if (icon === "account") {
+    return (
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="5" r="2.2" stroke="currentColor" strokeWidth="1.1" />
+        <path d="M3 11.5C3.5 9.8 5 8.8 7 8.8C9 8.8 10.5 9.8 11 11.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
   return (
     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none">
       <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2" />
@@ -69,23 +81,41 @@ function NavIcon({ icon }: { icon: string }) {
   );
 }
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const customer = await getCustomerSession();
+
   return (
     <header className="site-header-shell">
       <div className="container site-header-grid">
-        <a href="/" className="site-header-brand">
-          <WashHubLogo compact />
-        </a>
+        <Link href="/" className="site-header-brand">
+          <AreaSortedLogo compact />
+        </Link>
 
         <nav className="site-header-nav">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} className="site-header-link">
-              <span style={{ color: "var(--color-accent)", display: "inline-flex", alignItems: "center" }}>
+            <Link key={item.href} href={item.href} className="site-header-link">
+              <span style={{ color: "var(--color-brand)", display: "inline-flex", alignItems: "center" }}>
                 <NavIcon icon={item.icon} />
               </span>
               <span style={{ color: "var(--color-text)" }}>{item.label}</span>
-            </a>
+            </Link>
           ))}
+
+          {customer ? (
+            <Link href="/account" className="site-header-link">
+              <span style={{ color: "var(--color-brand)", display: "inline-flex", alignItems: "center" }}>
+                <NavIcon icon="account" />
+              </span>
+              <span style={{ color: "var(--color-text)" }}>My Account</span>
+            </Link>
+          ) : (
+            <Link href="/customer/login" className="site-header-link">
+              <span style={{ color: "var(--color-brand)", display: "inline-flex", alignItems: "center" }}>
+                <NavIcon icon="account" />
+              </span>
+              <span style={{ color: "var(--color-text)" }}>Login</span>
+            </Link>
+          )}
         </nav>
       </div>
     </header>

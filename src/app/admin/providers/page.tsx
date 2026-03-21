@@ -1,14 +1,33 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { listProviderCompanies } from "@/lib/providers/repository";
 import { createProviderInviteAction, toggleProviderStatusAction } from "./actions";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
 import { providerServiceCatalog, providerStatusLabels } from "@/lib/providers/service-catalog-mapping";
-import { ProviderStatusBadge } from "@/components/providers/status-badge";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { InviteForm } from "./invite-form";
 
 type AdminProvidersPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const statusBadgeVariant: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
+  ACTIVE: "default",
+  APPROVED: "default",
+  SUSPENDED: "destructive",
+  REJECTED: "destructive",
+  INVITED: "outline",
+  EMAIL_VERIFICATION_PENDING: "secondary",
+  PASSWORD_SETUP_PENDING: "secondary",
+  ONBOARDING_IN_PROGRESS: "secondary",
+  SUBMITTED_FOR_REVIEW: "secondary",
+  UNDER_REVIEW: "secondary",
+  CHANGES_REQUESTED: "secondary",
+  STRIPE_PENDING: "secondary",
+  STRIPE_RESTRICTED: "secondary",
+  PRICING_PENDING: "secondary",
 };
 
 export default async function AdminProvidersPage({ searchParams }: AdminProvidersPageProps) {
@@ -24,77 +43,140 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
   const providers = await listProviderCompanies();
 
   return (
-    <main className="section">
-      <div className="container">
-        <section className="panel card" style={{ marginBottom: "1rem" }}>
-          <div className="backoffice-section-head">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
             <div>
-              <div className="eyebrow">Admin</div>
-              <h1 className="title" style={{ marginTop: "0.35rem" }}>Provider companies</h1>
-              <p className="lead">Manage provider setup and approval.</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
+              <CardTitle className="mt-1 text-xl">Provider companies</CardTitle>
+              <CardDescription>Manage provider setup and approval.</CardDescription>
             </div>
-            <div className="provider-soft-pill is-active">{providers.length} providers</div>
+            <Badge variant="secondary">{providers.length} providers</Badge>
           </div>
-          {error ? <p style={{ color: "var(--color-error)", lineHeight: 1.6, margin: 0 }}>Action blocked: {error}</p> : null}
-          {status ? <p style={{ color: "var(--color-success)", lineHeight: 1.6, margin: error ? "0.35rem 0 0" : 0 }}>{status.replace(/_/g, " ")}.</p> : null}
-          {inviteLink ? <div className="backoffice-callout" style={{ marginTop: "0.8rem" }}><strong>Invite ready for {inviteEmail || "provider"}</strong><span>{delivery === "email" ? "Invite email sent." : "Use this link to send manually."}</span><code style={{ wordBreak: "break-all" }}>{inviteLink}</code></div> : null}
-        </section>
+        </CardHeader>
+        {(error || status || inviteLink) && (
+          <CardContent>
+            {error && (
+              <p className="text-sm leading-relaxed text-destructive">Action blocked: {error}</p>
+            )}
+            {status && (
+              <p className={`text-sm leading-relaxed text-green-600${error ? " mt-1" : ""}`}>
+                {status.replace(/_/g, " ")}.
+              </p>
+            )}
+            {inviteLink && (
+              <Card className="mt-3 border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
+                <CardContent className="space-y-1">
+                  <strong className="text-sm">Invite ready for {inviteEmail || "provider"}</strong>
+                  <span className="block text-sm text-muted-foreground">
+                    {delivery === "email" ? "Invite email sent." : "Use this link to send manually."}
+                  </span>
+                  <code className="block break-all text-xs">{inviteLink}</code>
+                </CardContent>
+              </Card>
+            )}
+          </CardContent>
+        )}
+      </Card>
 
-        <section className="panel card" style={{ marginBottom: "1.5rem" }}>
-          <div className="backoffice-section-head">
-            <div>
-              <div className="eyebrow">Invite provider</div>
-              <p className="lead">Send an invite to start setup.</p>
-            </div>
-          </div>
+      <Card>
+        <CardHeader>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Invite provider</p>
+          <CardDescription>Send an invite to start setup.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <InviteForm categories={providerServiceCatalog} action={createProviderInviteAction} />
-        </section>
+        </CardContent>
+      </Card>
 
-        <div className="admin-table-shell" style={{ display: "grid", gap: "0.8rem" }}>
-          {providers.map((provider) => {
-            const checklist = buildProviderChecklist(provider);
-            const completedCount = checklist.items.filter((item) => item.complete).length;
-            return (
-              <section key={provider.id} className="panel card">
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+      <div className="grid gap-4">
+        {providers.map((provider) => {
+          const checklist = buildProviderChecklist(provider);
+          const completedCount = checklist.items.filter((item) => item.complete).length;
+          const stripeReady =
+            provider.stripeConnectedAccount?.chargesEnabled && provider.stripeConnectedAccount?.payoutsEnabled;
+
+          return (
+            <Card key={provider.id}>
+              <CardHeader>
+                <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <div className="eyebrow">{provider.companyNumber || "No company number yet"}</div>
-                    <strong style={{ fontSize: "1.2rem" }}>{provider.tradingName || provider.legalName || provider.contactEmail}</strong>
-                    <div style={{ color: "var(--color-text-muted)", marginTop: "0.35rem" }}>{provider.contactEmail}</div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {provider.companyNumber || "No company number yet"}
+                    </p>
+                    <strong className="text-lg">
+                      {provider.tradingName || provider.legalName || provider.contactEmail}
+                    </strong>
+                    <p className="mt-1 text-sm text-muted-foreground">{provider.contactEmail}</p>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <ProviderStatusBadge status={provider.status} />
-                    <div style={{ color: "var(--color-text-muted)", marginTop: "0.4rem" }}>
-                      Submitted: {provider.onboardingSubmittedAt ? new Date(provider.onboardingSubmittedAt).toLocaleDateString() : "not yet"}
-                    </div>
+                  <div className="text-right">
+                    <Badge variant={statusBadgeVariant[provider.status] ?? "secondary"}>
+                      {providerStatusLabels[provider.status] ?? provider.status}
+                    </Badge>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Submitted:{" "}
+                      {provider.onboardingSubmittedAt
+                        ? new Date(provider.onboardingSubmittedAt).toLocaleDateString()
+                        : "not yet"}
+                    </p>
                   </div>
                 </div>
+              </CardHeader>
 
-                <div className="backoffice-metric-grid" style={{ marginTop: "1rem" }}>
-                  <div className="backoffice-kpi-card"><span>Checklist complete</span><strong>{completedCount}/{checklist.items.length}</strong></div>
-                  <div className="backoffice-kpi-card"><span>Documents</span><strong>{provider.documents.length}</strong></div>
-                  <div className="backoffice-kpi-card"><span>Pricing</span><strong>{provider.pricingRules.filter((item) => item.active).length} active</strong></div>
-                  <div className="backoffice-kpi-card">
-                    <span>Stripe Status</span>
-                    <strong style={{ color: provider.stripeConnectedAccount?.chargesEnabled && provider.stripeConnectedAccount?.payoutsEnabled ? "var(--color-success)" : "var(--color-error)" }}>
-                      {provider.stripeConnectedAccount?.chargesEnabled && provider.stripeConnectedAccount?.payoutsEnabled ? "Ready" : "Not ready"}
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-4">
+                  <div className="rounded-lg border bg-muted/40 p-3">
+                    <span className="block text-xs text-muted-foreground">Checklist complete</span>
+                    <strong className="text-sm">
+                      {completedCount}/{checklist.items.length}
+                    </strong>
+                  </div>
+                  <div className="rounded-lg border bg-muted/40 p-3">
+                    <span className="block text-xs text-muted-foreground">Documents</span>
+                    <strong className="text-sm">{provider.documents.length}</strong>
+                  </div>
+                  <div className="rounded-lg border bg-muted/40 p-3">
+                    <span className="block text-xs text-muted-foreground">Pricing</span>
+                    <strong className="text-sm">
+                      {provider.pricingRules.filter((item) => item.active).length} active
+                    </strong>
+                  </div>
+                  <div className="rounded-lg border bg-muted/40 p-3">
+                    <span className="block text-xs text-muted-foreground">Stripe Status</span>
+                    <strong className={`text-sm ${stripeReady ? "text-green-600" : "text-destructive"}`}>
+                      {stripeReady ? "Ready" : "Not ready"}
                     </strong>
                   </div>
                 </div>
 
-                <div className="button-row" style={{ marginTop: "1rem" }}>
-                  <a href={`/admin/provider/${provider.id}`} className="button button-primary">Open review</a>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/admin/provider/${provider.id}`}
+                    className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
+                  >
+                    Open review
+                  </Link>
                   <form action={toggleProviderStatusAction}>
                     <input type="hidden" name="providerCompanyId" value={provider.id} />
-                    <input type="hidden" name="nextStatus" value={provider.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED"} />
-                    <button className="button button-secondary" type="submit">{provider.status === "SUSPENDED" ? "Activate" : "Suspend"}</button>
+                    <input
+                      type="hidden"
+                      name="nextStatus"
+                      value={provider.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED"}
+                    />
+                    <button
+                      className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                      type="submit"
+                    >
+                      {provider.status === "SUSPENDED" ? "Activate" : "Suspend"}
+                    </button>
                   </form>
                 </div>
-              </section>
-            );
-          })}
-        </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
-    </main>
+    </div>
   );
 }

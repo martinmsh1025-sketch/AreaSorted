@@ -1,6 +1,7 @@
 import { getPrisma } from "@/lib/db";
 import { getProviderCompanyById } from "@/lib/providers/repository";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
+import { createProviderNotification } from "@/lib/providers/notifications";
 
 export class ProviderActivationError extends Error {
   missing: string[];
@@ -22,13 +23,28 @@ export async function activateProviderCompany(providerCompanyId: string) {
     throw new ProviderActivationError("Provider cannot be activated until all onboarding requirements are complete.", checklist.missingLabels);
   }
 
-  return prisma.providerCompany.update({
+  const result = await prisma.providerCompany.update({
     where: { id: providerCompanyId },
     data: {
       status: "ACTIVE",
       paymentReady: true,
     },
   });
+
+  // Notify provider they are now active
+  try {
+    await createProviderNotification({
+      providerCompanyId,
+      type: "SYSTEM_MESSAGE",
+      title: "Your account is now active!",
+      message: "Congratulations! Your account has been fully activated. You can now receive and accept bookings.",
+      link: "/provider",
+    });
+  } catch {
+    // Non-critical
+  }
+
+  return result;
 }
 
 export async function syncProviderLifecycleState(providerCompanyId: string) {
@@ -42,16 +58,29 @@ export async function syncProviderLifecycleState(providerCompanyId: string) {
 
   let nextStatus = provider.status;
 
+  // Identity locks: these statuses require explicit admin action to change
+  // and should NOT be overridden by automated lifecycle transitions.
   if (provider.status === "SUSPENDED") {
     nextStatus = "SUSPENDED";
   } else if (provider.status === "REJECTED") {
     nextStatus = "REJECTED";
   } else if (provider.status === "CHANGES_REQUESTED") {
     nextStatus = "CHANGES_REQUESTED";
-  } else if (provider.status === "UNDER_REVIEW") {
-    nextStatus = "UNDER_REVIEW";
-  } else if (provider.status === "SUBMITTED_FOR_REVIEW") {
-    nextStatus = "SUBMITTED_FOR_REVIEW";
+  } else if (provider.status === "UNDER_REVIEW" || provider.status === "SUBMITTED_FOR_REVIEW") {
+    // These statuses are transitional — admin review can change them.
+    // However, automated lifecycle sync should NOT auto-progress them;
+    // only keep them if no approval has been granted yet.
+    if (!provider.approvedAt) {
+      nextStatus = provider.status;
+    } else if (checklist.allComplete) {
+      nextStatus = "ACTIVE";
+    } else if (provider.approvedAt && stripeReady && !hasPricing) {
+      nextStatus = "PRICING_PENDING";
+    } else if (provider.approvedAt && !stripeReady && provider.stripeConnectedAccount) {
+      nextStatus = provider.stripeConnectedAccount.chargesEnabled || provider.stripeConnectedAccount.payoutsEnabled ? "STRIPE_RESTRICTED" : "STRIPE_PENDING";
+    } else if (provider.approvedAt) {
+      nextStatus = "APPROVED";
+    }
   } else if (checklist.allComplete) {
     nextStatus = "ACTIVE";
   } else if (provider.approvedAt && stripeReady && !hasPricing) {
@@ -87,11 +116,26 @@ export async function getProviderActivationCheck(providerCompanyId: string) {
 
 export async function suspendProviderCompany(providerCompanyId: string) {
   const prisma = getPrisma();
-  return prisma.providerCompany.update({
+  const result = await prisma.providerCompany.update({
     where: { id: providerCompanyId },
     data: {
       status: "SUSPENDED",
       paymentReady: false,
     },
   });
+
+  // Notify provider about suspension
+  try {
+    await createProviderNotification({
+      providerCompanyId,
+      type: "SYSTEM_MESSAGE",
+      title: "Account suspended",
+      message: "Your account has been suspended. Please contact support for more information.",
+      link: "/provider",
+    });
+  } catch {
+    // Non-critical
+  }
+
+  return result;
 }

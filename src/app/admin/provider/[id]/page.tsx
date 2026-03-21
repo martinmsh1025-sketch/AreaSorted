@@ -1,11 +1,46 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getProviderCompanyById } from "@/lib/providers/repository";
 import { providerStatusLabels } from "@/lib/providers/service-catalog-mapping";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
-import { reviewProviderDocumentAction, reviewProviderStatusAction } from "./actions";
+import { deleteCoverageAreaAction, reviewProviderDocumentAction } from "./actions";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
-import { ProviderDocumentBadge, ProviderStatusBadge } from "@/components/providers/status-badge";
+import { ReviewDecisionForm } from "./review-decision-form";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+
+function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "ACTIVE":
+    case "APPROVED":
+      return "default";
+    case "SUSPENDED":
+    case "REJECTED":
+      return "destructive";
+    case "INVITED":
+      return "outline";
+    default:
+      return "secondary";
+  }
+}
+
+function docStatusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "APPROVED":
+      return "default";
+    case "REJECTED":
+    case "NEEDS_RESUBMISSION":
+      return "destructive";
+    case "PENDING":
+      return "outline";
+    default:
+      return "secondary";
+  }
+}
 
 type AdminProviderDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -23,159 +58,273 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
   const query = (await searchParams) ?? {};
   const status = typeof query.status === "string" ? query.status : "";
   const checklist = buildProviderChecklist(provider);
+  const completedCount = checklist.items.filter((item) => item.complete).length;
+  const stripeReady =
+    provider.stripeConnectedAccount?.chargesEnabled &&
+    provider.stripeConnectedAccount?.payoutsEnabled;
 
   return (
-    <main className="section">
-      <div className="container">
-        <section className="panel card" style={{ marginBottom: "1rem" }}>
-          <div className="backoffice-section-head">
-            <div>
-              <div className="eyebrow">Admin review</div>
-              <h1 className="title" style={{ marginTop: "0.35rem" }}>{provider.tradingName || provider.legalName || provider.contactEmail}</h1>
-              <p className="lead">Review, approve, or request changes.</p>
-            </div>
-            <div className="button-row" style={{ marginTop: 0 }}>
-              <ProviderStatusBadge status={provider.status} />
-              <span className="provider-soft-pill">Checklist {checklist.items.filter((item) => item.complete).length}/{checklist.items.length}</span>
-            </div>
-          </div>
-          {status ? <p style={{ color: "var(--color-success)", lineHeight: 1.6, margin: 0 }}>{status.replace(/_/g, " ")}.</p> : null}
-        </section>
-
-        <section className="backoffice-metric-grid" style={{ marginBottom: "1rem" }}>
-          <div className="panel card admin-stat-card">
-            <div className="eyebrow">Provider state</div>
-            <strong className="admin-stat-number" style={{ fontSize: "1.2rem" }}>{providerStatusLabels[provider.status] || provider.status}</strong>
-            <p className="lead" style={{ marginBottom: 0 }}>Provider status</p>
-          </div>
-          <div className="panel card admin-stat-card">
-            <div className="eyebrow">Review submitted</div>
-            <strong className="admin-stat-number" style={{ fontSize: "1.2rem" }}>{provider.onboardingSubmittedAt ? new Date(provider.onboardingSubmittedAt).toLocaleDateString() : "Not yet"}</strong>
-            <p className="lead" style={{ marginBottom: 0 }}>Submission date</p>
-          </div>
-          <div className="panel card admin-stat-card">
-            <div className="eyebrow">Stripe</div>
-            <strong className="admin-stat-number" style={{ fontSize: "1.2rem" }}>{provider.stripeConnectedAccount?.chargesEnabled && provider.stripeConnectedAccount?.payoutsEnabled ? "Ready" : "Locked / pending"}</strong>
-            <p className="lead" style={{ marginBottom: 0 }}>Charges and payouts</p>
-          </div>
-        </section>
-
-        <section className="backoffice-grid-2">
-          <div className="backoffice-stack">
-        <section className="panel card">
-          <div className="backoffice-section-head">
-            <div>
-              <div className="eyebrow">Checklist</div>
-              <p className="lead">Approval blockers.</p>
-            </div>
-          </div>
-          <div className="backoffice-checklist-grid" style={{ marginTop: "1rem" }}>
-            {checklist.items.map((item) => (
-              <div key={item.key} className="backoffice-checklist-item">
-                <div>
-                  <strong>{item.label}</strong>
-                  <p>{item.complete ? "Completed" : item.detail}</p>
-                </div>
-                <span className={`status-badge ${item.complete ? "status-badge-active" : "status-badge-wip"}`}>{item.complete ? "Done" : "Open"}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel card">
-          <div className="backoffice-section-head">
-            <div>
-              <div className="eyebrow">Provider details</div>
-              <p className="lead">Company details.</p>
-            </div>
-          </div>
-          <div className="backoffice-data-list" style={{ marginTop: "1rem" }}>
-            <div className="backoffice-data-row"><span>Legal name</span><strong>{provider.legalName || "-"}</strong></div>
-            <div className="backoffice-data-row"><span>Trading name</span><strong>{provider.tradingName || "-"}</strong></div>
-            <div className="backoffice-data-row"><span>Company number</span><strong>{provider.companyNumber || "-"}</strong></div>
-            <div className="backoffice-data-row"><span>Registered address</span><strong>{provider.registeredAddress || "-"}</strong></div>
-            <div className="backoffice-data-row"><span>Contact email</span><strong>{provider.contactEmail}</strong></div>
-            <div className="backoffice-data-row"><span>Phone</span><strong>{provider.phone || "-"}</strong></div>
-            <div className="backoffice-data-row"><span>Coverage</span><strong>{provider.coverageAreas.map((item) => item.postcodePrefix).join(", ") || "-"}</strong></div>
-            <div className="backoffice-data-row"><span>Categories</span><strong>{provider.serviceCategories.map((item) => item.categoryKey).join(", ") || "-"}</strong></div>
-          </div>
-        </section>
-          </div>
-
-          <div className="backoffice-stack">
-
-        <section className="panel card">
-          <div className="backoffice-section-head">
-            <div>
-              <div className="eyebrow">Document review</div>
-              <p className="lead">Review required files.</p>
-            </div>
-          </div>
-          <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
-            {provider.documents.length ? provider.documents.map((document) => (
-              <section key={document.id} className="backoffice-document-card">
-                <div className="backoffice-document-meta">
-                  <div>
-                    <strong>{document.label}</strong>
-                    <div style={{ color: "var(--color-text-muted)", marginTop: "0.35rem" }}><a className="backoffice-link-inline" href={document.storagePath}>{document.fileName}</a></div>
-                  </div>
-                  <ProviderDocumentBadge status={document.status} />
-                </div>
-                <form action={reviewProviderDocumentAction} className="admin-filter-grid" style={{ marginTop: "1rem" }}>
-                  <input type="hidden" name="providerCompanyId" value={provider.id} />
-                  <input type="hidden" name="documentId" value={document.id} />
-                  <label className="quote-field-stack admin-filter-span-4">
-                    <span>Document status</span>
-                    <select name="documentStatus" defaultValue={document.status}>
-                      <option value="PENDING">pending</option>
-                      <option value="APPROVED">approved</option>
-                      <option value="REJECTED">rejected</option>
-                      <option value="NEEDS_RESUBMISSION">needs resubmission</option>
-                    </select>
-                  </label>
-                  <label className="quote-field-stack admin-filter-span-8">
-                    <span>Document notes</span>
-                    <input name="reviewNotes" defaultValue={document.reviewNotes || ""} />
-                  </label>
-                  <div className="admin-filter-actions" style={{ marginTop: 0 }}>
-                    <FormSubmitButton label="Save document review" pendingLabel="Saving review" />
-                  </div>
-                </form>
-              </section>
-            )) : <div className="backoffice-empty"><strong>No documents uploaded yet</strong><span className="lead" style={{ margin: 0 }}>The provider has not submitted any files for review.</span></div>}
-          </div>
-        </section>
-
-        <section className="panel card">
-          <div className="backoffice-section-head">
-            <div>
-              <div className="eyebrow">Provider decision</div>
-              <p className="lead">Set review outcome.</p>
-            </div>
-          </div>
-          <form action={reviewProviderStatusAction} className="admin-filter-grid" style={{ marginTop: "1rem" }}>
-            <input type="hidden" name="providerCompanyId" value={provider.id} />
-            <label className="quote-field-stack admin-filter-span-4">
-              <span>Decision</span>
-              <select name="reviewStatus" defaultValue={provider.status === "SUBMITTED_FOR_REVIEW" ? "UNDER_REVIEW" : provider.status}>
-                <option value="UNDER_REVIEW">under review</option>
-                <option value="CHANGES_REQUESTED">request changes</option>
-                <option value="REJECTED">reject</option>
-                <option value="APPROVED">approve</option>
-              </select>
-            </label>
-            <label className="quote-field-stack admin-filter-span-8">
-              <span>Review notes</span>
-              <textarea name="reviewNotes" rows={4} defaultValue={provider.reviewNotes || ""} />
-            </label>
-            <div className="admin-filter-actions" style={{ marginTop: 0 }}>
-              <FormSubmitButton label="Save review decision" pendingLabel="Saving decision" />
-            </div>
-          </form>
-        </section>
-          </div>
-        </section>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/admin/providers"
+          className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+        >
+          &larr; Back
+        </Link>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {provider.tradingName || provider.legalName || provider.contactEmail}
+          </h1>
+          <p className="text-muted-foreground">
+            Review, approve, or request changes.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={statusBadgeVariant(provider.status)}>
+            {providerStatusLabels[provider.status] || provider.status}
+          </Badge>
+          <Badge variant="outline">
+            {completedCount}/{checklist.items.length} checklist
+          </Badge>
+        </div>
       </div>
-    </main>
+
+      {status && (
+        <p className="text-sm text-green-600">
+          {status.replace(/_/g, " ")}.
+        </p>
+      )}
+
+      {/* Summary stats */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Provider state</CardDescription>
+            <CardTitle className="text-lg">
+              {providerStatusLabels[provider.status] || provider.status}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Review submitted</CardDescription>
+            <CardTitle className="text-lg">
+              {provider.onboardingSubmittedAt
+                ? new Date(provider.onboardingSubmittedAt).toLocaleDateString()
+                : "Not yet"}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Stripe</CardDescription>
+            <CardTitle className={`text-lg ${stripeReady ? "text-green-600" : "text-destructive"}`}>
+              {stripeReady ? "Ready" : "Locked / pending"}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left column */}
+        <div className="space-y-6">
+          {/* Checklist */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Approval checklist</CardTitle>
+              <CardDescription>Approval blockers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {checklist.items.map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
+                    <div>
+                      <p className="font-medium text-sm">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.complete ? "Completed" : item.detail}
+                      </p>
+                    </div>
+                    <Badge variant={item.complete ? "default" : "outline"}>
+                      {item.complete ? "Done" : "Open"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Provider details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Company details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Legal name</dt>
+                  <dd className="font-medium">{provider.legalName || "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Trading name</dt>
+                  <dd className="font-medium">{provider.tradingName || "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Company number</dt>
+                  <dd className="font-medium">{provider.companyNumber || "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Registered address</dt>
+                  <dd className="font-medium">{provider.registeredAddress || "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Contact email</dt>
+                  <dd className="font-medium">{provider.contactEmail}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Phone</dt>
+                  <dd className="font-medium">{provider.phone || "-"}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-sm text-muted-foreground mb-2">Coverage areas</dt>
+                  <dd>
+                    {provider.coverageAreas.length > 0 ? (
+                      <div className="space-y-2">
+                        {provider.coverageAreas.map((area) => (
+                          <div
+                            key={area.id}
+                            className="flex items-center justify-between rounded-md border px-3 py-2"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{area.postcodePrefix}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {area.categoryKey}
+                              </Badge>
+                              {!area.active && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Inactive
+                                </Badge>
+                              )}
+                            </div>
+                            <form action={deleteCoverageAreaAction}>
+                              <input type="hidden" name="providerCompanyId" value={provider.id} />
+                              <input type="hidden" name="coverageAreaId" value={area.id} />
+                              <FormSubmitButton
+                                label="Delete"
+                                pendingLabel="..."
+                                className="inline-flex h-7 items-center justify-center rounded-md bg-destructive px-2 text-xs font-medium text-destructive-foreground shadow-sm hover:bg-destructive/90 disabled:opacity-50"
+                              />
+                            </form>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">No coverage areas</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Categories</dt>
+                  <dd className="font-medium">
+                    {provider.serviceCategories.map((c) => c.categoryKey).join(", ") || "-"}
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* Document review */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Document review</CardTitle>
+              <CardDescription>Review uploaded files</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {provider.documents.length > 0 ? (
+                <div className="space-y-4">
+                  {provider.documents.map((document) => (
+                    <div key={document.id} className="rounded-lg border p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">{document.label}</p>
+                          <a
+                            href={document.storagePath}
+                            className="text-xs text-primary underline-offset-4 hover:underline"
+                          >
+                            {document.fileName}
+                          </a>
+                        </div>
+                        <Badge variant={docStatusBadgeVariant(document.status)}>
+                          {document.status}
+                        </Badge>
+                      </div>
+                      <form action={reviewProviderDocumentAction} className="grid gap-3 sm:grid-cols-12">
+                        <input type="hidden" name="providerCompanyId" value={provider.id} />
+                        <input type="hidden" name="documentId" value={document.id} />
+                        <div className="sm:col-span-4">
+                          <Label htmlFor={`docStatus-${document.id}`}>Status</Label>
+                          <select
+                            id={`docStatus-${document.id}`}
+                            name="documentStatus"
+                            defaultValue={document.status}
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                            <option value="NEEDS_RESUBMISSION">Needs resubmission</option>
+                          </select>
+                        </div>
+                        <div className="sm:col-span-6">
+                          <Label htmlFor={`docNotes-${document.id}`}>Notes</Label>
+                          <Input
+                            id={`docNotes-${document.id}`}
+                            name="reviewNotes"
+                            defaultValue={document.reviewNotes || ""}
+                          />
+                        </div>
+                        <div className="sm:col-span-2 flex items-end">
+                          <FormSubmitButton
+                            label="Save"
+                            pendingLabel="..."
+                            className="inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50"
+                          />
+                        </div>
+                      </form>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No documents uploaded yet.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Provider decision */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Review decision</CardTitle>
+              <CardDescription>Set the review outcome for this provider</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ReviewDecisionForm
+                providerCompanyId={provider.id}
+                currentStatus={provider.status}
+                currentNotes={provider.reviewNotes || ""}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

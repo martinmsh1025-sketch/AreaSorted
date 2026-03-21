@@ -1,205 +1,549 @@
-import { notFound } from "next/navigation";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { getBookingRecordByReference } from "@/lib/booking-record-store";
-import { updateBookingStatusAction } from "./actions";
+import { getPrisma } from "@/lib/db";
+import { Decimal } from "@prisma/client/runtime/library";
+import { updateBookingStatusAction, acceptCounterOfferAction, rejectCounterOfferAction } from "./actions";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+
+function dec(value: Decimal | null | undefined): number {
+  return value ? Number(value) : 0;
+}
+
+function formatService(value: string) {
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
 
 type AdminBookingDetailPageProps = {
   params: Promise<{ reference: string }>;
 };
-
-function formatService(value?: string) {
-  if (!value) return "-";
-  return value
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
 
 export default async function AdminBookingDetailPage({ params }: AdminBookingDetailPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
 
   const { reference } = await params;
-  const booking = await getBookingRecordByReference(reference);
+  const prisma = getPrisma();
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: reference },
+    include: {
+      customer: true,
+      customerAddress: true,
+      marketplaceProviderCompany: {
+        select: { id: true, tradingName: true, legalName: true, contactEmail: true },
+      },
+      payments: { orderBy: { createdAt: "desc" } },
+      paymentRecords: { orderBy: { createdAt: "desc" } },
+      jobs: {
+        include: {
+          assignedCleaner: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      jobAssignments: {
+        include: {
+          cleaner: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      refunds: { orderBy: { createdAt: "desc" } },
+      refundRecords: { orderBy: { createdAt: "desc" } },
+      addons: true,
+      priceSnapshot: true,
+      quoteRequest: { select: { reference: true } },
+      counterOffers: {
+        include: {
+          providerCompany: { select: { tradingName: true, legalName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
 
   if (!booking) notFound();
 
-  const serviceAddress = [booking.addressLine1, booking.addressLine2, booking.city, booking.postcode].filter(Boolean).join(", ");
-  const billingAddress = [booking.billingAddressLine1, booking.billingAddressLine2, booking.billingCity, booking.billingPostcode]
+  const serviceAddress = [
+    booking.serviceAddressLine1,
+    booking.serviceAddressLine2,
+    booking.serviceCity,
+    booking.servicePostcode,
+  ]
     .filter(Boolean)
     .join(", ");
 
+  const customerAddress = booking.customerAddress;
+  const entryNotes = customerAddress?.entryNotes || "-";
+  const parkingNotes = customerAddress?.parkingNotes || "-";
+
+  const providerName = booking.marketplaceProviderCompany
+    ? booking.marketplaceProviderCompany.tradingName ||
+      booking.marketplaceProviderCompany.legalName ||
+      booking.marketplaceProviderCompany.contactEmail
+    : "Unassigned";
+
+  const providerEmail = booking.marketplaceProviderCompany?.contactEmail || "-";
+
+  const latestJob = booking.jobs[0];
+  const latestAssignment = booking.jobAssignments[0];
+  const assignedCleaner = latestJob?.assignedCleaner || latestAssignment?.cleaner;
+
+  const latestPaymentRecord = booking.paymentRecords[0];
+  const latestPayment = booking.payments[0];
+
+  const paymentStatus = latestPaymentRecord
+    ? latestPaymentRecord.paymentState
+    : latestPayment
+      ? latestPayment.paymentStatus
+      : booking.bookingStatus === "PAID" || booking.bookingStatus === "COMPLETED"
+        ? "PAID"
+        : "PENDING";
+
+  const stripeSessionId = latestPaymentRecord?.stripeCheckoutSessionId || "-";
+
+  const bookingRef = booking.quoteRequest?.reference || booking.id.slice(0, 12).toUpperCase();
+
+  const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+
   return (
-    <main className="section">
-      <div className="container">
-        <div style={{ maxWidth: 820, marginBottom: "2rem" }}>
-          <div className="eyebrow">Admin booking</div>
-          <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3.2rem)" }}>
-            {booking.bookingReference}
-          </h1>
-          <p className="lead">Review the full booking and update operational statuses from one place.</p>
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link
+          href="/admin/bookings"
+          className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+        >
+          &larr; Back
+        </Link>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">{bookingRef}</h1>
+          <p className="text-muted-foreground">
+            Booking detail &mdash; review information and update operational statuses.
+          </p>
+        </div>
+        {showInvoice && (
+          <Link
+            href={`/admin/bookings/${reference}/invoice`}
+            className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
+          >
+            View Reconciliation
+          </Link>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left column — info cards */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Customer */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer</CardTitle>
+              <CardDescription>Contact and customer details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Name</dt>
+                  <dd className="font-medium">
+                    {booking.customer.firstName} {booking.customer.lastName}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Email</dt>
+                  <dd className="font-medium">{booking.customer.email}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Phone</dt>
+                  <dd className="font-medium">{booking.customer.phone}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Booking status</dt>
+                  <dd>
+                    <Badge>{booking.bookingStatus}</Badge>
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          {/* Provider / Assignment */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Provider &amp; assignment</CardTitle>
+              <CardDescription>Assigned provider company and cleaner</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Provider company</dt>
+                  <dd className="font-medium">{providerName}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Provider email</dt>
+                  <dd className="font-medium">{providerEmail}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Assigned cleaner</dt>
+                  <dd className="font-medium">
+                    {assignedCleaner
+                      ? `${assignedCleaner.firstName} ${assignedCleaner.lastName}`
+                      : "Unassigned"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Cleaner email</dt>
+                  <dd className="font-medium">{assignedCleaner?.email || "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Cleaner payout</dt>
+                  <dd className="font-medium tabular-nums">
+                    &pound;{dec(booking.cleanerPayoutAmount).toFixed(2)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Platform margin</dt>
+                  <dd className="font-medium tabular-nums">
+                    &pound;{dec(booking.platformMarginAmount).toFixed(2)}
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          {/* Service details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Service details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Service</dt>
+                  <dd className="font-medium">{formatService(booking.serviceType)}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Address</dt>
+                  <dd className="font-medium">{serviceAddress}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Service date</dt>
+                  <dd className="font-medium">
+                    {booking.scheduledDate.toISOString().slice(0, 10)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Service time</dt>
+                  <dd className="font-medium">{booking.scheduledStartTime}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Duration</dt>
+                  <dd className="font-medium">{Number(booking.durationHours)} hours</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Property type</dt>
+                  <dd className="font-medium">{booking.propertyType}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Bedrooms</dt>
+                  <dd className="font-medium">{booking.bedroomCount ?? "-"}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Bathrooms</dt>
+                  <dd className="font-medium">{booking.bathroomCount ?? "-"}</dd>
+                </div>
+                {booking.addons.length > 0 && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-sm text-muted-foreground">Add-ons</dt>
+                    <dd className="font-medium">
+                      {booking.addons.map((a) => `${a.addonName} (x${a.quantity})`).join(", ")}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </CardContent>
+          </Card>
+
+          {/* Notes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <dt className="text-sm text-muted-foreground">Additional notes</dt>
+                  <dd className="font-medium">{booking.additionalNotes || "None"}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Entry notes</dt>
+                  <dd className="font-medium">{entryNotes}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Parking notes</dt>
+                  <dd className="font-medium">{parkingNotes}</dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          {/* Counter Offers */}
+          {booking.counterOffers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Counter offers</CardTitle>
+                <CardDescription>
+                  {booking.counterOffers.length} offer{booking.counterOffers.length !== 1 ? "s" : ""} from provider
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {booking.counterOffers.map((offer) => {
+                  const provName = offer.providerCompany.tradingName || offer.providerCompany.legalName || "Provider";
+                  const isPending = offer.status === "PENDING";
+                  return (
+                    <div key={offer.id} className="rounded-lg border p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">{provName}</span>
+                        <Badge
+                          className={
+                            offer.status === "ACCEPTED"
+                              ? "bg-green-100 text-green-800"
+                              : offer.status === "REJECTED"
+                                ? "bg-red-100 text-red-800"
+                                : offer.status === "WITHDRAWN"
+                                  ? "bg-gray-100 text-gray-600"
+                                  : offer.status === "EXPIRED"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : ""
+                          }
+                        >
+                          {offer.status}
+                        </Badge>
+                      </div>
+
+                      <dl className="grid gap-2 text-sm sm:grid-cols-3">
+                        {offer.proposedPrice && (
+                          <div>
+                            <dt className="text-muted-foreground">Proposed price</dt>
+                            <dd className="font-medium tabular-nums">&pound;{Number(offer.proposedPrice).toFixed(2)}</dd>
+                          </div>
+                        )}
+                        {offer.proposedDate && (
+                          <div>
+                            <dt className="text-muted-foreground">Proposed date</dt>
+                            <dd className="font-medium">{offer.proposedDate.toISOString().slice(0, 10)}</dd>
+                          </div>
+                        )}
+                        {offer.proposedStartTime && (
+                          <div>
+                            <dt className="text-muted-foreground">Proposed time</dt>
+                            <dd className="font-medium">{offer.proposedStartTime}</dd>
+                          </div>
+                        )}
+                      </dl>
+
+                      {offer.message && (
+                        <p className="text-sm text-muted-foreground italic">&ldquo;{offer.message}&rdquo;</p>
+                      )}
+
+                      {offer.adminNotes && (
+                        <p className="text-xs text-muted-foreground">Admin notes: {offer.adminNotes}</p>
+                      )}
+
+                      <p className="text-xs text-muted-foreground">
+                        Submitted {offer.createdAt.toISOString().slice(0, 19).replace("T", " ")}
+                        {offer.respondedAt && ` · Responded ${offer.respondedAt.toISOString().slice(0, 19).replace("T", " ")}`}
+                      </p>
+
+                      {isPending && (
+                        <div className="flex gap-2 pt-1">
+                          <form action={acceptCounterOfferAction} className="flex-1 space-y-2">
+                            <input type="hidden" name="counterOfferId" value={offer.id} />
+                            <Input name="adminNotes" placeholder="Admin notes (optional)" className="text-xs" />
+                            <button
+                              type="submit"
+                              className="inline-flex h-8 w-full items-center justify-center rounded-md bg-green-600 px-3 text-sm font-medium text-white shadow hover:bg-green-700"
+                            >
+                              Accept
+                            </button>
+                          </form>
+                          <form action={rejectCounterOfferAction} className="flex-1 space-y-2">
+                            <input type="hidden" name="counterOfferId" value={offer.id} />
+                            <Input name="adminNotes" placeholder="Reason for rejection (optional)" className="text-xs" />
+                            <button
+                              type="submit"
+                              className="inline-flex h-8 w-full items-center justify-center rounded-md bg-red-600 px-3 text-sm font-medium text-white shadow hover:bg-red-700"
+                            >
+                              Reject
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Price snapshot */}
+          {booking.priceSnapshot && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Price breakdown</CardTitle>
+                <CardDescription>Frozen at time of booking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Provider service amount</dt>
+                    <dd className="font-medium tabular-nums">
+                      &pound;{dec(booking.priceSnapshot.providerServiceAmount).toFixed(2)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Booking fee</dt>
+                    <dd className="font-medium tabular-nums">
+                      &pound;{dec(booking.priceSnapshot.platformBookingFee).toFixed(2)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Commission</dt>
+                    <dd className="font-medium tabular-nums">
+                      &pound;{dec(booking.priceSnapshot.platformCommissionAmount).toFixed(2)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Customer total</dt>
+                    <dd className="font-medium tabular-nums">
+                      &pound;{dec(booking.priceSnapshot.customerTotalAmount).toFixed(2)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm text-muted-foreground">Provider expected payout</dt>
+                    <dd className="font-medium tabular-nums">
+                      &pound;{dec(booking.priceSnapshot.providerExpectedPayout).toFixed(2)}
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        <div className="quote-page-grid">
-          <section className="quote-form-sections">
-            <div className="panel card quote-section-card">
-              <div className="quote-section-head">
-                <div className="eyebrow">Customer</div>
-                <strong>Customer and contact</strong>
-              </div>
-              <div className="quote-summary-list">
-                <div><span>Name</span><strong>{booking.customerName || "-"}</strong></div>
-                <div><span>Email</span><strong>{booking.email || "-"}</strong></div>
-                <div><span>Phone</span><strong>{booking.contactPhone || "-"}</strong></div>
-                <div><span>Booking status</span><strong>{booking.bookingStatus || "-"}</strong></div>
-              </div>
-            </div>
+        {/* Right column — status controls + amount */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Update status</CardTitle>
+              <CardDescription>Change booking workflow state</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={updateBookingStatusAction} className="space-y-4">
+                <input type="hidden" name="bookingId" value={booking.id} />
 
-            <div className="panel card quote-section-card">
-              <div className="quote-section-head">
-                <div className="eyebrow">Cleaner</div>
-                <strong>Assigned cleaner and earnings</strong>
-              </div>
-              <div className="quote-summary-list">
-                <div><span>Cleaner ID</span><strong>{booking.cleanerId || "Unassigned"}</strong></div>
                 <div>
-                  <span>Cleaner name</span>
-                  <strong>
-                    {booking.cleanerEmail ? (
-                      <a href={`/cleaner/jobs?email=${encodeURIComponent(booking.cleanerEmail)}`} style={{ color: "var(--color-accent)" }}>
-                        {booking.cleanerName || booking.cleanerEmail}
-                      </a>
-                    ) : (
-                      booking.cleanerName || "Unassigned"
-                    )}
-                  </strong>
+                  <Label htmlFor="bookingStatus">Booking status</Label>
+                  <select
+                    id="bookingStatus"
+                    name="bookingStatus"
+                    defaultValue={booking.bookingStatus}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="AWAITING_PAYMENT">Awaiting payment</option>
+                    <option value="PAID">Paid</option>
+                    <option value="PENDING_ASSIGNMENT">Pending assignment</option>
+                    <option value="ASSIGNED">Assigned</option>
+                    <option value="IN_PROGRESS">In progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="CANCELLED">Cancelled</option>
+                    <option value="NO_CLEANER_FOUND">No cleaner found</option>
+                    <option value="REFUND_PENDING">Refund pending</option>
+                    <option value="REFUNDED">Refunded</option>
+                  </select>
                 </div>
-                <div><span>Cleaner email</span><strong>{booking.cleanerEmail || "-"}</strong></div>
-                <div><span>Cleaner pay</span><strong>GBP {(booking.cleanerPayoutAmount || 0).toFixed(2)}</strong></div>
-                <div><span>Platform earnings</span><strong>GBP {(booking.platformEarningsAmount || 0).toFixed(2)}</strong></div>
-              </div>
-            </div>
 
-            <div className="panel card quote-section-card">
-              <div className="quote-section-head">
-                <div className="eyebrow">Service</div>
-                <strong>Booking details</strong>
-              </div>
-              <div className="quote-summary-list">
-                <div><span>Service</span><strong>{formatService(booking.service)}</strong></div>
-                <div><span>Address</span><strong>{serviceAddress || booking.postcode || "-"}</strong></div>
-                <div><span>Service date</span><strong>{booking.preferredDate || "-"}</strong></div>
-                <div><span>Service time</span><strong>{booking.preferredTime || "-"}</strong></div>
-                <div><span>Hours</span><strong>{booking.estimatedHours ? `${booking.estimatedHours} hours` : "-"}</strong></div>
-                <div><span>Add-ons</span><strong>{booking.addOns?.length ? booking.addOns.join(", ") : "None"}</strong></div>
-                <div><span>Billing address</span><strong>{billingAddress || "Same as service address"}</strong></div>
-                <div><span>Booked at</span><strong>{booking.createdAt}</strong></div>
-                <div><span>Last updated</span><strong>{booking.updatedAt}</strong></div>
-              </div>
-            </div>
+                <Separator />
 
-            <div className="panel card quote-section-card">
-              <div className="quote-section-head">
-                <div className="eyebrow">Notes</div>
-                <strong>Special notes</strong>
-              </div>
-              <div className="quote-summary-list">
-                <div><span>Additional requests</span><strong>{booking.additionalRequests || "None"}</strong></div>
-                <div><span>Entry notes</span><strong>{booking.entryNotes || "None"}</strong></div>
-                <div><span>Parking notes</span><strong>{booking.parkingNotes || "None"}</strong></div>
-              </div>
-            </div>
-          </section>
+                <div>
+                  <Label htmlFor="cleanerPayoutAmount">Cleaner payout (&pound;)</Label>
+                  <Input
+                    id="cleanerPayoutAmount"
+                    name="cleanerPayoutAmount"
+                    type="number"
+                    step="0.01"
+                    defaultValue={dec(booking.cleanerPayoutAmount)}
+                  />
+                </div>
 
-          <aside className="quote-sidebar-stack">
-            <section className="panel card quote-summary-panel">
-              <div className="eyebrow">Status control</div>
-              <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>Update workflow</h2>
-              <form action={updateBookingStatusAction} className="mini-form" style={{ padding: 0 }}>
-                <input type="hidden" name="bookingReference" value={booking.bookingReference} />
+                <div>
+                  <Label htmlFor="platformMarginAmount">Platform margin (&pound;)</Label>
+                  <Input
+                    id="platformMarginAmount"
+                    name="platformMarginAmount"
+                    type="number"
+                    step="0.01"
+                    defaultValue={dec(booking.platformMarginAmount)}
+                  />
+                </div>
 
-                <label className="quote-field-stack">
-                  <span>Cleaner ID</span>
-                  <input name="cleanerId" defaultValue={booking.cleanerId || ""} />
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Cleaner name</span>
-                  <input name="cleanerName" defaultValue={booking.cleanerName || ""} />
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Cleaner email</span>
-                  <input name="cleanerEmail" defaultValue={booking.cleanerEmail || ""} />
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Cleaner pay</span>
-                  <input name="cleanerPayoutAmount" type="number" step="0.01" defaultValue={booking.cleanerPayoutAmount || 0} />
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Platform earnings</span>
-                  <input name="platformEarningsAmount" type="number" step="0.01" defaultValue={booking.platformEarningsAmount || 0} />
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Payment</span>
-                  <select name="stripePaymentStatus" defaultValue={booking.stripePaymentStatus || "pending"}>
-                    <option value="pending">pending</option>
-                    <option value="paid">paid</option>
-                    <option value="cancelled">cancelled</option>
-                    <option value="failed">failed</option>
-                  </select>
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Assignment</span>
-                  <select name="assignmentStatus" defaultValue={booking.assignmentStatus || "unassigned"}>
-                    <option value="unassigned">unassigned</option>
-                    <option value="offering">offering</option>
-                    <option value="assigned">assigned</option>
-                    <option value="accepted">accepted</option>
-                    <option value="reassigned">reassigned</option>
-                  </select>
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Job</span>
-                  <select name="jobStatus" defaultValue={booking.jobStatus || "pending"}>
-                    <option value="pending">pending</option>
-                    <option value="scheduled">scheduled</option>
-                    <option value="in_progress">in_progress</option>
-                    <option value="completed">completed</option>
-                    <option value="no_show">no_show</option>
-                    <option value="cancelled">cancelled</option>
-                  </select>
-                </label>
-
-                <label className="quote-field-stack">
-                  <span>Refund</span>
-                  <select name="refundStatus" defaultValue={booking.refundStatus || "not_requested"}>
-                    <option value="not_requested">not_requested</option>
-                    <option value="pending">pending</option>
-                    <option value="refunded">refunded</option>
-                    <option value="partial_refund">partial_refund</option>
-                    <option value="declined">declined</option>
-                  </select>
-                </label>
-
-                <button className="button button-primary" type="submit">Save statuses</button>
+                <button
+                  type="submit"
+                  className="inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+                >
+                  Save changes
+                </button>
               </form>
-            </section>
+            </CardContent>
+          </Card>
 
-            <section className="panel card">
-              <div className="eyebrow">Amount</div>
-              <div className="quote-total-number">GBP {booking.totalAmount.toFixed(2)}</div>
-              <p className="lead" style={{ marginBottom: 0 }}>Stripe session: {booking.stripeSessionId || "Pending"}</p>
-            </section>
-          </aside>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total amount</CardDescription>
+              <CardTitle className="text-3xl tabular-nums">
+                &pound;{dec(booking.totalAmount).toFixed(2)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Payment status</dt>
+                  <dd>
+                    <Badge>{paymentStatus}</Badge>
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Job status</dt>
+                  <dd>
+                    <Badge>{latestJob?.jobStatus || "CREATED"}</Badge>
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Assignment</dt>
+                  <dd>
+                    <Badge>{latestAssignment?.assignmentStatus || "UNASSIGNED"}</Badge>
+                  </dd>
+                </div>
+              </dl>
+              <Separator className="my-3" />
+              <p className="text-xs text-muted-foreground">
+                Stripe session: {stripeSessionId}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Created: {booking.createdAt.toISOString().slice(0, 19).replace("T", " ")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Updated: {booking.updatedAt.toISOString().slice(0, 19).replace("T", " ")}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

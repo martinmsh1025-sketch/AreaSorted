@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getCoverageForPostcode } from "@/lib/postcode-coverage";
+import { getCoverageForPostcode, normalisePostcode } from "@/lib/postcode-coverage";
 
 type IconProps = { className?: string };
 
@@ -233,6 +233,11 @@ export default function HomePage() {
   const coverage = useMemo(() => getCoverageForPostcode(postcode), [postcode]);
   const selectedAddress = addresses.find((item) => item.ID === addressId);
 
+  function updatePostcode(value: string) {
+    setPostcode(value.toUpperCase());
+    setSubmitMessage("");
+  }
+
   async function lookupAddresses() {
     if (isLookingUp) return;
 
@@ -243,13 +248,30 @@ export default function HomePage() {
 
     try {
       setIsLookingUp(true);
-      const response = await fetch(`/api/postcode-search?query=${encodeURIComponent(postcode.trim())}`);
+      const cleanPostcode = normalisePostcode(postcode);
+      setPostcode(cleanPostcode);
+
+      const response = await fetch(`/api/postcode-search?query=${encodeURIComponent(cleanPostcode)}`);
       const data = await response.json();
+
+      if (!response.ok) {
+        setAddresses([]);
+        setAddressId("");
+        setSubmitMessage(data.error || "Unable to look up addresses right now. Please use manual address entry.");
+        return;
+      }
+
       setAddresses(data.results || []);
       setAddressId("");
-      setSubmitMessage(data.results?.length ? "Select your address from the list." : "No addresses found. You can use manual address instead.");
+      setSubmitMessage(
+        data.results?.length
+          ? data.instructionsTxt || "Select your address from the list."
+          : "No addresses found. You can use manual address instead.",
+      );
     } catch {
-      setSubmitMessage("Unable to look up addresses right now.");
+      setAddresses([]);
+      setAddressId("");
+      setSubmitMessage("Unable to look up addresses right now. Please use manual address entry.");
     } finally {
       setIsLookingUp(false);
     }
@@ -295,17 +317,20 @@ export default function HomePage() {
   async function handleCoverageCheck() {
     if (isSubmitting) return;
 
-    if (!postcode.trim()) {
+    const cleanPostcode = normalisePostcode(postcode);
+
+    if (!cleanPostcode) {
       setSubmitMessage("Please enter a postcode first.");
       return;
     }
+
+    setPostcode(cleanPostcode);
 
     if (entryMode === "lookup" && !selectedAddress) {
       await lookupAddresses();
       return;
     }
 
-    let address = "";
     let line1 = "";
     let line2 = "";
     let city = "";
@@ -315,7 +340,6 @@ export default function HomePage() {
         setSubmitMessage("Please find and select an address first.");
         return;
       }
-      address = selectedAddress.Line;
       const parts = selectedAddress.Line.split(",").map((part) => part.trim()).filter(Boolean);
       line1 = parts[0] ?? selectedAddress.Line;
       line2 = parts[1] ?? "";
@@ -325,7 +349,6 @@ export default function HomePage() {
         setSubmitMessage("Please enter address line 1.");
         return;
       }
-      address = [manualAddress1, manualAddress2, manualCity, postcode].filter(Boolean).join(", ");
       line1 = manualAddress1;
       line2 = manualAddress2;
       city = manualCity || "London";
@@ -334,7 +357,7 @@ export default function HomePage() {
     setSubmitMessage("");
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 350));
-    router.push(`/instant-quote?${new URLSearchParams({ postcode, address, line1, line2, city }).toString()}`);
+    router.push(`/quote?${new URLSearchParams({ postcode: cleanPostcode, line1, line2, city }).toString()}`);
   }
 
   return (
@@ -381,8 +404,10 @@ export default function HomePage() {
                     aria-label="Postcode"
                     value={postcode}
                     onChange={(event) => {
-                      setPostcode(event.target.value.toUpperCase());
-                      setSubmitMessage("");
+                      updatePostcode(event.target.value);
+                    }}
+                    onBlur={() => {
+                      if (postcode.trim()) setPostcode(normalisePostcode(postcode));
                     }}
                     onKeyDown={(event) => {
                       if (event.key !== "Enter") return;

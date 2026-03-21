@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { getCleanerApplicationByEmail } from "@/lib/cleaner-application-store";
 import { getCleanerRecordByEmail } from "@/lib/cleaner-record-store";
 
-export const CLEANER_SESSION_COOKIE = "washhub_cleaner_email";
+export const CLEANER_SESSION_COOKIE = "areasorted_cleaner_email";
 
 export async function getAuthenticatedCleanerEmail() {
   const cookieStore = await cookies();

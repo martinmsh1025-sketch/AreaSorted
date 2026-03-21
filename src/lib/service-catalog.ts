@@ -37,6 +37,7 @@ export type JobTypeDefinition = {
   addOns: AddOnDefinition[];
   propertyTypes: PropertyTypeValue[];
   providerTags: string[];
+  recommendedHourlyRange: { min: number; max: number };
 };
 
 export type ServiceDefinition = {
@@ -172,6 +173,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "domestic-cleaning"],
+    recommendedHourlyRange: { min: 15, max: 25 },
   },
   {
     value: "end-of-tenancy-cleaning",
@@ -197,6 +199,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "tenancy-cleaning"],
+    recommendedHourlyRange: { min: 20, max: 35 },
   },
   {
     value: "carpet-upholstery-cleaning",
@@ -222,6 +225,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["cleaning", "carpet-cleaning"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "rat-mouse-treatment",
@@ -247,6 +251,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "rodent-control"],
+    recommendedHourlyRange: { min: 45, max: 70 },
   },
   {
     value: "cockroach-treatment",
@@ -272,6 +277,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "cockroach-treatment"],
+    recommendedHourlyRange: { min: 50, max: 75 },
   },
   {
     value: "wasp-nest-removal",
@@ -297,6 +303,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "wasp-removal"],
+    recommendedHourlyRange: { min: 45, max: 70 },
   },
   {
     value: "pest-survey-report",
@@ -322,6 +329,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "inspection"],
+    recommendedHourlyRange: { min: 40, max: 60 },
   },
   {
     value: "tv-mounting",
@@ -347,6 +355,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "tv-mounting", "drilling"],
+    recommendedHourlyRange: { min: 30, max: 45 },
   },
   {
     value: "mirror-picture-hanging",
@@ -372,6 +381,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "picture-hanging"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "shelf-curtain-fitting",
@@ -397,6 +407,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "fixtures-fittings", "drilling"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "tap-toilet-seat-replacement",
@@ -422,6 +433,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "light-plumbing"],
+    recommendedHourlyRange: { min: 28, max: 42 },
   },
   {
     value: "sealant-resealing",
@@ -447,6 +459,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "resealing"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "minor-home-repairs",
@@ -472,6 +485,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "minor-repairs"],
+    recommendedHourlyRange: { min: 28, max: 45 },
   },
   {
     value: "wardrobe-bed-assembly",
@@ -497,6 +511,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "bedroom-furniture"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "desk-storage-assembly",
@@ -522,6 +537,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "office-furniture"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "disassembly-reassembly",
@@ -547,6 +563,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "disassembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "bagged-household-waste",
@@ -572,6 +589,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "bagged-waste"],
+    recommendedHourlyRange: { min: 30, max: 50 },
   },
   {
     value: "bulky-item-removal",
@@ -597,6 +615,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "bulky-items"],
+    recommendedHourlyRange: { min: 32, max: 50 },
   },
   {
     value: "property-clearance",
@@ -622,6 +641,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "clearance"],
+    recommendedHourlyRange: { min: 30, max: 48 },
   },
   {
     value: "lawn-mowing",
@@ -647,6 +667,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "lawn-mowing"],
+    recommendedHourlyRange: { min: 20, max: 32 },
   },
   {
     value: "hedge-trimming",
@@ -672,6 +693,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "hedge-trimming"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "garden-tidy-up",
@@ -697,6 +719,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "tidy-up"],
+    recommendedHourlyRange: { min: 20, max: 32 },
   },
   {
     value: "deep-cleaning",
@@ -722,6 +745,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "deep-cleaning"],
+    recommendedHourlyRange: { min: 18, max: 30 },
   },
   {
     value: "office-commercial-cleaning",
@@ -747,6 +771,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["commercial"],
     providerTags: ["cleaning", "commercial-cleaning"],
+    recommendedHourlyRange: { min: 16, max: 28 },
   },
   {
     value: "airbnb-turnover-cleaning",
@@ -772,6 +797,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "airbnb-turnover"],
+    recommendedHourlyRange: { min: 18, max: 28 },
   },
   {
     value: "after-builders-cleaning",
@@ -797,6 +823,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["cleaning", "after-builders"],
+    recommendedHourlyRange: { min: 22, max: 38 },
   },
   {
     value: "sofa-upholstery-cleaning",
@@ -822,6 +849,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["cleaning", "upholstery-cleaning"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "oven-cleaning",
@@ -844,6 +872,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "hob-clean", label: "Hob clean", amount: 14 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "oven-cleaning"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "fridge-cleaning",
@@ -866,6 +895,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "freezer-defrost", label: "Freezer defrost", amount: 12 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "fridge-cleaning"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "window-cleaning-interior",
@@ -888,6 +918,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "frame-detail", label: "Frame detail clean", amount: 12 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["cleaning", "interior-windows"],
+    recommendedHourlyRange: { min: 20, max: 32 },
   },
   {
     value: "window-cleaning-exterior-ground-floor",
@@ -910,6 +941,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "frame-detail", label: "Frame detail clean", amount: 12 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["cleaning", "exterior-windows"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "bathroom-deep-clean",
@@ -932,6 +964,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "mould-treatment", label: "Mould treatment", amount: 15 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "bathroom-deep-clean"],
+    recommendedHourlyRange: { min: 20, max: 32 },
   },
   {
     value: "kitchen-deep-clean",
@@ -957,6 +990,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["cleaning", "kitchen-deep-clean"],
+    recommendedHourlyRange: { min: 20, max: 32 },
   },
   {
     value: "general-household-waste-removal",
@@ -982,6 +1016,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "general-household"],
+    recommendedHourlyRange: { min: 28, max: 45 },
   },
   {
     value: "furniture-disposal",
@@ -1007,6 +1042,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "furniture-disposal"],
+    recommendedHourlyRange: { min: 30, max: 48 },
   },
   {
     value: "mattress-removal",
@@ -1029,6 +1065,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "stairs-carry", label: "Upper-floor carry", amount: 20 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "mattress-removal"],
+    recommendedHourlyRange: { min: 30, max: 48 },
   },
   {
     value: "appliance-removal",
@@ -1054,6 +1091,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "appliance-removal"],
+    recommendedHourlyRange: { min: 32, max: 50 },
   },
   {
     value: "garage-shed-clearance",
@@ -1079,6 +1117,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "garage-clearance"],
+    recommendedHourlyRange: { min: 28, max: 45 },
   },
   {
     value: "office-clearance",
@@ -1104,6 +1143,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["commercial"],
     providerTags: ["waste-removal", "office-clearance"],
+    recommendedHourlyRange: { min: 30, max: 48 },
   },
   {
     value: "builders-waste-removal",
@@ -1129,6 +1169,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["waste-removal", "builders-waste"],
+    recommendedHourlyRange: { min: 32, max: 50 },
   },
   {
     value: "mice-treatment",
@@ -1151,6 +1192,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "proofing-note", label: "Proofing recommendations", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "mice-treatment"],
+    recommendedHourlyRange: { min: 45, max: 65 },
   },
   {
     value: "rat-treatment",
@@ -1173,6 +1215,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "proofing-note", label: "Proofing recommendations", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "rat-treatment"],
+    recommendedHourlyRange: { min: 45, max: 70 },
   },
   {
     value: "ant-treatment",
@@ -1195,6 +1238,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "follow-up-visit", label: "Reserve follow-up visit", amount: 28 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "ant-treatment"],
+    recommendedHourlyRange: { min: 40, max: 60 },
   },
   {
     value: "flea-treatment",
@@ -1217,6 +1261,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "follow-up-visit", label: "Reserve follow-up visit", amount: 35 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "flea-treatment"],
+    recommendedHourlyRange: { min: 45, max: 65 },
   },
   {
     value: "bed-bug-treatment",
@@ -1239,6 +1284,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "follow-up-visit", label: "Reserve follow-up visit", amount: 42 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "bed-bug-treatment"],
+    recommendedHourlyRange: { min: 55, max: 80 },
   },
   {
     value: "moth-treatment",
@@ -1261,6 +1307,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "follow-up-visit", label: "Reserve follow-up visit", amount: 28 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "moth-treatment"],
+    recommendedHourlyRange: { min: 40, max: 60 },
   },
   {
     value: "silverfish-treatment",
@@ -1283,6 +1330,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "follow-up-visit", label: "Reserve follow-up visit", amount: 28 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "silverfish-treatment"],
+    recommendedHourlyRange: { min: 40, max: 60 },
   },
   {
     value: "pigeon-proofing-inspection",
@@ -1305,6 +1353,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "written-report", label: "Written survey report", amount: 24 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "pigeon-proofing"],
+    recommendedHourlyRange: { min: 45, max: 65 },
   },
   {
     value: "proofing-sealing-entry-points",
@@ -1327,6 +1376,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "materials-pack", label: "Proofing materials pack", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "proofing"],
+    recommendedHourlyRange: { min: 40, max: 60 },
   },
   {
     value: "pest-follow-up-visit",
@@ -1349,6 +1399,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "written-report", label: "Updated report", amount: 20 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["pest-control", "follow-up"],
+    recommendedHourlyRange: { min: 35, max: 55 },
   },
   {
     value: "weeding",
@@ -1371,6 +1422,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "green-waste", label: "Green waste removal", amount: 24 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "weeding"],
+    recommendedHourlyRange: { min: 18, max: 28 },
   },
   {
     value: "leaf-clearance",
@@ -1393,6 +1445,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "green-waste", label: "Green waste removal", amount: 24 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "leaf-clearance"],
+    recommendedHourlyRange: { min: 18, max: 28 },
   },
   {
     value: "pruning",
@@ -1415,6 +1468,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "green-waste", label: "Green waste removal", amount: 24 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "pruning"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "small-tree-trimming",
@@ -1440,6 +1494,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "small-tree-trimming"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "garden-waste-bagging",
@@ -1462,6 +1517,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "green-waste", label: "Green waste removal", amount: 24 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "waste-bagging"],
+    recommendedHourlyRange: { min: 18, max: 28 },
   },
   {
     value: "pressure-washing-patio-driveway",
@@ -1484,6 +1540,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "detergent-treatment", label: "Detergent treatment", amount: 16 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "pressure-washing"],
+    recommendedHourlyRange: { min: 28, max: 42 },
   },
   {
     value: "fence-painting",
@@ -1506,6 +1563,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "paint-supply", label: "Provider supplies paint", amount: 28 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "fence-painting"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "deck-cleaning",
@@ -1528,6 +1586,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "detergent-treatment", label: "Detergent treatment", amount: 16 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "deck-cleaning"],
+    recommendedHourlyRange: { min: 25, max: 38 },
   },
   {
     value: "seasonal-garden-maintenance",
@@ -1550,6 +1609,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "green-waste", label: "Green waste removal", amount: 24 }],
     propertyTypes: ["terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["garden", "seasonal-maintenance"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "shelf-installation",
@@ -1572,6 +1632,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "provider-fixings", label: "Provider fixings pack", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "shelf-installation"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "curtain-blind-installation",
@@ -1594,6 +1655,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "provider-fixings", label: "Provider fixings pack", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "curtain-installation"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "furniture-moving-within-property",
@@ -1616,6 +1678,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "two-person-lift", label: "Two-person crew", amount: 28 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "internal-moving"],
+    recommendedHourlyRange: { min: 25, max: 38 },
   },
   {
     value: "door-handle-lock-replacement",
@@ -1638,6 +1701,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "provider-parts-pickup", label: "Provider parts pickup", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "lock-replacement"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "minor-wall-repair-filling",
@@ -1660,6 +1724,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "touch-up-paint", label: "Touch-up paint finish", amount: 22 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "wall-repair"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "flat-pack-adjustment",
@@ -1682,6 +1747,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "wall-anchoring", label: "Wall anchoring", amount: 24 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "flat-pack-adjustment"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "cabinet-fixing",
@@ -1704,6 +1770,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "provider-fixings", label: "Provider fixings pack", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "cabinet-fixing"],
+    recommendedHourlyRange: { min: 25, max: 40 },
   },
   {
     value: "minor-plumbing-repair",
@@ -1726,6 +1793,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "provider-parts-pickup", label: "Provider parts pickup", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "minor-plumbing"],
+    recommendedHourlyRange: { min: 30, max: 45 },
   },
   {
     value: "light-fitting-replacement",
@@ -1748,6 +1816,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "ladder-work", label: "High ladder access", amount: 24 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "light-fitting"],
+    recommendedHourlyRange: { min: 28, max: 42 },
   },
   {
     value: "smoke-alarm-installation",
@@ -1770,6 +1839,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "alarm-supply", label: "Provider supplies alarm", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "smoke-alarm"],
+    recommendedHourlyRange: { min: 28, max: 42 },
   },
   {
     value: "draft-excluder-sealing-work",
@@ -1792,6 +1862,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "materials-pack", label: "Sealing materials pack", amount: 16 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["handyman", "draft-proofing"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "bed-assembly",
@@ -1814,6 +1885,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "packaging-removal", label: "Packaging removal", amount: 16 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "bed-assembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "wardrobe-assembly",
@@ -1839,6 +1911,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     ],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "wardrobe-assembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "desk-assembly",
@@ -1861,6 +1934,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "packaging-removal", label: "Packaging removal", amount: 16 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "desk-assembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "dining-table-assembly",
@@ -1883,6 +1957,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "chair-bundle", label: "Chair bundle add-on", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "dining-table-assembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "chair-assembly",
@@ -1905,6 +1980,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "packaging-removal", label: "Packaging removal", amount: 12 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "chair-assembly"],
+    recommendedHourlyRange: { min: 18, max: 30 },
   },
   {
     value: "chest-of-drawers-assembly",
@@ -1927,6 +2003,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "wall-anchoring", label: "Wall anchoring", amount: 24 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "drawer-assembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "bookcase-assembly",
@@ -1949,6 +2026,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "wall-anchoring", label: "Wall anchoring", amount: 24 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "bookcase-assembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "nursery-furniture-assembly",
@@ -1971,6 +2049,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "wall-anchoring", label: "Wall anchoring", amount: 24 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached"],
     providerTags: ["assembly", "nursery-assembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "ikea-assembly",
@@ -1993,6 +2072,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "wall-anchoring", label: "Wall anchoring", amount: 24 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "ikea-assembly"],
+    recommendedHourlyRange: { min: 20, max: 32 },
   },
   {
     value: "multiple-item-assembly",
@@ -2015,6 +2095,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "packaging-removal", label: "Packaging removal", amount: 16 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "multiple-item"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "disassembly",
@@ -2037,6 +2118,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "repositioning", label: "Move between rooms", amount: 22 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "disassembly"],
+    recommendedHourlyRange: { min: 22, max: 35 },
   },
   {
     value: "assembly-wall-fixing",
@@ -2059,6 +2141,7 @@ export const jobTypeCatalog: JobTypeDefinition[] = [
     addOns: [{ value: "provider-fixings", label: "Provider fixings pack", amount: 18 }],
     propertyTypes: ["flat", "terraced", "semi-detached", "detached", "commercial"],
     providerTags: ["assembly", "wall-fixing"],
+    recommendedHourlyRange: { min: 25, max: 38 },
   },
 ];
 

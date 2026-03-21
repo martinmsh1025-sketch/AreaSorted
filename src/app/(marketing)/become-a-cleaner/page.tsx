@@ -9,7 +9,7 @@ export default function BecomeCleanerPage() {
               Self-employed cleaner opportunities across London, with structured onboarding.
             </h1>
             <p className="lead">
-              WashHub reviews documents, confirms work eligibility, sends contracts via DocuSign, and then matches jobs by availability, area, and score.
+              AreaSorted reviews documents, confirms work eligibility, sends contracts via DocuSign, and then matches jobs by availability, area, and score.
             </p>
             <div className="button-row">
               <a className="button button-primary" href="/cleaner/apply">Start Application</a>

@@ -2,7 +2,7 @@ import "dotenv/config";
 import { getPrisma } from "@/lib/db";
 import {
   deleteProviderPricingRule,
-  disableProviderPricingRule,
+  toggleProviderPricingRule,
   listPricingAuditLogs,
   previewProviderPricing,
   savePricingAreaOverride,
@@ -102,7 +102,7 @@ async function main() {
     weekend: false,
   });
 
-  const disabled = await disableProviderPricingRule({
+  const disabled = await toggleProviderPricingRule({
     providerPricingRuleId: edited.id,
     actorType: "ADMIN",
     actorId: "admin-proof",

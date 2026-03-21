@@ -3,7 +3,7 @@ const sitemapGroups = {
     ["/", "Home"],
     ["/services", "Services"],
     ["/pricing", "Pricing"],
-    ["/instant-quote", "Instant Quote"],
+    ["/quote", "Get a Quote"],
     ["/faq", "FAQ"],
     ["/contact", "Contact Us"],
   ],

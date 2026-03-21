@@ -6,6 +6,7 @@ import { getProviderCategoryByKey } from "@/lib/providers/service-catalog-mappin
 import { continueProviderSubmissionAction, saveProviderProfileAction, submitProviderForReviewAction } from "./actions";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
 import { ProviderOnboardingClient } from "./client";
+import { getPrisma } from "@/lib/db";
 
 type ProviderOnboardingPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -49,6 +50,24 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
     return item;
   });
 
+  // Fetch postcodes that already have other providers for this category (informational, not blocking)
+  const competitorPostcodes: Record<string, number> = {};
+  if (lockedCategoryKey) {
+    const prisma = getPrisma();
+    const existing = await prisma.providerCoverageArea.groupBy({
+      by: ["postcodePrefix"],
+      where: {
+        categoryKey: lockedCategoryKey,
+        providerCompanyId: { not: provider.id },
+        active: true,
+      },
+      _count: { postcodePrefix: true },
+    });
+    for (const row of existing) {
+      competitorPostcodes[row.postcodePrefix] = row._count.postcodePrefix;
+    }
+  }
+
   return (
     <ProviderOnboardingClient
       provider={provider}
@@ -59,6 +78,8 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
       initialStep={Number.isFinite(currentStep) ? currentStep : 1}
       statusMessage={status === "documents_saved" ? "Documents saved." : status === "saved" ? "Saved." : status === "submitted" ? "Submitted for review." : ""}
       errorMessage={error}
+      takenPostcodes={[]}
+      competitorPostcodes={competitorPostcodes}
       saveAction={saveProviderProfileAction}
       continueAction={continueProviderSubmissionAction}
       submitAction={submitProviderForReviewAction}

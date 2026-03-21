@@ -93,3 +93,65 @@ export const providerDocumentToneClass: Record<string, string> = {
   REJECTED: "status-badge-restricted",
   NEEDS_RESUBMISSION: "status-badge-wip",
 };
+
+/* ── Human-friendly booking status labels (provider-facing) ── */
+
+export const bookingStatusLabels: Record<string, string> = {
+  AWAITING_PAYMENT: "Awaiting Payment",
+  PAID: "New — Accept?",
+  PENDING_ASSIGNMENT: "Pending — Accept?",
+  ASSIGNED: "Accepted",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  NO_CLEANER_FOUND: "Declined",
+  REFUND_PENDING: "Refund Pending",
+  REFUNDED: "Refunded",
+};
+
+/* ── Short booking status labels (for charts & compact displays) ── */
+
+export const bookingStatusShortLabels: Record<string, string> = {
+  AWAITING_PAYMENT: "Awaiting",
+  PAID: "New",
+  PENDING_ASSIGNMENT: "Pending",
+  ASSIGNED: "Accepted",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  NO_CLEANER_FOUND: "Declined",
+  REFUND_PENDING: "Refund Pending",
+  REFUNDED: "Refunded",
+};
+
+/* ── Property type labels ── */
+
+export const propertyTypeLabels: Record<string, string> = {
+  FLAT: "Flat",
+  HOUSE: "House",
+  OFFICE: "Office",
+  STUDIO: "Studio",
+  OTHER: "Other",
+};
+
+/* ── Service type / category labels ── */
+
+export const serviceTypeLabels: Record<string, string> = {
+  CLEANING: "Cleaning",
+  PEST_CONTROL: "Pest Control",
+  HANDYMAN: "Handyman",
+  FURNITURE_ASSEMBLY: "Furniture Assembly",
+  WASTE_REMOVAL: "Waste Removal",
+  GARDEN_MAINTENANCE: "Garden Maintenance",
+};
+
+/**
+ * Generic enum formatter — converts SCREAMING_SNAKE to Title Case.
+ * Use the specific label maps above when available; fall back to this.
+ */
+export function formatEnumLabel(value: string): string {
+  return value
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}

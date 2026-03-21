@@ -3,7 +3,9 @@ import { getPrisma } from "@/lib/db";
 import { getEnv } from "@/lib/config/env";
 import { createDirectChargeCheckoutSession } from "@/lib/stripe/connect";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
-import { matchProviderForPublicQuote } from "@/server/services/public/provider-matching";
+import { createProviderNotification } from "@/lib/providers/notifications";
+import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
+import { jobTypeCatalog } from "@/lib/service-catalog";
 
 function mapCategoryToServiceType(categoryKey: string) {
   switch (categoryKey) {
@@ -35,12 +37,26 @@ type CreateQuoteInput = {
   categoryKey: string;
   serviceKey: string;
   quantity: number;
-  estimatedHours: number;
+  estimatedHours?: number;
   sameDay: boolean;
   weekend: boolean;
   scheduledDate?: string;
   scheduledTimeLabel?: string;
   details?: Record<string, unknown>;
+  jobPhotoUrls?: string[];
+  /** Cleaning-specific */
+  bedrooms?: number;
+  bathrooms?: number;
+  kitchens?: number;
+  cleaningCondition?: "light" | "standard" | "heavy" | "very-heavy";
+  supplies?: "customer" | "provider";
+  propertyType?: string;
+  /** Pest control / general size */
+  jobSize?: "small" | "standard" | "large";
+  /** Add-on keys from catalog */
+  addOns?: string[];
+  /** Free-text notes */
+  notes?: string;
 };
 
 function createReference(prefix: string) {
@@ -56,7 +72,7 @@ function toObjectRecord(value: unknown) {
 }
 
 export async function createPublicQuote(input: CreateQuoteInput) {
-  const match = await matchProviderForPublicQuote({
+  const match = await matchProvidersForPublicQuote({
     postcode: input.postcode,
     categoryKey: input.categoryKey,
   });
@@ -65,19 +81,59 @@ export async function createPublicQuote(input: CreateQuoteInput) {
     return match;
   }
 
-  const preview = await previewProviderPricing({
-    providerCompanyId: match.providerCompanyId,
-    categoryKey: input.categoryKey,
-    serviceKey: input.serviceKey,
-    postcodePrefix: match.postcodePrefix,
-    estimatedHours: input.estimatedHours,
-    quantity: input.quantity,
-    sameDay: input.sameDay,
-    weekend: input.weekend,
-  });
+  const { providers } = match;
+
+  // Generate pricing previews for all matched providers.
+  // Some providers may not have a pricing rule for this specific serviceKey
+  // (they were matched by categoryKey + postcode only). We skip those gracefully.
+  const previewResults = await Promise.all(
+    providers.map(async (provider) => {
+      try {
+        const preview = await previewProviderPricing({
+          providerCompanyId: provider.providerCompanyId,
+          categoryKey: input.categoryKey,
+          serviceKey: input.serviceKey,
+          postcodePrefix: provider.postcodePrefix,
+          estimatedHours: input.estimatedHours,
+          quantity: input.quantity,
+          sameDay: input.sameDay,
+          weekend: input.weekend,
+          bedrooms: input.bedrooms,
+          bathrooms: input.bathrooms,
+          kitchens: input.kitchens,
+          cleaningCondition: input.cleaningCondition,
+          supplies: input.supplies,
+          propertyType: input.propertyType,
+          jobSize: input.jobSize,
+          addOns: input.addOns,
+        });
+        return { provider, preview };
+      } catch {
+        // Provider doesn't have a pricing rule for this service — skip
+        return null;
+      }
+    }),
+  );
+
+  const previews = previewResults.filter(
+    (r): r is NonNullable<typeof r> => r !== null,
+  );
+
+  // If ALL providers were skipped (no one has pricing for this service), return no_coverage
+  if (previews.length === 0) {
+    return { status: "no_coverage" as const };
+  }
 
   const prisma = getPrisma();
   const reference = createReference("QR");
+  const isSingleProvider = previews.length === 1;
+
+  // For single provider: set providerCompanyId + priceSnapshot directly (backward compatible)
+  // For multiple providers: leave providerCompanyId null, customer selects later
+  const singleMatch = isSingleProvider ? previews[0] : null;
+  const singleQuoteRequired = singleMatch
+    ? singleMatch.preview.quoteRequired || !singleMatch.provider.paymentReady
+    : false;
 
   const quoteRequest = await prisma.quoteRequest.create({
     data: {
@@ -86,21 +142,70 @@ export async function createPublicQuote(input: CreateQuoteInput) {
       customerEmail: input.customerEmail,
       customerPhone: input.customerPhone,
       postcode: input.postcode,
-      postcodePrefix: match.postcodePrefix,
+      postcodePrefix: providers[0].postcodePrefix,
       addressLine1: input.addressLine1,
       addressLine2: input.addressLine2,
       city: input.city,
       categoryKey: input.categoryKey,
       serviceKey: input.serviceKey,
-      providerCompanyId: match.providerCompanyId,
-      state: preview.quoteRequired || !match.paymentReady ? "MANUAL_REVIEW_REQUIRED" : "PRICED",
-      quoteRequired: preview.quoteRequired || !match.paymentReady,
+      providerCompanyId: singleMatch?.provider.providerCompanyId ?? null,
+      state: isSingleProvider
+        ? (singleQuoteRequired ? "MANUAL_REVIEW_REQUIRED" : "PRICED")
+        : "PRICED",
+      quoteRequired: singleQuoteRequired,
       scheduledDate: input.scheduledDate ? new Date(input.scheduledDate) : null,
       scheduledTimeLabel: input.scheduledTimeLabel,
-      inputJson: toJsonValue(input.details || {}),
-      priceSnapshot: {
-        create: {
-          providerCompanyId: match.providerCompanyId,
+      jobPhotoUrls: input.jobPhotoUrls ?? [],
+      inputJson: toJsonValue({
+        ...input.details,
+        kitchens: input.kitchens,
+        cleaningCondition: input.cleaningCondition,
+        supplies: input.supplies,
+        addOns: input.addOns,
+        notes: input.notes,
+      }),
+      // Single provider: create legacy priceSnapshot for backward compat
+      ...(singleMatch
+        ? {
+            priceSnapshot: {
+              create: {
+                providerCompanyId: singleMatch.provider.providerCompanyId,
+                pricingRuleId: singleMatch.preview.pricingRuleId,
+                providerBasePrice: singleMatch.preview.providerBasePrice,
+                bookingFee: singleMatch.preview.bookingFee,
+                commissionAmount: singleMatch.preview.commissionAmount,
+                postcodeSurcharge: singleMatch.preview.postcodeSurcharge,
+                totalCustomerPay: singleMatch.preview.totalCustomerPay,
+                expectedProviderPayoutBeforeFees: singleMatch.preview.expectedProviderPayoutBeforeStripeFees,
+                quantity: input.quantity,
+                estimatedHours: input.estimatedHours ?? 0,
+                sameDay: input.sameDay,
+                weekend: input.weekend,
+                quoteRequired: singleQuoteRequired,
+                inputJson: toJsonValue({
+                  ...input.details,
+                  quantity: input.quantity,
+                  estimatedHours: input.estimatedHours,
+                  sameDay: input.sameDay,
+                  weekend: input.weekend,
+                  bedrooms: input.bedrooms,
+                  bathrooms: input.bathrooms,
+                  kitchens: input.kitchens,
+                  cleaningCondition: input.cleaningCondition,
+                  supplies: input.supplies,
+                  propertyType: input.propertyType,
+                  jobSize: input.jobSize,
+                  addOns: input.addOns,
+                  notes: input.notes,
+                }),
+              },
+            },
+          }
+        : {}),
+      // Always create QuoteOptions for all providers
+      quoteOptions: {
+        create: previews.map(({ provider, preview }) => ({
+          providerCompanyId: provider.providerCompanyId,
           pricingRuleId: preview.pricingRuleId,
           providerBasePrice: preview.providerBasePrice,
           bookingFee: preview.bookingFee,
@@ -109,32 +214,101 @@ export async function createPublicQuote(input: CreateQuoteInput) {
           totalCustomerPay: preview.totalCustomerPay,
           expectedProviderPayoutBeforeFees: preview.expectedProviderPayoutBeforeStripeFees,
           quantity: input.quantity,
-          estimatedHours: input.estimatedHours,
+          estimatedHours: input.estimatedHours ?? 0,
           sameDay: input.sameDay,
           weekend: input.weekend,
-          quoteRequired: preview.quoteRequired || !match.paymentReady,
+          quoteRequired: preview.quoteRequired || !provider.paymentReady,
+          paymentReady: provider.paymentReady,
+          providerName: provider.providerName,
           inputJson: toJsonValue({
             ...input.details,
             quantity: input.quantity,
             estimatedHours: input.estimatedHours,
             sameDay: input.sameDay,
             weekend: input.weekend,
+            bedrooms: input.bedrooms,
+            bathrooms: input.bathrooms,
+            kitchens: input.kitchens,
+            cleaningCondition: input.cleaningCondition,
+            supplies: input.supplies,
+            propertyType: input.propertyType,
+            jobSize: input.jobSize,
+            addOns: input.addOns,
+            notes: input.notes,
           }),
-        },
+        })),
       },
     },
     include: {
       priceSnapshot: true,
       providerCompany: true,
+      quoteOptions: {
+        include: { providerCompany: true },
+        orderBy: { totalCustomerPay: "asc" },
+      },
     },
   });
 
   return {
     status: "quoted" as const,
     quoteRequest,
-    provider: match,
-    preview,
+    multipleProviders: !isSingleProvider,
   };
+}
+
+export async function selectQuoteOption(reference: string, quoteOptionId: string) {
+  const prisma = getPrisma();
+
+  const quote = await prisma.quoteRequest.findUnique({
+    where: { reference },
+    include: {
+      quoteOptions: true,
+      priceSnapshot: true,
+    },
+  });
+
+  if (!quote) {
+    throw new Error("Quote request not found");
+  }
+
+  const option = quote.quoteOptions.find((o) => o.id === quoteOptionId);
+  if (!option) {
+    throw new Error("Quote option not found");
+  }
+
+  // Create priceSnapshot from the selected option (if not already exists)
+  if (quote.priceSnapshot) {
+    await prisma.quotePriceSnapshot.delete({ where: { id: quote.priceSnapshot.id } });
+  }
+
+  await prisma.quoteRequest.update({
+    where: { id: quote.id },
+    data: {
+      providerCompanyId: option.providerCompanyId,
+      selectedQuoteOptionId: option.id,
+      state: option.quoteRequired ? "MANUAL_REVIEW_REQUIRED" : "PROVIDER_SELECTED",
+      quoteRequired: option.quoteRequired,
+      priceSnapshot: {
+        create: {
+          providerCompanyId: option.providerCompanyId,
+          pricingRuleId: option.pricingRuleId,
+          providerBasePrice: option.providerBasePrice,
+          bookingFee: option.bookingFee,
+          commissionAmount: option.commissionAmount,
+          postcodeSurcharge: option.postcodeSurcharge,
+          totalCustomerPay: option.totalCustomerPay,
+          expectedProviderPayoutBeforeFees: option.expectedProviderPayoutBeforeFees,
+          quantity: option.quantity,
+          estimatedHours: option.estimatedHours,
+          sameDay: option.sameDay,
+          weekend: option.weekend,
+          quoteRequired: option.quoteRequired,
+          inputJson: option.inputJson ?? undefined,        },
+      },
+    },
+  });
+
+  return { status: "selected" as const, providerCompanyId: option.providerCompanyId };
 }
 
 export async function getPublicQuoteByReference(reference: string) {
@@ -144,6 +318,10 @@ export async function getPublicQuoteByReference(reference: string) {
     include: {
       providerCompany: true,
       priceSnapshot: true,
+      quoteOptions: {
+        include: { providerCompany: true },
+        orderBy: { totalCustomerPay: "asc" },
+      },
       booking: {
         include: {
           priceSnapshot: true,
@@ -175,7 +353,7 @@ export async function createInstantBookingFromQuote(reference: string) {
   });
 
   if (!quote || !quote.providerCompany || !quote.priceSnapshot) {
-    throw new Error("Quote request not ready for booking");
+    throw new Error("Quote request not ready for booking — provider must be selected first");
   }
 
   if (quote.quoteRequired) {
@@ -221,7 +399,7 @@ export async function createInstantBookingFromQuote(reference: string) {
       serviceType: mapCategoryToServiceType(quote.categoryKey) as any,
       scheduledDate: quote.scheduledDate || new Date(),
       scheduledStartTime: quote.scheduledTimeLabel || "09:00",
-      durationHours: quote.priceSnapshot.estimatedHours,
+      durationHours: Number(quote.priceSnapshot.estimatedHours) || 2,
       additionalNotes: JSON.stringify({ ...toObjectRecord(quote.inputJson), bookingReference }),
       bookingStatus: "AWAITING_PAYMENT",
       totalAmount: quote.priceSnapshot.totalCustomerPay,
@@ -233,7 +411,16 @@ export async function createInstantBookingFromQuote(reference: string) {
           platformBookingFee: quote.priceSnapshot.bookingFee,
           platformCommissionAmount: quote.priceSnapshot.commissionAmount,
           platformMarkupAmount: 0,
-          optionalExtrasAmount: 0,
+          optionalExtrasAmount: (() => {
+            const inputData = toObjectRecord(quote.priceSnapshot.inputJson);
+            const addOnKeys = Array.isArray(inputData.addOns) ? inputData.addOns as string[] : [];
+            if (addOnKeys.length === 0) return 0;
+            const jobType = jobTypeCatalog.find((j) => j.value === quote.serviceKey);
+            if (!jobType) return 0;
+            return jobType.addOns
+              .filter((a) => addOnKeys.includes(a.value))
+              .reduce((sum, a) => sum + a.amount, 0);
+          })(),
           customerTotalAmount: quote.priceSnapshot.totalCustomerPay,
           providerExpectedPayout: quote.priceSnapshot.expectedProviderPayoutBeforeFees,
           pricingJson: toJsonValue(quote.priceSnapshot.inputJson || {}),
@@ -297,14 +484,57 @@ export async function createInstantBookingFromQuote(reference: string) {
 
     sessionId = `mock_${bookingReference}`;
     sessionUrl = `${appUrl}/booking/confirmation/${bookingReference}`;
+
+    // Mock checkout: mark booking as PAID and payment as PAID
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { bookingStatus: "PAID" },
+    });
+    await prisma.paymentRecord.update({
+      where: { id: paymentRecord.id },
+      data: {
+        stripeCheckoutSessionId: sessionId,
+        paymentState: "PAID",
+      },
+    });
+
+    // Generate invoices for this booking
+    try {
+      const { generateInvoicesForBooking } = await import("@/server/services/invoices/generate");
+      await generateInvoicesForBooking(booking.id);
+    } catch {
+      // Non-critical — invoices can be generated on-demand
+    }
+
+    // Notify provider about new paid booking (mock path)
+    try {
+      if (booking.providerCompanyId) {
+        const dateStr = booking.scheduledDate
+          ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+          : "TBC";
+        await createProviderNotification({
+          providerCompanyId: booking.providerCompanyId,
+          type: "NEW_ORDER",
+          title: "New booking received",
+          message: `A new paid booking in ${booking.servicePostcode} for ${dateStr} is waiting for your confirmation.`,
+          link: `/provider/orders/${booking.id}`,
+          bookingId: booking.id,
+        });
+      }
+    } catch {
+      // Non-critical
+    }
   }
 
-  await prisma.paymentRecord.update({
-    where: { id: paymentRecord.id },
-    data: {
-      stripeCheckoutSessionId: sessionId,
-    },
-  });
+  // Only update payment + quote if not already done in mock path
+  if (sessionId && !sessionId.startsWith("mock_")) {
+    await prisma.paymentRecord.update({
+      where: { id: paymentRecord.id },
+      data: {
+        stripeCheckoutSessionId: sessionId,
+      },
+    });
+  }
 
   await prisma.quoteRequest.update({
     where: { id: quote.id },

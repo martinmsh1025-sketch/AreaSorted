@@ -12,12 +12,26 @@ const schema = z.object({
   city: z.string().min(1),
   categoryKey: z.string().min(1),
   serviceKey: z.string().min(1),
-  quantity: z.number().min(1),
-  estimatedHours: z.number().min(0.5),
+  quantity: z.number().min(1).optional().default(1),
+  estimatedHours: z.number().min(0.5).optional(),
   sameDay: z.boolean().optional().default(false),
   weekend: z.boolean().optional().default(false),
   scheduledDate: z.string().optional(),
   scheduledTimeLabel: z.string().optional(),
+  jobPhotoUrls: z.array(z.string().url()).max(5).optional().default([]),
+  /** Cleaning-specific */
+  bedrooms: z.number().int().min(0).optional(),
+  bathrooms: z.number().int().min(0).optional(),
+  kitchens: z.number().int().min(0).optional(),
+  cleaningCondition: z.enum(["light", "standard", "heavy", "very-heavy"]).optional(),
+  supplies: z.enum(["customer", "provider"]).optional(),
+  propertyType: z.string().optional(),
+  /** Pest control / general size selector */
+  jobSize: z.enum(["small", "standard", "large"]).optional(),
+  /** Add-on keys from the job type catalog */
+  addOns: z.array(z.string()).optional(),
+  /** Free-text notes / job description */
+  notes: z.string().max(2000).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -29,10 +43,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No provider coverage found for that postcode and category." }, { status: 404 });
     }
 
-    if (result.status === "manual_review") {
-      return NextResponse.json({ error: "This quote requires manual review before pricing can continue." }, { status: 409 });
-    }
-
     if (result.status === "invalid_input") {
       return NextResponse.json({ error: result.reason }, { status: 400 });
     }
@@ -40,6 +50,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       redirectUrl: `/quote/${result.quoteRequest.reference}`,
       reference: result.quoteRequest.reference,
+      multipleProviders: result.multipleProviders,
+      optionCount: result.quoteRequest.quoteOptions.length,
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create quote" }, { status: 500 });

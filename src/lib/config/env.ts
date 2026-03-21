@@ -14,7 +14,7 @@ const envSchema = z.object({
   STRIPE_MANUAL_PAYOUTS: z.coerce.boolean().default(true),
   ALLOW_MOCK_STRIPE_CHECKOUT: z.coerce.boolean().default(false),
   MARKETPLACE_DEFAULT_BOOKING_FEE_GBP: z.coerce.number().nonnegative().default(12),
-  MARKETPLACE_DEFAULT_COMMISSION_PERCENT: z.coerce.number().nonnegative().default(18),
+  MARKETPLACE_DEFAULT_COMMISSION_PERCENT: z.coerce.number().nonnegative().default(12),
   MARKETPLACE_DEFAULT_MARKUP_ENABLED: z.coerce.boolean().default(false),
   MARKETPLACE_DEFAULT_INVOICE_STRATEGY: z.string().default("provider_service_plus_platform_fee_receipt"),
   MARKETPLACE_DEFAULT_REFUND_APPLICATION_FEE: z.coerce.boolean().default(false),

@@ -1,0 +1,123 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireCustomerSession } from "@/lib/customer-auth";
+import { getPrisma } from "@/lib/db";
+
+type BookingDetailPageProps = {
+  params: Promise<{ reference: string }>;
+};
+
+export default async function BookingDetailPage({ params }: BookingDetailPageProps) {
+  const { reference } = await params;
+  const customer = await requireCustomerSession();
+  const prisma = getPrisma();
+
+  const booking = await prisma.booking.findFirst({
+    where: {
+      customerId: customer.id,
+      OR: [
+        { quoteRequest: { reference } },
+        { id: reference },
+      ],
+    },
+    include: {
+      quoteRequest: { select: { reference: true, serviceKey: true, categoryKey: true } },
+      priceSnapshot: true,
+      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
+    },
+  });
+
+  if (!booking) notFound();
+
+  const ref = booking.quoteRequest?.reference ?? booking.id;
+  const service = booking.quoteRequest?.serviceKey ?? booking.serviceType;
+  const status = booking.bookingStatus.replace(/_/g, " ");
+  const payment = booking.paymentRecords?.[0]?.paymentState ?? "UNKNOWN";
+  const providerName = booking.marketplaceProviderCompany?.tradingName
+    ?? booking.marketplaceProviderCompany?.legalName
+    ?? "Pending assignment";
+
+  const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+
+  return (
+    <main className="section">
+      <div className="container" style={{ maxWidth: 900 }}>
+        <div style={{ marginBottom: "1.25rem" }}>
+          <Link href="/account/bookings" style={{ color: "var(--color-brand)", fontSize: "0.9rem", fontWeight: 600 }}>
+            &larr; Back to bookings
+          </Link>
+        </div>
+
+        <div className="panel card" style={{ marginBottom: "1.5rem" }}>
+          <div className="eyebrow">Booking details</div>
+          <h1 className="title" style={{ marginTop: "0.3rem", fontSize: "1.5rem" }}>
+            {service}
+          </h1>
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.25rem" }}>
+            Reference: {ref}
+          </p>
+        </div>
+
+        <div className="panel card" style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Service details</h2>
+          <div className="quote-summary-list">
+            <div><span>Status</span><strong>{status}</strong></div>
+            <div><span>Payment</span><strong>{String(payment).replace(/_/g, " ")}</strong></div>
+            <div><span>Date</span><strong>{booking.scheduledDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong></div>
+            <div><span>Time</span><strong>{booking.scheduledStartTime}</strong></div>
+            <div><span>Duration</span><strong>{Number(booking.durationHours)} hours</strong></div>
+            <div><span>Provider</span><strong>{providerName}</strong></div>
+          </div>
+        </div>
+
+        <div className="panel card" style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Address</h2>
+          <div className="quote-summary-list">
+            <div><span>Address</span><strong>{booking.serviceAddressLine1}</strong></div>
+            {booking.serviceAddressLine2 && (
+              <div><span>Line 2</span><strong>{booking.serviceAddressLine2}</strong></div>
+            )}
+            <div><span>City</span><strong>{booking.serviceCity}</strong></div>
+            <div><span>Postcode</span><strong>{booking.servicePostcode}</strong></div>
+          </div>
+        </div>
+
+        {booking.priceSnapshot && (
+          <div className="panel card" style={{ marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Pricing</h2>
+            <div className="quote-summary-list">
+              <div><span>Service</span><strong>&pound;{Number(booking.priceSnapshot.providerServiceAmount).toFixed(2)}</strong></div>
+              <div><span>Booking fee</span><strong>&pound;{Number(booking.priceSnapshot.platformBookingFee).toFixed(2)}</strong></div>
+              <div style={{ fontWeight: 600, fontSize: "1.05rem" }}>
+                <span>Total paid</span>
+                <strong>&pound;{Number(booking.priceSnapshot.customerTotalAmount).toFixed(2)}</strong>
+              </div>
+            </div>
+            {showInvoice && (
+              <div style={{ marginTop: "1rem", paddingTop: "0.75rem", borderTop: "1px solid var(--color-border)" }}>
+                <Link
+                  href={`/account/bookings/${ref}/invoice`}
+                  className="button"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+                >
+                  View Receipt
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="panel card">
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Need help?</h2>
+          <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.75rem" }}>
+            If you need to change or cancel this booking, please contact our support team.
+          </p>
+          <Link href="/contact" className="button button-secondary">
+            Contact support
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}

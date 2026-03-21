@@ -1,8 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { deleteProviderPricingRule, disableProviderPricingRule, savePricingAreaOverride, saveProviderPricingRule } from "@/lib/pricing/prisma-pricing";
+import { deleteProviderPricingRule, toggleProviderPricingRule, savePricingAreaOverride, saveProviderPricingRule } from "@/lib/pricing/prisma-pricing";
 import { getPrisma } from "@/lib/db";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
@@ -29,16 +30,20 @@ export async function savePricingConfigAction(formData: FormData) {
     active: formData.get("active") === "on",
     actorType: "ADMIN",
   });
+
+  revalidatePath("/admin/pricing");
 }
 
 export async function disablePricingConfigAction(formData: FormData) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
 
-  await disableProviderPricingRule({
+  await toggleProviderPricingRule({
     providerPricingRuleId: String(formData.get("providerPricingRuleId") || ""),
     actorType: "ADMIN",
   });
+
+  revalidatePath("/admin/pricing");
 }
 
 export async function deletePricingConfigAction(formData: FormData) {
@@ -49,6 +54,8 @@ export async function deletePricingConfigAction(formData: FormData) {
     providerPricingRuleId: String(formData.get("providerPricingRuleId") || ""),
     actorType: "ADMIN",
   });
+
+  revalidatePath("/admin/pricing");
 }
 
 export async function saveAreaOverrideAction(formData: FormData) {
@@ -65,6 +72,8 @@ export async function saveAreaOverrideAction(formData: FormData) {
     active: formData.get("active") === "on",
     actorType: "ADMIN",
   });
+
+  revalidatePath("/admin/pricing");
 }
 
 export async function saveMarketplaceSettingAction(formData: FormData) {
@@ -81,4 +90,19 @@ export async function saveMarketplaceSettingAction(formData: FormData) {
     update: { valueJson: { value } },
     create: { key, valueJson: { value } },
   });
+
+  // If this is a booking fee save, also persist the fee mode
+  const feeMode = formData.get("feeMode");
+  if (key === "marketplace.booking_fee" && feeMode) {
+    const modeKey = "marketplace.booking_fee_mode";
+    const modeValue = String(feeMode);
+    await prisma.adminSetting.upsert({
+      where: { key: modeKey },
+      update: { valueJson: { value: modeValue } },
+      create: { key: modeKey, valueJson: { value: modeValue } },
+    });
+  }
+
+  revalidatePath("/admin/pricing");
+  revalidatePath("/admin/settings");
 }

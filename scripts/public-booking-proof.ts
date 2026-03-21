@@ -69,12 +69,12 @@ async function main() {
     instantPath: {
       quoteReference: instantQuote.quoteRequest.reference,
       displayedQuote: {
-        providerBasePrice: Number(instantQuote.preview.providerBasePrice),
-        bookingFee: Number(instantQuote.preview.bookingFee),
-        commissionAmount: Number(instantQuote.preview.commissionAmount),
-        postcodeSurcharge: Number(instantQuote.preview.postcodeSurcharge),
-        totalCustomerPay: Number(instantQuote.preview.totalCustomerPay),
-        quoteRequired: instantQuote.preview.quoteRequired,
+        providerBasePrice: Number(instantQuote.quoteRequest.priceSnapshot?.providerBasePrice || 0),
+        bookingFee: Number(instantQuote.quoteRequest.priceSnapshot?.bookingFee || 0),
+        commissionAmount: Number(instantQuote.quoteRequest.priceSnapshot?.commissionAmount || 0),
+        postcodeSurcharge: Number(instantQuote.quoteRequest.priceSnapshot?.postcodeSurcharge || 0),
+        totalCustomerPay: Number(instantQuote.quoteRequest.priceSnapshot?.totalCustomerPay || 0),
+        quoteRequired: instantQuote.quoteRequest.priceSnapshot?.quoteRequired || false,
       },
       savedQuoteSnapshot: {
         providerBasePrice: Number(instantQuoteFromDb?.priceSnapshot?.providerBasePrice || 0),
@@ -98,7 +98,7 @@ async function main() {
     },
     manualPath: {
       quoteReference: manualQuote.quoteRequest.reference,
-      quoteRequired: manualQuote.preview.quoteRequired,
+      quoteRequired: manualQuote.quoteRequest.quoteRequired,
       stateAfterSubmit: manualQuoteFromDb?.state,
       bookingLinked: Boolean(manualQuoteFromDb?.bookingId),
       snapshotTotal: Number(manualQuoteFromDb?.priceSnapshot?.totalCustomerPay || 0),

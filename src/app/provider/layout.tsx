@@ -1,76 +1,105 @@
 import { providerLogoutAction } from "@/app/provider/login/actions";
 import { getProviderSession } from "@/lib/provider-auth";
-import { canProviderAccessAccount, canProviderAccessDashboard, canProviderAccessOrders, canProviderAccessPricing, canProviderAccessStripe, canProviderEditOnboarding } from "@/lib/providers/status";
+import {
+  canProviderAccessAccount,
+  canProviderAccessOrders,
+  canProviderAccessPricing,
+  canProviderAccessStripe,
+  canProviderViewOrders,
+  canProviderEditOnboarding,
+} from "@/lib/providers/status";
 import { providerPortalStatusLabels } from "@/lib/providers/service-catalog-mapping";
-import { ProviderStatusBadge } from "@/components/providers/status-badge";
+import { ProviderShell } from "@/components/provider/provider-shell";
+import type { NavGroup } from "@/components/provider/provider-shell";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-function buildProviderNav(status: string) {
-  const nav = [{ href: "/provider", label: "Overview" }];
+function buildProviderNav(status: string): NavGroup[] {
+  const groups: NavGroup[] = [];
 
-  if (canProviderEditOnboarding(status)) {
-    nav.push({ href: "/provider/onboarding", label: "Onboarding" });
+  /* ── Main ─────────────────────────────────── */
+  const mainItems: NavGroup["items"] = [
+    { href: "/provider", label: "Home", icon: "Home" },
+  ];
+
+  if (canProviderViewOrders(status)) {
+    mainItems.push({ href: "/provider/orders", label: "My Orders", icon: "Orders" });
   }
 
-  nav.push({ href: "/provider/application-status", label: "Application" });
+  groups.push({ label: null, items: mainItems });
+
+  /* ── Onboarding (pre-approval only) ─────── */
+  const onboardingItems: NavGroup["items"] = [];
+
+  if (canProviderEditOnboarding(status)) {
+    onboardingItems.push({ href: "/provider/onboarding", label: "Onboarding", icon: "Onboarding" });
+  }
+
+  // Show Application Status for non-active providers who are past onboarding
+  const showApplicationStatus = [
+    "SUBMITTED_FOR_REVIEW", "UNDER_REVIEW", "CHANGES_REQUESTED", "REJECTED",
+    "APPROVED", "STRIPE_PENDING", "STRIPE_RESTRICTED", "PRICING_PENDING",
+  ].includes(status);
+
+  if (showApplicationStatus) {
+    onboardingItems.push({ href: "/provider/application-status", label: "Application Status", icon: "Application" });
+  }
+
+  if (onboardingItems.length > 0) {
+    groups.push({ label: "Getting Started", items: onboardingItems });
+  }
+
+  /* ── Business Setup ────────────────────────── */
+  const setupItems: NavGroup["items"] = [];
 
   if (canProviderAccessStripe(status)) {
-    nav.push({ href: "/provider/dashboard", label: "Payment account" });
+    setupItems.push({ href: "/provider/payment", label: "Payments", icon: "Payment" });
   }
 
   if (canProviderAccessPricing(status)) {
-    nav.push({ href: "/provider/pricing", label: "Pricing" });
+    setupItems.push({ href: "/provider/coverage", label: "Service Areas", icon: "Coverage" });
+    setupItems.push({ href: "/provider/pricing", label: "Pricing", icon: "Pricing" });
+    setupItems.push({ href: "/provider/availability", label: "Availability", icon: "Availability" });
   }
 
-  if (canProviderAccessOrders(status)) {
-    nav.push({ href: "/provider/orders", label: "Orders" });
+  if (setupItems.length > 0) {
+    groups.push({ label: "Business", items: setupItems });
   }
 
+  /* ── Account ───────────────────────────────── */
   if (canProviderAccessAccount(status)) {
-    nav.push({ href: "/provider/account", label: "Account" });
+    groups.push({
+      label: "Account",
+      items: [
+        { href: "/provider/account", label: "My Profile", icon: "Account" },
+      ],
+    });
   }
 
-  return nav;
+  return groups;
 }
 
 export default async function ProviderLayout({ children }: { children: React.ReactNode }) {
   const session = await getProviderSession();
   const provider = session?.providerCompany || null;
   const providerNav = provider ? buildProviderNav(provider.status) : [];
-  const displayName = provider ? (provider.tradingName || provider.legalName || provider.contactEmail) : "Onboarding, approval, payment account and pricing";
+  const displayName = provider
+    ? provider.tradingName || provider.legalName || provider.contactEmail
+    : null;
+  const statusLabel = provider
+    ? providerPortalStatusLabels[provider.status] || provider.status
+    : null;
 
   return (
-    <div className="backoffice-shell backoffice-provider-shell">
-      <header className="backoffice-topbar">
-        <div className="container backoffice-topbar-inner">
-          <div>
-            <div className="backoffice-kicker">AreaSorted Provider Portal</div>
-            <strong className="backoffice-brand-title">{displayName}</strong>
-            {provider ? (
-              <div className="button-row" style={{ marginTop: "0.6rem", alignItems: "center" }}>
-                <ProviderStatusBadge status={provider.status} />
-                <span className="provider-soft-pill is-active">{providerPortalStatusLabels[provider.status] || provider.status}</span>
-              </div>
-            ) : null}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            {provider ? (
-              <>
-                <nav className="backoffice-nav">
-                  {providerNav.map((item) => (
-                    <a key={item.href} href={item.href} className="backoffice-nav-link">
-                      {item.label}
-                    </a>
-                  ))}
-                </nav>
-                <form action={providerLogoutAction}>
-                  <button type="submit" className="button button-secondary">Logout</button>
-                </form>
-              </>
-            ) : null}
-          </div>
-        </div>
-      </header>
-      <div className="backoffice-body">{children}</div>
-    </div>
+    <TooltipProvider>
+      <ProviderShell
+        providerName={displayName}
+        providerStatus={provider?.status || null}
+        statusLabel={statusLabel}
+        navGroups={providerNav}
+        logoutAction={providerLogoutAction}
+      >
+        {children}
+      </ProviderShell>
+    </TooltipProvider>
   );
 }

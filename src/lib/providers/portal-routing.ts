@@ -10,7 +10,7 @@ export function getProviderDefaultRoute(status: string) {
   }
 
   if (canProviderAccessStripe(status)) {
-    return "/provider/dashboard";
+    return "/provider/payment";
   }
 
   if (["SUBMITTED_FOR_REVIEW", "UNDER_REVIEW", "CHANGES_REQUESTED", "REJECTED"].includes(status)) {

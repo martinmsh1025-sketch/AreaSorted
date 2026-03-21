@@ -87,7 +87,7 @@ async function main() {
     { key: 'marketplace.charge_model', valueJson: { value: 'direct_charges' }, description: 'Default Stripe Connect charge model' },
     { key: 'marketplace.invoice_strategy', valueJson: { value: 'provider_service_plus_platform_fee_receipt' }, description: 'Default invoice ownership strategy' },
     { key: 'marketplace.booking_fee', valueJson: { value: 12 }, description: 'Default booking fee in GBP' },
-    { key: 'marketplace.commission_percent', valueJson: { value: 18 }, description: 'Default platform commission percent' },
+    { key: 'marketplace.commission_percent', valueJson: { value: 12 }, description: 'Default platform commission percent' },
     { key: 'marketplace.payout_hold_days', valueJson: { value: 7 }, description: 'Default hold period before provider payout' },
   ];
 
@@ -226,6 +226,224 @@ async function main() {
       expiresAt: new Date('2027-01-01T00:00:00.000Z'),
     },
   });
+
+  // ── ACTIVE PROVIDERS for quote-flow testing ──
+  // Cleaning: 3 providers (multi-provider comparison view)
+  // Pest Control: 1 provider (single-provider direct pricing view)
+
+  const activeProviders = [
+    {
+      // Sparkle Clean: uses HOURLY pricing mode (system estimates hours from bedrooms/bathrooms)
+      email: 'sparkle-clean@example.com',
+      tradingName: 'Sparkle Clean London',
+      companyNumber: 'AS-ACTIVE-001',
+      categories: ['CLEANING'],
+      postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1X', 'SW1Y', 'SW1P', 'SW1H', 'SW1E', 'SW3', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'EC1', 'EC1A', 'EC1M', 'EC1N', 'EC1R', 'EC1V', 'EC1Y', 'N1'],
+      pricingRules: [
+        { categoryKey: 'CLEANING', serviceKey: 'regular-home-cleaning', pricingMode: 'hourly', hourlyPrice: 18, minimumCharge: 36 },
+        { categoryKey: 'CLEANING', serviceKey: 'end-of-tenancy-cleaning', pricingMode: 'hourly', hourlyPrice: 22, minimumCharge: 88 },
+        { categoryKey: 'CLEANING', serviceKey: 'deep-cleaning', pricingMode: 'hourly', hourlyPrice: 20, minimumCharge: 60 },
+        { categoryKey: 'CLEANING', serviceKey: 'office-commercial-cleaning', pricingMode: 'hourly', hourlyPrice: 24, minimumCharge: 72 },
+      ],
+      stripeAccountId: 'acct_mock_sparkle_001',
+    },
+    {
+      // Pristine Maids: uses FIXED_PER_SIZE pricing mode (provider sets prices per property size)
+      email: 'pristine-maids@example.com',
+      tradingName: 'Pristine Maids',
+      companyNumber: 'AS-ACTIVE-002',
+      categories: ['CLEANING'],
+      postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1P', 'SW3', 'SW5', 'SW6', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W'],
+      pricingRules: [
+        { categoryKey: 'CLEANING', serviceKey: 'regular-home-cleaning', pricingMode: 'fixed_per_size', pricingJson: { small: 55, standard: 85, large: 125 }, minimumCharge: 55 },
+        { categoryKey: 'CLEANING', serviceKey: 'end-of-tenancy-cleaning', pricingMode: 'fixed_per_size', pricingJson: { small: 129, standard: 199, large: 289 }, minimumCharge: 129 },
+        { categoryKey: 'CLEANING', serviceKey: 'deep-cleaning', pricingMode: 'fixed_per_size', pricingJson: { small: 96, standard: 145, large: 210 }, minimumCharge: 96 },
+      ],
+      stripeAccountId: 'acct_mock_pristine_002',
+    },
+    {
+      // Fresh Start: uses HOURLY pricing mode (budget-friendly option)
+      email: 'fresh-start-cleaners@example.com',
+      tradingName: 'Fresh Start Cleaners',
+      companyNumber: 'AS-ACTIVE-003',
+      categories: ['CLEANING'],
+      postcodes: ['SW1A', 'SW1V', 'SW1W', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'WC1', 'WC1A', 'WC1B', 'WC1E', 'WC1H', 'WC1N', 'WC1R', 'WC1V', 'WC1X', 'WC2', 'WC2A', 'WC2B', 'WC2E', 'WC2H', 'WC2N', 'WC2R'],
+      pricingRules: [
+        { categoryKey: 'CLEANING', serviceKey: 'regular-home-cleaning', pricingMode: 'hourly', hourlyPrice: 15, minimumCharge: 30 },
+        { categoryKey: 'CLEANING', serviceKey: 'end-of-tenancy-cleaning', pricingMode: 'hourly', hourlyPrice: 20, minimumCharge: 80 },
+        { categoryKey: 'CLEANING', serviceKey: 'deep-cleaning', pricingMode: 'hourly', hourlyPrice: 18, minimumCharge: 54 },
+        { categoryKey: 'CLEANING', serviceKey: 'carpet-upholstery-cleaning', pricingMode: 'hourly', hourlyPrice: 30, minimumCharge: 60 },
+      ],
+      stripeAccountId: 'acct_mock_fresh_003',
+    },
+    {
+      // London Pest Solutions: uses FIXED_PER_SIZE pricing (size-based treatment pricing)
+      email: 'london-pest-solutions@example.com',
+      tradingName: 'London Pest Solutions',
+      companyNumber: 'AS-ACTIVE-004',
+      categories: ['PEST_CONTROL'],
+      postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1X', 'SW1Y', 'SW1P', 'SW1H', 'SW1E', 'SW3', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'EC1', 'EC1A', 'EC1M', 'EC1N', 'EC1R', 'EC1V', 'EC1Y', 'N1', 'SE1', 'E1', 'E2', 'E14', 'NW1'],
+      pricingRules: [
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'rat-mouse-treatment', pricingMode: 'fixed_per_size', pricingJson: { small: 129, standard: 171, large: 224 }, minimumCharge: 129 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'cockroach-treatment', pricingMode: 'fixed_per_size', pricingJson: { small: 149, standard: 197, large: 251 }, minimumCharge: 149 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'bed-bug-treatment', pricingMode: 'fixed_per_size', pricingJson: { small: 179, standard: 249, large: 349 }, minimumCharge: 179 },
+        { categoryKey: 'PEST_CONTROL', serviceKey: 'wasp-nest-removal', pricingMode: 'fixed_per_size', pricingJson: { small: 99, standard: 129, large: 177 }, minimumCharge: 99 },
+      ],
+      stripeAccountId: 'acct_mock_pest_004',
+    },
+  ];
+
+  const activeProviderEmails = activeProviders.map((p) => p.email);
+
+  // Clean up any existing active demo providers
+  const existingActiveUsers = await prisma.user.findMany({
+    where: { email: { in: activeProviderEmails } },
+    select: { id: true },
+  });
+  const existingActiveUserIds = existingActiveUsers.map((u) => u.id);
+  const existingActiveCompanies = await prisma.providerCompany.findMany({
+    where: {
+      OR: [
+        { contactEmail: { in: activeProviderEmails } },
+        ...(existingActiveUserIds.length ? [{ userId: { in: existingActiveUserIds } }] : []),
+      ],
+    },
+    select: { id: true },
+  });
+  const existingActiveCompanyIds = existingActiveCompanies.map((c) => c.id);
+
+  if (existingActiveCompanyIds.length) {
+    // Clean up bookings and their dependent records
+    const existingBookings = await prisma.booking.findMany({
+      where: { providerCompanyId: { in: existingActiveCompanyIds } },
+      select: { id: true },
+    });
+    const existingBookingIds = existingBookings.map((b) => b.id);
+    if (existingBookingIds.length) {
+      await prisma.paymentRecord.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.bookingPriceSnapshot.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.booking.deleteMany({ where: { id: { in: existingBookingIds } } });
+    }
+
+    // Clean up quote-related records that reference providers
+    await prisma.quoteOption.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerPricingRule.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.pricingAuditLog.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.pricingAreaOverride.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerCoverageArea.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerServiceCategory.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerAgreement.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerOnboardingDocument.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerEmailVerification.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerAuthToken.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.stripeConnectedAccount.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerAvailability.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.providerCompany.deleteMany({ where: { id: { in: existingActiveCompanyIds } } });
+  }
+
+  if (existingActiveUserIds.length) {
+    await prisma.userRoleAssignment.deleteMany({ where: { userId: { in: existingActiveUserIds } } });
+    await prisma.user.deleteMany({ where: { id: { in: existingActiveUserIds } } });
+  }
+
+  // Create each active provider
+  for (const prov of activeProviders) {
+    const user = await prisma.user.create({
+      data: {
+        email: prov.email,
+        passwordHash: hashPassword('Provider123!'),
+        isActive: true,
+      },
+    });
+
+    if (providerRole) {
+      await prisma.userRoleAssignment.create({
+        data: { userId: user.id, roleId: providerRole.id },
+      });
+    }
+
+    const company = await prisma.providerCompany.create({
+      data: {
+        userId: user.id,
+        tradingName: prov.tradingName,
+        companyNumber: prov.companyNumber,
+        contactEmail: prov.email,
+        status: 'ACTIVE',
+        paymentReady: true,
+        emailVerifiedAt: new Date(),
+        passwordSetAt: new Date(),
+        onboardingSubmittedAt: new Date(),
+        reviewStartedAt: new Date(),
+        approvedAt: new Date(),
+      },
+    });
+
+    // Stripe connected account (mock, fully enabled)
+    await prisma.stripeConnectedAccount.create({
+      data: {
+        providerCompanyId: company.id,
+        stripeAccountId: prov.stripeAccountId,
+        chargesEnabled: true,
+        payoutsEnabled: true,
+        detailsSubmitted: true,
+        lastSyncedAt: new Date(),
+      },
+    });
+
+    // Service categories
+    for (const cat of prov.categories) {
+      await prisma.providerServiceCategory.create({
+        data: { providerCompanyId: company.id, categoryKey: cat, active: true },
+      });
+    }
+
+    // Coverage areas — each category × each postcode prefix
+    for (const cat of prov.categories) {
+      for (const pc of prov.postcodes) {
+        await prisma.providerCoverageArea.create({
+          data: { providerCompanyId: company.id, postcodePrefix: pc, categoryKey: cat, active: true },
+        });
+      }
+    }
+
+    // Pricing rules
+    for (const rule of prov.pricingRules) {
+      await prisma.providerPricingRule.create({
+        data: {
+          providerCompanyId: company.id,
+          categoryKey: rule.categoryKey,
+          serviceKey: rule.serviceKey,
+          pricingMode: rule.pricingMode,
+          hourlyPrice: rule.hourlyPrice || null,
+          minimumCharge: rule.minimumCharge,
+          pricingJson: rule.pricingJson || undefined,
+          active: true,
+        },
+      });
+    }
+
+    // Availability: Mon-Sat 08:00-18:00
+    for (let day = 1; day <= 6; day++) {
+      await prisma.providerAvailability.create({
+        data: {
+          providerCompanyId: company.id,
+          dayOfWeek: day,
+          startTime: '08:00',
+          endTime: '18:00',
+          isAvailable: true,
+        },
+      });
+    }
+
+    console.log(`  ✓ Created active provider: ${prov.tradingName} (${prov.email})`);
+  }
+
+  console.log('\n  Active providers summary:');
+  console.log('  - Cleaning (hourly mode): Sparkle Clean London (£18/hr), Fresh Start Cleaners (£15/hr)');
+  console.log('  - Cleaning (fixed per size mode): Pristine Maids (£55/£85/£125 per size)');
+  console.log('  - Pest Control (fixed per size): London Pest Solutions (e.g. rats £129/£171/£224)');
+  console.log('  - Test postcode: SW1A 1AA (or any SW1 prefix)');
+  console.log('  - All provider passwords: Provider123!');
 }
 
 main()

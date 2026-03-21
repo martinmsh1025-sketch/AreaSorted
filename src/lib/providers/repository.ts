@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "@/lib/db";
+import { createProviderNotification } from "@/lib/providers/notifications";
 
 function createInviteToken() {
   return randomUUID().replace(/-/g, "");
@@ -284,7 +285,7 @@ export async function updateProviderReview(input: {
   reviewNotes?: string;
 }) {
   const prisma = getPrisma();
-  return prisma.providerCompany.update({
+  const result = await prisma.providerCompany.update({
     where: { id: input.providerCompanyId },
     data: {
       status: input.status,
@@ -296,6 +297,46 @@ export async function updateProviderReview(input: {
       paymentReady: input.status === "APPROVED" ? false : input.status === "REJECTED" || input.status === "CHANGES_REQUESTED" ? false : undefined,
     },
   });
+
+  // Notify provider about review outcome
+  try {
+    const notifMap: Record<string, { title: string; message: string }> = {
+      APPROVED: {
+        title: "Application approved!",
+        message: "Your application has been approved. Please complete the remaining setup steps to start receiving bookings.",
+      },
+      REJECTED: {
+        title: "Application not approved",
+        message: input.reviewNotes
+          ? `Your application was not approved. Reason: ${input.reviewNotes}`
+          : "Your application was not approved. Please contact support for details.",
+      },
+      CHANGES_REQUESTED: {
+        title: "Changes requested on your application",
+        message: input.reviewNotes
+          ? `The review team has requested changes: ${input.reviewNotes}`
+          : "The review team has requested changes to your application. Please check and resubmit.",
+      },
+      UNDER_REVIEW: {
+        title: "Application under review",
+        message: "Your application is now being reviewed. We'll notify you once a decision is made.",
+      },
+    };
+    const notif = notifMap[input.status];
+    if (notif) {
+      await createProviderNotification({
+        providerCompanyId: input.providerCompanyId,
+        type: "PROFILE_UPDATE",
+        title: notif.title,
+        message: notif.message,
+        link: "/provider/application-status",
+      });
+    }
+  } catch {
+    // Non-critical
+  }
+
+  return result;
 }
 
 export async function updateProviderDocumentReview(input: {

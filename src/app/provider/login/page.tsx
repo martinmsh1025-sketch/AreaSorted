@@ -1,5 +1,11 @@
+import Link from "next/link";
 import { providerLoginAction } from "./actions";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, LogIn } from "lucide-react";
 
 type ProviderLoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -11,29 +17,65 @@ export default async function ProviderLoginPage({ searchParams }: ProviderLoginP
   const hasError = Boolean(error);
 
   return (
-    <main className="section">
-      <div className="container" style={{ maxWidth: 520 }}>
-        <div className="panel mini-form">
-          <div className="eyebrow">Provider login</div>
-          <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>Sign in</h1>
-          <p className="lead">Use the email and password linked to your invite.</p>
-          <div className="panel-soft" style={{ padding: "0.75rem", marginBottom: "0.8rem" }}>
-            <div className="eyebrow">First time here?</div>
-            <div className="quote-summary-list" style={{ marginTop: "0.75rem" }}>
-              <div><span>1</span><strong>Open your invite</strong></div>
-              <div><span>2</span><strong>Verify email</strong></div>
-              <div><span>3</span><strong>Create password</strong></div>
-            </div>
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="space-y-1 text-center">
+          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-blue-600 text-white">
+            <LogIn className="size-5" />
           </div>
-          <form action={providerLoginAction} className="mini-form" style={{ padding: 0 }}>
-            <input type="email" name="email" placeholder="Provider email" aria-label="Provider email" />
-            <input type="password" name="password" placeholder="Password" aria-label="Password" />
-            {hasError ? <p style={{ color: "var(--color-error)", lineHeight: 1.6 }}>{error === "invite_not_completed" ? "Your invite exists, but setup is not finished yet. Open the invite link, verify email, and create your password first." : "Incorrect email or password."}</p> : null}
-            <FormSubmitButton label="Sign in" pendingLabel="Signing in" />
-          </form>
-          <a href="/provider/forgot-password" className="button button-secondary" style={{ justifyContent: "center" }}>Reset password</a>
+          <h1 className="mt-3 text-xl font-semibold tracking-tight">Provider sign in</h1>
+          <p className="text-sm text-muted-foreground">Use the email and password linked to your invite.</p>
+        </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <form action={providerLoginAction} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" name="email" placeholder="you@company.com" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" name="password" placeholder="Password" required />
+              </div>
+
+              {hasError && (
+                <div className="flex items-start gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/50 dark:text-red-300">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  <span>
+                    {error === "invite_not_completed"
+                      ? "Your invite exists, but setup is not finished. Open your invite link, verify email, and create your password first."
+                      : "Incorrect email or password."}
+                  </span>
+                </div>
+              )}
+
+              <FormSubmitButton
+                label="Sign in"
+                pendingLabel="Signing in..."
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center justify-center rounded-lg h-9 px-4 text-sm font-medium transition-colors"
+              />
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-muted/50">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-xs font-medium text-muted-foreground mb-2">First time here?</p>
+            <ol className="space-y-1 text-xs text-muted-foreground">
+              <li className="flex gap-2"><span className="font-semibold text-foreground">1.</span> Open your invite link</li>
+              <li className="flex gap-2"><span className="font-semibold text-foreground">2.</span> Verify your email</li>
+              <li className="flex gap-2"><span className="font-semibold text-foreground">3.</span> Create your password</li>
+            </ol>
+          </CardContent>
+        </Card>
+
+        <div className="text-center">
+          <Button variant="link" size="sm" render={<Link href="/provider/forgot-password" />} className="text-xs text-muted-foreground">
+            Forgot your password?
+          </Button>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

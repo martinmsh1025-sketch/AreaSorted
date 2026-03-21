@@ -1,11 +1,18 @@
-import { WashHubLogo } from "@/components/branding/washhub-logo";
+import { AreaSortedLogo } from "@/components/branding/areasorted-logo";
 
 const customerLinks = [
   ["/services", "Services"],
   ["/pricing", "Pricing"],
-  ["/quote", "Quote"],
+  ["/quote", "Get a Quote"],
   ["/faq", "FAQ"],
   ["/contact", "Contact Us"],
+];
+
+const cleanerLinks = [
+  ["/become-a-cleaner", "Become a Cleaner"],
+  ["/cleaner/apply", "Cleaner Application"],
+  ["/cleaner/faq", "Cleaner FAQ"],
+  ["/cleaner-terms", "Cleaner Terms"],
 ];
 
 const legalLinks = [
@@ -41,7 +48,7 @@ export function SiteFooter() {
         <div className="footer-grid">
           <div className="footer-brand-block">
             <div className="footer-brand-mark">
-              <WashHubLogo />
+              <AreaSortedLogo />
             </div>
             <p className="footer-brand-copy">
               Trusted local services across London with postcode-first matching, clear booking, and practical support from quote to follow-up.
@@ -55,6 +62,10 @@ export function SiteFooter() {
           <div className="footer-column">
             <div className="footer-title">Customer</div>
             <LinkList items={customerLinks} />
+          </div>
+          <div className="footer-column">
+            <div className="footer-title">Cleaners</div>
+            <LinkList items={cleanerLinks} />
           </div>
           <div className="footer-column">
             <div className="footer-title">Legal</div>

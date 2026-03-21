@@ -260,11 +260,33 @@ enum NotificationStatus {
   READ
 }
 
+enum ProviderNotificationType {
+  NEW_ORDER
+  ORDER_CANCELLED
+  ORDER_REMINDER
+  COVERAGE_APPROVED
+  COVERAGE_REJECTED
+  PAYMENT_RECEIVED
+  PAYOUT_SENT
+  PROFILE_UPDATE
+  SYSTEM_MESSAGE
+  COUNTER_OFFER_RESPONSE
+}
+
+enum CounterOfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+}
+
 enum PublicQuoteState {
   DRAFT
   PRICED
   MANUAL_REVIEW_REQUIRED
   REQUEST_SUBMITTED
+  PROVIDER_SELECTED
   BOOKING_CREATED
   EXPIRED
 }
@@ -298,6 +320,7 @@ model Customer {
   lastName         String
   email            String      @unique
   phone            String
+  passwordHash     String?
   marketingConsent Boolean     @default(false)
   status           RecordStatus @default(ACTIVE)
   stripeCustomerId String?     @unique
@@ -650,6 +673,8 @@ model Booking {
   ledgerEntries            LedgerEntry[]
   invoiceRecords           InvoiceRecord[]
   notificationLogsV2       NotificationLogV2[]
+  providerNotifications    ProviderNotification[] @relation("ProviderNotificationBooking")
+  counterOffers            CounterOffer[]
 
   @@index([customerId])
   @@index([quoteId])
@@ -673,11 +698,13 @@ model QuoteRequest {
   categoryKey               String
   serviceKey                String
   providerCompanyId         String?
+  selectedQuoteOptionId     String?
   bookingId                 String?          @unique
   state                     PublicQuoteState @default(DRAFT)
   quoteRequired             Boolean          @default(false)
   scheduledDate             DateTime?
   scheduledTimeLabel        String?
+  jobPhotoUrls              String[]         @default([])
   inputJson                 Json?
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt
@@ -685,6 +712,7 @@ model QuoteRequest {
   providerCompany           ProviderCompany? @relation(fields: [providerCompanyId], references: [id])
   booking                   Booking?         @relation(fields: [bookingId], references: [id])
   priceSnapshot             QuotePriceSnapshot?
+  quoteOptions              QuoteOption[]
 
   @@index([postcode])
   @@index([postcodePrefix])
@@ -713,6 +741,34 @@ model QuotePriceSnapshot {
   createdAt                        DateTime     @default(now())
 
   quoteRequest                     QuoteRequest @relation(fields: [quoteRequestId], references: [id])
+}
+
+model QuoteOption {
+  id                               String          @id @default(cuid())
+  quoteRequestId                   String
+  providerCompanyId                String
+  pricingRuleId                    String?
+  providerBasePrice                Decimal         @db.Decimal(10, 2)
+  bookingFee                       Decimal         @db.Decimal(10, 2)
+  commissionAmount                 Decimal         @db.Decimal(10, 2)
+  postcodeSurcharge                Decimal         @db.Decimal(10, 2)
+  totalCustomerPay                 Decimal         @db.Decimal(10, 2)
+  expectedProviderPayoutBeforeFees Decimal         @db.Decimal(10, 2)
+  quantity                         Int             @default(1)
+  estimatedHours                   Decimal         @db.Decimal(5, 2)
+  sameDay                          Boolean         @default(false)
+  weekend                          Boolean         @default(false)
+  quoteRequired                    Boolean         @default(false)
+  paymentReady                     Boolean         @default(false)
+  providerName                     String          @default("")
+  inputJson                        Json?
+  createdAt                        DateTime        @default(now())
+
+  quoteRequest                     QuoteRequest    @relation(fields: [quoteRequestId], references: [id])
+  providerCompany                  ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+
+  @@unique([quoteRequestId, providerCompanyId])
+  @@index([quoteRequestId])
 }
 
 model BookingAddon {
@@ -1139,6 +1195,7 @@ model ProviderCompany {
   user                     User?                  @relation(fields: [userId], references: [id])
   serviceCategories        ProviderServiceCategory[]
   coverageAreas            ProviderCoverageArea[]
+  coverageChangeRequests   CoverageChangeRequest[]
   documents                ProviderOnboardingDocument[]
   pricingRules             ProviderPricingRule[]
   pricingAreaOverrides     PricingAreaOverride[]
@@ -1150,10 +1207,86 @@ model ProviderCompany {
   stripeConnectedAccount   StripeConnectedAccount?
   bookingAssignments       Booking[]              @relation("MarketplaceProviderCompany")
   quoteRequests            QuoteRequest[]
+  quoteOptions             QuoteOption[]
   payoutRecords            PayoutRecord[]
   disputeRecords           DisputeRecord[]
   invoiceRecords           InvoiceRecord[]
   notificationLogs         NotificationLogV2[]
+  notifications            ProviderNotification[]
+  counterOffers            CounterOffer[]
+  availabilityRules        ProviderAvailability[]
+  dateOverrides            ProviderDateOverride[]
+  maxJobsPerDay            Int?                   // null = unlimited
+  leadTimeHours            Int                    @default(24)  // minimum notice hours
+}
+
+model ProviderAvailability {
+  id                String          @id @default(cuid())
+  providerCompanyId String
+  dayOfWeek         Int             // 0=Sun, 1=Mon, 2=Tue, ..., 6=Sat
+  startTime         String          // "09:00"
+  endTime           String          // "17:00"
+  isAvailable       Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  providerCompany   ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+
+  @@unique([providerCompanyId, dayOfWeek])
+  @@index([providerCompanyId])
+}
+
+model ProviderDateOverride {
+  id                String          @id @default(cuid())
+  providerCompanyId String
+  date              DateTime        @db.Date     // specific date
+  isAvailable       Boolean         @default(false) // false = day off, true = custom hours
+  startTime         String?         // "09:00" (null if unavailable)
+  endTime           String?         // "17:00" (null if unavailable)
+  note              String?         // e.g. "Bank holiday", "Personal day"
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  providerCompany   ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+
+  @@unique([providerCompanyId, date])
+  @@index([providerCompanyId])
+}
+
+model ProviderNotification {
+  id                String                     @id @default(cuid())
+  providerCompanyId String
+  type              ProviderNotificationType
+  title             String
+  message           String
+  link              String?                    // e.g. "/provider/orders/abc123"
+  read              Boolean                    @default(false)
+  readAt            DateTime?
+  bookingId         String?
+  createdAt         DateTime                   @default(now())
+  providerCompany   ProviderCompany            @relation(fields: [providerCompanyId], references: [id])
+  booking           Booking?                   @relation("ProviderNotificationBooking", fields: [bookingId], references: [id])
+
+  @@index([providerCompanyId, read])
+  @@index([providerCompanyId, createdAt])
+}
+
+model CounterOffer {
+  id                String             @id @default(cuid())
+  bookingId         String
+  providerCompanyId String
+  proposedPrice     Decimal?           @db.Decimal(10, 2)  // null = no price change proposed
+  proposedDate      DateTime?          @db.Date             // null = no date change proposed
+  proposedStartTime String?                                  // "09:00"
+  message           String?                                  // provider's message explaining the change
+  status            CounterOfferStatus @default(PENDING)
+  adminNotes        String?
+  respondedAt       DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  booking           Booking            @relation(fields: [bookingId], references: [id])
+  providerCompany   ProviderCompany    @relation(fields: [providerCompanyId], references: [id])
+
+  @@index([bookingId])
+  @@index([providerCompanyId])
 }
 
 model ProviderEmailVerification {
@@ -1229,7 +1362,24 @@ model ProviderCoverageArea {
   active            Boolean         @default(true)
   providerCompany   ProviderCompany @relation(fields: [providerCompanyId], references: [id])
 
-  @@unique([postcodePrefix, categoryKey])
+  @@unique([providerCompanyId, postcodePrefix, categoryKey])
+}
+
+model CoverageChangeRequest {
+  id                String          @id @default(cuid())
+  providerCompanyId String
+  postcodePrefix    String
+  categoryKey       String
+  requestType       String          // "ADD" or "REMOVE"
+  status            String          @default("PENDING") // "PENDING", "APPROVED", "REJECTED"
+  adminNotes        String?
+  resolvedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  providerCompany   ProviderCompany @relation(fields: [providerCompanyId], references: [id])
+
+  @@index([status])
+  @@index([providerCompanyId])
 }
 
 model ProviderPricingRule {
@@ -1475,4 +1625,13 @@ model AdminSetting {
   valueJson   Json
   description String?
   updatedAt   DateTime @updatedAt
+}
+
+model ContactEnquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
 }

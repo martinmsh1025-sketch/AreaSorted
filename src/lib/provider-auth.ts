@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
-import { canProviderAccessAccount, canProviderAccessDashboard, canProviderAccessOnboarding, canProviderAccessOrders, canProviderAccessPricing, canProviderAccessStripe } from "@/lib/providers/status";
+import { canProviderAccessAccount, canProviderAccessDashboard, canProviderAccessOnboarding, canProviderAccessOrders, canProviderAccessPricing, canProviderAccessStripe, canProviderViewOrders } from "@/lib/providers/status";
 import { getProviderDefaultRoute } from "@/lib/providers/portal-routing";
 import { findProviderInviteByEmail, getLatestProviderInviteForCompany } from "@/lib/providers/repository";
 
@@ -100,6 +100,14 @@ export async function requireProviderDashboardAccess() {
 export async function requireProviderOrdersAccess() {
   const session = await requireProviderSession();
   if (!canProviderAccessOrders(session.providerCompany.status)) {
+    redirect(getProviderDefaultRoute(session.providerCompany.status));
+  }
+  return session;
+}
+
+export async function requireProviderOrdersListAccess() {
+  const session = await requireProviderSession();
+  if (!canProviderViewOrders(session.providerCompany.status)) {
     redirect(getProviderDefaultRoute(session.providerCompany.status));
   }
   return session;

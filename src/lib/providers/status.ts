@@ -49,6 +49,10 @@ export function canProviderAccessOrders(status: string) {
   return ["ACTIVE", "SUSPENDED"].includes(status);
 }
 
+export function canProviderViewOrders(status: string) {
+  return ["PRICING_PENDING", "ACTIVE", "SUSPENDED"].includes(status);
+}
+
 export function canProviderAccessAccount(status: string) {
   return status !== "INVITED" && status !== "EMAIL_VERIFICATION_PENDING" && status !== "PASSWORD_SETUP_PENDING";
 }
