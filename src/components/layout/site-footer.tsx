@@ -3,7 +3,7 @@ import { AreaSortedLogo } from "@/components/branding/areasorted-logo";
 const customerLinks = [
   ["/services", "Services"],
   ["/pricing", "Pricing"],
-  ["/quote", "Get a Quote"],
+  ["/quote", "Continue Booking"],
   ["/faq", "FAQ"],
   ["/contact", "Contact Us"],
 ];

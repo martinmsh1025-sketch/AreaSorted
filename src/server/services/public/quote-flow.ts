@@ -4,6 +4,7 @@ import { getEnv } from "@/lib/config/env";
 import { createDirectChargeCheckoutSession } from "@/lib/stripe/connect";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { createProviderNotification } from "@/lib/providers/notifications";
+import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import { jobTypeCatalog } from "@/lib/service-catalog";
 import { hashPassword } from "@/lib/security/password";
@@ -44,6 +45,7 @@ type CreateQuoteInput = {
   weekend: boolean;
   scheduledDate?: string;
   scheduledTimeLabel?: string;
+  preferredScheduleOptions?: Array<{ date: string; time: string }>;
   details?: Record<string, unknown>;
   jobPhotoUrls?: string[];
   /** Cleaning-specific */
@@ -114,7 +116,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
 
   const prisma = getPrisma();
   const reference = createReference("QR");
-  const quoteRequired = preview.quoteRequired || !matchedProvider.paymentReady;
+  const quoteRequired = false;
 
   // Create or update customer with password hash at quote time
   const passwordHash = await hashPassword(input.password);
@@ -160,8 +162,8 @@ export async function createPublicQuote(input: CreateQuoteInput) {
       categoryKey: input.categoryKey,
       serviceKey: input.serviceKey,
       providerCompanyId: matchedProvider.providerCompanyId,
-      state: quoteRequired ? "MANUAL_REVIEW_REQUIRED" : "PRICED",
-      quoteRequired,
+       state: "PRICED",
+       quoteRequired,
       scheduledDate: input.scheduledDate ? new Date(input.scheduledDate) : null,
       scheduledTimeLabel: input.scheduledTimeLabel,
       jobPhotoUrls: input.jobPhotoUrls ?? [],
@@ -172,6 +174,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
         supplies: input.supplies,
         addOns: input.addOns,
         notes: input.notes,
+        preferredScheduleOptions: input.preferredScheduleOptions,
       }),
       priceSnapshot: {
         create: {
@@ -187,7 +190,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
           estimatedHours: input.estimatedHours ?? 0,
           sameDay: input.sameDay,
           weekend: input.weekend,
-          quoteRequired,
+          quoteRequired: false,
           inputJson: toJsonValue({
             ...input.details,
             quantity: input.quantity,
@@ -203,6 +206,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
             jobSize: input.jobSize,
             addOns: input.addOns,
             notes: input.notes,
+            preferredScheduleOptions: input.preferredScheduleOptions,
           }),
         },
       },
@@ -221,7 +225,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
           estimatedHours: input.estimatedHours ?? 0,
           sameDay: input.sameDay,
           weekend: input.weekend,
-          quoteRequired: preview.quoteRequired || !matchedProvider.paymentReady,
+          quoteRequired: false,
           paymentReady: matchedProvider.paymentReady,
           providerName: matchedProvider.providerName,
           inputJson: toJsonValue({
@@ -235,11 +239,12 @@ export async function createPublicQuote(input: CreateQuoteInput) {
             kitchens: input.kitchens,
             cleaningCondition: input.cleaningCondition,
             supplies: input.supplies,
-            propertyType: input.propertyType,
-            jobSize: input.jobSize,
-            addOns: input.addOns,
-            notes: input.notes,
-          }),
+              propertyType: input.propertyType,
+              jobSize: input.jobSize,
+              addOns: input.addOns,
+              notes: input.notes,
+              preferredScheduleOptions: input.preferredScheduleOptions,
+            }),
         }],
       },
     },
@@ -275,14 +280,6 @@ export async function getPublicQuoteByReference(reference: string) {
   });
 }
 
-export async function submitManualQuoteRequest(reference: string) {
-  const prisma = getPrisma();
-  return prisma.quoteRequest.update({
-    where: { reference },
-    data: { state: "REQUEST_SUBMITTED" },
-  });
-}
-
 export async function createInstantBookingFromQuote(reference: string) {
   const prisma = getPrisma();
   const quote = await prisma.quoteRequest.findUnique({
@@ -297,10 +294,6 @@ export async function createInstantBookingFromQuote(reference: string) {
 
   if (!quote || !quote.providerCompany || !quote.priceSnapshot) {
     throw new Error("Quote request not ready for booking — provider must be selected first");
-  }
-
-  if (quote.quoteRequired) {
-    throw new Error("Manual quote required - instant booking not allowed");
   }
 
   const customer = await prisma.customer.upsert({
@@ -428,26 +421,30 @@ export async function createInstantBookingFromQuote(reference: string) {
     sessionId = `mock_${bookingReference}`;
     sessionUrl = `${appUrl}/api/auth/post-payment/${bookingReference}`;
 
-    // Mock checkout: mark booking as PAID and payment as PAID
+    // Mock checkout: treat authorization as completed and wait for provider confirmation
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { bookingStatus: "PAID" },
+      data: { bookingStatus: "PENDING_ASSIGNMENT" },
     });
     await prisma.paymentRecord.update({
       where: { id: paymentRecord.id },
       data: {
         stripeCheckoutSessionId: sessionId,
-        paymentState: "PAID",
+        paymentState: "PENDING",
+        metadataJson: toJsonValue({
+          quoteReference: quote.reference,
+          bookingReference,
+          authorizationStatus: "AUTHORIZED",
+          authorizedAt: new Date().toISOString(),
+          mockCheckout: true,
+        }),
       },
     });
 
-    // Generate invoices for this booking
     try {
-      const { generateInvoicesForBooking } = await import("@/server/services/invoices/generate");
-      await generateInvoicesForBooking(booking.id);
-    } catch {
-      // Non-critical — invoices can be generated on-demand
-    }
+      const { sendBookingConfirmationEmail } = await import("@/lib/notifications/booking-emails");
+      await sendBookingConfirmationEmail(booking.id);
+    } catch {}
 
     // Notify provider about new paid booking (mock path)
     try {
@@ -455,11 +452,12 @@ export async function createInstantBookingFromQuote(reference: string) {
         const dateStr = booking.scheduledDate
           ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
           : "TBC";
+        const scheduleOptions = parsePreferredScheduleOptions(quote.inputJson);
         await createProviderNotification({
           providerCompanyId: booking.providerCompanyId,
           type: "NEW_ORDER",
-          title: "New booking received",
-          message: `A new paid booking in ${booking.servicePostcode} for ${dateStr} is waiting for your confirmation.`,
+          title: "Booking awaiting confirmation",
+          message: `A new authorised booking in ${booking.servicePostcode} for ${dateStr}${scheduleOptions.length > 1 ? ` (${scheduleOptions.length} date options)` : ""} is waiting for your confirmation.`,
           link: `/provider/orders/${booking.id}`,
           bookingId: booking.id,
         });

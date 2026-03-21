@@ -32,6 +32,7 @@ import {
   FileText,
 } from "lucide-react";
 import { serviceTypeLabels, propertyTypeLabels, formatEnumLabel } from "@/lib/providers/service-catalog-mapping";
+import { formatPreferredScheduleOption, parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-GB", {
@@ -56,8 +57,8 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
 
 const statusLabel: Record<string, string> = {
   AWAITING_PAYMENT: "Awaiting Payment",
-  PAID: "New — Needs Acceptance",
-  PENDING_ASSIGNMENT: "Pending — Needs Acceptance",
+  PAID: "Captured",
+  PENDING_ASSIGNMENT: "Authorised — Needs Confirmation",
   ASSIGNED: "Accepted",
   IN_PROGRESS: "In Progress",
   COMPLETED: "Completed",
@@ -111,10 +112,10 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
 
   if (!booking) notFound();
 
-  const needsAcceptance = ["PAID", "PENDING_ASSIGNMENT"].includes(booking.bookingStatus);
+  const needsAcceptance = booking.bookingStatus === "PENDING_ASSIGNMENT";
   const isAssigned = booking.bookingStatus === "ASSIGNED";
   const isInProgress = booking.bookingStatus === "IN_PROGRESS";
-  const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
 
   const hasPendingCounterOffer = booking.counterOffers.some((co) => co.status === "PENDING");
   const counterOffers = booking.counterOffers.map((co) => ({
@@ -149,6 +150,7 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
     : "—";
 
   const mapsUrl = buildGoogleMapsUrl(booking);
+  const preferredScheduleOptions = parsePreferredScheduleOptions(booking.quoteRequest?.inputJson);
 
   return (
     <div className="space-y-6">
@@ -211,7 +213,7 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
             <div>
               <p className="font-medium">This order needs your response</p>
               <p className="text-sm text-muted-foreground">
-                Accept to confirm you will handle this job, or decline to release it to another provider.
+                Accept to confirm you will handle this job and capture payment, or decline to release the card hold.
                 {!hasPendingCounterOffer && " You can also make a counter offer."}
               </p>
             </div>
@@ -284,6 +286,18 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
             <Separator />
             <Row label="Scheduled date" value={scheduledDateFormatted} />
             {timeSlot && <Row label="Time" value={timeSlot} />}
+            {preferredScheduleOptions.length > 0 && (
+              <div>
+                <p className="text-sm text-muted-foreground">Customer flexibility</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {preferredScheduleOptions.map((option) => (
+                    <span key={`${option.date}-${option.time}`} className="rounded-full border bg-muted/40 px-3 py-1 text-xs font-medium">
+                      {formatPreferredScheduleOption(option)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             {booking.additionalNotes && (
               <>
                 <Separator />

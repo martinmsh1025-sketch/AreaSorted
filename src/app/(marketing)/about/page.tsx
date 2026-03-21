@@ -50,7 +50,7 @@ const steps = [
   },
   {
     number: "03",
-    title: "Book and pay securely",
+    title: "Continue booking securely",
     description:
       "Confirm your booking and pay online. Your payment is processed securely and the provider is assigned automatically.",
   },
@@ -243,7 +243,7 @@ export default function AboutPage() {
             through AreaSorted and carried out by independent, vetted providers.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Get a quote</Link>
+            <Link className="button button-primary" href="/quote">Continue booking</Link>
             <Link className="button button-secondary" href="/contact">Contact us</Link>
           </div>
         </div>

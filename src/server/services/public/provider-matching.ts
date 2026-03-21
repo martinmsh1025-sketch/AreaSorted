@@ -1,5 +1,4 @@
 import { getPrisma } from "@/lib/db";
-import { createProviderNotification } from "@/lib/providers/notifications";
 
 export type MatchedProvider = {
   providerCompanyId: string;
@@ -13,9 +12,7 @@ export type ProviderMatchResult =
   | { status: "no_coverage" }
   | { status: "invalid_input"; reason: string };
 
-export type RematchResult =
-  | { status: "reassigned"; providerCompanyId: string }
-  | { status: "no_alternative" };
+export type RematchResult = { status: "no_alternative" };
 
 function getPostcodePrefix(postcode: string) {
   return postcode.trim().toUpperCase().split(" ")[0] || "";
@@ -43,6 +40,7 @@ export async function matchProvidersForPublicQuote(
       active: true,
       providerCompany: {
         status: "ACTIVE",
+        paymentReady: true,
         ...(input.excludeProviderIds?.length
           ? { id: { notIn: input.excludeProviderIds } }
           : {}),
@@ -100,9 +98,8 @@ export async function matchProvidersForPublicQuote(
     return { status: "no_coverage" };
   }
 
-  // Single-provider model: pick the best provider (prefer payment-ready)
-  const paymentReady = providers.filter((p) => p.paymentReady);
-  const chosen = paymentReady.length ? paymentReady[0] : providers[0];
+  // Single-provider model: pick the matched provider.
+  const chosen = providers[0];
 
   return { status: "matched", providers: [chosen] };
 }
@@ -117,53 +114,5 @@ export async function rematchBookingAfterRejection(input: {
   categoryKey: string;
   excludeProviderIds: string[];
 }): Promise<RematchResult> {
-  const prisma = getPrisma();
-
-  // Get the booking's scheduled date/time for availability filtering
-  const booking = await prisma.booking.findUnique({
-    where: { id: input.bookingId },
-    select: { scheduledDate: true, scheduledStartTime: true },
-  });
-
-  const match = await matchProvidersForPublicQuote({
-    postcode: input.postcode,
-    categoryKey: input.categoryKey,
-    scheduledDate: booking?.scheduledDate ?? undefined,
-    scheduledTime: booking?.scheduledStartTime ?? undefined,
-    excludeProviderIds: input.excludeProviderIds,
-  });
-
-  if (match.status !== "matched" || !match.providers.length) {
-    return { status: "no_alternative" };
-  }
-
-  // Prefer a payment-ready provider
-  const paymentReady = match.providers.filter((p) => p.paymentReady);
-  const chosen = paymentReady.length ? paymentReady[0] : match.providers[0];
-
-  await prisma.booking.update({
-    where: { id: input.bookingId },
-    data: {
-      providerCompanyId: chosen.providerCompanyId,
-      bookingStatus: "PENDING_ASSIGNMENT",
-      cancelledByType: null,
-      cancelledReason: null,
-    },
-  });
-
-  // Notify the new provider
-  try {
-    await createProviderNotification({
-      providerCompanyId: chosen.providerCompanyId,
-      type: "NEW_ORDER",
-      title: "New booking assigned to you",
-      message: `A booking in ${input.postcode} has been reassigned to you. Please review and accept.`,
-      link: `/provider/orders/${input.bookingId}`,
-      bookingId: input.bookingId,
-    });
-  } catch {
-    // Non-critical
-  }
-
-  return { status: "reassigned", providerCompanyId: chosen.providerCompanyId };
+  return { status: "no_alternative" };
 }

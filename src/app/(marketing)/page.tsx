@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getCoverageForPostcode, normalisePostcode } from "@/lib/postcode-coverage";
+import { PageLoading } from "@/components/shared/page-loading";
 
 type IconProps = { className?: string };
 
@@ -363,13 +364,7 @@ export default function HomePage() {
   return (
     <main className="homepage-shell">
       {isSubmitting ? (
-        <div className="page-loading-overlay" role="status" aria-live="polite">
-          <div className="page-loading-card">
-            <span className="page-loading-spinner" />
-            <strong>Loading...</strong>
-            <span>Please wait...</span>
-          </div>
-        </div>
+        <PageLoading fullscreen title="Loading..." message="Please wait..." />
       ) : null}
       <section className="homepage-hero">
         <div className="homepage-hero-surface">

@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createInstantBookingFromQuote, submitManualQuoteRequest } from "@/server/services/public/quote-flow";
+import { createInstantBookingFromQuote } from "@/server/services/public/quote-flow";
 import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
 import { signSessionValue } from "@/lib/security/session";
 
@@ -23,10 +23,4 @@ export async function startInstantBookingAction(formData: FormData) {
   }
 
   redirect(result.sessionUrl || `/booking/status/${result.bookingReference}`);
-}
-
-export async function submitManualQuoteAction(formData: FormData) {
-  const reference = String(formData.get("reference") || "");
-  await submitManualQuoteRequest(reference);
-  redirect(`/quote/${reference}/manual-confirmation`);
 }

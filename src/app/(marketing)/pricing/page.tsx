@@ -316,7 +316,7 @@ export default function PricingPage() {
             no surprises, no callbacks.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Get a quote</Link>
+            <Link className="button button-primary" href="/quote">Continue booking</Link>
             <Link className="button button-secondary" href="/services">Browse all services</Link>
           </div>
         </div>

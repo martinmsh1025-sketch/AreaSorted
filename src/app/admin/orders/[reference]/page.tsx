@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { getDisplayPaymentStatus, getPaymentStatusLabel, getPaymentStatusVariant } from "@/lib/payments/display-status";
 
 function dec(value: Decimal | null | undefined): number {
   return value ? Number(value) : 0;
@@ -99,18 +100,20 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
   const latestPayment = booking.payments[0];
 
   const paymentStatus = latestPaymentRecord
-    ? latestPaymentRecord.paymentState
+    ? getDisplayPaymentStatus({
+        paymentState: latestPaymentRecord.paymentState,
+        metadataJson: latestPaymentRecord.metadataJson,
+        bookingStatus: booking.bookingStatus,
+      })
     : latestPayment
       ? latestPayment.paymentStatus
-      : booking.bookingStatus === "PAID" || booking.bookingStatus === "COMPLETED"
-        ? "PAID"
-        : "PENDING";
+      : getDisplayPaymentStatus({ bookingStatus: booking.bookingStatus });
 
   const stripeSessionId = latestPaymentRecord?.stripeCheckoutSessionId || "-";
 
   const bookingRef = booking.quoteRequest?.reference || booking.id.slice(0, 12).toUpperCase();
 
-  const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
 
   return (
     <div className="space-y-6">
@@ -436,8 +439,8 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     <option value="AWAITING_PAYMENT">Awaiting payment</option>
-                    <option value="PAID">Paid</option>
-                    <option value="PENDING_ASSIGNMENT">Pending assignment</option>
+                    <option value="PAID">Captured</option>
+                    <option value="PENDING_ASSIGNMENT">Authorised hold</option>
                     <option value="ASSIGNED">Assigned</option>
                     <option value="IN_PROGRESS">In progress</option>
                     <option value="COMPLETED">Completed</option>
@@ -484,7 +487,7 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>Total amount</CardDescription>
+              <CardDescription>{booking.bookingStatus === "PENDING_ASSIGNMENT" ? "Authorised amount" : "Captured amount"}</CardDescription>
               <CardTitle className="text-3xl tabular-nums">
                 &pound;{dec(booking.totalAmount).toFixed(2)}
               </CardTitle>
@@ -494,7 +497,7 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Payment status</dt>
                   <dd>
-                    <Badge>{paymentStatus}</Badge>
+                    <Badge variant={getPaymentStatusVariant(paymentStatus)}>{getPaymentStatusLabel(paymentStatus)}</Badge>
                   </dd>
                 </div>
                 <div className="flex justify-between">

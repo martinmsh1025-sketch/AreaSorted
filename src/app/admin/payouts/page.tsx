@@ -42,6 +42,8 @@ function bookingStatusVariant(
     case "PAID":
     case "COMPLETED":
       return "default";
+    case "PENDING_ASSIGNMENT":
+      return "outline";
     case "CANCELLED":
     case "REFUNDED":
       return "destructive";
@@ -82,11 +84,9 @@ export default async function AdminPayoutsPage({
   const dateFrom = startDate ? new Date(startDate) : thirtyDaysAgo;
   const dateTo = endDate ? (() => { const d = new Date(endDate); d.setDate(d.getDate() + 1); return d; })() : new Date(today.getTime() + 86400000);
 
-  // Fetch bookings with price snapshots for the date range
-  // Only include bookings that would generate a payout (paid/completed/assigned/in-progress)
+  // Fetch captured bookings with price snapshots for the date range.
   const payoutStatuses = [
     "PAID",
-    "PENDING_ASSIGNMENT",
     "ASSIGNED",
     "IN_PROGRESS",
     "COMPLETED",
@@ -259,7 +259,7 @@ export default async function AdminPayoutsPage({
       <div>
         <h1 className="text-xl font-bold tracking-tight">Payouts</h1>
         <p className="text-sm text-muted-foreground">
-          Daily reconciliation — what each provider is owed
+          Daily reconciliation for captured bookings only. Authorised card holds stay out of payouts until a provider confirms.
         </p>
       </div>
 

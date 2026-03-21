@@ -5,7 +5,7 @@ import Link from "next/link";
 const navItems = [
   { href: "/services", label: "Services", icon: "spark" },
   { href: "/pricing", label: "Pricing", icon: "tag" },
-  { href: "/quote", label: "Quote", icon: "pin" },
+  { href: "/quote", label: "Book", icon: "pin" },
   { href: "/become-a-cleaner", label: "Cleaners", icon: "people" },
   { href: "/faq", label: "FAQ", icon: "chat" },
   { href: "/contact", label: "Contact", icon: "phone" },

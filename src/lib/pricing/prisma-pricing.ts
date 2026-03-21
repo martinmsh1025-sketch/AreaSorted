@@ -31,6 +31,7 @@ export type PricingPreviewInput = {
   quantity?: number;
   sameDay?: boolean;
   weekend?: boolean;
+  weekendCount?: number;
   /** Cleaning-specific inputs */
   bedrooms?: number;
   bathrooms?: number;
@@ -375,6 +376,8 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
 
   if (!rule) throw new Error("Provider pricing rule not found");
 
+  const quantity = Math.max(input.quantity ?? 1, 1);
+  const weekendCount = Math.max(input.weekendCount ?? (input.weekend ? 1 : 0), 0);
   let providerBasePrice = 0;
   const pricingMode = rule.pricingMode || "hourly";
 
@@ -438,15 +441,14 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
     }
   }
 
-  // Add add-ons to provider base price
-  providerBasePrice += addOnsTotal;
-
-  providerBasePrice = Math.max(providerBasePrice, asNumber(rule.minimumCharge) ?? 0);
-  providerBasePrice += asNumber(rule.travelFee) ?? 0;
+  // Convert single-visit price into total multi-visit price
+  const singleVisitBase = Math.max(providerBasePrice + addOnsTotal, asNumber(rule.minimumCharge) ?? 0);
+  providerBasePrice = singleVisitBase * quantity;
+  providerBasePrice += (asNumber(rule.travelFee) ?? 0) * quantity;
   if (input.sameDay) providerBasePrice += asNumber(rule.sameDayUplift) ?? 0;
-  if (input.weekend) providerBasePrice += asNumber(rule.weekendUplift) ?? 0;
+  if (weekendCount > 0) providerBasePrice += (asNumber(rule.weekendUplift) ?? 0) * weekendCount;
 
-  const quoteRequired = rule.customQuoteRequired;
+  const quoteRequired = false;
 
   // Booking fee: supports fixed amount or percentage of provider base price
   const bookingFeeMode = ((bookingFeeModeSetting?.valueJson as any)?.value as string) || "fixed";

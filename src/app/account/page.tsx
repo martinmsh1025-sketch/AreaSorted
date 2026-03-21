@@ -54,7 +54,7 @@ export default async function AccountDashboardPage() {
             <p style={{ color: "var(--color-text-muted)", fontSize: "0.95rem" }}>
               You don&apos;t have any bookings yet.{" "}
               <Link href="/quote" style={{ color: "var(--color-brand)", fontWeight: 600 }}>
-                Get a quote
+                Continue booking
               </Link>
             </p>
           ) : (

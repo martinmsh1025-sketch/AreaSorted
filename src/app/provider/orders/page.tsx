@@ -17,6 +17,7 @@ import { Prisma } from "@prisma/client";
 import { acceptBookingAction, rejectBookingAction } from "./actions";
 import { AcceptOrderButton, DeclineOrderButton } from "@/components/provider/order-action-dialogs";
 import { Clock, CheckCircle, TrendingUp, ShoppingCart } from "lucide-react";
+import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { serviceTypeLabels, formatEnumLabel } from "@/lib/providers/service-catalog-mapping";
 
 function formatMoney(value: number) {
@@ -42,8 +43,8 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
 
 const statusLabel: Record<string, string> = {
   AWAITING_PAYMENT: "Awaiting Payment",
-  PAID: "New — Accept?",
-  PENDING_ASSIGNMENT: "Pending — Accept?",
+  PAID: "Captured",
+  PENDING_ASSIGNMENT: "Authorised — Confirm?",
   ASSIGNED: "Accepted",
   IN_PROGRESS: "In Progress",
   COMPLETED: "Completed",
@@ -106,6 +107,9 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
     include: {
       customer: true,
       priceSnapshot: true,
+      quoteRequest: {
+        select: { inputJson: true },
+      },
     },
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -127,7 +131,7 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
 
   // KPIs
   const pendingAcceptance = filteredBookings.filter((b) =>
-    ["PAID", "PENDING_ASSIGNMENT"].includes(b.bookingStatus),
+    ["PENDING_ASSIGNMENT"].includes(b.bookingStatus),
   ).length;
   const accepted = filteredBookings.filter((b) => b.bookingStatus === "ASSIGNED").length;
   const inProgress = filteredBookings.filter((b) => b.bookingStatus === "IN_PROGRESS").length;
@@ -171,7 +175,7 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Clock className="size-4" />
-              Needs Acceptance
+              Awaiting Confirmation
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -280,8 +284,8 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="">All statuses</option>
-                  <option value="PAID">Needs Acceptance</option>
-                  <option value="PENDING_ASSIGNMENT">Pending Assignment</option>
+                  <option value="PENDING_ASSIGNMENT">Awaiting confirmation</option>
+                  <option value="PAID">Captured</option>
                   <option value="ASSIGNED">Accepted</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="COMPLETED">Completed</option>
@@ -337,13 +341,12 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
               <TableBody>
                 {filteredBookings.length ? (
                   filteredBookings.map((booking) => {
-                    const needsAcceptance = ["PAID", "PENDING_ASSIGNMENT"].includes(
-                      booking.bookingStatus,
-                    );
+                    const needsAcceptance = booking.bookingStatus === "PENDING_ASSIGNMENT";
                     const payout =
                       booking.priceSnapshot?.providerExpectedPayout ??
                       booking.cleanerPayoutAmount ??
                       null;
+                    const preferredScheduleOptions = parsePreferredScheduleOptions(booking.quoteRequest?.inputJson);
                     return (
                       <TableRow
                         key={booking.id}
@@ -378,6 +381,11 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
                           <div className="text-xs text-muted-foreground">
                             {booking.scheduledStartTime}
                           </div>
+                          {preferredScheduleOptions.length > 1 && (
+                            <div className="text-xs text-blue-700">
+                              {preferredScheduleOptions.length} date options
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge

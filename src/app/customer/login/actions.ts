@@ -6,6 +6,7 @@ import { getPrisma } from "@/lib/db";
 import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
 import { verifyPassword, hashPassword } from "@/lib/security/password";
 import { signSessionValue } from "@/lib/security/session";
+import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 
 export async function customerLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -55,6 +56,11 @@ export async function customerRegisterAction(formData: FormData) {
     redirect("/customer/register?error=weak_password");
   }
 
+  const normalizedPhone = normalizeUkPhone(phone);
+  if (!normalizedPhone) {
+    redirect("/customer/register?error=invalid_phone");
+  }
+
   const prisma = getPrisma();
 
   const existing = await prisma.customer.findUnique({ where: { email } });
@@ -62,10 +68,10 @@ export async function customerRegisterAction(formData: FormData) {
     // If customer exists but has no password (created during checkout), set password
     if (!existing.passwordHash) {
       const passwordHash = await hashPassword(password);
-      await prisma.customer.update({
-        where: { id: existing.id },
-        data: { passwordHash, firstName, lastName, phone },
-      });
+        await prisma.customer.update({
+          where: { id: existing.id },
+          data: { passwordHash, firstName, lastName, phone: normalizedPhone },
+        });
 
       const cookieStore = await cookies();
       cookieStore.set(CUSTOMER_SESSION_COOKIE, signSessionValue(existing.id), {
@@ -83,7 +89,7 @@ export async function customerRegisterAction(formData: FormData) {
 
   const passwordHash = await hashPassword(password);
   const newCustomer = await prisma.customer.create({
-    data: { firstName, lastName, email, phone, passwordHash },
+    data: { firstName, lastName, email, phone: normalizedPhone, passwordHash },
   });
 
   const cookieStore = await cookies();

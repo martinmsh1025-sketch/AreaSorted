@@ -1,8 +1,9 @@
 import { getPrisma } from "@/lib/db";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
+import { formatPreferredScheduleOption, parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 
 /**
- * Send booking confirmation email to the customer after successful payment.
+ * Send booking authorisation email to the customer after card hold is placed.
  */
 export async function sendBookingConfirmationEmail(bookingId: string) {
   const prisma = getPrisma();
@@ -13,7 +14,7 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
       customer: { select: { firstName: true, email: true } },
       marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
       priceSnapshot: true,
-      quoteRequest: { select: { reference: true, serviceKey: true } },
+      quoteRequest: { select: { reference: true, serviceKey: true, inputJson: true } },
     },
   });
 
@@ -38,19 +39,23 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
   const totalAmount = booking.priceSnapshot?.customerTotalAmount
     ? `£${Number(booking.priceSnapshot.customerTotalAmount).toFixed(2)}`
     : "";
+  const preferredScheduleOptions = parsePreferredScheduleOptions(booking.quoteRequest?.inputJson);
 
   const text = [
     `Hi ${customer.firstName},`,
     ``,
-    `Your booking has been confirmed! Here are the details:`,
+    `We have placed a temporary hold on your card while the provider confirms your booking. Here are the details:`,
     ``,
     `Reference: ${reference}`,
     `Service: ${serviceLabel}`,
     `Date: ${dateStr}`,
     `Time: ${timeStr}`,
+    preferredScheduleOptions.length > 1 ? "Other preferred options:" : "",
+    ...preferredScheduleOptions.slice(1).map((option) => `- ${formatPreferredScheduleOption(option)}`),
     `Location: ${booking.servicePostcode || ""}`,
-    totalAmount ? `Total paid: ${totalAmount}` : "",
-    provider ? `Provider: ${provider.tradingName || provider.legalName || "Your assigned provider"}` : "",
+    totalAmount ? `Authorised amount: ${totalAmount}` : "",
+    ``,
+    `You are only charged once the provider confirms the job. If they do not confirm within 24 hours, the hold is released automatically.`,
     ``,
     `You can view your booking and track its status here:`,
     bookingUrl,
@@ -65,8 +70,8 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
   try {
     await sendTransactionalEmail({
       to: customer.email,
-      subject: `Booking confirmed — ${reference}`,
-      text,
+        subject: `Booking hold placed — ${reference}`,
+        text,
     });
   } catch {
     // Non-critical — don't fail the webhook over email
@@ -87,7 +92,7 @@ export async function sendBookingStatusEmail(
     include: {
       customer: { select: { firstName: true, email: true } },
       marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
-      quoteRequest: { select: { reference: true, serviceKey: true } },
+      quoteRequest: { select: { reference: true, serviceKey: true, inputJson: true } },
     },
   });
 
@@ -101,6 +106,7 @@ export async function sendBookingStatusEmail(
   const serviceLabel = booking.quoteRequest?.serviceKey || "Service";
 
   const providerName = provider?.tradingName || provider?.legalName || "Your assigned provider";
+  const preferredScheduleOptions = parsePreferredScheduleOptions(booking.quoteRequest?.inputJson);
 
   let subject = "";
   let bodyLines: string[] = [];
@@ -116,6 +122,9 @@ export async function sendBookingStatusEmail(
         `Reference: ${reference}`,
         `Service: ${serviceLabel}`,
         provider ? `Provider: ${providerName}` : "",
+        `Your card hold has now been converted into a confirmed payment.`,
+        preferredScheduleOptions.length > 1 ? "Other preferred options:" : "",
+        ...preferredScheduleOptions.slice(1).map((option) => `- ${formatPreferredScheduleOption(option)}`),
         ``,
         `You can view the full details here:`,
         bookingUrl,
@@ -165,6 +174,21 @@ export async function sendBookingStatusEmail(
         ``,
         `If you have any questions about this cancellation, please contact us.`,
         ``,
+        bookingUrl,
+      ];
+      break;
+
+    case "NO_CLEANER_FOUND":
+      subject = `Booking update — ${reference}`;
+      bodyLines = [
+        `Hi ${customer.firstName},`,
+        ``,
+        `We could not secure provider confirmation for your booking, so the temporary card hold has been released.`,
+        ``,
+        `Reference: ${reference}`,
+        `Service: ${serviceLabel}`,
+        ``,
+        `Please check your booking for the latest status:`,
         bookingUrl,
       ];
       break;

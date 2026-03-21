@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireCustomerSession } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
+import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
 
 export default async function AccountBookingsPage() {
   const customer = await requireCustomerSession();
@@ -11,7 +12,7 @@ export default async function AccountBookingsPage() {
     orderBy: { createdAt: "desc" },
     include: {
       quoteRequest: { select: { reference: true, serviceKey: true } },
-      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
       counterOffers: {
         where: { status: "PENDING" },
         select: { id: true },
@@ -38,7 +39,7 @@ export default async function AccountBookingsPage() {
             <p style={{ color: "var(--color-text-muted)", fontSize: "0.95rem" }}>
               You don&apos;t have any bookings yet.{" "}
               <Link href="/quote" style={{ color: "var(--color-brand)", fontWeight: 600 }}>
-                Get a quote
+                Continue booking
               </Link>
             </p>
           ) : (
@@ -50,7 +51,11 @@ export default async function AccountBookingsPage() {
                 const date = booking.scheduledDate.toLocaleDateString("en-GB", {
                   day: "numeric", month: "short", year: "numeric",
                 });
-                const payment = booking.paymentRecords?.[0]?.paymentState ?? "UNKNOWN";
+                const payment = getDisplayPaymentStatus({
+                  paymentState: booking.paymentRecords?.[0]?.paymentState,
+                  metadataJson: booking.paymentRecords?.[0]?.metadataJson,
+                  bookingStatus: booking.bookingStatus,
+                });
                 const hasPendingOffer = booking.counterOffers.length > 0;
 
                 return (
@@ -111,7 +116,7 @@ export default async function AccountBookingsPage() {
                         {status}
                       </div>
                       <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.1rem" }}>
-                        Payment: {String(payment).replace(/_/g, " ").toLowerCase()}
+                        Payment: {getPaymentStatusLabel(payment).toLowerCase()}
                       </div>
                     </div>
                   </Link>

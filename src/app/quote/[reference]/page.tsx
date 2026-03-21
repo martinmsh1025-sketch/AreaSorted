@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
-import { startInstantBookingAction, submitManualQuoteAction } from "./actions";
+import { startInstantBookingAction } from "./actions";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
 
 function money(value: any) {
@@ -21,7 +21,7 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
   const quote = await getPublicQuoteByReference(reference);
   if (!quote || !quote.priceSnapshot) notFound();
 
-  const manual = quote.quoteRequired;
+  const unavailable = quote.state === "EXPIRED";
   const embedUrl = mapEmbedUrl(quote.postcode);
 
   return (
@@ -30,7 +30,7 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
         <div className="panel card">
           <div className="eyebrow">Quote result</div>
           <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>
-            {manual ? "Manual quote required" : "Your instant quote"}
+            {unavailable ? "Quote unavailable" : "Your booking price"}
           </h1>
           <p className="lead">Reference: {quote.reference}</p>
 
@@ -71,27 +71,24 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
                     <span>Total</span><strong>{money(quote.priceSnapshot.totalCustomerPay)}</strong>
                   </div>
                 </div>
-                {manual ? (
-                  <form action={submitManualQuoteAction} style={{ marginTop: "1rem" }}>
-                    <input type="hidden" name="reference" value={quote.reference} />
-                    <FormSubmitButton
-                      label="Submit for manual review"
-                      pendingLabel="Submitting..."
-                      className="button button-primary"
-                    />
-                  </form>
+                {unavailable ? (
+                  <div style={{ marginTop: "1rem" }}>
+                    <div className="muted-block">
+                      We could not prepare a quote for this request. Please submit a new request or contact support if you need help.
+                    </div>
+                  </div>
                 ) : (
                   <form action={startInstantBookingAction} style={{ marginTop: "1rem" }}>
                     <input type="hidden" name="reference" value={quote.reference} />
                     <FormSubmitButton
-                      label="Book and pay"
+                      label="Continue booking"
                       pendingLabel="Processing..."
                       className="button button-primary"
                     />
                   </form>
                 )}
                 <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                  All prices include platform fees. Service provided by an independent local provider arranged through AreaSorted.
+                  All prices include platform fees. We place a temporary hold on your card, and you are only charged once the matched provider confirms the job.
                 </p>
               </section>
 

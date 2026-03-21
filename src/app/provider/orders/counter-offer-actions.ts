@@ -7,7 +7,7 @@ import { sendTransactionalEmail } from "@/lib/notifications/email";
 
 /**
  * Provider submits a counter offer on a booking.
- * Only allowed when booking is PAID or PENDING_ASSIGNMENT.
+ * Only allowed while a booking is awaiting provider confirmation.
  * The customer is notified via email and can accept/reject from their dashboard.
  */
 export async function createCounterOfferAction(formData: FormData) {
@@ -38,7 +38,7 @@ export async function createCounterOfferAction(formData: FormData) {
     where: {
       id: bookingId,
       providerCompanyId: session.providerCompany.id,
-      bookingStatus: { in: ["PAID", "PENDING_ASSIGNMENT"] },
+      bookingStatus: { in: ["PENDING_ASSIGNMENT"] },
     },
     include: {
       customer: { select: { email: true, firstName: true } },

@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createPublicQuote } from "@/server/services/public/quote-flow";
+import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 
 const schema = z.object({
   customerName: z.string().min(1),
   customerEmail: z.string().email(),
-  customerPhone: z.string().min(1),
+  customerPhone: z.string().transform((value, ctx) => {
+    const normalized = normalizeUkPhone(value);
+    if (!normalized) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Please enter a valid UK phone number." });
+      return z.NEVER;
+    }
+    return normalized;
+  }),
   password: z.string().min(8),
   postcode: z.string().min(1),
   addressLine1: z.string().min(1),
@@ -19,6 +27,10 @@ const schema = z.object({
   weekend: z.boolean().optional().default(false),
   scheduledDate: z.string().optional(),
   scheduledTimeLabel: z.string().optional(),
+  preferredScheduleOptions: z.array(z.object({
+    date: z.string().min(1),
+    time: z.string().regex(/^\d{2}:(00|30)$/),
+  })).optional().default([]),
   jobPhotoUrls: z.array(z.string().url()).max(5).optional().default([]),
   /** Cleaning-specific */
   bedrooms: z.number().int().min(0).optional(),

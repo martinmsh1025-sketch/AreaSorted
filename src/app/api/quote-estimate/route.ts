@@ -14,8 +14,10 @@ const schema = z.object({
   categoryKey: z.string().min(1),
   serviceKey: z.string().min(1),
   estimatedHours: z.number().min(0.5).optional(),
+  quantity: z.number().int().min(1).optional().default(1),
   sameDay: z.boolean().optional().default(false),
   weekend: z.boolean().optional().default(false),
+  weekendCount: z.number().int().min(0).optional().default(0),
   bedrooms: z.number().int().min(0).optional(),
   bathrooms: z.number().int().min(0).optional(),
   kitchens: z.number().int().min(0).optional(),
@@ -49,8 +51,10 @@ export async function POST(request: NextRequest) {
       serviceKey: payload.serviceKey,
       postcodePrefix: provider.postcodePrefix,
       estimatedHours: payload.estimatedHours,
+      quantity: payload.quantity,
       sameDay: payload.sameDay,
       weekend: payload.weekend,
+      weekendCount: payload.weekendCount,
       bedrooms: payload.bedrooms,
       bathrooms: payload.bathrooms,
       kitchens: payload.kitchens,
@@ -69,7 +73,6 @@ export async function POST(request: NextRequest) {
       postcodeSurcharge: preview.postcodeSurcharge,
       addOnsTotal: preview.optionalExtrasAmount,
       totalCustomerPay: preview.totalCustomerPay,
-      quoteRequired: preview.quoteRequired,
     });
   } catch (error) {
     // Provider has no pricing rule for this service

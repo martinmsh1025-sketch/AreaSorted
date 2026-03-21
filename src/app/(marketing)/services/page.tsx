@@ -43,7 +43,7 @@ export default function ServicesPage() {
             in your area. Browse the full catalogue below, then get a quote in minutes.
           </p>
           <div className="button-row" style={{ marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Get a quote</Link>
+            <Link className="button button-primary" href="/quote">Continue booking</Link>
           </div>
         </div>
       </section>
@@ -192,7 +192,7 @@ export default function ServicesPage() {
             Enter your postcode to check coverage and get an instant quote for any of the {jobTypeCatalog.length} services above.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Get a quote</Link>
+            <Link className="button button-primary" href="/quote">Continue booking</Link>
             <Link className="button button-secondary" href="/pricing">View pricing</Link>
           </div>
         </div>

@@ -1,6 +1,10 @@
 import "dotenv/config";
 import { getPrisma } from "@/lib/db";
-import { createInstantBookingFromQuote, createPublicQuote, getPublicQuoteByReference, submitManualQuoteRequest } from "@/server/services/public/quote-flow";
+import {
+  createInstantBookingFromQuote,
+  createPublicQuote,
+  getPublicQuoteByReference,
+} from "@/server/services/public/quote-flow";
 
 async function main() {
   process.env.ALLOW_MOCK_STRIPE_CHECKOUT = "true";
@@ -39,13 +43,13 @@ async function main() {
     },
   });
 
-  const manualQuote = await createPublicQuote({
-    customerName: "Manual Demo",
-    customerEmail: "manual-demo@example.com",
+  const secondQuote = await createPublicQuote({
+    customerName: "Second Demo",
+    customerEmail: "second-demo@example.com",
     customerPhone: "07222222222",
     password: "TestPassword123!",
     postcode: "SW6 2NT",
-    addressLine1: "2 Manual Street",
+    addressLine1: "2 Followup Street",
     addressLine2: "",
     city: "London",
     categoryKey: "CLEANING",
@@ -56,12 +60,11 @@ async function main() {
     weekend: false,
     scheduledDate: "2026-03-22",
     scheduledTimeLabel: "11:00",
-    details: { flow: "manual" },
+    details: { flow: "second" },
   });
 
-  if (manualQuote.status !== "quoted") throw new Error("Expected quoted result for manual path");
-  await submitManualQuoteRequest(manualQuote.quoteRequest.reference);
-  const manualQuoteFromDb = await getPublicQuoteByReference(manualQuote.quoteRequest.reference);
+  if (secondQuote.status !== "quoted") throw new Error("Expected quoted result for second path");
+  const secondQuoteFromDb = await getPublicQuoteByReference(secondQuote.quoteRequest.reference);
 
   console.log(JSON.stringify({
     instantPath: {
@@ -94,12 +97,11 @@ async function main() {
         applicationFeeAmount: Number(instantBookingFromDb?.paymentRecords[0]?.applicationFeeAmount || 0),
       },
     },
-    manualPath: {
-      quoteReference: manualQuote.quoteRequest.reference,
-      quoteRequired: manualQuote.quoteRequest.quoteRequired,
-      stateAfterSubmit: manualQuoteFromDb?.state,
-      bookingLinked: Boolean(manualQuoteFromDb?.bookingId),
-      snapshotTotal: Number(manualQuoteFromDb?.priceSnapshot?.totalCustomerPay || 0),
+    secondQuotePath: {
+      quoteReference: secondQuote.quoteRequest.reference,
+      state: secondQuoteFromDb?.state,
+      bookingLinked: Boolean(secondQuoteFromDb?.bookingId),
+      snapshotTotal: Number(secondQuoteFromDb?.priceSnapshot?.totalCustomerPay || 0),
     },
   }, null, 2));
 

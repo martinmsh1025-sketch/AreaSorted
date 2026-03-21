@@ -13,6 +13,7 @@ import {
   type PropertyTypeValue,
 } from "@/lib/service-catalog";
 import { UploadDropzone } from "@/lib/uploadthing";
+import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 
 type PublicCategoryKey = ReturnType<typeof listPublicCategories>[number]["key"];
 
@@ -70,8 +71,20 @@ type ServerEstimate = {
   postcodeSurcharge: number;
   addOnsTotal: number;
   totalCustomerPay: number;
-  quoteRequired: boolean;
 };
+
+type ScheduleOption = {
+  date: string;
+  time: string;
+};
+
+const HALF_HOUR_TIMES = Array.from({ length: 24 * 2 }, (_, index) => {
+  const hour = String(Math.floor(index / 2)).padStart(2, "0");
+  const minute = index % 2 === 0 ? "00" : "30";
+  return `${hour}:${minute}`;
+});
+
+const DEFAULT_SCHEDULE_TIME = "09:30";
 
 /* ── Main component ── */
 
@@ -95,7 +108,8 @@ export function PublicQuoteForm() {
     addressLine2: "",
     city: "London",
     scheduledDate: getTomorrowDate(),
-    scheduledTimeLabel: "10:00",
+    scheduledTimeLabel: DEFAULT_SCHEDULE_TIME,
+    additionalScheduleOptions: [] as ScheduleOption[],
     sameDay: false,
     bedrooms: "2",
     bathrooms: "1",
@@ -125,6 +139,31 @@ export function PublicQuoteForm() {
     return day === 0 || day === 6;
   }, [form.scheduledDate]);
   const [schedulePassed, setSchedulePassed] = useState(false);
+
+  const allScheduleOptions = useMemo(
+    () => [
+      { date: form.scheduledDate, time: form.scheduledTimeLabel },
+      ...form.additionalScheduleOptions,
+    ].filter((option) => option.date && option.time),
+    [form.additionalScheduleOptions, form.scheduledDate, form.scheduledTimeLabel],
+  );
+
+  const hasDuplicateScheduleDates = useMemo(() => {
+    const dates = allScheduleOptions.map((option) => option.date).filter(Boolean);
+    return new Set(dates).size !== dates.length;
+  }, [allScheduleOptions]);
+
+  const scheduleVisitCount = allScheduleOptions.length || 1;
+
+  const weekendVisitCount = useMemo(
+    () => allScheduleOptions.filter((option) => {
+      const d = option.date ? new Date(`${option.date}T12:00:00`) : null;
+      if (!d || Number.isNaN(d.getTime())) return false;
+      const day = d.getDay();
+      return day === 0 || day === 6;
+    }).length,
+    [allScheduleOptions],
+  );
 
   const selectedJob = useMemo(() => jobTypeCatalog.find((j) => j.value === serviceKey), [serviceKey]);
   const roomCount = selectedJob ? isRoomCountCleaning(selectedJob.service, selectedJob.subcategory) : false;
@@ -190,7 +229,7 @@ export function PublicQuoteForm() {
   }, [selectedJob, form.bedrooms, form.bathrooms, form.kitchens, form.propertyType, form.cleaningCondition, form.jobSize, isCleaning, roomCount]);
 
   // Fetch server estimate whenever pricing-relevant fields change
-  const applyWeekendSurcharge = schedulePassed && isWeekend;
+  const applyWeekendSurcharge = schedulePassed && weekendVisitCount > 0;
 
   useEffect(() => {
     // Need at least postcode + serviceKey to estimate
@@ -214,8 +253,10 @@ export function PublicQuoteForm() {
         categoryKey,
         serviceKey,
         estimatedHours,
+        quantity: scheduleVisitCount,
         sameDay: form.sameDay,
         weekend: applyWeekendSurcharge,
+        weekendCount: schedulePassed ? weekendVisitCount : 0,
       };
 
       // Cleaning-specific
@@ -272,7 +313,6 @@ export function PublicQuoteForm() {
           postcodeSurcharge: data.postcodeSurcharge,
           addOnsTotal: data.addOnsTotal,
           totalCustomerPay: data.totalCustomerPay,
-          quoteRequired: data.quoteRequired,
         });
         setEstimateError("");
         setEstimateLoading(false);
@@ -289,7 +329,7 @@ export function PublicQuoteForm() {
     };
   }, [
     form.postcode, categoryKey, serviceKey, estimatedHours,
-    form.sameDay, applyWeekendSurcharge,
+    form.sameDay, applyWeekendSurcharge, scheduleVisitCount, weekendVisitCount,
     form.bedrooms, form.bathrooms, form.kitchens,
     form.propertyType, form.cleaningCondition, form.supplies,
     form.jobSize, form.selectedAddOns,
@@ -326,6 +366,11 @@ export function PublicQuoteForm() {
         return null;
       case 3:
         if (!form.scheduledDate) return "Please select a date.";
+        if (!HALF_HOUR_TIMES.includes(form.scheduledTimeLabel)) return "Please choose a time in 30-minute slots.";
+        if (form.additionalScheduleOptions.some((option) => !option.date || !HALF_HOUR_TIMES.includes(option.time))) {
+          return "Please complete each extra date and time or remove the empty row.";
+        }
+        if (hasDuplicateScheduleDates) return "Please choose different dates for each schedule option.";
         return null;
       case 4:
         return null;
@@ -333,6 +378,7 @@ export function PublicQuoteForm() {
         if (!form.customerName.trim()) return "Please enter your name.";
         if (!form.customerEmail.trim()) return "Please enter your email.";
         if (!/\S+@\S+\.\S+/.test(form.customerEmail)) return "Please enter a valid email address.";
+        if (!normalizeUkPhone(form.customerPhone)) return "Please enter a valid UK phone number.";
         if (!form.password) return "Please create a password for your account.";
         if (form.password.length < 8) return "Password must be at least 8 characters.";
         if (form.password !== form.confirmPassword) return "Passwords do not match.";
@@ -366,6 +412,13 @@ export function PublicQuoteForm() {
     }
   }
 
+  function chooseService(jobValue: string) {
+    setServiceKey(jobValue);
+    setStepErrors((prev) => ({ ...prev, 1: "" }));
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   const progressPct = Math.round(((step + 1) / STEPS.length) * 100);
   const showSidebar = step >= 1;
 
@@ -394,7 +447,8 @@ export function PublicQuoteForm() {
     const payload: Record<string, unknown> = {
       customerName: form.customerName,
       customerEmail: form.customerEmail,
-      customerPhone: form.customerPhone,
+      customerPhone: normalizeUkPhone(form.customerPhone),
+      quantity: scheduleVisitCount,
       password: form.password,
       postcode: form.postcode,
       addressLine1: form.addressLine1,
@@ -403,9 +457,10 @@ export function PublicQuoteForm() {
       categoryKey,
       serviceKey,
       sameDay: form.sameDay,
-      weekend: isWeekend,
+      weekend: weekendVisitCount > 0,
       scheduledDate: form.scheduledDate,
       scheduledTimeLabel: form.scheduledTimeLabel,
+      preferredScheduleOptions: allScheduleOptions,
       jobPhotoUrls: photoUrls,
     };
 
@@ -464,7 +519,7 @@ export function PublicQuoteForm() {
 
   return (
     <div className="panel card">
-      <div className="eyebrow">Get a quote</div>
+      <div className="eyebrow">Continue booking</div>
       <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
         Tell us about your job
       </h1>
@@ -591,7 +646,7 @@ export function PublicQuoteForm() {
                                   key={job.value}
                                   type="button"
                                   className="job-list-row"
-                                  onClick={() => setServiceKey(job.value)}
+                                  onClick={() => chooseService(job.value)}
                                 >
                                   <span className="job-list-row-name">{job.label}</span>
                                   <span className="job-list-row-price">From {money(job.startingPrice)}</span>
@@ -721,7 +776,7 @@ export function PublicQuoteForm() {
               <div className="panel card quote-section-card">
                 <div className="quote-section-head">
                   <strong>Scheduling</strong>
-                  <p>When would you like the service?</p>
+                  <p>Choose your preferred time, and add extra options if you are flexible.</p>
                 </div>
                 <div className="quote-two-col-fields">
                   <label className="quote-field-stack">
@@ -730,12 +785,81 @@ export function PublicQuoteForm() {
                   </label>
                   <label className="quote-field-stack">
                     <span>Preferred time</span>
-                    <input type="time" value={form.scheduledTimeLabel} onChange={(e) => setForm({ ...form, scheduledTimeLabel: e.target.value })} />
+                    <select value={form.scheduledTimeLabel} onChange={(e) => setForm({ ...form, scheduledTimeLabel: e.target.value })}>
+                      {HALF_HOUR_TIMES.map((time) => <option key={time} value={time}>{time}</option>)}
+                    </select>
                   </label>
                   <label className="quote-check-item">
                     <input type="checkbox" checked={form.sameDay} onChange={(e) => setForm({ ...form, sameDay: e.target.checked })} />
                     <span>Same-day service</span>
                   </label>
+                </div>
+                <div style={{ marginTop: "1rem", display: "grid", gap: "0.75rem" }}>
+                  {form.additionalScheduleOptions.map((option, index) => (
+                    <div key={`${option.date}-${index}`} className="panel" style={{ padding: "1rem", display: "grid", gap: "0.9rem", border: "1px solid var(--color-border)" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+                        <strong style={{ fontSize: "0.95rem" }}>Extra option {index + 1}</strong>
+                        <button
+                          type="button"
+                          className="button button-secondary"
+                          onClick={() => setForm({
+                            ...form,
+                            additionalScheduleOptions: form.additionalScheduleOptions.filter((_, optionIndex) => optionIndex !== index),
+                          })}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <div className="quote-two-col-fields">
+                      <label className="quote-field-stack">
+                        <span>Date</span>
+                        <input
+                          type="date"
+                          min={getTomorrowDate()}
+                          value={option.date}
+                          onChange={(e) => {
+                            const next = [...form.additionalScheduleOptions];
+                            next[index] = { ...next[index], date: e.target.value };
+                            setForm({ ...form, additionalScheduleOptions: next });
+                          }}
+                        />
+                      </label>
+                      <label className="quote-field-stack">
+                        <span>Time</span>
+                        <select
+                          value={option.time}
+                          onChange={(e) => {
+                            const next = [...form.additionalScheduleOptions];
+                            next[index] = { ...next[index], time: e.target.value };
+                            setForm({ ...form, additionalScheduleOptions: next });
+                          }}
+                        >
+                          {HALF_HOUR_TIMES.map((time) => <option key={time} value={time}>{time}</option>)}
+                        </select>
+                      </label>
+                      </div>
+                    </div>
+                  ))}
+                  {hasDuplicateScheduleDates && (
+                    <p style={{ fontSize: "0.8rem", color: "var(--color-error)", margin: 0 }}>
+                      Each schedule option needs a different date.
+                    </p>
+                  )}
+                  <div>
+                    <button
+                      type="button"
+                      className="button button-secondary"
+                      onClick={() => setForm({
+                        ...form,
+                        additionalScheduleOptions: [
+                          ...form.additionalScheduleOptions,
+                          { date: getTomorrowDate(), time: DEFAULT_SCHEDULE_TIME },
+                        ],
+                      })}
+                    >
+                      Add extra date
+                    </button>
+                  </div>
                 </div>
                 {isWeekend && (
                   <p style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--color-brand)", fontWeight: 500, lineHeight: 1.5 }}>
@@ -844,15 +968,18 @@ export function PublicQuoteForm() {
                 <div className="quote-two-col-fields">
                   <label className="quote-field-stack">
                     <span>Full name *</span>
-                    <input required placeholder="John Smith" value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
+                    <input required placeholder="John Smith" autoComplete="name" value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} />
                   </label>
                   <label className="quote-field-stack">
                     <span>Email *</span>
-                    <input required type="email" placeholder="john@example.com" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
+                    <input required type="email" placeholder="john@example.com" autoComplete="email" value={form.customerEmail} onChange={(e) => setForm({ ...form, customerEmail: e.target.value })} />
                   </label>
                   <label className="quote-field-stack">
-                    <span>Phone</span>
-                    <input type="tel" placeholder="07700 900 000" value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
+                    <span>Phone *</span>
+                    <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", overflow: "hidden", background: "var(--color-surface)" }}>
+                      <span style={{ padding: "0.8rem 0.9rem", borderRight: "1px solid var(--color-border)", color: "var(--color-text-muted)", fontWeight: 600 }}>+44</span>
+                      <input type="tel" placeholder="7700 900123" autoComplete="tel-national" inputMode="tel" value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} style={{ border: 0, borderRadius: 0 }} />
+                    </div>
                   </label>
                 </div>
                 <div className="quote-section-head" style={{ marginTop: "1.5rem" }}>
@@ -862,11 +989,11 @@ export function PublicQuoteForm() {
                 <div className="quote-two-col-fields">
                   <label className="quote-field-stack">
                     <span>Password *</span>
-                    <input required type="password" placeholder="Min 8 characters" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                    <input required type="password" placeholder="Min 8 characters" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                   </label>
                   <label className="quote-field-stack">
                     <span>Confirm password *</span>
-                    <input required type="password" placeholder="Re-enter password" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} />
+                    <input required type="password" placeholder="Re-enter password" autoComplete="new-password" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} />
                   </label>
                 </div>
               </div>
@@ -895,14 +1022,14 @@ export function PublicQuoteForm() {
                 Skip this step &rarr;
               </button>
             )}
-            {step < STEPS.length - 1 && (
+            {step < STEPS.length - 1 && step !== 1 && (
               <button type="button" className="button button-primary" onClick={goNext}>
                 Continue
               </button>
             )}
             {step === STEPS.length - 1 && (
               <button className="button button-primary" type="submit" disabled={submitting}>
-                {submitting ? "Creating quote..." : "Get Your Quote"}
+                {submitting ? "Preparing booking..." : "Continue Booking"}
               </button>
             )}
           </div>
@@ -930,6 +1057,7 @@ export function PublicQuoteForm() {
                     {money(estimate.totalCustomerPay)}
                   </h2>
                   <div className="quote-summary-list">
+                    <div><span>Service dates</span><strong>{scheduleVisitCount}</strong></div>
                     <div><span>Service</span><strong>{selectedJob?.label ?? serviceKey}</strong></div>
                     <div><span>Service price</span><strong>{money(estimate.servicePrice)}</strong></div>
                     {estimate.addOnsTotal > 0 && (
@@ -940,16 +1068,9 @@ export function PublicQuoteForm() {
                     )}
                     <div><span>Booking fee</span><strong>{money(estimate.bookingFee)}</strong></div>
                   </div>
-                  {estimate.quoteRequired && (
-                    <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-brand)", fontWeight: 500, lineHeight: 1.6 }}>
-                      This service requires a manual review. You will receive a confirmed quote by email.
-                    </p>
-                  )}
-                  {!estimate.quoteRequired && (
-                    <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                      This is the price you will pay. You can book and pay securely after submitting.
-                    </p>
-                  )}
+                  <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+                    This is your current price. Continue booking to place a temporary card hold, then the provider confirms the job before any payment is captured.
+                  </p>
                 </>
               ) : !estimateLoading && !estimateError ? (
                 <>
@@ -991,8 +1112,8 @@ export function PublicQuoteForm() {
               <ol style={{ paddingLeft: "1.1rem", margin: 0, display: "grid", gap: "0.3rem" }}>
                 <li>Fill in your job details</li>
                 <li>We match you with an available provider</li>
-                <li>Review your quote</li>
-                <li>Book and pay securely online</li>
+                <li>Review your price and continue booking</li>
+                <li>Pay securely, then wait for provider confirmation</li>
               </ol>
             </div>
           </aside>

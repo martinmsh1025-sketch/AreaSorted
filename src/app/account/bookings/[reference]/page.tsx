@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireCustomerSession } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
+import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
 import { CustomerCounterOfferBanner } from "@/components/customer/counter-offer-response";
 import { CancelBookingSection } from "./cancel-booking-section";
 import { RescheduleBookingSection } from "./reschedule-booking-section";
@@ -26,7 +27,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     include: {
       quoteRequest: { select: { reference: true, serviceKey: true, categoryKey: true } },
       priceSnapshot: true,
-      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
       marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
       counterOffers: {
         orderBy: { createdAt: "desc" },
@@ -39,12 +40,16 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   const ref = booking.quoteRequest?.reference ?? booking.id;
   const service = booking.quoteRequest?.serviceKey ?? booking.serviceType;
   const status = booking.bookingStatus.replace(/_/g, " ");
-  const payment = booking.paymentRecords?.[0]?.paymentState ?? "UNKNOWN";
+  const payment = getDisplayPaymentStatus({
+    paymentState: booking.paymentRecords?.[0]?.paymentState,
+    metadataJson: booking.paymentRecords?.[0]?.metadataJson,
+    bookingStatus: booking.bookingStatus,
+  });
   const providerName = booking.marketplaceProviderCompany?.tradingName
     ?? booking.marketplaceProviderCompany?.legalName
     ?? "Pending assignment";
 
-  const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
   const canCancel = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
   const canReschedule = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
 
@@ -94,7 +99,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Service details</h2>
           <div className="quote-summary-list">
             <div><span>Status</span><strong>{status}</strong></div>
-            <div><span>Payment</span><strong>{String(payment).replace(/_/g, " ")}</strong></div>
+            <div><span>Payment</span><strong>{getPaymentStatusLabel(payment)}</strong></div>
             <div><span>Date</span><strong>{booking.scheduledDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong></div>
             <div><span>Time</span><strong>{booking.scheduledStartTime}</strong></div>
             <div><span>Duration</span><strong>Approx. {Number(booking.durationHours) <= 1 ? "1-2" : `${Number(booking.durationHours)}-${Number(booking.durationHours) + 1}`} hours</strong></div>
@@ -124,7 +129,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
               <div><span>Service</span><strong>&pound;{Number(booking.priceSnapshot.providerServiceAmount).toFixed(2)}</strong></div>
               <div><span>Booking fee</span><strong>&pound;{Number(booking.priceSnapshot.platformBookingFee).toFixed(2)}</strong></div>
               <div style={{ fontWeight: 600, fontSize: "1.05rem" }}>
-                <span>Total paid</span>
+                <span>{booking.bookingStatus === "PENDING_ASSIGNMENT" ? "Authorised amount" : "Total paid"}</span>
                 <strong>&pound;{Number(booking.priceSnapshot.customerTotalAmount).toFixed(2)}</strong>
               </div>
             </div>

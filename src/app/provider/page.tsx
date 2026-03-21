@@ -164,9 +164,7 @@ export default async function ProviderHomePage() {
   const monthEarnings = computeEarnings(monthBookings);
   const allTimeEarnings = computeEarnings(allBookings);
 
-  const pendingAcceptance = allBookings.filter((b) =>
-    ["PAID", "PENDING_ASSIGNMENT"].includes(b.bookingStatus),
-  ).length;
+  const pendingAcceptance = allBookings.filter((b) => b.bookingStatus === "PENDING_ASSIGNMENT").length;
   const inProgress = allBookings.filter((b) => b.bookingStatus === "IN_PROGRESS").length;
 
   const recentCompleted = allBookings
@@ -220,7 +218,7 @@ export default async function ProviderHomePage() {
                   {pendingAcceptance > 0 && (
                     <span className="flex items-center gap-1.5">
                       <Clock className="size-4 text-amber-600" />
-                      <strong>{pendingAcceptance}</strong> awaiting acceptance
+                      <strong>{pendingAcceptance}</strong> awaiting confirmation
                     </span>
                   )}
                   {inProgress > 0 && (
@@ -231,7 +229,7 @@ export default async function ProviderHomePage() {
                   )}
                 </div>
                 <Link
-                  href="/provider/orders?status=PAID"
+                  href="/provider/orders?status=PENDING_ASSIGNMENT"
                   className="inline-flex h-8 items-center justify-center rounded-md bg-blue-600 px-3 text-xs font-medium text-white shadow hover:bg-blue-700"
                 >
                   View orders

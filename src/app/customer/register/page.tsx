@@ -17,6 +17,7 @@ export default async function CustomerRegisterPage({ searchParams }: CustomerReg
   const errorMessages: Record<string, string> = {
     missing_fields: "Please fill in all fields.",
     weak_password: "Password must be at least 8 characters.",
+    invalid_phone: "Please enter a valid UK phone number.",
     email_taken: "An account with this email already exists. Please sign in instead.",
   };
 
@@ -46,17 +47,20 @@ export default async function CustomerRegisterPage({ searchParams }: CustomerReg
 
             <label className="quote-field-stack">
               <span>Email</span>
-              <input type="email" name="email" placeholder="you@example.com" required />
+              <input id="register-email" type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
             </label>
 
             <label className="quote-field-stack">
               <span>Phone</span>
-              <input type="tel" name="phone" placeholder="07700 900000" required />
+              <div style={{ display: "flex", alignItems: "center", border: "1px solid var(--color-border)", borderRadius: "var(--radius-sm)", overflow: "hidden", background: "var(--color-surface)" }}>
+                <span style={{ padding: "0.8rem 0.9rem", borderRight: "1px solid var(--color-border)", color: "var(--color-text-muted)", fontWeight: 600 }}>+44</span>
+                <input id="register-phone" type="tel" name="phone" placeholder="7700 900123" autoComplete="tel-national" inputMode="tel" style={{ border: 0, borderRadius: 0 }} required />
+              </div>
             </label>
 
             <label className="quote-field-stack">
               <span>Password</span>
-              <input type="password" name="password" placeholder="At least 8 characters" required minLength={8} />
+              <input id="register-password" type="password" name="password" placeholder="At least 8 characters" autoComplete="new-password" required minLength={8} />
             </label>
 
             {error && (

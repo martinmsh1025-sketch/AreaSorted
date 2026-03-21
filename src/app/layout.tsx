@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { NavigationLoadingOverlay } from "@/components/shared/navigation-loading-overlay";
 export const metadata: Metadata = {
   title: {
     default: "AreaSorted — Trusted Local Services in London",
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body>
+        <NavigationLoadingOverlay />
         <div className="page-shell">{children}</div>
       </body>
     </html>

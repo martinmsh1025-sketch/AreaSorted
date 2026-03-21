@@ -81,6 +81,7 @@ export async function createDirectChargeCheckoutSession(params: {
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
       payment_intent_data: {
+        capture_method: "manual",
         application_fee_amount: params.applicationFeeAmount,
         metadata: params.metadata,
       },
@@ -91,4 +92,24 @@ export async function createDirectChargeCheckoutSession(params: {
       stripeAccount: params.connectedAccountId,
     },
   );
+}
+
+export async function captureDirectChargePaymentIntent(params: {
+  connectedAccountId: string;
+  paymentIntentId: string;
+}) {
+  const stripe = getStripe();
+  return stripe.paymentIntents.capture(params.paymentIntentId, {}, {
+    stripeAccount: params.connectedAccountId,
+  });
+}
+
+export async function cancelDirectChargePaymentIntent(params: {
+  connectedAccountId: string;
+  paymentIntentId: string;
+}) {
+  const stripe = getStripe();
+  return stripe.paymentIntents.cancel(params.paymentIntentId, {}, {
+    stripeAccount: params.connectedAccountId,
+  });
 }

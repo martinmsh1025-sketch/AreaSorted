@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { Prisma } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import { createProviderNotification } from "@/lib/providers/notifications";
+import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 
 function toJsonValue<T>(value: T) {
   return JSON.parse(JSON.stringify(value));
@@ -47,6 +48,8 @@ async function syncAccountUpdated(event: Stripe.Event) {
 async function syncPaymentIntent(event: Stripe.Event) {
   const prisma = getPrisma();
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
+  const isCaptured = event.type === "payment_intent.succeeded";
+  const isAuthorised = event.type === "payment_intent.amount_capturable_updated" || paymentIntent.status === "requires_capture";
 
   let record = await prisma.paymentRecord.findFirst({
     where: { stripePaymentIntentId: paymentIntent.id },
@@ -61,7 +64,7 @@ async function syncPaymentIntent(event: Stripe.Event) {
         bookingId,
         stripeAccountId: typeof event.account === "string" ? event.account : undefined,
         stripePaymentIntentId: paymentIntent.id,
-        paymentState: event.type === "payment_intent.succeeded" ? "PAID" : "FAILED",
+        paymentState: isCaptured ? "PAID" : event.type === "payment_intent.payment_failed" ? "FAILED" : "PENDING",
         grossAmount: (paymentIntent.amount || 0) / 100,
         metadataJson: toJsonValue(paymentIntent.metadata || {}),
       },
@@ -76,21 +79,27 @@ async function syncPaymentIntent(event: Stripe.Event) {
     data: {
       stripeAccountId: typeof event.account === "string" ? event.account : record.stripeAccountId,
       stripePaymentIntentId: paymentIntent.id,
-      paymentState: event.type === "payment_intent.succeeded" ? "PAID" : "FAILED",
+      paymentState: isCaptured ? "PAID" : event.type === "payment_intent.payment_failed" ? "FAILED" : record.paymentState,
       grossAmount: (paymentIntent.amount || 0) / 100,
-      metadataJson: toJsonValue(paymentIntent.metadata || {}),
+      metadataJson: toJsonValue({
+        ...(typeof record.metadataJson === "object" && record.metadataJson !== null ? record.metadataJson : {}),
+        ...(paymentIntent.metadata || {}),
+        authorizationStatus: isAuthorised ? "AUTHORIZED" : isCaptured ? "CAPTURED" : undefined,
+        authorisedAt: isAuthorised ? new Date().toISOString() : undefined,
+        capturedAt: isCaptured ? new Date().toISOString() : undefined,
+      }),
     },
   });
 
   await prisma.booking.update({
     where: { id: updated.bookingId },
     data: {
-      bookingStatus: event.type === "payment_intent.succeeded" ? "PAID" : record.booking.bookingStatus,
+      bookingStatus: isCaptured ? record.booking.bookingStatus : isAuthorised ? "PENDING_ASSIGNMENT" : record.booking.bookingStatus,
     },
   });
 
-  // Generate invoices when payment succeeds
-  if (event.type === "payment_intent.succeeded") {
+  // Generate invoices when payment is captured
+  if (isCaptured) {
     try {
       const { generateInvoicesForBooking } = await import("@/server/services/invoices/generate");
       await generateInvoicesForBooking(updated.bookingId);
@@ -98,36 +107,6 @@ async function syncPaymentIntent(event: Stripe.Event) {
       // Non-critical — invoices can be generated on-demand
     }
 
-    // Send booking confirmation email to the customer
-    try {
-      const { sendBookingConfirmationEmail } = await import("@/lib/notifications/booking-emails");
-      await sendBookingConfirmationEmail(updated.bookingId);
-    } catch {
-      // Non-critical
-    }
-
-    // Notify the assigned provider about the new paid booking
-    try {
-      const booking = await prisma.booking.findUnique({
-        where: { id: updated.bookingId },
-        select: { providerCompanyId: true, servicePostcode: true, scheduledDate: true },
-      });
-      if (booking?.providerCompanyId) {
-        const dateStr = booking.scheduledDate
-          ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-          : "TBC";
-        await createProviderNotification({
-          providerCompanyId: booking.providerCompanyId,
-          type: "NEW_ORDER",
-          title: "New booking received",
-          message: `A new paid booking in ${booking.servicePostcode} for ${dateStr} is waiting for your confirmation.`,
-          link: `/provider/orders/${updated.bookingId}`,
-          bookingId: updated.bookingId,
-        });
-      }
-    } catch {
-      // Non-critical
-    }
   }
 
   return { ignored: false };
@@ -292,11 +271,13 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
     data: {
       stripePaymentIntentId: paymentIntentId,
       stripeAccountId: typeof event.account === "string" ? event.account : record.stripeAccountId,
-      paymentState: session.payment_status === "paid" ? "PAID" : undefined,
+      paymentState: record.paymentState,
       metadataJson: toJsonValue({
         ...(typeof record.metadataJson === "object" && record.metadataJson !== null ? record.metadataJson : {}),
         checkoutSessionStatus: session.status,
         paymentStatus: session.payment_status,
+        authorizationStatus: session.payment_status === "paid" ? "AUTHORIZED" : undefined,
+        authorisedAt: session.payment_status === "paid" ? new Date().toISOString() : undefined,
       }),
     },
   });
@@ -304,16 +285,41 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
   if (session.payment_status === "paid") {
     await prisma.booking.update({
       where: { id: record.bookingId },
-      data: { bookingStatus: "PAID" },
+      data: { bookingStatus: "PENDING_ASSIGNMENT" },
     });
 
-    // Generate invoices for this booking
     try {
-      const { generateInvoicesForBooking } = await import("@/server/services/invoices/generate");
-      await generateInvoicesForBooking(record.bookingId);
+      const { sendBookingConfirmationEmail } = await import("@/lib/notifications/booking-emails");
+      await sendBookingConfirmationEmail(record.bookingId);
     } catch {
-      // Non-critical — invoices can be generated on-demand
+      // Non-critical
     }
+
+    try {
+      const booking = await prisma.booking.findUnique({
+        where: { id: record.bookingId },
+        select: {
+          providerCompanyId: true,
+          servicePostcode: true,
+          scheduledDate: true,
+          quoteRequest: { select: { inputJson: true } },
+        },
+      });
+      if (booking?.providerCompanyId) {
+        const dateStr = booking.scheduledDate
+          ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+          : "TBC";
+        const scheduleOptions = parsePreferredScheduleOptions(booking.quoteRequest?.inputJson);
+        await createProviderNotification({
+          providerCompanyId: booking.providerCompanyId,
+          type: "NEW_ORDER",
+          title: "Booking awaiting confirmation",
+          message: `A new authorised booking in ${booking.servicePostcode} for ${dateStr}${scheduleOptions.length > 1 ? ` (${scheduleOptions.length} date options)` : ""} is waiting for your confirmation.`,
+          link: `/provider/orders/${record.bookingId}`,
+          bookingId: record.bookingId,
+        });
+      }
+    } catch {}
   }
 
   return { ignored: false };
@@ -380,6 +386,7 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
         result = await syncAccountUpdated(event);
         break;
       case "payment_intent.succeeded":
+      case "payment_intent.amount_capturable_updated":
       case "payment_intent.payment_failed":
         result = await syncPaymentIntent(event);
         break;

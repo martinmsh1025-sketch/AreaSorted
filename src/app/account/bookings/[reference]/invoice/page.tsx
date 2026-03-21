@@ -31,7 +31,6 @@ export default async function CustomerInvoicePage({ params }: Props) {
   // Only show invoice for paid/completed bookings
   const invoiceableStatuses = [
     "PAID",
-    "PENDING_ASSIGNMENT",
     "ASSIGNED",
     "IN_PROGRESS",
     "COMPLETED",

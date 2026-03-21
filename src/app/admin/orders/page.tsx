@@ -24,6 +24,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
+  getDisplayPaymentStatus,
+  getPaymentStatusLabel,
+  getPaymentStatusVariant,
+} from "@/lib/payments/display-status";
+import {
   RevenueTrendChart,
   StatusDistributionChart,
   ServiceTypeChart,
@@ -65,22 +70,6 @@ function bookingStatusVariant(
       return "secondary";
     default:
       return "outline";
-  }
-}
-
-function paymentStatusVariant(
-  status: string
-): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "PAID":
-      return "default";
-    case "FAILED":
-    case "CANCELLED":
-      return "destructive";
-    case "PENDING":
-      return "outline";
-    default:
-      return "secondary";
   }
 }
 
@@ -179,8 +168,8 @@ export default async function AdminOrdersPage({
       select: { paymentStatus: true, amount: true },
       orderBy: { createdAt: "desc" as const },
     },
-    paymentRecords: {
-      select: { paymentState: true, grossAmount: true },
+      paymentRecords: {
+      select: { paymentState: true, grossAmount: true, metadataJson: true },
       orderBy: { createdAt: "desc" as const },
     },
     jobs: {
@@ -269,7 +258,11 @@ export default async function AdminOrdersPage({
       const pr = booking.paymentRecords[0];
       const p = booking.payments[0];
       const paymentStatus = pr
-        ? pr.paymentState
+        ? getDisplayPaymentStatus({
+            paymentState: pr.paymentState,
+            metadataJson: pr.metadataJson,
+            bookingStatus: booking.bookingStatus,
+          })
         : p
           ? p.paymentStatus
           : "PENDING";
@@ -289,13 +282,16 @@ export default async function AdminOrdersPage({
 
   function getPaymentStatus(booking: (typeof allBookings)[0]) {
     const pr = booking.paymentRecords[0];
-    if (pr) return pr.paymentState;
+    if (pr) {
+      return getDisplayPaymentStatus({
+        paymentState: pr.paymentState,
+        metadataJson: pr.metadataJson,
+        bookingStatus: booking.bookingStatus,
+      });
+    }
     const p = booking.payments[0];
     if (p) return p.paymentStatus;
-    return booking.bookingStatus === "PAID" ||
-      booking.bookingStatus === "COMPLETED"
-      ? "PAID"
-      : "PENDING";
+    return getDisplayPaymentStatus({ bookingStatus: booking.bookingStatus });
   }
 
   function getJobStatus(booking: (typeof allBookings)[0]) {
@@ -724,12 +720,10 @@ export default async function AdminOrdersPage({
                       </TableCell>
                       <TableCell className="py-2">
                         <Badge
-                          variant={paymentStatusVariant(
-                            getPaymentStatus(booking)
-                          )}
+                          variant={getPaymentStatusVariant(getPaymentStatus(booking))}
                           className="text-xs"
                         >
-                          {getPaymentStatus(booking)}
+                          {getPaymentStatusLabel(getPaymentStatus(booking))}
                         </Badge>
                       </TableCell>
                     </TableRow>
@@ -809,8 +803,8 @@ export default async function AdminOrdersPage({
               >
                 <option value="">All</option>
                 <option value="AWAITING_PAYMENT">Awaiting payment</option>
-                <option value="PAID">Paid</option>
-                <option value="PENDING_ASSIGNMENT">Pending assignment</option>
+                <option value="PAID">Captured</option>
+                <option value="PENDING_ASSIGNMENT">Authorised hold</option>
                 <option value="ASSIGNED">Assigned</option>
                 <option value="IN_PROGRESS">In progress</option>
                 <option value="COMPLETED">Completed</option>
@@ -915,12 +909,10 @@ export default async function AdminOrdersPage({
                       </TableCell>
                       <TableCell className="py-2">
                         <Badge
-                          variant={paymentStatusVariant(
-                            getPaymentStatus(booking)
-                          )}
+                          variant={getPaymentStatusVariant(getPaymentStatus(booking))}
                           className="text-xs"
                         >
-                          {getPaymentStatus(booking)}
+                          {getPaymentStatusLabel(getPaymentStatus(booking))}
                         </Badge>
                       </TableCell>
                       <TableCell className="py-2">

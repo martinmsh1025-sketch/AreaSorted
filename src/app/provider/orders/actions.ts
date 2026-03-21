@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { requireProviderOrdersAccess } from "@/lib/provider-auth";
-import { rematchBookingAfterRejection } from "@/server/services/public/provider-matching";
+import { createProviderNotification } from "@/lib/providers/notifications";
+import { cancelDirectChargePaymentIntent, captureDirectChargePaymentIntent } from "@/lib/stripe/connect";
 
 /**
- * Provider accepts a booking — moves status to ASSIGNED.
+ * Provider accepts a booking — captures authorised funds and moves status to ASSIGNED.
  */
 export async function acceptBookingAction(formData: FormData) {
   const session = await requireProviderOrdersAccess();
@@ -20,15 +21,60 @@ export async function acceptBookingAction(formData: FormData) {
     where: {
       id: bookingId,
       providerCompanyId: session.providerCompany.id,
-      bookingStatus: { in: ["PAID", "PENDING_ASSIGNMENT"] },
+      bookingStatus: { in: ["PENDING_ASSIGNMENT"] },
+    },
+    include: {
+      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      marketplaceProviderCompany: { include: { stripeConnectedAccount: true } },
     },
   });
 
   if (!booking) return;
 
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { bookingStatus: "ASSIGNED" },
+  const paymentRecord = booking.paymentRecords[0];
+  const stripeAccountId = booking.marketplaceProviderCompany?.stripeConnectedAccount?.stripeAccountId;
+
+  if (paymentRecord?.stripePaymentIntentId && stripeAccountId) {
+    await captureDirectChargePaymentIntent({
+      connectedAccountId: stripeAccountId,
+      paymentIntentId: paymentRecord.stripePaymentIntentId,
+    });
+  } else {
+    await prisma.paymentRecord.updateMany({
+      where: { bookingId },
+      data: { paymentState: "PAID" },
+    });
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { bookingStatus: "ASSIGNED" },
+    });
+
+    const latestJob = await tx.job.findFirst({
+      where: { bookingId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (latestJob) {
+      await tx.job.update({
+        where: { id: latestJob.id },
+        data: {
+          jobStatus: "ACCEPTED",
+          acceptedAt: latestJob.acceptedAt ?? new Date(),
+        },
+      });
+    } else {
+      await tx.job.create({
+        data: {
+          bookingId,
+          jobStatus: "ACCEPTED",
+          dispatchRound: 1,
+          acceptedAt: new Date(),
+        },
+      });
+    }
   });
 
   // Notify customer
@@ -39,12 +85,13 @@ export async function acceptBookingAction(formData: FormData) {
 
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);
+  revalidatePath("/account/bookings");
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${bookingId}`);
 }
 
 /**
- * Provider rejects a booking — clears provider link, then attempts
- * automatic re-matching to another provider. Falls back to NO_CLEANER_FOUND
- * if no alternatives are available.
+ * Provider rejects a booking — releases the authorisation and closes the booking.
  */
 export async function rejectBookingAction(formData: FormData) {
   const session = await requireProviderOrdersAccess();
@@ -59,50 +106,70 @@ export async function rejectBookingAction(formData: FormData) {
     where: {
       id: bookingId,
       providerCompanyId: session.providerCompany.id,
-      bookingStatus: { in: ["PAID", "PENDING_ASSIGNMENT"] },
+      bookingStatus: { in: ["PENDING_ASSIGNMENT"] },
     },
-    include: { quoteRequest: true },
+    include: {
+      quoteRequest: true,
+      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      marketplaceProviderCompany: { include: { stripeConnectedAccount: true } },
+    },
   });
 
   if (!booking) return;
 
-  // Unlink provider and record rejection reason
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: {
-      providerCompanyId: null,
-      cancelledByType: "PROVIDER",
-      cancelledReason: reason || "Provider declined the booking",
-    },
-  });
+  const paymentRecord = booking.paymentRecords[0];
+  const stripeAccountId = booking.marketplaceProviderCompany?.stripeConnectedAccount?.stripeAccountId;
 
-  // Attempt to find another provider (excluding the one that just rejected)
-  const categoryKey = booking.quoteRequest?.categoryKey;
-  const postcode = booking.servicePostcode;
-
-  if (categoryKey && postcode) {
-    const rematch = await rematchBookingAfterRejection({
-      bookingId,
-      postcode,
-      categoryKey,
-      excludeProviderIds: [session.providerCompany.id],
-    });
-
-    if (rematch.status === "reassigned") {
-      revalidatePath("/provider/orders");
-      revalidatePath(`/provider/orders/${bookingId}`);
-      return;
+  if (paymentRecord?.stripePaymentIntentId && stripeAccountId) {
+    try {
+      await cancelDirectChargePaymentIntent({
+        connectedAccountId: stripeAccountId,
+        paymentIntentId: paymentRecord.stripePaymentIntentId,
+      });
+    } catch {
+      // Non-critical: cron/admin can reconcile if Stripe cancellation fails.
     }
   }
 
-  // No alternative found — mark as NO_CLEANER_FOUND
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { bookingStatus: "NO_CLEANER_FOUND" },
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        bookingStatus: "NO_CLEANER_FOUND",
+        cancelledByType: "PROVIDER",
+        cancelledReason: reason || "Provider declined the booking",
+      },
+    });
+
+    const latestJob = await tx.job.findFirst({
+      where: { bookingId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (latestJob && latestJob.jobStatus !== "COMPLETED") {
+      await tx.job.update({
+        where: { id: latestJob.id },
+        data: { jobStatus: "CANCELLED_BY_CLEANER" },
+      });
+    }
+    await tx.paymentRecord.updateMany({
+      where: { bookingId },
+      data: { paymentState: "CANCELLED" },
+    });
   });
+
+  try {
+    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    await sendBookingStatusEmail(bookingId, "NO_CLEANER_FOUND");
+  } catch {
+    // Non-critical
+  }
 
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);
+  revalidatePath("/account/bookings");
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${bookingId}`);
 }
 
 /**
@@ -125,9 +192,36 @@ export async function startBookingAction(formData: FormData) {
 
   if (!booking) return;
 
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { bookingStatus: "IN_PROGRESS" },
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { bookingStatus: "IN_PROGRESS" },
+    });
+
+    const latestJob = await tx.job.findFirst({
+      where: { bookingId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (latestJob) {
+      await tx.job.update({
+        where: { id: latestJob.id },
+        data: {
+          startedAt: latestJob.startedAt ?? new Date(),
+          acceptedAt: latestJob.acceptedAt ?? new Date(),
+        },
+      });
+    } else {
+      await tx.job.create({
+        data: {
+          bookingId,
+          jobStatus: "ACCEPTED",
+          dispatchRound: 1,
+          acceptedAt: new Date(),
+          startedAt: new Date(),
+        },
+      });
+    }
   });
 
   // Notify customer
@@ -138,6 +232,9 @@ export async function startBookingAction(formData: FormData) {
 
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);
+  revalidatePath("/account/bookings");
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${bookingId}`);
 }
 
 /**
@@ -160,9 +257,39 @@ export async function completeBookingAction(formData: FormData) {
 
   if (!booking) return;
 
-  await prisma.booking.update({
-    where: { id: bookingId },
-    data: { bookingStatus: "COMPLETED" },
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { bookingStatus: "COMPLETED" },
+    });
+
+    const latestJob = await tx.job.findFirst({
+      where: { bookingId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (latestJob) {
+      await tx.job.update({
+        where: { id: latestJob.id },
+        data: {
+          jobStatus: "COMPLETED",
+          acceptedAt: latestJob.acceptedAt ?? new Date(),
+          startedAt: latestJob.startedAt ?? new Date(),
+          completedAt: new Date(),
+        },
+      });
+    } else {
+      await tx.job.create({
+        data: {
+          bookingId,
+          jobStatus: "COMPLETED",
+          dispatchRound: 1,
+          acceptedAt: new Date(),
+          startedAt: new Date(),
+          completedAt: new Date(),
+        },
+      });
+    }
   });
 
   // Notify customer
@@ -173,4 +300,7 @@ export async function completeBookingAction(formData: FormData) {
 
   revalidatePath("/provider/orders");
   revalidatePath(`/provider/orders/${bookingId}`);
+  revalidatePath("/account/bookings");
+  revalidatePath("/admin/orders");
+  revalidatePath(`/admin/orders/${bookingId}`);
 }
