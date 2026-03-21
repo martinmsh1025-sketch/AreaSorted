@@ -6,6 +6,7 @@ import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
 import { consumeCustomerAuthToken } from "@/lib/customers/auth-tokens";
 import { hashPassword } from "@/lib/security/password";
+import { signSessionValue } from "@/lib/security/session";
 
 export async function resetCustomerPasswordAction(formData: FormData) {
   const token = String(formData.get("token") || "").trim();
@@ -39,7 +40,7 @@ export async function resetCustomerPasswordAction(formData: FormData) {
 
   // Auto-login after password reset
   const cookieStore = await cookies();
-  cookieStore.set(CUSTOMER_SESSION_COOKIE, record.customerId, {
+  cookieStore.set(CUSTOMER_SESSION_COOKIE, signSessionValue(record.customerId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

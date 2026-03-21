@@ -7,6 +7,7 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
+  // @ts-expect-error Prisma 6 seed config — types not yet updated
   seed: {
     command: `node ${path.resolve("prisma/seed.cjs")}`,
   },

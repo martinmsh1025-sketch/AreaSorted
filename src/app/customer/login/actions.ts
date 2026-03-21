@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
 import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
 import { verifyPassword, hashPassword } from "@/lib/security/password";
+import { signSessionValue } from "@/lib/security/session";
 
 export async function customerLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -22,7 +23,7 @@ export async function customerLoginAction(formData: FormData) {
   if (!valid) redirect("/customer/login?error=1");
 
   const cookieStore = await cookies();
-  cookieStore.set(CUSTOMER_SESSION_COOKIE, customer.id, {
+  cookieStore.set(CUSTOMER_SESSION_COOKIE, signSessionValue(customer.id), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -67,7 +68,7 @@ export async function customerRegisterAction(formData: FormData) {
       });
 
       const cookieStore = await cookies();
-      cookieStore.set(CUSTOMER_SESSION_COOKIE, existing.id, {
+      cookieStore.set(CUSTOMER_SESSION_COOKIE, signSessionValue(existing.id), {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.NODE_ENV === "production",
@@ -81,12 +82,12 @@ export async function customerRegisterAction(formData: FormData) {
   }
 
   const passwordHash = await hashPassword(password);
-  const customer = await prisma.customer.create({
+  const newCustomer = await prisma.customer.create({
     data: { firstName, lastName, email, phone, passwordHash },
   });
 
   const cookieStore = await cookies();
-  cookieStore.set(CUSTOMER_SESSION_COOKIE, customer.id, {
+  cookieStore.set(CUSTOMER_SESSION_COOKIE, signSessionValue(newCustomer.id), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

@@ -50,8 +50,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       redirectUrl: `/quote/${result.quoteRequest.reference}`,
       reference: result.quoteRequest.reference,
-      multipleProviders: result.multipleProviders,
-      optionCount: result.quoteRequest.quoteOptions.length,
     });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create quote" }, { status: 500 });

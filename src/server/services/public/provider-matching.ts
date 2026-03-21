@@ -66,7 +66,7 @@ export async function matchProvidersForPublicQuote(
     const company = row.providerCompany;
     return {
       providerCompanyId: company.id,
-      providerName: company.tradingName || company.legalName || company.contactEmail,
+      providerName: company.tradingName || company.legalName || "Service provider",
       postcodePrefix,
       paymentReady: Boolean(
         company.stripeConnectedAccount?.chargesEnabled &&
@@ -100,7 +100,11 @@ export async function matchProvidersForPublicQuote(
     return { status: "no_coverage" };
   }
 
-  return { status: "matched", providers };
+  // Single-provider model: pick the best provider (prefer payment-ready)
+  const paymentReady = providers.filter((p) => p.paymentReady);
+  const chosen = paymentReady.length ? paymentReady[0] : providers[0];
+
+  return { status: "matched", providers: [chosen] };
 }
 
 /**

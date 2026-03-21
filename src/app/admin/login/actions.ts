@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { ADMIN_SESSION_COOKIE } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/security/password";
+import { signSessionValue } from "@/lib/security/session";
 
 export async function adminLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -38,7 +39,7 @@ export async function adminLoginAction(formData: FormData) {
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(ADMIN_SESSION_COOKIE, user.id, {
+  cookieStore.set(ADMIN_SESSION_COOKIE, signSessionValue(user.id), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

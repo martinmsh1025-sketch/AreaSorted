@@ -4,12 +4,16 @@ import { getPrisma } from "@/lib/db";
 import { canProviderAccessAccount, canProviderAccessDashboard, canProviderAccessOnboarding, canProviderAccessOrders, canProviderAccessPricing, canProviderAccessStripe, canProviderViewOrders } from "@/lib/providers/status";
 import { getProviderDefaultRoute } from "@/lib/providers/portal-routing";
 import { findProviderInviteByEmail, getLatestProviderInviteForCompany } from "@/lib/providers/repository";
+import { verifySessionValue } from "@/lib/security/session";
 
 export const PROVIDER_SESSION_COOKIE = "areasorted_provider_session";
 
 export async function getProviderSession() {
   const cookieStore = await cookies();
-  const userId = cookieStore.get(PROVIDER_SESSION_COOKIE)?.value || null;
+  const raw = cookieStore.get(PROVIDER_SESSION_COOKIE)?.value || null;
+  if (!raw) return null;
+
+  const userId = verifySessionValue(raw);
   if (!userId) return null;
 
   const prisma = getPrisma();

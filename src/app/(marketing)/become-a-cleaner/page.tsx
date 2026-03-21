@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Become a Provider — Join AreaSorted",
+  description:
+    "Apply to join AreaSorted as a self-employed service provider in London. Structured onboarding, verified profiles, and job matching by area and availability.",
+};
+
 export default function BecomeCleanerPage() {
   return (
     <main>
@@ -12,7 +20,7 @@ export default function BecomeCleanerPage() {
               AreaSorted reviews documents, confirms work eligibility, sends contracts via DocuSign, and then matches jobs by availability, area, and score.
             </p>
             <div className="button-row">
-              <a className="button button-primary" href="/cleaner/apply">Start Application</a>
+              <a className="button button-primary" href="/contact">Enquire About Joining</a>
               <a className="button button-secondary" href="/contact">Contact Recruitment Support</a>
             </div>
           </div>

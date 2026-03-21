@@ -8,6 +8,7 @@ import { getProviderAuthToken, consumeProviderAuthToken } from "@/lib/providers/
 import { getProviderDefaultRoute } from "@/lib/providers/portal-routing";
 import { setProviderPasswordSet } from "@/lib/providers/repository";
 import { hashPassword } from "@/lib/security/password";
+import { signSessionValue } from "@/lib/security/session";
 
 export async function setProviderPasswordAction(formData: FormData) {
   const token = String(formData.get("token") || "").trim();
@@ -111,7 +112,7 @@ export async function setProviderPasswordAction(formData: FormData) {
   }
 
   const cookieStore = await cookies();
-  cookieStore.set(PROVIDER_SESSION_COOKIE, userId, {
+  cookieStore.set(PROVIDER_SESSION_COOKIE, signSessionValue(userId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

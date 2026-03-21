@@ -9,10 +9,9 @@ const customerLinks = [
 ];
 
 const cleanerLinks = [
-  ["/become-a-cleaner", "Become a Cleaner"],
-  ["/cleaner/apply", "Cleaner Application"],
-  ["/cleaner/faq", "Cleaner FAQ"],
-  ["/cleaner-terms", "Cleaner Terms"],
+  ["/become-a-cleaner", "Become a Provider"],
+  ["/contact", "Provider Enquiries"],
+  ["/cleaner-terms", "Provider Terms"],
 ];
 
 const legalLinks = [
@@ -24,9 +23,8 @@ const legalLinks = [
 
 const sitemapLinks = [
   ["/about", "About Us"],
-  ["/services", "Areas We Cover"],
-  ["/sitemap", "Site Map"],
-  ["/services", "London Service Pages"],
+  ["/services", "All Services"],
+  ["/faq", "Help Centre"],
 ];
 
 function LinkList({ items }: { items: string[][] }) {
@@ -64,7 +62,7 @@ export function SiteFooter() {
             <LinkList items={customerLinks} />
           </div>
           <div className="footer-column">
-            <div className="footer-title">Cleaners</div>
+            <div className="footer-title">Providers</div>
             <LinkList items={cleanerLinks} />
           </div>
           <div className="footer-column">

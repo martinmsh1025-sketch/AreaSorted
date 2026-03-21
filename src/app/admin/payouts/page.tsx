@@ -99,7 +99,7 @@ export default async function AdminPayoutsPage({
         lt: dateTo,
       },
       bookingStatus: { in: payoutStatuses as any },
-      marketplaceProviderCompanyId: providerFilter ? providerFilter : undefined,
+      providerCompanyId: providerFilter ? providerFilter : undefined,
     },
     include: {
       customer: { select: { firstName: true, lastName: true } },

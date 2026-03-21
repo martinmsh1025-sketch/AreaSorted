@@ -10,16 +10,18 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      customer: true,
-      providerCompany: true,
+      customer: { select: { firstName: true, email: true } },
+      marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
       priceSnapshot: true,
+      quoteRequest: { select: { reference: true, serviceKey: true } },
     },
   });
 
   if (!booking || !booking.customer) return;
 
   const customer = booking.customer;
-  const provider = booking.providerCompany;
+  const provider = booking.marketplaceProviderCompany;
+  const reference = booking.quoteRequest?.reference || booking.id.slice(-8).toUpperCase();
   const dateStr = booking.scheduledDate
     ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", {
         weekday: "long",
@@ -28,13 +30,13 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
         year: "numeric",
       })
     : "To be confirmed";
-  const timeStr = booking.scheduledTimeSlot || "To be confirmed";
-  const serviceLabel = booking.serviceLabel || booking.serviceKey || "Cleaning service";
+  const timeStr = booking.scheduledStartTime || "To be confirmed";
+  const serviceLabel = booking.quoteRequest?.serviceKey || "Service";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const bookingUrl = `${appUrl}/account/bookings/${booking.reference}`;
+  const bookingUrl = `${appUrl}/account/bookings/${reference}`;
 
-  const totalAmount = booking.priceSnapshot?.customerTotalPrice
-    ? `£${Number(booking.priceSnapshot.customerTotalPrice).toFixed(2)}`
+  const totalAmount = booking.priceSnapshot?.customerTotalAmount
+    ? `£${Number(booking.priceSnapshot.customerTotalAmount).toFixed(2)}`
     : "";
 
   const text = [
@@ -42,13 +44,13 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
     ``,
     `Your booking has been confirmed! Here are the details:`,
     ``,
-    `Reference: ${booking.reference}`,
+    `Reference: ${reference}`,
     `Service: ${serviceLabel}`,
     `Date: ${dateStr}`,
     `Time: ${timeStr}`,
     `Location: ${booking.servicePostcode || ""}`,
     totalAmount ? `Total paid: ${totalAmount}` : "",
-    provider ? `Provider: ${provider.tradingName}` : "",
+    provider ? `Provider: ${provider.tradingName || provider.legalName || "Your assigned provider"}` : "",
     ``,
     `You can view your booking and track its status here:`,
     bookingUrl,
@@ -63,7 +65,7 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
   try {
     await sendTransactionalEmail({
       to: customer.email,
-      subject: `Booking confirmed — ${booking.reference}`,
+      subject: `Booking confirmed — ${reference}`,
       text,
     });
   } catch {
@@ -83,33 +85,37 @@ export async function sendBookingStatusEmail(
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      customer: true,
-      providerCompany: true,
+      customer: { select: { firstName: true, email: true } },
+      marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
+      quoteRequest: { select: { reference: true, serviceKey: true } },
     },
   });
 
   if (!booking || !booking.customer) return;
 
   const customer = booking.customer;
-  const provider = booking.providerCompany;
+  const provider = booking.marketplaceProviderCompany;
+  const reference = booking.quoteRequest?.reference || booking.id.slice(-8).toUpperCase();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const bookingUrl = `${appUrl}/account/bookings/${booking.reference}`;
-  const serviceLabel = booking.serviceLabel || booking.serviceKey || "Cleaning service";
+  const bookingUrl = `${appUrl}/account/bookings/${reference}`;
+  const serviceLabel = booking.quoteRequest?.serviceKey || "Service";
+
+  const providerName = provider?.tradingName || provider?.legalName || "Your assigned provider";
 
   let subject = "";
   let bodyLines: string[] = [];
 
   switch (newStatus) {
     case "ASSIGNED":
-      subject = `Your booking has been assigned — ${booking.reference}`;
+      subject = `Your booking has been assigned — ${reference}`;
       bodyLines = [
         `Hi ${customer.firstName},`,
         ``,
         `Great news! A provider has been assigned to your booking.`,
         ``,
-        `Reference: ${booking.reference}`,
+        `Reference: ${reference}`,
         `Service: ${serviceLabel}`,
-        provider ? `Provider: ${provider.tradingName}` : "",
+        provider ? `Provider: ${providerName}` : "",
         ``,
         `You can view the full details here:`,
         bookingUrl,
@@ -117,28 +123,28 @@ export async function sendBookingStatusEmail(
       break;
 
     case "IN_PROGRESS":
-      subject = `Your service is in progress — ${booking.reference}`;
+      subject = `Your service is in progress — ${reference}`;
       bodyLines = [
         `Hi ${customer.firstName},`,
         ``,
         `Your ${serviceLabel} service is now in progress.`,
         ``,
-        `Reference: ${booking.reference}`,
-        provider ? `Provider: ${provider.tradingName}` : "",
+        `Reference: ${reference}`,
+        provider ? `Provider: ${providerName}` : "",
         ``,
         bookingUrl,
       ];
       break;
 
     case "COMPLETED":
-      subject = `Service completed — ${booking.reference}`;
+      subject = `Service completed — ${reference}`;
       bodyLines = [
         `Hi ${customer.firstName},`,
         ``,
         `Your ${serviceLabel} service has been completed.`,
         ``,
-        `Reference: ${booking.reference}`,
-        provider ? `Provider: ${provider.tradingName}` : "",
+        `Reference: ${reference}`,
+        provider ? `Provider: ${providerName}` : "",
         ``,
         `We hope everything went well! You can view the details here:`,
         bookingUrl,
@@ -148,13 +154,13 @@ export async function sendBookingStatusEmail(
       break;
 
     case "CANCELLED":
-      subject = `Booking cancelled — ${booking.reference}`;
+      subject = `Booking cancelled — ${reference}`;
       bodyLines = [
         `Hi ${customer.firstName},`,
         ``,
         `Your booking has been cancelled.`,
         ``,
-        `Reference: ${booking.reference}`,
+        `Reference: ${reference}`,
         `Service: ${serviceLabel}`,
         ``,
         `If you have any questions about this cancellation, please contact us.`,

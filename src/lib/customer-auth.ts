@@ -1,12 +1,16 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
+import { verifySessionValue } from "@/lib/security/session";
 
 export const CUSTOMER_SESSION_COOKIE = "areasorted_customer_session";
 
 export async function getCustomerSession() {
   const cookieStore = await cookies();
-  const customerId = cookieStore.get(CUSTOMER_SESSION_COOKIE)?.value || null;
+  const raw = cookieStore.get(CUSTOMER_SESSION_COOKIE)?.value || null;
+  if (!raw) return null;
+
+  const customerId = verifySessionValue(raw);
   if (!customerId) return null;
 
   const prisma = getPrisma();

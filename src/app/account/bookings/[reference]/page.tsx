@@ -4,6 +4,7 @@ import { requireCustomerSession } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
 import { CustomerCounterOfferBanner } from "@/components/customer/counter-offer-response";
 import { CancelBookingSection } from "./cancel-booking-section";
+import { RescheduleBookingSection } from "./reschedule-booking-section";
 
 type BookingDetailPageProps = {
   params: Promise<{ reference: string }>;
@@ -45,6 +46,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
 
   const showInvoice = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
   const canCancel = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
+  const canReschedule = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
 
   // Prepare counter offers for client component
   const counterOffers = booking.counterOffers.map((co) => ({
@@ -147,13 +149,22 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
 
         <div className="panel card">
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Manage booking</h2>
-          {canCancel ? (
+          {(canCancel || canReschedule) ? (
             <>
               <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.75rem" }}>
-                Need to cancel? You can cancel this booking below. For other changes, contact our support team.
+                You can reschedule or cancel this booking below. For other changes, contact our support team.
               </p>
               <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
-                <CancelBookingSection bookingId={booking.id} />
+                {canReschedule && (
+                  <RescheduleBookingSection
+                    bookingId={booking.id}
+                    currentDate={booking.scheduledDate.toISOString().split("T")[0]}
+                    currentTime={booking.scheduledStartTime}
+                  />
+                )}
+                {canCancel && (
+                  <CancelBookingSection bookingId={booking.id} />
+                )}
                 <Link href="/contact" className="button button-secondary">
                   Contact support
                 </Link>

@@ -6,6 +6,7 @@ import { PROVIDER_SESSION_COOKIE } from "@/lib/provider-auth";
 import { getProviderDefaultRoute } from "@/lib/providers/portal-routing";
 import { findProviderCompanyByEmail, findProviderInviteByEmail } from "@/lib/providers/repository";
 import { verifyPassword } from "@/lib/security/password";
+import { signSessionValue } from "@/lib/security/session";
 
 export async function providerLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
@@ -26,7 +27,7 @@ export async function providerLoginAction(formData: FormData) {
   if (!valid) redirect("/provider/login?error=1");
 
   const cookieStore = await cookies();
-  cookieStore.set(PROVIDER_SESSION_COOKIE, provider.user.id, {
+  cookieStore.set(PROVIDER_SESSION_COOKIE, signSessionValue(provider.user.id), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
