@@ -20,8 +20,8 @@ export default async function CustomerResetPasswordPage({ params, searchParams }
   if (!record) {
     return (
       <main className="section">
-        <div className="container" style={{ maxWidth: 420 }}>
-          <div className="panel card" style={{ padding: "2rem" }}>
+        <div className="container auth-page-container">
+          <div className="panel card auth-page-card">
             <div className="eyebrow" style={{ textAlign: "center" }}>Customer account</div>
             <h1 className="title" style={{ marginTop: "0.4rem", fontSize: "1.5rem", textAlign: "center" }}>
               Reset link expired
@@ -41,8 +41,8 @@ export default async function CustomerResetPasswordPage({ params, searchParams }
 
   return (
     <main className="section">
-      <div className="container" style={{ maxWidth: 420 }}>
-        <div className="panel card" style={{ padding: "2rem" }}>
+      <div className="container auth-page-container">
+        <div className="panel card auth-page-card">
           <div className="eyebrow" style={{ textAlign: "center" }}>Customer account</div>
           <h1 className="title" style={{ marginTop: "0.4rem", fontSize: "1.5rem", textAlign: "center" }}>
             Reset your password

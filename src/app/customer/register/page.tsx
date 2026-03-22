@@ -23,8 +23,8 @@ export default async function CustomerRegisterPage({ searchParams }: CustomerReg
 
   return (
     <main className="section">
-      <div className="container" style={{ maxWidth: 420 }}>
-        <div className="panel card" style={{ padding: "2rem" }}>
+      <div className="container auth-page-container">
+        <div className="panel card auth-page-card">
           <div className="eyebrow" style={{ textAlign: "center" }}>Customer account</div>
           <h1 className="title" style={{ marginTop: "0.4rem", fontSize: "1.5rem", textAlign: "center" }}>
             Create account
@@ -34,7 +34,7 @@ export default async function CustomerRegisterPage({ searchParams }: CustomerReg
           </p>
 
           <form action={customerRegisterAction} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className="auth-two-col-fields">
               <label className="quote-field-stack">
                 <span>First name</span>
                 <input type="text" name="firstName" placeholder="Jane" required />

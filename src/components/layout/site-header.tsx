@@ -1,6 +1,7 @@
 import { AreaSortedLogo } from "@/components/branding/areasorted-logo";
 import { getCustomerSession } from "@/lib/customer-auth";
 import Link from "next/link";
+import { SiteHeaderMobileNav } from "@/components/layout/site-header-mobile-nav";
 
 const navItems = [
   { href: "/services", label: "Services", icon: "spark" },
@@ -83,6 +84,8 @@ function NavIcon({ icon }: { icon: string }) {
 
 export async function SiteHeader() {
   const customer = await getCustomerSession();
+  const accountHref = customer ? "/account" : "/customer/login";
+  const accountLabel = customer ? "My Account" : "Login";
 
   return (
     <header className="site-header-shell">
@@ -91,7 +94,7 @@ export async function SiteHeader() {
           <AreaSortedLogo compact />
         </Link>
 
-        <nav className="site-header-nav">
+        <nav className="site-header-nav site-header-nav-desktop">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} className="site-header-link">
               <span style={{ color: "var(--color-brand)", display: "inline-flex", alignItems: "center" }}>
@@ -117,6 +120,12 @@ export async function SiteHeader() {
             </Link>
           )}
         </nav>
+
+        <SiteHeaderMobileNav
+          navItems={navItems.map(({ href, label }) => ({ href, label }))}
+          accountHref={accountHref}
+          accountLabel={accountLabel}
+        />
       </div>
     </header>
   );

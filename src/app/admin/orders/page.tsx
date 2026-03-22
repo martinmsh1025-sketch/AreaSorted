@@ -830,7 +830,56 @@ export default async function AdminOrdersPage({
 
           <Separator className="mb-4" />
 
-          <div className="overflow-x-auto">
+          <div className="space-y-3 md:hidden">
+            {filteredBookings.length > 0 ? (
+              filteredBookings.map((booking) => (
+                <div key={booking.id} className="rounded-xl border p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <Link href={`/admin/orders/${booking.id}`} className="font-medium text-primary underline-offset-4 hover:underline">
+                        {getBookingRef(booking)}
+                      </Link>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {booking.customer.firstName} {booking.customer.lastName}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{booking.customer.email}</div>
+                    </div>
+                    <Badge variant={bookingStatusVariant(booking.bookingStatus)} className="text-xs">
+                      {booking.bookingStatus}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Service</div>
+                      <div className="mt-1 font-medium">{formatService(booking.serviceType)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Date</div>
+                      <div className="mt-1 font-medium">{formatDate(booking.scheduledDate)} {booking.scheduledStartTime ? `· ${booking.scheduledStartTime}` : ""}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Amount</div>
+                      <div className="mt-1 font-medium">&pound;{dec(booking.totalAmount).toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Payment</div>
+                      <div className="mt-1"><Badge variant={getPaymentStatusVariant(getPaymentStatus(booking))} className="text-xs">{getPaymentStatusLabel(getPaymentStatus(booking))}</Badge></div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Provider</div>
+                      <div className="mt-1 font-medium">{getProviderName(booking)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Job</div>
+                      <div className="mt-1"><Badge variant={bookingStatusVariant(getJobStatus(booking))} className="text-xs">{getJobStatus(booking)}</Badge></div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : null}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -143,7 +143,7 @@ export function AdminShell({ children, adminEmail, logoutAction }: AdminShellPro
             </Badge>
           </div>
         </header>
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 sm:p-6">
           {children}
         </main>
       </SidebarInset>

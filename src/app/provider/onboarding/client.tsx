@@ -352,7 +352,7 @@ export function ProviderOnboardingClient({
       {/* ─── Main content grid ─── */}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* ─── Form area ─── */}
-        <form id="provider-onboarding-form" action={saveAction}>
+        <form id="provider-onboarding-form" action={saveAction} className="order-2 lg:order-1">
           <input type="hidden" name="currentStep" value={String(step)} />
           <input type="hidden" name="businessType" value={businessType} />
           {selectedCategories.map((category) => (
@@ -889,7 +889,7 @@ export function ProviderOnboardingClient({
         </form>
 
         {/* ─── Sidebar ─── */}
-        <div className="space-y-4">
+        <div className="order-1 space-y-4 lg:order-2">
           {/* Checklist */}
           <Card>
             <CardHeader>

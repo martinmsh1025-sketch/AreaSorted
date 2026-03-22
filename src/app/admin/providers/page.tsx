@@ -204,7 +204,54 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
           <CardDescription>A clear list of every provider account, with business type, readiness, and quick actions.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="space-y-3 md:hidden">
+            {filteredRows.map((row) => (
+              <div key={row.provider.id} className="rounded-xl border p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-medium text-foreground">{row.provider.tradingName || row.provider.legalName || row.provider.contactEmail}</div>
+                    <div className="text-sm text-muted-foreground">{row.provider.contactEmail}</div>
+                    {row.provider.phone && <div className="text-sm text-muted-foreground">{row.provider.phone}</div>}
+                  </div>
+                  <Badge variant={statusBadgeVariant[row.provider.status] ?? "secondary"}>
+                    {providerStatusLabels[row.provider.status] ?? row.provider.status}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Business type</div>
+                    <div className="mt-1 font-medium">{row.businessType === "sole_trader" ? "Sole trader" : "Company"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Stripe</div>
+                    <div className={`mt-1 font-medium ${row.stripeReady ? "text-green-600" : "text-destructive"}`}>{row.stripeReady ? "Ready" : "Not ready"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Coverage</div>
+                    <div className="mt-1 font-medium">{row.coverageCount} prefixes</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Checklist</div>
+                    <div className="mt-1 font-medium">{row.completedCount}/{row.checklist.items.length}</div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Link href={`/admin/provider/${row.provider.id}`} className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90">
+                    Open review
+                  </Link>
+                  <form action={toggleProviderStatusAction}>
+                    <input type="hidden" name="providerCompanyId" value={row.provider.id} />
+                    <input type="hidden" name="nextStatus" value={row.provider.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED"} />
+                    <button className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground" type="submit">
+                      {row.provider.status === "SUSPENDED" ? "Activate" : "Suspend"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[1100px] text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
