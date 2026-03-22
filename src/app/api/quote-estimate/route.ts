@@ -84,6 +84,12 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error && error.message.includes("not found")) {
       return NextResponse.json({ status: "no_pricing" }, { status: 404 });
     }
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { status: "invalid_input", error: error.issues[0]?.message || "Please check your quote details." },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
       { status: "error", error: error instanceof Error ? error.message : "Unable to estimate price" },
       { status: 500 },

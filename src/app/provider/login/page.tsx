@@ -15,6 +15,13 @@ export default async function ProviderLoginPage({ searchParams }: ProviderLoginP
   const params = (await searchParams) ?? {};
   const error = typeof params.error === "string" ? params.error : "";
   const hasError = Boolean(error);
+  const errorMessage = error === "invite_not_completed"
+    ? "Your invite exists, but setup is not finished. Open your invite link, verify email, and create your password first."
+    : error === "invalid_reset_token" || error === "invalid_setup_token"
+      ? "This password link is invalid or has expired. Request a fresh password email to continue."
+      : hasError
+        ? "Incorrect email or password."
+        : "";
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
@@ -42,11 +49,7 @@ export default async function ProviderLoginPage({ searchParams }: ProviderLoginP
               {hasError && (
                 <div className="flex items-start gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/50 dark:text-red-300">
                   <AlertCircle className="mt-0.5 size-4 shrink-0" />
-                  <span>
-                    {error === "invite_not_completed"
-                      ? "Your invite exists, but setup is not finished. Open your invite link, verify email, and create your password first."
-                      : "Incorrect email or password."}
-                  </span>
+                  <span>{errorMessage}</span>
                 </div>
               )}
 

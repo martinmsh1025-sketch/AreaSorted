@@ -11,6 +11,12 @@ const CANCELLABLE_STATUSES = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"];
 
 /** Statuses from which a customer can self-reschedule */
 const RESCHEDULABLE_STATUSES = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"];
+const RESCHEDULE_TIME_SLOTS = new Set([
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+  "17:00", "17:30", "18:00",
+]);
 
 /**
  * Customer cancels their own booking.
@@ -98,8 +104,7 @@ export async function rescheduleBookingAction(formData: FormData) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   if (newDate < tomorrow) return { error: "New date must be at least tomorrow" };
 
-  // Validate time format (HH:MM)
-  if (!/^\d{2}:\d{2}$/.test(newTime)) return { error: "Invalid time format" };
+  if (!RESCHEDULE_TIME_SLOTS.has(newTime)) return { error: "Please select a valid time slot" };
 
   const prisma = getPrisma();
 

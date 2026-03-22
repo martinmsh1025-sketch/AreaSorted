@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
       reference: result.quoteRequest.reference,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.issues[0]?.message || "Please check your quote details and try again." }, { status: 400 });
+    }
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create quote" }, { status: 500 });
   }
 }

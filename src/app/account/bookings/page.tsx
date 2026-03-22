@@ -20,6 +20,8 @@ export default async function AccountBookingsPage() {
     },
   });
 
+  const pendingOfferCount = bookings.filter((booking) => booking.counterOffers.length > 0).length;
+
   return (
     <main className="section">
       <div className="container" style={{ maxWidth: 900 }}>
@@ -34,6 +36,14 @@ export default async function AccountBookingsPage() {
           <h1 className="title" style={{ marginTop: "0.3rem", fontSize: "1.5rem", marginBottom: "1.25rem" }}>
             All bookings
           </h1>
+          {pendingOfferCount > 0 && (
+            <div style={{ marginBottom: "1.25rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "linear-gradient(135deg, #fff0f0 0%, #fff 100%)", border: "1px solid rgba(217,37,42,0.18)" }}>
+              <strong style={{ display: "block", marginBottom: "0.3rem" }}>Action needed</strong>
+              <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.92rem", lineHeight: 1.55 }}>
+                {pendingOfferCount} booking{pendingOfferCount === 1 ? "" : "s"} {pendingOfferCount === 1 ? "has" : "have"} a pending provider counter offer. Open the highlighted booking to accept or decline it.
+              </p>
+            </div>
+          )}
 
           {bookings.length === 0 ? (
             <p style={{ color: "var(--color-text-muted)", fontSize: "0.95rem" }}>
@@ -118,6 +128,11 @@ export default async function AccountBookingsPage() {
                       <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.1rem" }}>
                         Payment: {getPaymentStatusLabel(payment).toLowerCase()}
                       </div>
+                      {hasPendingOffer && (
+                        <div style={{ fontSize: "0.78rem", color: "var(--color-brand, #d9252a)", fontWeight: 700, marginTop: "0.25rem" }}>
+                          Open to respond
+                        </div>
+                      )}
                     </div>
                   </Link>
                 );

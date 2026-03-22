@@ -1,7 +1,18 @@
 import type { MetadataRoute } from "next";
 import { boroughPages } from "@/lib/seo/borough-pages";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://areasorted.com";
+function getSafeBaseUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "https://areasorted.com";
+
+  try {
+    return new URL(raw).toString().replace(/\/$/, "");
+  } catch {
+    return "https://areasorted.com";
+  }
+}
+
+const BASE_URL = getSafeBaseUrl();
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

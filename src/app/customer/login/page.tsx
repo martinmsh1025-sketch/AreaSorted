@@ -13,6 +13,11 @@ export default async function CustomerLoginPage({ searchParams }: CustomerLoginP
 
   const params = (await searchParams) ?? {};
   const error = typeof params.error === "string" ? params.error : "";
+  const errorMessage = error === "invalid_reset_token"
+    ? "This reset link is invalid or has expired. Request a new password reset email."
+    : error
+      ? "Incorrect email or password."
+      : "";
 
   return (
     <main className="section">
@@ -37,9 +42,9 @@ export default async function CustomerLoginPage({ searchParams }: CustomerLoginP
               <input type="password" name="password" placeholder="Your password" required />
             </label>
 
-            {error && (
+            {errorMessage && (
               <p style={{ color: "var(--color-error)", fontSize: "0.9rem", margin: 0 }}>
-                Incorrect email or password.
+                {errorMessage}
               </p>
             )}
 

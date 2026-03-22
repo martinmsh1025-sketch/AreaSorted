@@ -266,9 +266,10 @@ export default function HomePage() {
       setAddresses(data.results || []);
       setAddressId("");
       setSubmitMessage(
-        data.results?.length
-          ? data.instructionsTxt || "Select your address from the list."
-          : "No addresses found. You can use manual address instead.",
+        data.instructionsTxt ||
+          (data.results?.length
+            ? "Select your address from the list."
+            : "No addresses found. You can use manual address instead."),
       );
     } catch {
       setAddresses([]);

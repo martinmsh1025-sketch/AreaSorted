@@ -65,6 +65,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   }));
 
   const hasPendingOffer = counterOffers.some((o) => o.status === "PENDING");
+  const formattedDate = booking.scheduledDate.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <main className="section">
@@ -91,6 +97,9 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             <CustomerCounterOfferBanner
               offers={counterOffers}
               providerName={providerName}
+              currentPrice={booking.priceSnapshot ? Number(booking.priceSnapshot.customerTotalAmount) : null}
+              currentDate={formattedDate}
+              currentTime={booking.scheduledStartTime}
             />
           </div>
         )}
@@ -100,7 +109,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           <div className="quote-summary-list">
             <div><span>Status</span><strong>{status}</strong></div>
             <div><span>Payment</span><strong>{getPaymentStatusLabel(payment)}</strong></div>
-            <div><span>Date</span><strong>{booking.scheduledDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</strong></div>
+            <div><span>Date</span><strong>{formattedDate}</strong></div>
             <div><span>Time</span><strong>{booking.scheduledStartTime}</strong></div>
             <div><span>Duration</span><strong>Approx. {Number(booking.durationHours) <= 1 ? "1-2" : `${Number(booking.durationHours)}-${Number(booking.durationHours) + 1}`} hours</strong></div>
             <div><span>Provider</span><strong>{providerName}</strong></div>
@@ -159,6 +168,14 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
 
         <div className="panel card">
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Manage booking</h2>
+          {hasPendingOffer && (
+            <div style={{ marginBottom: "1rem", padding: "0.85rem 1rem", borderRadius: "0.75rem", background: "linear-gradient(135deg, #fff0f0 0%, #fff 100%)", border: "1px solid rgba(217,37,42,0.18)" }}>
+              <strong style={{ display: "block", marginBottom: "0.35rem" }}>Provider response needed</strong>
+              <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.55 }}>
+                You have a pending counter offer above. Accept it to update this booking, or decline it to keep your current arrangement.
+              </p>
+            </div>
+          )}
           {(canCancel || canReschedule) ? (
             <>
               <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.75rem" }}>

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getProviderAuthToken } from "@/lib/providers/auth-tokens";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { setProviderPasswordAction } from "./actions";
@@ -23,7 +23,30 @@ export default async function ProviderResetPasswordPage({ params, searchParams }
     purpose: mode === "reset" ? "PASSWORD_RESET" : "PASSWORD_SETUP",
   });
 
-  if (!record) notFound();
+  if (!record) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="w-full max-w-sm space-y-6">
+          <Card>
+            <CardContent className="space-y-4 pt-6 text-center">
+              <h1 className="text-xl font-semibold tracking-tight">Password link expired</h1>
+              <p className="text-sm text-muted-foreground">
+                This password link is invalid or has expired. Request a fresh password email to continue.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Link href="/provider/forgot-password" className="inline-flex h-9 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow hover:bg-blue-700">
+                  Request new reset link
+                </Link>
+                <Link href="/provider/login" className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                  Back to sign in
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
@@ -56,7 +79,7 @@ export default async function ProviderResetPasswordPage({ params, searchParams }
                 <Input id="confirmPassword" type="password" name="confirmPassword" placeholder="Re-enter password" autoComplete="new-password" required />
               </div>
 
-              <p className="text-xs text-muted-foreground">Use at least 8 characters with letters and numbers.</p>
+              <p className="text-xs text-muted-foreground">Use at least 8 characters.</p>
 
               {error === "password_too_short" && (
                 <div className="flex items-start gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/50 dark:text-red-300">

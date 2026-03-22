@@ -7,14 +7,19 @@ export function CancelBookingSection({ bookingId }: { bookingId: string }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleCancel() {
+    setError(null);
     setSubmitting(true);
     const fd = new FormData();
     fd.set("bookingId", bookingId);
     fd.set("reason", reason);
-    await cancelBookingAction(fd);
-    // Page will revalidate and re-render
+    const result = await cancelBookingAction(fd);
+    if (result?.error) {
+      setError(result.error);
+      setSubmitting(false);
+    }
   }
 
   if (!showConfirm) {
@@ -53,6 +58,11 @@ export function CancelBookingSection({ bookingId }: { bookingId: string }) {
           style={{ resize: "vertical" }}
         />
       </label>
+      {error && (
+        <p style={{ color: "var(--color-error, #dc2626)", fontSize: "0.85rem", margin: "0 0 0.75rem" }}>
+          {error}
+        </p>
+      )}
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <button
           type="button"

@@ -11,7 +11,7 @@ export async function requestProviderPasswordResetAction(formData: FormData) {
 
   const provider = await findProviderCompanyByEmail(email);
   if (!provider?.userId) {
-    redirect("/provider/forgot-password?setupRequired=1");
+    redirect("/provider/forgot-password?sent=1");
   }
 
   const token = await createProviderAuthToken({

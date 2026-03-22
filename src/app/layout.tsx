@@ -4,7 +4,18 @@ import "./globals.css";
 import { NavigationLoadingOverlay } from "@/components/shared/navigation-loading-overlay";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://areasorted.com";
+function getSafeSiteUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "https://areasorted.com";
+
+  try {
+    return new URL(raw).toString().replace(/\/$/, "");
+  } catch {
+    return "https://areasorted.com";
+  }
+}
+
+const siteUrl = getSafeSiteUrl();
 
 export const metadata: Metadata = {
   title: {

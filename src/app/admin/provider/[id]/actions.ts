@@ -7,6 +7,7 @@ import { updateProviderDocumentReview, updateProviderReview } from "@/lib/provid
 import { syncProviderLifecycleState } from "@/server/services/providers/activation";
 import { deleteProviderPricingRule, toggleProviderPricingRule, savePricingAreaOverride, saveProviderPricingRule } from "@/lib/pricing/prisma-pricing";
 import { getPrisma } from "@/lib/db";
+import { buildProviderChecklist } from "@/server/services/providers/checklist";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   const parsed = Number(value ?? fallback);
@@ -26,6 +27,28 @@ export async function reviewProviderStatusAction(formData: FormData) {
   if (!providerCompanyId || !reviewStatus) {
     console.log("[reviewProviderStatusAction] EARLY RETURN — missing providerCompanyId or reviewStatus");
     return;
+  }
+
+  if (reviewStatus === "APPROVED") {
+    const prisma = getPrisma();
+    const provider = await prisma.providerCompany.findUnique({
+      where: { id: providerCompanyId },
+      include: {
+        serviceCategories: true,
+        coverageAreas: true,
+        agreements: true,
+        documents: true,
+        pricingRules: true,
+        stripeConnectedAccount: true,
+      },
+    });
+
+    const checklist = buildProviderChecklist(provider);
+    const requiredKeys = ["email_verified", "password_set", "profile", "categories", "coverage", "documents_uploaded", "documents_approved", "agreement"];
+    const missing = checklist.items.filter((item) => requiredKeys.includes(item.key) && !item.complete);
+    if (missing.length) {
+      redirect(`/admin/provider/${providerCompanyId}?error=${encodeURIComponent(`Cannot approve yet. Missing: ${missing.map((item) => item.label).join(", ")}`)}`);
+    }
   }
 
   const result = await updateProviderReview({

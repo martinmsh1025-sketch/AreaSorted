@@ -41,13 +41,14 @@ function hasValue(value: string | null | undefined) {
   return Boolean(value && value.trim());
 }
 
+function getMetadata(provider: ProviderChecklistSource | null) {
+  return provider?.stripeRequirementsJson && typeof provider.stripeRequirementsJson === "object" && !Array.isArray(provider.stripeRequirementsJson)
+    ? (provider.stripeRequirementsJson as Record<string, unknown>)
+    : null;
+}
+
 function getBusinessType(provider: ProviderChecklistSource | null) {
-  const metadata =
-    provider?.stripeRequirementsJson &&
-    typeof provider.stripeRequirementsJson === "object" &&
-    !Array.isArray(provider.stripeRequirementsJson)
-      ? (provider.stripeRequirementsJson as Record<string, unknown>)
-      : null;
+  const metadata = getMetadata(provider);
 
   if (
     metadata?.businessType === "sole_trader"
@@ -63,11 +64,19 @@ function getMissingProfileFields(provider: ProviderChecklistSource | null) {
 
   const missing: string[] = [];
   const businessType = getBusinessType(provider);
+  const metadata = getMetadata(provider);
   if (!hasValue(provider.legalName)) missing.push(businessType === "sole_trader" ? "full legal name" : "company name");
   if (businessType !== "sole_trader" && !hasValue(provider.companyNumber)) missing.push("company number");
   if (!hasValue(provider.registeredAddress)) missing.push("registered address");
   if (!hasValue(provider.contactEmail)) missing.push("email");
   if (!hasValue(provider.phone)) missing.push("phone");
+  if (businessType === "sole_trader") {
+    if (!hasValue(typeof metadata?.dateOfBirth === "string" ? metadata.dateOfBirth : "")) missing.push("date of birth");
+    if (!hasValue(typeof metadata?.nationality === "string" ? metadata.nationality : "")) missing.push("nationality");
+  } else {
+    if (!hasValue(typeof metadata?.authorisedSignatoryName === "string" ? metadata.authorisedSignatoryName : "")) missing.push("authorised signatory name");
+    if (!hasValue(typeof metadata?.authorisedSignatoryEmail === "string" ? metadata.authorisedSignatoryEmail : "")) missing.push("authorised signatory email");
+  }
   return missing;
 }
 

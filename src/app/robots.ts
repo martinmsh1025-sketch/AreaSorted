@@ -1,6 +1,17 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://areasorted.com";
+function getSafeBaseUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "https://areasorted.com";
+
+  try {
+    return new URL(raw).toString().replace(/\/$/, "");
+  } catch {
+    return "https://areasorted.com";
+  }
+}
+
+const BASE_URL = getSafeBaseUrl();
 
 export default function robots(): MetadataRoute.Robots {
   return {

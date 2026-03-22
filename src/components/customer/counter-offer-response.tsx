@@ -23,9 +23,15 @@ function money(v: number) {
 export function CustomerCounterOfferBanner({
   offers,
   providerName,
+  currentPrice,
+  currentDate,
+  currentTime,
 }: {
   offers: CounterOfferData[];
   providerName: string;
+  currentPrice: number | null;
+  currentDate: string;
+  currentTime: string | null;
 }) {
   const pendingOffers = offers.filter((o) => o.status === "PENDING");
   const pastOffers = offers.filter((o) => o.status !== "PENDING");
@@ -35,7 +41,14 @@ export function CustomerCounterOfferBanner({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       {pendingOffers.map((offer) => (
-        <PendingOfferCard key={offer.id} offer={offer} providerName={providerName} />
+        <PendingOfferCard
+          key={offer.id}
+          offer={offer}
+          providerName={providerName}
+          currentPrice={currentPrice}
+          currentDate={currentDate}
+          currentTime={currentTime}
+        />
       ))}
       {pastOffers.length > 0 && (
         <div className="panel card" style={{ marginBottom: "0" }}>
@@ -54,9 +67,15 @@ export function CustomerCounterOfferBanner({
 function PendingOfferCard({
   offer,
   providerName,
+  currentPrice,
+  currentDate,
+  currentTime,
 }: {
   offer: CounterOfferData;
   providerName: string;
+  currentPrice: number | null;
+  currentDate: string;
+  currentTime: string | null;
 }) {
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [reason, setReason] = useState("");
@@ -111,35 +130,38 @@ function PendingOfferCard({
       </div>
 
       <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>
-        {providerName} has proposed a change
+        Respond to {providerName}'s counter offer
       </h2>
+      <p style={{ fontSize: "0.92rem", color: "var(--color-text-muted)", lineHeight: 1.6, margin: "0 0 1rem" }}>
+        Review the proposed changes below. Accepting updates this booking. Declining keeps your current booking terms unchanged.
+      </p>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "0.75rem" }}>
-        {offer.proposedPrice != null && (
-          <div style={{ fontSize: "0.95rem" }}>
-            <span style={{ color: "var(--color-text-muted)" }}>New price: </span>
-            <strong>{money(offer.proposedPrice)}</strong>
+      <div style={{ display: "grid", gap: "0.8rem", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", marginBottom: "1rem" }}>
+        <div style={{ border: "1px solid var(--color-border)", borderRadius: "0.75rem", padding: "0.9rem 1rem", background: "rgba(255,255,255,0.78)" }}>
+          <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.45rem" }}>
+            Current booking
           </div>
-        )}
-        {offer.proposedDate && (
-          <div style={{ fontSize: "0.95rem" }}>
-            <span style={{ color: "var(--color-text-muted)" }}>New date: </span>
-            <strong>
-              {new Date(offer.proposedDate).toLocaleDateString("en-GB", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </strong>
+          <div style={{ display: "grid", gap: "0.3rem", fontSize: "0.92rem" }}>
+            {currentPrice != null && <div><span style={{ color: "var(--color-text-muted)" }}>Price: </span><strong>{money(currentPrice)}</strong></div>}
+            <div><span style={{ color: "var(--color-text-muted)" }}>Date: </span><strong>{currentDate}</strong></div>
+            {currentTime && <div><span style={{ color: "var(--color-text-muted)" }}>Time: </span><strong>{currentTime}</strong></div>}
           </div>
-        )}
-        {offer.proposedStartTime && (
-          <div style={{ fontSize: "0.95rem" }}>
-            <span style={{ color: "var(--color-text-muted)" }}>New start time: </span>
-            <strong>{offer.proposedStartTime}</strong>
+        </div>
+        <div style={{ border: "1px solid rgba(217,37,42,0.22)", borderRadius: "0.75rem", padding: "0.9rem 1rem", background: "rgba(255,255,255,0.92)" }}>
+          <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700, color: "var(--color-brand, #d9252a)", marginBottom: "0.45rem" }}>
+            Proposed change
           </div>
-        )}
+          <div style={{ display: "grid", gap: "0.3rem", fontSize: "0.92rem" }}>
+            {offer.proposedPrice != null ? <div><span style={{ color: "var(--color-text-muted)" }}>Price: </span><strong>{money(offer.proposedPrice)}</strong></div> : null}
+            {offer.proposedDate ? <div><span style={{ color: "var(--color-text-muted)" }}>Date: </span><strong>{new Date(offer.proposedDate).toLocaleDateString("en-GB", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}</strong></div> : null}
+            {offer.proposedStartTime ? <div><span style={{ color: "var(--color-text-muted)" }}>Time: </span><strong>{offer.proposedStartTime}</strong></div> : null}
+          </div>
+        </div>
       </div>
 
       {offer.message && (
@@ -166,7 +188,7 @@ function PendingOfferCard({
       )}
 
       {!showRejectForm ? (
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
           <button
             type="button"
             onClick={handleAccept}
@@ -185,6 +207,9 @@ function PendingOfferCard({
           >
             Decline offer
           </button>
+          <span style={{ fontSize: "0.78rem", color: "var(--color-text-muted)" }}>
+            Need more context? Decline and keep your original booking terms.
+          </span>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -239,7 +264,7 @@ function PendingOfferCard({
       )}
 
       <p style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "0.75rem" }}>
-        If you decline, your original booking terms remain unchanged.
+        If you decline, your original booking terms remain unchanged and the provider is notified.
       </p>
     </div>
   );

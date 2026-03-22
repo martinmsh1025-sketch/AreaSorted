@@ -92,6 +92,54 @@ function getOnboardingErrorStep(error: unknown, fallbackStep: number) {
   return fallbackStep;
 }
 
+function isValidEmail(value: string) {
+  return /^\S+@\S+\.\S+$/.test(value);
+}
+
+function validateProviderOnboardingForm(formData: FormData, currentStep: number) {
+  const businessType = String(formData.get("businessType") || "company") === "sole_trader" ? "sole_trader" : "company";
+  const legalName = String(formData.get("legalName") || "").trim();
+  const companyNumber = String(formData.get("companyNumber") || "").trim();
+  const registeredAddress = String(formData.get("registeredAddress") || "").trim();
+  const contactEmail = String(formData.get("contactEmail") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
+  const authorisedSignatoryName = String(formData.get("authorisedSignatoryName") || "").trim();
+  const authorisedSignatoryEmail = String(formData.get("authorisedSignatoryEmail") || "").trim();
+  const dateOfBirth = String(formData.get("dateOfBirth") || "").trim();
+  const nationality = String(formData.get("nationality") || "").trim();
+  const categories = parseMultiValues(formData, "categories");
+  const serviceKeys = parseServiceKeys(formData);
+  const postcodePrefixes = parseMultiValue(formData.get("postcodePrefixes"));
+
+  if (currentStep >= 1) {
+    if (!legalName) throw new Error(businessType === "sole_trader" ? "Full legal name is required." : "Company name is required.");
+    if (businessType === "company" && !companyNumber) throw new Error("Company number is required.");
+    if (!registeredAddress) throw new Error("Registered address is required.");
+    if (!contactEmail || !isValidEmail(contactEmail)) throw new Error("A valid email address is required.");
+    if (!phone) throw new Error("Phone number is required.");
+    if (businessType === "sole_trader") {
+      if (!dateOfBirth) throw new Error("Date of birth is required for sole traders.");
+      if (!nationality) throw new Error("Nationality is required for sole traders.");
+    } else {
+      if (!authorisedSignatoryName) throw new Error("Authorised signatory name is required.");
+      if (!authorisedSignatoryEmail || !isValidEmail(authorisedSignatoryEmail)) throw new Error("A valid authorised signatory email is required.");
+    }
+  }
+
+  if (currentStep >= 2) {
+    if (!categories.length) throw new Error("Choose at least one service category.");
+    if (!serviceKeys.length) throw new Error("Choose at least one approved service.");
+  }
+
+  if (currentStep >= 3) {
+    if (!postcodePrefixes.length) throw new Error("Choose at least one coverage postcode.");
+  }
+
+  if (currentStep >= 4 && formData.get("agreementAccepted") !== "on") {
+    throw new Error("You must accept the provider agreement before continuing.");
+  }
+}
+
 async function persistProviderOnboarding(sessionProviderCompanyId: string, formData: FormData) {
   const businessType = String(formData.get("businessType") || "company") === "sole_trader" ? "sole_trader" : "company";
 
@@ -159,6 +207,7 @@ export async function saveProviderProfileAction(formData: FormData) {
   }
 
   try {
+    validateProviderOnboardingForm(formData, currentStep === 4 ? 3 : currentStep);
     await persistProviderOnboarding(session.providerCompany.id, formData);
   } catch (error) {
     redirect(`/provider/onboarding?error=${encodeURIComponent(getOnboardingErrorMessage(error))}&step=${getOnboardingErrorStep(error, currentStep)}`);
@@ -175,6 +224,7 @@ export async function continueProviderSubmissionAction(formData: FormData) {
   }
 
   try {
+    validateProviderOnboardingForm(formData, 4);
     await persistProviderOnboarding(session.providerCompany.id, formData);
   } catch (error) {
     redirect(`/provider/onboarding?error=${encodeURIComponent(getOnboardingErrorMessage(error))}&step=${getOnboardingErrorStep(error, 4)}`);
