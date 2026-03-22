@@ -1,17 +1,35 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
 import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
 import { verifyPassword, hashPassword } from "@/lib/security/password";
 import { signSessionValue } from "@/lib/security/session";
 import { normalizeUkPhone } from "@/lib/validation/uk-phone";
+import { checkRateLimit, LOGIN_RATE_LIMIT, REGISTER_RATE_LIMIT, isAccountLocked, recordFailedLogin, clearFailedLogins } from "@/lib/security/rate-limit";
+
+async function getClientIp(): Promise<string> {
+  const h = await headers();
+  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+}
 
 export async function customerLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
   if (!email || !password) redirect("/customer/login?error=1");
+
+  // C-1 FIX: Rate limit login attempts by IP+email
+  const ip = await getClientIp();
+  const rl = checkRateLimit(LOGIN_RATE_LIMIT, `${ip}:${email}`);
+  if (!rl.allowed) {
+    redirect("/customer/login?error=rate_limited");
+  }
+
+  // H-18 FIX: Check account lockout (per-email, stricter than IP+email rate limit)
+  if (isAccountLocked(email)) {
+    redirect("/customer/login?error=account_locked");
+  }
 
   const prisma = getPrisma();
   const customer = await prisma.customer.findUnique({ where: { email } });
@@ -21,7 +39,13 @@ export async function customerLoginAction(formData: FormData) {
   }
 
   const valid = await verifyPassword(password, customer.passwordHash);
-  if (!valid) redirect("/customer/login?error=1");
+  if (!valid) {
+    recordFailedLogin(email);
+    redirect("/customer/login?error=1");
+  }
+
+  // Successful login — clear lockout counter
+  clearFailedLogins(email);
 
   const cookieStore = await cookies();
   cookieStore.set(CUSTOMER_SESSION_COOKIE, signSessionValue(customer.id), {
@@ -61,12 +85,27 @@ export async function customerRegisterAction(formData: FormData) {
     redirect("/customer/register?error=invalid_phone");
   }
 
+  // C-1 FIX: Rate limit registration by IP
+  const ip = await getClientIp();
+  const rl = checkRateLimit(REGISTER_RATE_LIMIT, ip);
+  if (!rl.allowed) {
+    redirect("/customer/register?error=rate_limited");
+  }
+
   const prisma = getPrisma();
 
   const existing = await prisma.customer.findUnique({ where: { email } });
   if (existing) {
-    // If customer exists but has no password (created during checkout), set password
+    // C-22 FIX: Only allow password-setting on existing account if the account
+    // has no password AND the user proves ownership (matching existing phone).
+    // This prevents attackers from claiming any account just by knowing its email.
     if (!existing.passwordHash) {
+      // Additional verification: phone must match or be empty on existing record
+      if (existing.phone && existing.phone !== normalizedPhone) {
+        // Phone mismatch — don't reveal that account exists, show generic error
+        redirect("/customer/register?error=email_taken");
+      }
+
       const passwordHash = await hashPassword(password);
         await prisma.customer.update({
           where: { id: existing.id },

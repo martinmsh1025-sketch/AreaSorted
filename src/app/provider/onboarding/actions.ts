@@ -60,7 +60,15 @@ function getOnboardingErrorMessage(error: unknown) {
   }
 
   if (error instanceof Error) {
-    return error.message;
+    // M-16 FIX: Only return error.message for known validation errors.
+    // For unknown errors, use a generic message to avoid exposing internals.
+    if (/required|invalid|already used|duplicate|must accept|choose at least/i.test(error.message)) {
+      return error.message;
+    }
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[onboarding] Unexpected error:", error.message);
+    }
+    return "Something went wrong while saving your onboarding details.";
   }
 
   return "Something went wrong while saving your onboarding details.";

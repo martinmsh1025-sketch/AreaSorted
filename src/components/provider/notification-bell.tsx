@@ -70,7 +70,12 @@ export function NotificationBell() {
 
   React.useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, POLL_INTERVAL);
+    // H-43 FIX: Only poll when tab is visible to avoid wasted requests
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchNotifications();
+      }
+    }, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 

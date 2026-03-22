@@ -61,9 +61,8 @@ export default function ServicesPage() {
           <div className="grid-3" style={{ gap: "1.2rem" }}>
             {serviceCatalog.map((cat) => {
               const jobCount = jobTypeCatalog.filter((j) => j.service === cat.value).length;
-              const lowestPrice = Math.min(
-                ...jobTypeCatalog.filter((j) => j.service === cat.value).map((j) => j.startingPrice),
-              );
+              const prices = jobTypeCatalog.filter((j) => j.service === cat.value).map((j) => j.startingPrice);
+              const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
               return (
                 <a
                   key={cat.value}

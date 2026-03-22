@@ -4,6 +4,7 @@ import { acceptAllRecommendedAction, saveSinglePriceAction } from "./actions";
 import { providerServiceCatalog } from "@/lib/providers/service-catalog-mapping";
 import { jobTypeCatalog } from "@/lib/service-catalog";
 import { getPrisma } from "@/lib/db";
+import { getSettingValue } from "@/lib/config/env";
 import { Badge } from "@/components/ui/badge";
 import {
   SimplePricingCards,
@@ -12,6 +13,7 @@ import {
 import { PricingCalculator } from "@/components/provider/pricing-calculator";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
 
 export default async function ProviderPricingPage() {
   const session = await requireProviderPricingAccess();
@@ -48,12 +50,12 @@ export default async function ProviderPricingPage() {
     ]);
 
   const bookingFeeMode =
-    ((bookingFeeModeSetting?.valueJson as any)?.value as string) || "fixed";
+    getSettingValue<string>(bookingFeeModeSetting, "fixed");
   const bookingFee = Number(
-    (bookingFeeSetting?.valueJson as { value?: number } | null)?.value ?? 12
+    getSettingValue<number>(bookingFeeSetting, 12)
   );
   const commissionPercent = Number(
-    (commissionSetting?.valueJson as { value?: number } | null)?.value ?? 12
+    getSettingValue<number>(commissionSetting, 12)
   );
 
   // Build simplified service list
@@ -113,6 +115,7 @@ export default async function ProviderPricingPage() {
   const allAccepted =
     activeCount > 0 && activeCount >= services.length;
   const activeCoverage = provider.coverageAreas.filter((a) => a.active);
+  const groupedCoverage = groupPostcodePrefixes(activeCoverage.map((a) => a.postcodePrefix));
 
   // Build calculator props — services with full catalog info + pricing rules
   const calculatorServices = categoryServices.map((s) => {
@@ -163,15 +166,30 @@ export default async function ProviderPricingPage() {
 
       {/* Coverage area banner */}
       <div className="rounded-lg border bg-blue-50/60 px-4 py-3 dark:bg-blue-950/20">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="size-4 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span className="text-blue-900 dark:text-blue-200">
-              <span className="font-medium">Coverage areas:</span>{" "}
-              {activeCoverage.length > 0
-                ? activeCoverage.map((a) => a.postcodePrefix).join(", ")
-                : "No coverage areas assigned"}
-            </span>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-2 text-sm">
+            <MapPin className="mt-0.5 size-4 text-blue-600 dark:text-blue-400 shrink-0" />
+            <div className="text-blue-900 dark:text-blue-200">
+              <div className="font-medium">Coverage areas</div>
+              {groupedCoverage.length > 0 ? (
+                <div className="mt-2 space-y-2">
+                  {groupedCoverage.map((group) => (
+                    <div key={group.areaKey} className="rounded-md border border-blue-200/60 bg-white/70 px-3 py-2 dark:border-blue-800/50 dark:bg-blue-950/20">
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">{group.areaName}</div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {group.prefixes.map((prefix) => (
+                          <span key={prefix} className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">
+                            {prefix}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-1">No coverage areas assigned</div>
+              )}
+            </div>
           </div>
           <Link
             href="/provider/coverage"

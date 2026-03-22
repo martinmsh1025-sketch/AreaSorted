@@ -22,10 +22,15 @@ export async function reviewProviderStatusAction(formData: FormData) {
   const reviewStatus = String(formData.get("reviewStatus") || "") as "UNDER_REVIEW" | "CHANGES_REQUESTED" | "REJECTED" | "APPROVED";
   const reviewNotes = String(formData.get("reviewNotes") || "").trim();
 
-  console.log("[reviewProviderStatusAction] called with:", { providerCompanyId, reviewStatus, reviewNotes });
+  // M-19 FIX: Guard debug logging behind NODE_ENV
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[reviewProviderStatusAction] called with:", { providerCompanyId, reviewStatus, reviewNotes });
+  }
 
   if (!providerCompanyId || !reviewStatus) {
-    console.log("[reviewProviderStatusAction] EARLY RETURN — missing providerCompanyId or reviewStatus");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[reviewProviderStatusAction] EARLY RETURN — missing providerCompanyId or reviewStatus");
+    }
     return;
   }
 
@@ -57,7 +62,10 @@ export async function reviewProviderStatusAction(formData: FormData) {
     reviewNotes,
   });
 
-  console.log("[reviewProviderStatusAction] updateProviderReview result:", { id: result.id, status: result.status, approvedAt: result.approvedAt });
+  // M-19 FIX: Guard debug logging behind NODE_ENV
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[reviewProviderStatusAction] updateProviderReview result:", { id: result.id, status: result.status, approvedAt: result.approvedAt });
+  }
 
   // Do NOT call syncProviderLifecycleState() here — admin review is an explicit
   // decision, not an automated lifecycle transition. The sync function has
@@ -75,10 +83,15 @@ export async function reviewProviderDocumentAction(formData: FormData) {
   const documentStatus = String(formData.get("documentStatus") || "") as "PENDING" | "APPROVED" | "REJECTED" | "NEEDS_RESUBMISSION";
   const reviewNotes = String(formData.get("reviewNotes") || "").trim();
 
-  console.log("[reviewProviderDocumentAction] called with:", { providerCompanyId, documentId, documentStatus, reviewNotes });
+  // M-19 FIX: Guard debug logging behind NODE_ENV
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[reviewProviderDocumentAction] called with:", { providerCompanyId, documentId, documentStatus, reviewNotes });
+  }
 
   if (!providerCompanyId || !documentId || !documentStatus) {
-    console.log("[reviewProviderDocumentAction] EARLY RETURN — missing fields");
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[reviewProviderDocumentAction] EARLY RETURN — missing fields");
+    }
     return;
   }
 

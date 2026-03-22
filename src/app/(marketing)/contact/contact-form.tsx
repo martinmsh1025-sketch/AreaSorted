@@ -54,9 +54,9 @@ export function ContactForm() {
         </div>
       ) : (
         <>
-          <input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <textarea placeholder="How can we help?" rows={6} value={message} onChange={(e) => setMessage(e.target.value)} />
+          <input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
+          <input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} />
+          <textarea placeholder="How can we help?" rows={6} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={5000} />
           {errorMessage ? <p style={{ color: "var(--color-error)", fontSize: "0.9rem", margin: 0 }}>{errorMessage}</p> : null}
           <button type="submit" className="button button-primary" disabled={status === "sending"}>
             {status === "sending" ? "Sending..." : "Send message"}

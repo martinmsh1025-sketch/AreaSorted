@@ -129,6 +129,7 @@ enum BookingStatus {
   AWAITING_PAYMENT
   PAID
   PENDING_ASSIGNMENT
+  ACCEPTING
   ASSIGNED
   IN_PROGRESS
   COMPLETED
@@ -284,6 +285,7 @@ enum CounterOfferStatus {
 enum PublicQuoteState {
   DRAFT
   PRICED
+  BOOKING_IN_PROGRESS
   MANUAL_REVIEW_REQUIRED
   REQUEST_SUBMITTED
   PROVIDER_SELECTED
@@ -1234,6 +1236,9 @@ model ProviderCompany {
   dateOverrides            ProviderDateOverride[]
   maxJobsPerDay            Int?                   // null = unlimited
   leadTimeHours            Int                    @default(24)  // minimum notice hours
+
+  // H-34 FIX: Index contactEmail for faster lookups (used in login, invite flows)
+  @@index([contactEmail])
 }
 
 model ProviderAvailability {

@@ -6,6 +6,7 @@ import { createProviderInvite } from "@/lib/providers/repository";
 import { getProviderCategoryByKey } from "@/lib/providers/service-catalog-mapping";
 import { ProviderActivationError, activateProviderCompany, suspendProviderCompany } from "@/server/services/providers/activation";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
+import { getAppUrl } from "@/lib/config/env";
 
 export async function createProviderInviteAction(formData: FormData) {
   const authenticated = await isAdminAuthenticated();
@@ -18,7 +19,7 @@ export async function createProviderInviteAction(formData: FormData) {
   if (approvedCategoryKey && !approvedCategory) return;
 
   const invite = await createProviderInvite({ email, approvedCategoryKey: approvedCategoryKey || null, approvedServiceKeys: [] });
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const inviteUrl = `${appUrl}/provider/invite/${invite.token}`;
 
   let sent = true;

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
-import { Prisma } from "@prisma/client";
+import { Prisma, BookingStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -136,7 +136,7 @@ export default async function AdminOrdersPage({
     }
   }
   if (bookingStatusFilter) {
-    tableWhere.bookingStatus = bookingStatusFilter as any;
+    tableWhere.bookingStatus = bookingStatusFilter as BookingStatus;
   }
 
   let orderBy: Prisma.BookingOrderByWithRelationInput;
@@ -225,6 +225,8 @@ export default async function AdminOrdersPage({
     },
     include: bookingInclude,
     orderBy,
+    // H-38 FIX: Cap result set to prevent unbounded queries when filters are applied
+    take: 5000,
   });
 
   // Also fetch recent bookings unconditionally for KPIs

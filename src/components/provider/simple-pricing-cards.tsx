@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ActionResult } from "@/app/provider/pricing/actions";
+import { formatMoney } from "@/lib/format";
 
 /* ─── Types ─── */
 
@@ -45,10 +46,6 @@ type PricingCardsProps = {
 };
 
 /* ─── Helpers ─── */
-
-function formatMoney(v: number) {
-  return `£${v.toFixed(2)}`;
-}
 
 /**
  * Provider receives their FULL price — commission is charged to the customer

@@ -17,7 +17,7 @@ export default function ProviderError({ error, reset }: { error: Error; reset: (
               <div className="space-y-1">
                 <h1 className="text-lg font-semibold">Something went wrong</h1>
                 <p className="text-sm text-muted-foreground">
-                  {error.message || "An unexpected error occurred in the provider portal."}
+                  An unexpected error occurred in the provider portal. Please try again or contact support.
                 </p>
               </div>
               <Button onClick={reset} variant="outline" size="sm">

@@ -8,7 +8,10 @@ function sanitizeFileName(name: string) {
 }
 
 export async function saveProviderDocumentUploads(providerCompanyId: string, formData: FormData) {
-  const uploadRoot = path.join(process.cwd(), "public", "uploads", "provider-documents", providerCompanyId);
+  // C-5 FIX: Store provider documents OUTSIDE public/ to prevent unauthenticated access.
+  // Documents contain sensitive PII (passports, insurance, NI numbers).
+  // Serve them via an authenticated API route instead.
+  const uploadRoot = path.join(process.cwd(), ".data", "provider-documents", providerCompanyId);
   await mkdir(uploadRoot, { recursive: true });
 
   const savedDocuments = [] as Array<{
@@ -49,7 +52,8 @@ export async function saveProviderDocumentUploads(providerCompanyId: string, for
       label: document.label,
       fileName: entry.name || document.label,
       storedFileName,
-      storagePath: `/uploads/provider-documents/${providerCompanyId}/${storedFileName}`,
+      // C-5 FIX: Store relative path from .data/ root (NOT public/)
+      storagePath: `.data/provider-documents/${providerCompanyId}/${storedFileName}`,
       mimeType: entry.type || null,
       sizeBytes: entry.size || null,
     });

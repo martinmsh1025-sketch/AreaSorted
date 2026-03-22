@@ -40,16 +40,22 @@ export function RescheduleBookingSection({
       return;
     }
     setSubmitting(true);
-    const fd = new FormData();
-    fd.set("bookingId", bookingId);
-    fd.set("newDate", newDate);
-    fd.set("newTime", newTime);
-    const result = await rescheduleBookingAction(fd);
-    if (result?.error) {
-      setError(result.error);
+    // H-41 FIX: Wrap server action in try/catch to prevent uncaught promise rejection
+    try {
+      const fd = new FormData();
+      fd.set("bookingId", bookingId);
+      fd.set("newDate", newDate);
+      fd.set("newTime", newTime);
+      const result = await rescheduleBookingAction(fd);
+      if (result?.error) {
+        setError(result.error);
+        setSubmitting(false);
+      }
+      // On success the page revalidates and re-renders
+    } catch {
+      setError("Something went wrong. Please try again.");
       setSubmitting(false);
     }
-    // On success the page revalidates and re-renders
   }
 
   if (!showForm) {

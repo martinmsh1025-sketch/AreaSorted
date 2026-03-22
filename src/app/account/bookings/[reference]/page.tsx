@@ -73,15 +73,14 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   });
 
   return (
-    <main className="section">
-      <div className="container" style={{ maxWidth: 900 }}>
+    <div>
         <div style={{ marginBottom: "1.25rem" }}>
           <Link href="/account/bookings" style={{ color: "var(--color-brand)", fontSize: "0.9rem", fontWeight: 600 }}>
             &larr; Back to bookings
           </Link>
         </div>
 
-        <div className="panel card" style={{ marginBottom: "1.5rem" }}>
+        <div className="panel card account-hero-card" style={{ marginBottom: "1.5rem" }}>
           <div className="eyebrow">Booking details</div>
           <h1 className="title" style={{ marginTop: "0.3rem", fontSize: "1.5rem" }}>
             {service}
@@ -89,6 +88,11 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.25rem" }}>
             Reference: {ref}
           </p>
+          <div className="account-booking-meta-strip">
+            <span>{status}</span>
+            <span>{getPaymentStatusLabel(payment)}</span>
+            <span>{formattedDate}</span>
+          </div>
         </div>
 
         {/* Counter offer banner — shown prominently if pending */}
@@ -214,7 +218,6 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             </>
           )}
         </div>
-      </div>
-    </main>
+    </div>
   );
 }

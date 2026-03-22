@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
+import { getSettingValue } from "@/lib/config/env";
 import {
   deletePricingConfigAction,
   disablePricingConfigAction,
@@ -82,8 +83,8 @@ export default async function AdminPricingPage() {
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2">
             <BookingFeeForm
-              currentMode={((bookingFeeModeSetting?.valueJson as any)?.value as string) || "fixed"}
-              currentValue={(bookingFeeSetting?.valueJson as any)?.value ?? 12}
+              currentMode={getSettingValue<string>(bookingFeeModeSetting, "fixed")}
+              currentValue={getSettingValue<number>(bookingFeeSetting, 12)}
               saveAction={saveMarketplaceSettingAction}
             />
             <form action={saveMarketplaceSettingAction} className="space-y-3">
@@ -96,7 +97,7 @@ export default async function AdminPricingPage() {
                   step="0.01"
                   name="value"
                   defaultValue={String(
-                    (commissionSetting?.valueJson as any)?.value ?? 12,
+                    getSettingValue<number>(commissionSetting, 12),
                   )}
                 />
               </div>

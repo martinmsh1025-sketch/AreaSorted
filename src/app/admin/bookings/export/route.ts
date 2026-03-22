@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma, BookingStatus } from "@prisma/client";
 
 function csvEscape(value: unknown) {
   const text = String(value ?? "");
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (bookingStatus) {
-    where.bookingStatus = bookingStatus as any;
+    where.bookingStatus = bookingStatus as BookingStatus;
   }
 
   const bookings = await prisma.booking.findMany({

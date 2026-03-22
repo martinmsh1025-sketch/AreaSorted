@@ -87,8 +87,14 @@ function PendingOfferCard({
     const fd = new FormData();
     fd.set("counterOfferId", offer.id);
     startTransition(async () => {
-      const result = await acceptCounterOfferAction(fd);
-      if (result?.error) setError(result.error);
+      // H-42 FIX: Wrap in try/catch — errors thrown in startTransition callbacks
+      // are not caught by React and will crash the page
+      try {
+        const result = await acceptCounterOfferAction(fd);
+        if (result?.error) setError(result.error);
+      } catch {
+        setError("Something went wrong. Please try again.");
+      }
     });
   }
 
@@ -98,8 +104,13 @@ function PendingOfferCard({
     fd.set("counterOfferId", offer.id);
     if (reason.trim()) fd.set("reason", reason.trim());
     startTransition(async () => {
-      const result = await rejectCounterOfferAction(fd);
-      if (result?.error) setError(result.error);
+      // H-42 FIX: Same try/catch wrapper for reject path
+      try {
+        const result = await rejectCounterOfferAction(fd);
+        if (result?.error) setError(result.error);
+      } catch {
+        setError("Something went wrong. Please try again.");
+      }
     });
   }
 

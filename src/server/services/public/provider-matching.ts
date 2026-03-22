@@ -123,9 +123,7 @@ export async function matchProvidersForPublicQuote(
     return left.providerName.localeCompare(right.providerName);
   });
 
-  const chosen = rankedProviders[0];
-
-  return { status: "matched", providers: [chosen] };
+  return { status: "matched", providers: rankedProviders };
 }
 
 /**

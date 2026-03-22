@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Check, ChevronLeft, FileText, MapPin, Briefcase, Building2 } from "lucide-react";
+import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
 
 type ProviderApplicationConfirmationPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -43,6 +44,7 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
       : [];
   const selectedServices = lockedCategory?.services.filter((service) => selectedServiceKeys.includes(service.key)) || [];
   const coveragePostcodes = Array.from(new Set(provider.coverageAreas.map((item) => item.postcodePrefix))).sort();
+  const groupedCoveragePostcodes = groupPostcodePrefixes(coveragePostcodes);
   const uploadedDocuments = provider.documents.filter((document) => ["PENDING", "APPROVED"].includes(document.status));
 
   return (
@@ -164,9 +166,16 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Postcodes</span><span className="font-medium">{coveragePostcodes.length}</span></div>
             {coveragePostcodes.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {coveragePostcodes.map((postcode) => (
-                  <Badge key={postcode} variant="secondary" className="text-xs">{postcode}</Badge>
+              <div className="space-y-2">
+                {groupedCoveragePostcodes.map((group) => (
+                  <div key={group.areaKey} className="rounded-md border p-2">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{group.areaName}</div>
+                    <div className="flex flex-wrap gap-1">
+                      {group.prefixes.map((postcode) => (
+                        <Badge key={postcode} variant="secondary" className="text-xs">{postcode}</Badge>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (

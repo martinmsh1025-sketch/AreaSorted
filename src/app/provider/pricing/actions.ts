@@ -9,6 +9,10 @@ import type { Prisma } from "@prisma/client";
 
 export type ActionResult = { success: true } | { success: false; error: string };
 
+// L-L FIX: Named pricing default constants instead of magic numbers
+const DEFAULT_SAME_DAY_UPLIFT = 15;
+const DEFAULT_WEEKEND_UPLIFT = 10;
+
 /** Safe session check — returns result object instead of throwing redirect */
 async function getPricingSession(): Promise<
   | { ok: true; providerCompanyId: string }
@@ -74,8 +78,8 @@ export async function acceptAllRecommendedAction(formData: FormData): Promise<Ac
           hourlyPrice: r.pricingMode === "hourly" ? r.hourlyPrice : null,
           flatPrice: null,
           minimumCharge: null,
-          sameDayUplift: 15,
-          weekendUplift: 10,
+          sameDayUplift: DEFAULT_SAME_DAY_UPLIFT,
+          weekendUplift: DEFAULT_WEEKEND_UPLIFT,
           customQuoteRequired: false,
           pricingJson,
           active: true,
@@ -89,7 +93,10 @@ export async function acceptAllRecommendedAction(formData: FormData): Promise<Ac
     revalidatePath("/provider/pricing");
     return { success: true };
   } catch (err) {
-    console.error("[acceptAllRecommendedAction] Error:", err);
+    // M-20 FIX: Guard console.error behind NODE_ENV to avoid logging sensitive data in production
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[acceptAllRecommendedAction] Error:", err);
+    }
     return { success: false, error: "Failed to save prices. Please try again." };
   }
 }
@@ -137,8 +144,8 @@ export async function saveSinglePriceAction(formData: FormData): Promise<ActionR
       hourlyPrice: rule.pricingMode === "hourly" ? rule.hourlyPrice : null,
       flatPrice: null,
       minimumCharge: null,
-      sameDayUplift: 15,
-      weekendUplift: 10,
+      sameDayUplift: DEFAULT_SAME_DAY_UPLIFT,
+      weekendUplift: DEFAULT_WEEKEND_UPLIFT,
       customQuoteRequired: false,
       pricingJson,
       active: rule.active,
@@ -150,7 +157,10 @@ export async function saveSinglePriceAction(formData: FormData): Promise<ActionR
     revalidatePath("/provider/pricing");
     return { success: true };
   } catch (err) {
-    console.error("[saveSinglePriceAction] Error:", err);
+    // M-20 FIX: Guard console.error behind NODE_ENV to avoid logging sensitive data in production
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[saveSinglePriceAction] Error:", err);
+    }
     return { success: false, error: "Failed to save price. Please try again." };
   }
 }

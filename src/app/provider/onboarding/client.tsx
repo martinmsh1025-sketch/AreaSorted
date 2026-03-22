@@ -804,7 +804,7 @@ export function ProviderOnboardingClient({
                       <a
                         href={businessType === "sole_trader" ? "/provider/agreements/sole-trader" : "/provider/agreements/company"}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
                       >
                         Open full agreement

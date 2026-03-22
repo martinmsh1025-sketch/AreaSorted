@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import { getPrisma } from "@/lib/db";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
+import type { NotificationStatus } from "@prisma/client";
 
 type OtpDeliveryMethod = "EMAIL" | "DEV_FALLBACK";
 
@@ -19,8 +20,9 @@ export function buildProviderVerifyEmailUrl(input: {
   if (input.deliveryMethod === "DEV_FALLBACK") {
     params.set("delivery", "dev");
 
+    // H-15 FIX: Never pass OTP code in URL params — log to server console only
     if (process.env.NODE_ENV !== "production" && input.code) {
-      params.set("devCode", input.code);
+      console.log(`[DEV] OTP code for ${input.email}: ${input.code}`);
     }
 
     if (input.deliveryReason) {
@@ -51,7 +53,7 @@ export async function createProviderOtp(input: { providerCompanyId?: string; ema
   const subject = "Your AreaSorted verification code";
   const text = `Your verification code is ${code}. It expires in 15 minutes.`;
 
-  let deliveryStatus = "SENT";
+  let deliveryStatus: NotificationStatus = "SENT";
   let deliveryMethod: OtpDeliveryMethod = "EMAIL";
   let deliveryReason: string | null = null;
 
@@ -72,7 +74,7 @@ export async function createProviderOtp(input: { providerCompanyId?: string; ema
     data: {
       providerCompanyId: input.providerCompanyId,
       channel: "EMAIL",
-      status: deliveryStatus as any,
+      status: deliveryStatus,
       recipient: input.email.toLowerCase(),
       subject,
       templateCode: `provider_otp_${input.purpose.toLowerCase()}`,

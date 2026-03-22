@@ -23,15 +23,14 @@ export default async function AccountBookingsPage() {
   const pendingOfferCount = bookings.filter((booking) => booking.counterOffers.length > 0).length;
 
   return (
-    <main className="section">
-      <div className="container" style={{ maxWidth: 900 }}>
+    <div>
         <div style={{ marginBottom: "1.25rem" }}>
           <Link href="/account" style={{ color: "var(--color-brand)", fontSize: "0.9rem", fontWeight: 600 }}>
             &larr; Back to account
           </Link>
         </div>
 
-        <div className="panel card">
+        <div className="panel card account-hero-card">
           <div className="eyebrow">My account</div>
           <h1 className="title" style={{ marginTop: "0.3rem", fontSize: "1.5rem", marginBottom: "1.25rem" }}>
             All bookings
@@ -53,7 +52,7 @@ export default async function AccountBookingsPage() {
               </Link>
             </p>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <div className="account-booking-list">
               {bookings.map((booking) => {
                 const ref = booking.quoteRequest?.reference ?? booking.id;
                 const service = booking.quoteRequest?.serviceKey ?? booking.serviceType;
@@ -72,21 +71,7 @@ export default async function AccountBookingsPage() {
                   <Link
                     key={booking.id}
                     href={`/account/bookings/${ref}`}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "0.75rem 1rem",
-                      borderRadius: "0.5rem",
-                      border: hasPendingOffer
-                        ? "2px solid var(--color-brand, #d9252a)"
-                        : "1px solid var(--color-border)",
-                      textDecoration: "none",
-                      color: "inherit",
-                      gap: "1rem",
-                      flexWrap: "wrap",
-                      background: hasPendingOffer ? "linear-gradient(135deg, #fef3f3 0%, #fff 100%)" : undefined,
-                    }}
+                    className={`account-booking-card${hasPendingOffer ? " account-booking-card-alert" : ""}`}
                   >
                     <div>
                       <strong style={{ fontSize: "0.95rem" }}>{service}</strong>
@@ -113,7 +98,7 @@ export default async function AccountBookingsPage() {
                         {ref} &middot; {date} at {booking.scheduledStartTime}
                       </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
+                    <div className="account-booking-card-side" style={{ textAlign: "right" }}>
                       <div style={{
                         fontSize: "0.8rem",
                         fontWeight: 600,
@@ -140,7 +125,6 @@ export default async function AccountBookingsPage() {
             </div>
           )}
         </div>
-      </div>
-    </main>
+    </div>
   );
 }

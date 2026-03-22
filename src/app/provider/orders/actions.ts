@@ -16,13 +16,22 @@ export async function acceptBookingAction(formData: FormData) {
 
   const prisma = getPrisma();
 
-  // Verify the booking belongs to this provider and is in an acceptable state
-  const booking = await prisma.booking.findFirst({
+  // C2+C3 FIX: Atomically claim the booking to prevent race with customer cancel.
+  // This acts as a distributed lock — only one actor can move from PENDING_ASSIGNMENT.
+  const claimResult = await prisma.booking.updateMany({
     where: {
       id: bookingId,
       providerCompanyId: session.providerCompany.id,
-      bookingStatus: { in: ["PENDING_ASSIGNMENT"] },
+      bookingStatus: "PENDING_ASSIGNMENT",
     },
+    data: { bookingStatus: "ACCEPTING" },
+  });
+
+  if (claimResult.count === 0) return; // Already cancelled, accepted, or not found
+
+  // Load payment details now that we've claimed the booking
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
     include: {
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
       marketplaceProviderCompany: { include: { stripeConnectedAccount: true } },
@@ -34,18 +43,41 @@ export async function acceptBookingAction(formData: FormData) {
   const paymentRecord = booking.paymentRecords[0];
   const stripeAccountId = booking.marketplaceProviderCompany?.stripeConnectedAccount?.stripeAccountId;
 
-  if (paymentRecord?.stripePaymentIntentId && stripeAccountId) {
-    await captureDirectChargePaymentIntent({
-      connectedAccountId: stripeAccountId,
-      paymentIntentId: paymentRecord.stripePaymentIntentId,
+  // C3 FIX: Capture Stripe funds AFTER claiming the booking but BEFORE finalising.
+  // If capture fails, roll back the claim so the booking can be retried or cancelled.
+  try {
+    if (paymentRecord?.stripePaymentIntentId && stripeAccountId) {
+      const capturedIntent = await captureDirectChargePaymentIntent({
+        connectedAccountId: stripeAccountId,
+        paymentIntentId: paymentRecord.stripePaymentIntentId,
+      });
+
+      // H-25 FIX: Backfill stripeChargeId from the captured PaymentIntent
+      const chargeId = capturedIntent.latest_charge;
+      if (chargeId) {
+        await prisma.paymentRecord.update({
+          where: { id: paymentRecord.id },
+          data: {
+            stripeChargeId: typeof chargeId === "string" ? chargeId : chargeId.id,
+          },
+        });
+      }
+    } else {
+      await prisma.paymentRecord.updateMany({
+        where: { bookingId },
+        data: { paymentState: "PAID" },
+      });
+    }
+  } catch (captureError) {
+    // Roll back the claim — restore to PENDING_ASSIGNMENT so it can be retried
+    await prisma.booking.updateMany({
+      where: { id: bookingId, bookingStatus: "ACCEPTING" },
+      data: { bookingStatus: "PENDING_ASSIGNMENT" },
     });
-  } else {
-    await prisma.paymentRecord.updateMany({
-      where: { bookingId },
-      data: { paymentState: "PAID" },
-    });
+    throw captureError;
   }
 
+  // Now finalise the booking status and job in a transaction
   await prisma.$transaction(async (tx) => {
     await tx.booking.update({
       where: { id: bookingId },

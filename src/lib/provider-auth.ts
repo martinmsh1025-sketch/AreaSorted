@@ -35,6 +35,9 @@ export async function getProviderSession() {
   });
 
   if (!user?.providerCompany) return null;
+
+  // H-19 FIX: Check that the user account is active (mirrors admin-auth.ts behaviour)
+  if (!user.isActive) return null;
   const latestInvite = await getLatestProviderInviteForCompany(user.providerCompany.id)
     || await findProviderInviteByEmail(user.providerCompany.contactEmail || user.email);
   return {

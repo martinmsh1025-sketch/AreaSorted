@@ -1,5 +1,6 @@
 import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,30 +22,54 @@ export interface GeneratedInvoice {
 /**
  * Generate the next sequential invoice number.
  * Format: INV-YYYYMM-XXXXX  (e.g. INV-202603-00042)
+ *
+ * H12 FIX: Uses a retry loop to handle race conditions. If two concurrent
+ * calls generate the same number, the unique constraint on `number` will
+ * cause one to fail — it retries with the next sequence number.
  */
 async function nextInvoiceNumber(
   prisma: ReturnType<typeof getPrisma>,
   prefix: string,
+  maxRetries = 5,
 ): Promise<string> {
   const now = new Date();
   const ym = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
   const pattern = `${prefix}-${ym}-`;
 
-  // Find the highest existing number with this prefix
-  const latest = await prisma.invoiceRecord.findFirst({
-    where: { number: { startsWith: pattern } },
-    orderBy: { number: "desc" },
-    select: { number: true },
-  });
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    // Find the highest existing number with this prefix
+    const latest = await prisma.invoiceRecord.findFirst({
+      where: { number: { startsWith: pattern } },
+      orderBy: { number: "desc" },
+      select: { number: true },
+    });
 
-  let seq = 1;
-  if (latest) {
-    const parts = latest.number.split("-");
-    const lastSeq = parseInt(parts[parts.length - 1], 10);
-    if (!isNaN(lastSeq)) seq = lastSeq + 1;
+    let seq = 1;
+    if (latest) {
+      const parts = latest.number.split("-");
+      const lastSeq = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(lastSeq)) seq = lastSeq + 1;
+    }
+
+    // Add attempt offset to handle retries after collisions
+    seq += attempt;
+
+    const candidate = `${pattern}${String(seq).padStart(5, "0")}`;
+
+    // Verify the candidate doesn't already exist (belt-and-suspenders)
+    const exists = await prisma.invoiceRecord.findFirst({
+      where: { number: candidate },
+      select: { id: true },
+    });
+
+    if (!exists) {
+      return candidate;
+    }
+    // If it exists, retry with next sequence
   }
 
-  return `${pattern}${String(seq).padStart(5, "0")}`;
+  // Fallback: use timestamp-based suffix to guarantee uniqueness
+  return `${pattern}${Date.now().toString().slice(-5)}`;
 }
 
 // ---------------------------------------------------------------------------

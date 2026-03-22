@@ -265,8 +265,17 @@ export function PublicQuoteForm() {
 
   useEffect(() => {
     // Need at least postcode + serviceKey to estimate
-    if (!form.postcode.trim() || !serviceKey) {
+    if (!form.postcode.trim()) {
       setEstimate(null);
+      setEstimateLoading(false);
+      setEstimateError("");
+      return;
+    }
+
+    if (!serviceKey) {
+      setEstimate(null);
+      setEstimateLoading(false);
+      setEstimateError(categoryKey ? "Choose a job type to see your live price." : "Choose a service category to start your live booking price.");
       return;
     }
 
@@ -358,6 +367,8 @@ export function PublicQuoteForm() {
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      // H-44 FIX: Abort in-flight request on unmount/dependency change
+      if (abortRef.current) abortRef.current.abort();
     };
   }, [
     form.postcode, categoryKey, serviceKey, estimatedHours,
@@ -736,7 +747,6 @@ export function PublicQuoteForm() {
                                 onClick={() => chooseService(job.value)}
                               >
                                 <span className="job-list-row-name">{job.label}</span>
-                                <span className="job-list-row-price">{money(job.startingPrice)}<em>base price</em></span>
                               </button>
                             );
                           })}

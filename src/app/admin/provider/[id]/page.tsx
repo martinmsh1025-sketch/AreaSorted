@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
 
 function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
@@ -89,6 +90,7 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
     active: r.active,
     pricingJson: (r.pricingJson as Record<string, number> | null) ?? null,
   }));
+  const groupedCoverageAreas = groupPostcodePrefixes(provider.coverageAreas.map((area) => area.postcodePrefix));
 
   return (
     <div className="space-y-6">
@@ -220,32 +222,37 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                   <dt className="text-sm text-muted-foreground mb-2">Coverage areas</dt>
                   <dd>
                     {provider.coverageAreas.length > 0 ? (
-                      <div className="space-y-2">
-                        {provider.coverageAreas.map((area) => (
-                          <div
-                            key={area.id}
-                            className="flex items-center justify-between rounded-md border px-3 py-2"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{area.postcodePrefix}</span>
-                              <Badge variant="outline" className="text-xs">
-                                {area.categoryKey}
-                              </Badge>
-                              {!area.active && (
-                                <Badge variant="secondary" className="text-xs">
-                                  Inactive
-                                </Badge>
-                              )}
+                      <div className="space-y-3">
+                        {groupedCoverageAreas.map((group) => (
+                          <div key={group.areaKey} className="rounded-lg border p-3">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <div>
+                                <strong className="text-sm">{group.areaName}</strong>
+                                <p className="text-xs text-muted-foreground">{group.prefixes.length} postcode prefixes</p>
+                              </div>
+                              <Badge variant="outline" className="text-xs">{group.areaKey}</Badge>
                             </div>
-                            <form action={deleteCoverageAreaAction}>
-                              <input type="hidden" name="providerCompanyId" value={provider.id} />
-                              <input type="hidden" name="coverageAreaId" value={area.id} />
-                              <FormSubmitButton
-                                label="Delete"
-                                pendingLabel="..."
-                                className="inline-flex h-7 items-center justify-center rounded-md bg-destructive px-2 text-xs font-medium text-destructive-foreground shadow-sm hover:bg-destructive/90 disabled:opacity-50"
-                              />
-                            </form>
+                            <div className="flex flex-wrap gap-2">
+                              {group.prefixes.map((prefix) => {
+                                const area = provider.coverageAreas.find((coverageArea) => coverageArea.postcodePrefix === prefix);
+                                if (!area) return null;
+                                return (
+                                  <div key={prefix} className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm">
+                                    <span className="font-medium">{prefix}</span>
+                                    {!area.active && <Badge variant="secondary" className="text-[10px]">Inactive</Badge>}
+                                    <form action={deleteCoverageAreaAction}>
+                                      <input type="hidden" name="providerCompanyId" value={provider.id} />
+                                      <input type="hidden" name="coverageAreaId" value={area.id} />
+                                      <FormSubmitButton
+                                        label="×"
+                                        pendingLabel="..."
+                                        className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium text-white shadow-sm hover:bg-destructive/90 disabled:opacity-50"
+                                      />
+                                    </form>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
                         ))}
                       </div>

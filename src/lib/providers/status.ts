@@ -42,7 +42,7 @@ export function canProviderAccessStripe(status: string) {
 }
 
 export function canProviderAccessPricing(status: string) {
-  return ["PRICING_PENDING", "ACTIVE", "SUSPENDED"].includes(status);
+  return ["APPROVED", "STRIPE_PENDING", "STRIPE_RESTRICTED", "PRICING_PENDING", "ACTIVE", "SUSPENDED"].includes(status);
 }
 
 export function canProviderAccessOrders(status: string) {

@@ -173,33 +173,18 @@ export async function syncProviderStripeStatus(providerCompanyId: string) {
   });
 
   if (refreshed) {
-    const checklist = buildProviderChecklist(refreshed);
-    if (checklist.allComplete) {
-      await prisma.providerCompany.update({
-        where: { id: providerCompanyId },
-        data: {
-          status: "ACTIVE",
-          paymentReady: true,
-        },
-      });
-    } else if (snapshot.chargesEnabled && snapshot.payoutsEnabled) {
-      await prisma.providerCompany.update({
-        where: { id: providerCompanyId },
-        data: {
-          status: "PRICING_PENDING",
-          paymentReady: false,
-          approvedAt: refreshed.approvedAt || new Date(),
-        },
-      });
-    } else {
-      await prisma.providerCompany.update({
-        where: { id: providerCompanyId },
-        data: {
-          status: snapshot.chargesEnabled || snapshot.payoutsEnabled ? "STRIPE_RESTRICTED" : "STRIPE_PENDING",
-          paymentReady: false,
-        },
-      });
-    }
+    // C7 FIX: Do NOT write status directly here. Instead, update paymentReady
+    // only and delegate status management to syncProviderLifecycleState(),
+    // which respects identity locks (SUSPENDED, REJECTED, etc.).
+    const paymentReady = snapshot.chargesEnabled && snapshot.payoutsEnabled;
+    await prisma.providerCompany.update({
+      where: { id: providerCompanyId },
+      data: {
+        paymentReady,
+        // Ensure approvedAt is set if Stripe is fully ready
+        ...(paymentReady && !refreshed.approvedAt ? { approvedAt: new Date() } : {}),
+      },
+    });
   }
 
   await syncProviderLifecycleState(providerCompanyId);

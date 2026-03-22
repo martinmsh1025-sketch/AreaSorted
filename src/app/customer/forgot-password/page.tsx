@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requestCustomerPasswordResetAction } from "./actions";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { redirect } from "next/navigation";
+import { FormSubmitButton } from "@/components/shared/form-submit-button";
 
 type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -14,7 +15,7 @@ export default async function CustomerForgotPasswordPage({ searchParams }: Props
   const params = (await searchParams) ?? {};
   const hasError = params.error === "1";
   const sent = params.sent === "1";
-  const devLink = typeof params.devLink === "string" ? decodeURIComponent(params.devLink) : "";
+  // H-16 FIX: devLink no longer passed via URL params (logged to server console instead)
 
   return (
     <main className="section">
@@ -46,18 +47,7 @@ export default async function CustomerForgotPasswordPage({ searchParams }: Props
               </p>
             )}
 
-            {devLink && (
-              <div style={{ background: "var(--color-muted, #f5f5f5)", borderRadius: 8, padding: "0.75rem", fontSize: "0.8rem", wordBreak: "break-all" }}>
-                Dev reset link:{" "}
-                <a href={devLink} style={{ color: "var(--color-brand)", textDecoration: "underline" }}>
-                  {devLink}
-                </a>
-              </div>
-            )}
-
-            <button type="submit" className="button button-primary" style={{ width: "100%" }}>
-              Send reset link
-            </button>
+            <FormSubmitButton label="Send reset link" pendingLabel="Sending..." className="button button-primary" />
           </form>
 
           <p style={{ textAlign: "center", marginTop: "1.25rem", fontSize: "0.9rem" }}>

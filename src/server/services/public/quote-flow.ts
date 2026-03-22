@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getPrisma } from "@/lib/db";
-import { getEnv } from "@/lib/config/env";
+import { getEnv, getAppUrl } from "@/lib/config/env";
 import { createDirectChargeCheckoutSession } from "@/lib/stripe/connect";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { createProviderNotification } from "@/lib/providers/notifications";
@@ -8,8 +8,9 @@ import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import { jobTypeCatalog } from "@/lib/service-catalog";
 import { hashPassword } from "@/lib/security/password";
+import type { ServiceType } from "@prisma/client";
 
-function mapCategoryToServiceType(categoryKey: string) {
+function mapCategoryToServiceType(categoryKey: string): ServiceType {
   switch (categoryKey) {
     case "CLEANING":
       return "REGULAR_CLEANING";
@@ -86,68 +87,84 @@ export async function createPublicQuote(input: CreateQuoteInput) {
     return match;
   }
 
-  // Single-provider model: matcher always returns exactly one provider
-  const matchedProvider = match.providers[0];
+  let best:
+    | {
+        provider: (typeof match.providers)[number];
+        preview: Awaited<ReturnType<typeof previewProviderPricing>>;
+      }
+    | null = null;
 
-  // Generate pricing preview for the matched provider
-  let preview;
-  try {
-    preview = await previewProviderPricing({
-      providerCompanyId: matchedProvider.providerCompanyId,
-      categoryKey: input.categoryKey,
-      serviceKey: input.serviceKey,
-      postcodePrefix: matchedProvider.postcodePrefix,
-      estimatedHours: input.estimatedHours,
-      quantity: input.quantity,
-      sameDay: input.sameDay,
-      weekend: input.weekend,
-      bedrooms: input.bedrooms,
-      bathrooms: input.bathrooms,
-      kitchens: input.kitchens,
-      cleaningCondition: input.cleaningCondition,
-      supplies: input.supplies,
-      propertyType: input.propertyType,
-      jobSize: input.jobSize,
-      addOns: input.addOns,
-    });
-  } catch {
-    // Provider doesn't have a pricing rule for this service
+  for (const provider of match.providers) {
+    try {
+      const preview = await previewProviderPricing({
+        providerCompanyId: provider.providerCompanyId,
+        categoryKey: input.categoryKey,
+        serviceKey: input.serviceKey,
+        postcodePrefix: provider.postcodePrefix,
+        estimatedHours: input.estimatedHours,
+        quantity: input.quantity,
+        sameDay: input.sameDay,
+        weekend: input.weekend,
+        bedrooms: input.bedrooms,
+        bathrooms: input.bathrooms,
+        kitchens: input.kitchens,
+        cleaningCondition: input.cleaningCondition,
+        supplies: input.supplies,
+        propertyType: input.propertyType,
+        jobSize: input.jobSize,
+        addOns: input.addOns,
+      });
+
+      if (!best || preview.totalCustomerPay < best.preview.totalCustomerPay) {
+        best = { provider, preview };
+      }
+    } catch {
+      // Skip providers without a usable pricing rule for this request.
+    }
+  }
+
+  if (!best) {
     return { status: "no_coverage" as const };
   }
+
+  const matchedProvider = best.provider;
+  const preview = best.preview;
 
   const prisma = getPrisma();
   const reference = createReference("QR");
   const quoteRequired = false;
 
-  // Create or update customer with password hash at quote time
+  // C-12 FIX: Use upsert instead of findUnique+create to prevent race condition
+  // when two quote submissions for the same email arrive concurrently.
   const passwordHash = await hashPassword(input.password);
-  const existingCustomer = await prisma.customer.findUnique({
+  await prisma.customer.upsert({
     where: { email: input.customerEmail },
-    select: { id: true, passwordHash: true },
+    update: {
+      firstName: input.customerName.split(" ")[0] || input.customerName,
+      lastName: input.customerName.split(" ").slice(1).join(" ") || input.customerName,
+      phone: input.customerPhone,
+      // Only set password if they don't already have one (preserve existing passwords)
+      // Prisma upsert doesn't support conditional fields in update, so we handle this
+      // by setting the password in a follow-up conditional update if needed.
+    },
+    create: {
+      email: input.customerEmail,
+      firstName: input.customerName.split(" ")[0] || input.customerName,
+      lastName: input.customerName.split(" ").slice(1).join(" ") || input.customerName,
+      phone: input.customerPhone,
+      passwordHash,
+    },
   });
 
-  if (existingCustomer) {
-    // Update name/phone; only set password if they don't already have one
-    await prisma.customer.update({
-      where: { id: existingCustomer.id },
-      data: {
-        firstName: input.customerName.split(" ")[0] || input.customerName,
-        lastName: input.customerName.split(" ").slice(1).join(" ") || input.customerName,
-        phone: input.customerPhone,
-        ...(existingCustomer.passwordHash ? {} : { passwordHash }),
-      },
-    });
-  } else {
-    await prisma.customer.create({
-      data: {
-        email: input.customerEmail,
-        firstName: input.customerName.split(" ")[0] || input.customerName,
-        lastName: input.customerName.split(" ").slice(1).join(" ") || input.customerName,
-        phone: input.customerPhone,
-        passwordHash,
-      },
-    });
-  }
+  // For existing customers without a password, set it now
+  // (upsert update path doesn't conditionally set passwordHash)
+  await prisma.customer.updateMany({
+    where: {
+      email: input.customerEmail,
+      passwordHash: null,
+    },
+    data: { passwordHash },
+  });
 
   const quoteRequest = await prisma.quoteRequest.create({
     data: {
@@ -283,6 +300,19 @@ export async function getPublicQuoteByReference(reference: string) {
 
 export async function createInstantBookingFromQuote(reference: string) {
   const prisma = getPrisma();
+
+  // C1 FIX: Atomically claim the quote to prevent double-booking.
+  // Only a quote in "PRICED" state can proceed; the update acts as a lock.
+  const claimResult = await prisma.quoteRequest.updateMany({
+    where: { reference, state: "PRICED" },
+    data: { state: "BOOKING_IN_PROGRESS" },
+  });
+
+  if (claimResult.count === 0) {
+    // Either the quote doesn't exist or it's already been claimed/booked
+    throw new Error("Quote is no longer available for booking — it may already have been booked");
+  }
+
   const quote = await prisma.quoteRequest.findUnique({
     where: { reference },
     include: {
@@ -294,96 +324,109 @@ export async function createInstantBookingFromQuote(reference: string) {
   });
 
   if (!quote || !quote.providerCompany || !quote.priceSnapshot) {
+    // Roll back the claim since the data isn't ready
+    await prisma.quoteRequest.updateMany({
+      where: { reference, state: "BOOKING_IN_PROGRESS" },
+      data: { state: "PRICED" },
+    });
     throw new Error("Quote request not ready for booking — provider must be selected first");
   }
 
-  const customer = await prisma.customer.upsert({
-    where: { email: quote.customerEmail },
-    update: {
-      firstName: quote.customerName.split(" ")[0] || quote.customerName,
-      lastName: quote.customerName.split(" ").slice(1).join(" ") || quote.customerName,
-      phone: quote.customerPhone,
-    },
-    create: {
-      email: quote.customerEmail,
-      firstName: quote.customerName.split(" ")[0] || quote.customerName,
-      lastName: quote.customerName.split(" ").slice(1).join(" ") || quote.customerName,
-      phone: quote.customerPhone,
-    },
-  });
+  // H-37 FIX: Wrap all DB writes (customer upsert, address, booking, payment record)
+  // in a single interactive transaction to ensure atomicity. Stripe calls happen
+  // outside the transaction since they are external API calls.
+  const { booking, paymentRecord, bookingReference } = await prisma.$transaction(async (tx) => {
+    const customer = await tx.customer.upsert({
+      where: { email: quote.customerEmail },
+      update: {
+        firstName: quote.customerName.split(" ")[0] || quote.customerName,
+        lastName: quote.customerName.split(" ").slice(1).join(" ") || quote.customerName,
+        phone: quote.customerPhone,
+      },
+      create: {
+        email: quote.customerEmail,
+        firstName: quote.customerName.split(" ")[0] || quote.customerName,
+        lastName: quote.customerName.split(" ").slice(1).join(" ") || quote.customerName,
+        phone: quote.customerPhone,
+      },
+    });
 
-  const address = await prisma.customerAddress.create({
-    data: {
-      customerId: customer.id,
-      addressLine1: quote.addressLine1,
-      addressLine2: quote.addressLine2,
-      city: quote.city,
-      postcode: quote.postcode,
-    },
-  });
+    const address = await tx.customerAddress.create({
+      data: {
+        customerId: customer.id,
+        addressLine1: quote.addressLine1,
+        addressLine2: quote.addressLine2,
+        city: quote.city,
+        postcode: quote.postcode,
+      },
+    });
 
-  const bookingReference = quote.reference;
-  const booking = await prisma.booking.create({
-    data: {
-      customerId: customer.id,
-      customerAddressId: address.id,
-      providerCompanyId: quote.providerCompanyId,
-      serviceAddressLine1: quote.addressLine1,
-      serviceAddressLine2: quote.addressLine2,
-      serviceCity: quote.city,
-      servicePostcode: quote.postcode,
-      propertyType: "FLAT",
-      serviceType: mapCategoryToServiceType(quote.categoryKey) as any,
-      scheduledDate: quote.scheduledDate || new Date(),
-      scheduledStartTime: quote.scheduledTimeLabel || "09:00",
-      durationHours: Number(quote.priceSnapshot.estimatedHours) || 2,
-      additionalNotes: JSON.stringify({ ...toObjectRecord(quote.inputJson), bookingReference }),
-      bookingStatus: "AWAITING_PAYMENT",
-      totalAmount: quote.priceSnapshot.totalCustomerPay,
-      cleanerPayoutAmount: quote.priceSnapshot.expectedProviderPayoutBeforeFees,
-      platformMarginAmount: Number(quote.priceSnapshot.bookingFee) + Number(quote.priceSnapshot.commissionAmount),
-      priceSnapshot: {
-        create: {
-          providerServiceAmount: quote.priceSnapshot.providerBasePrice,
-          platformBookingFee: quote.priceSnapshot.bookingFee,
-          platformCommissionAmount: quote.priceSnapshot.commissionAmount,
-          platformMarkupAmount: 0,
-          optionalExtrasAmount: (() => {
-            const inputData = toObjectRecord(quote.priceSnapshot.inputJson);
-            const addOnKeys = Array.isArray(inputData.addOns) ? inputData.addOns as string[] : [];
-            if (addOnKeys.length === 0) return 0;
-            const jobType = jobTypeCatalog.find((j) => j.value === quote.serviceKey);
-            if (!jobType) return 0;
-            return jobType.addOns
-              .filter((a) => addOnKeys.includes(a.value))
-              .reduce((sum, a) => sum + a.amount, 0);
-          })(),
-          customerTotalAmount: quote.priceSnapshot.totalCustomerPay,
-          providerExpectedPayout: quote.priceSnapshot.expectedProviderPayoutBeforeFees,
-          pricingJson: toJsonValue(quote.priceSnapshot.inputJson || {}),
+    const txBookingReference = quote.reference;
+    const txBooking = await tx.booking.create({
+      data: {
+        customerId: customer.id,
+        customerAddressId: address.id,
+        providerCompanyId: quote.providerCompanyId,
+        serviceAddressLine1: quote.addressLine1,
+        serviceAddressLine2: quote.addressLine2,
+        serviceCity: quote.city,
+        servicePostcode: quote.postcode,
+        propertyType: "FLAT",
+        serviceType: mapCategoryToServiceType(quote.categoryKey),
+        scheduledDate: quote.scheduledDate || new Date(),
+        scheduledStartTime: quote.scheduledTimeLabel || "09:00",
+        durationHours: Number(quote.priceSnapshot!.estimatedHours) || 2,
+        additionalNotes: JSON.stringify({ ...toObjectRecord(quote.inputJson), bookingReference: txBookingReference }),
+        bookingStatus: "AWAITING_PAYMENT",
+        totalAmount: quote.priceSnapshot!.totalCustomerPay,
+        cleanerPayoutAmount: quote.priceSnapshot!.expectedProviderPayoutBeforeFees,
+        platformMarginAmount: Number(quote.priceSnapshot!.bookingFee) + Number(quote.priceSnapshot!.commissionAmount),
+        priceSnapshot: {
+          create: {
+            providerServiceAmount: quote.priceSnapshot!.providerBasePrice,
+            platformBookingFee: quote.priceSnapshot!.bookingFee,
+            platformCommissionAmount: quote.priceSnapshot!.commissionAmount,
+            platformMarkupAmount: 0,
+            optionalExtrasAmount: (() => {
+              const inputData = toObjectRecord(quote.priceSnapshot!.inputJson);
+              const addOnKeys = Array.isArray(inputData.addOns) ? inputData.addOns as string[] : [];
+              if (addOnKeys.length === 0) return 0;
+              const jobType = jobTypeCatalog.find((j) => j.value === quote.serviceKey);
+              if (!jobType) return 0;
+              return jobType.addOns
+                .filter((a) => addOnKeys.includes(a.value))
+                .reduce((sum, a) => sum + a.amount, 0);
+            })(),
+            customerTotalAmount: quote.priceSnapshot!.totalCustomerPay,
+            providerExpectedPayout: quote.priceSnapshot!.expectedProviderPayoutBeforeFees,
+            pricingJson: toJsonValue(quote.priceSnapshot!.inputJson || {}),
+          },
         },
       },
-    },
-    include: {
-      priceSnapshot: true,
-    },
+      include: {
+        priceSnapshot: true,
+      },
+    });
+
+    const txPaymentRecord = await tx.paymentRecord.create({
+      data: {
+        bookingId: txBooking.id,
+        stripeAccountId: quote.providerCompany!.stripeConnectedAccount?.stripeAccountId,
+        paymentState: "PENDING",
+        grossAmount: quote.priceSnapshot!.totalCustomerPay,
+        applicationFeeAmount: Number(quote.priceSnapshot!.bookingFee) + Number(quote.priceSnapshot!.commissionAmount),
+        metadataJson: toJsonValue({
+          quoteReference: quote.reference,
+          bookingReference: txBookingReference,
+        }),
+      },
+    });
+
+    return { booking: txBooking, paymentRecord: txPaymentRecord, bookingReference: txBookingReference };
   });
 
-  const paymentRecord = await prisma.paymentRecord.create({
-    data: {
-      bookingId: booking.id,
-      stripeAccountId: quote.providerCompany.stripeConnectedAccount?.stripeAccountId,
-      paymentState: "PENDING",
-      grossAmount: quote.priceSnapshot.totalCustomerPay,
-      applicationFeeAmount: Number(quote.priceSnapshot.bookingFee) + Number(quote.priceSnapshot.commissionAmount),
-      metadataJson: toJsonValue({
-        quoteReference: quote.reference,
-        bookingReference,
-      }),
-    },
-  });
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  // --- Stripe call happens OUTSIDE the transaction ---
+  const appUrl = getAppUrl();
   let sessionId = "";
   let sessionUrl = "";
 
@@ -445,7 +488,9 @@ export async function createInstantBookingFromQuote(reference: string) {
     try {
       const { sendBookingConfirmationEmail } = await import("@/lib/notifications/booking-emails");
       await sendBookingConfirmationEmail(booking.id);
-    } catch {}
+    } catch {
+      // Non-critical: booking is created regardless of email delivery
+    }
 
     // Notify provider about new paid booking (mock path)
     try {
@@ -488,3 +533,6 @@ export async function createInstantBookingFromQuote(reference: string) {
 
   return { booking, sessionUrl, bookingReference };
 }
+
+// Re-export the "BOOKING_IN_PROGRESS" state for schema/type reference
+export const QUOTE_BOOKING_IN_PROGRESS_STATE = "BOOKING_IN_PROGRESS" as const;

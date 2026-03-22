@@ -33,14 +33,7 @@ import {
 } from "lucide-react";
 import { serviceTypeLabels, propertyTypeLabels, formatEnumLabel } from "@/lib/providers/service-catalog-mapping";
 import { formatPreferredScheduleOption, parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
-}
+import { formatMoney } from "@/lib/format";
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   AWAITING_PAYMENT: "outline",
@@ -98,11 +91,29 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
       providerCompanyId: session.providerCompany.id,
     },
     include: {
-      customer: true,
+      // M-17 FIX: Exclude passwordHash from customer data
+      customer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
       priceSnapshot: true,
       quoteRequest: true,
       payments: true,
-      paymentRecords: true,
+      // M-18 FIX: Exclude sensitive Stripe IDs from payment records sent to provider
+      paymentRecords: {
+        select: {
+          id: true,
+          paymentState: true,
+          grossAmount: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       counterOffers: {
         where: { providerCompanyId: session.providerCompany.id },
         orderBy: { createdAt: "desc" },

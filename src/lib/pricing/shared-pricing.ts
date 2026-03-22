@@ -117,25 +117,19 @@ export type PriceBreakdownResult = {
   weekendExtra: number;
   /** Provider subtotal (base + extras + sameDay + weekend) — this is what provider receives */
   providerSubtotal: number;
-  /** Platform commission amount (charged to customer ON TOP, NOT deducted from provider) */
+  /** Platform commission amount (internal margin, deducted from provider payout) */
   commissionAmount: number;
-  /** What the provider receives = providerSubtotal (commission is NOT deducted) */
+  /** What the provider receives = providerSubtotal - commissionAmount */
   providerPayout: number;
   /** Booking fee added for customer */
   actualBookingFee: number;
   /** Add-ons total */
   addOnsTotal: number;
-  /** Total the customer pays = providerSubtotal + bookingFee + commission */
+  /** Total the customer pays = providerSubtotal + bookingFee */
   customerTotal: number;
 };
 
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
-}
+import { formatMoney } from "@/lib/format";
 
 /**
  * Calculate a full price breakdown matching the customer-facing pricing engine.
@@ -229,13 +223,14 @@ export function calculatePriceBreakdown(input: PriceBreakdownInput): PriceBreakd
   const weekendExtra = weekend ? weekendUplift : 0;
   const providerSubtotal = providerBasePrice + sameDayExtra + weekendExtra;
 
-  // Commission: % of provider subtotal — charged to customer ON TOP
-  // This matches the server engine: commission is an additional customer charge,
-  // NOT deducted from the provider's payout
+  // C-6 FIX: Commission is an internal platform margin — NOT charged to the customer.
+  // This now matches the server engine (prisma-pricing.ts):
+  //   - Customer pays: providerSubtotal + bookingFee only
+  //   - Commission is deducted from provider payout at settlement time
   const commissionAmount = roundMoney(providerSubtotal * (commissionPercent / 100));
 
-  // Provider payout = full subtotal (commission is NOT deducted from provider)
-  const providerPayout = roundMoney(providerSubtotal);
+  // Provider payout = subtotal minus commission (commission IS deducted from provider)
+  const providerPayout = roundMoney(providerSubtotal - commissionAmount);
 
   // Booking fee: fixed or % of provider subtotal
   const actualBookingFee =
@@ -243,9 +238,9 @@ export function calculatePriceBreakdown(input: PriceBreakdownInput): PriceBreakd
       ? roundMoney(providerSubtotal * (bookingFee / 100))
       : bookingFee;
 
-  // Customer total = provider subtotal + booking fee + commission
-  // Matches server engine: totalCustomerPay = providerBasePrice + bookingFee + commissionAmount
-  const customerTotal = roundMoney(providerSubtotal + actualBookingFee + commissionAmount);
+  // Customer total = provider subtotal + booking fee (commission NOT added)
+  // Matches server engine: totalCustomerPay = providerBasePrice + bookingFee
+  const customerTotal = roundMoney(providerSubtotal + actualBookingFee);
 
   return {
     providerBasePrice: roundMoney(providerBasePrice),

@@ -28,48 +28,38 @@ export default async function AccountDashboardPage() {
   });
 
   return (
-    <main className="section">
-      <div className="container" style={{ maxWidth: 900 }}>
-        <div className="panel card" style={{ marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-            <div>
-              <div className="eyebrow">My account</div>
-              <h1 className="title" style={{ marginTop: "0.3rem", fontSize: "1.5rem" }}>
-                Welcome back, {customer.firstName}
-              </h1>
-              <p className="lead" style={{ fontSize: "0.95rem" }}>{customer.email}</p>
-            </div>
-            <form action={customerLogoutAction}>
-              <button type="submit" className="button button-secondary" style={{ fontSize: "0.85rem" }}>
-                Sign out
-              </button>
-            </form>
+    <div className="account-main-column">
+      <div className="panel card account-hero-card" style={{ marginBottom: "1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <div className="eyebrow">My account</div>
+            <h1 className="title" style={{ marginTop: "0.3rem", fontSize: "1.5rem" }}>
+              Welcome back, {customer.firstName}
+            </h1>
+            <p className="lead" style={{ fontSize: "0.95rem" }}>{customer.email}</p>
+          </div>
+          <form action={customerLogoutAction}>
+            <button type="submit" className="button button-secondary" style={{ fontSize: "0.85rem" }}>
+              Sign out
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {pendingCounterOffers > 0 && (
+        <div className="panel card" style={{ marginBottom: "1.5rem", border: "1px solid rgba(217,37,42,0.18)", background: "linear-gradient(135deg, #fff0f0 0%, #fff 100%)" }}>
+          <div className="eyebrow">Action needed</div>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0.35rem 0 0.5rem" }}>A provider has proposed a change</h2>
+          <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.95rem", lineHeight: 1.65 }}>
+            One or more bookings need your response. Open your booking list to review and accept or decline any pending counter offer.
+          </p>
+          <div style={{ marginTop: "1rem" }}>
+            <Link href="/account/bookings" className="button button-primary">Review bookings</Link>
           </div>
         </div>
+      )}
 
-        <div className="panel card" style={{ marginBottom: "1.5rem" }}>
-          <div className="grid-3" style={{ gap: "0.9rem", marginBottom: "1rem" }}>
-            <div className="muted-block" style={{ borderRadius: "0.85rem" }}>
-              <div style={{ fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-muted)", fontWeight: 700 }}>Bookings</div>
-              <div style={{ fontSize: "1.7rem", fontWeight: 800, marginTop: "0.35rem", fontFamily: "var(--font-display)" }}>{totalBookings}</div>
-            </div>
-            <div className="muted-block" style={{ borderRadius: "0.85rem" }}>
-              <div style={{ fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-muted)", fontWeight: 700 }}>Pending offers</div>
-              <div style={{ fontSize: "1.7rem", fontWeight: 800, marginTop: "0.35rem", fontFamily: "var(--font-display)", color: pendingCounterOffers > 0 ? "var(--color-brand)" : "var(--color-text)" }}>{pendingCounterOffers}</div>
-            </div>
-            <div className="muted-block" style={{ borderRadius: "0.85rem" }}>
-              <div style={{ fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-muted)", fontWeight: 700 }}>Account</div>
-              <div style={{ fontSize: "1rem", fontWeight: 700, marginTop: "0.45rem" }}>{customer.firstName} {customer.lastName}</div>
-            </div>
-          </div>
-          {pendingCounterOffers > 0 && (
-            <div style={{ marginBottom: "1rem", padding: "0.9rem 1rem", borderRadius: "0.75rem", background: "linear-gradient(135deg, #fff0f0 0%, #fff 100%)", border: "1px solid rgba(217,37,42,0.18)" }}>
-              <strong style={{ display: "block", marginBottom: "0.3rem" }}>You have provider updates waiting</strong>
-              <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.92rem", lineHeight: 1.55 }}>
-                One or more bookings have a pending counter offer. Open your booking list to respond.
-              </p>
-            </div>
-          )}
+      <div className="panel card" style={{ marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>Recent bookings</h2>
             {totalBookings > 5 && (
@@ -143,9 +133,9 @@ export default async function AccountDashboardPage() {
               })}
             </div>
           )}
-        </div>
+      </div>
 
-        <div className="panel card">
+      <div className="panel card">
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Account details</h2>
           <EditProfileSection
             customer={{
@@ -159,8 +149,7 @@ export default async function AccountDashboardPage() {
           <div className="quote-summary-list" style={{ marginTop: "0.75rem" }}>
             <div><span>Member since</span><strong>{customer.createdAt.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</strong></div>
           </div>
-        </div>
       </div>
-    </main>
+    </div>
   );
 }

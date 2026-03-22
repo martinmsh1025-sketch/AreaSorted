@@ -17,6 +17,9 @@ export async function setProviderPasswordAction(formData: FormData) {
   const confirmPassword = String(formData.get("confirmPassword") || "");
 
   const purpose = mode === "reset" ? "PASSWORD_RESET" : "PASSWORD_SETUP";
+
+  // H-20 FIX: Consume token atomically BEFORE performing validation/mutations
+  // to eliminate TOCTOU window where token is validated at line N but consumed later.
   const record = await getProviderAuthToken({ rawToken: token, purpose });
 
   if (!record) {
@@ -30,6 +33,11 @@ export async function setProviderPasswordAction(formData: FormData) {
   if (password !== confirmPassword) {
     redirect(`/provider/reset-password/${token}?mode=${mode}&error=password_mismatch`);
   }
+
+  // H-20 FIX: Consume token immediately after validation, before any DB mutations.
+  // This prevents a race where two concurrent requests both pass getProviderAuthToken
+  // but only one should be allowed to reset the password.
+  await consumeProviderAuthToken({ rawToken: token, purpose });
 
   const prisma = getPrisma();
   const passwordHash = await hashPassword(password);
@@ -101,7 +109,7 @@ export async function setProviderPasswordAction(formData: FormData) {
     });
   }
 
-  await consumeProviderAuthToken({ rawToken: token, purpose });
+  // H-20 FIX: Token already consumed above (before mutations)
 
   if (record.providerCompanyId) {
     await setProviderPasswordSet(record.providerCompanyId);

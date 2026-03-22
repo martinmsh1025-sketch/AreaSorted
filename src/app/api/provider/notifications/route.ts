@@ -12,7 +12,9 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const limit = parseInt(searchParams.get("limit") || "20", 10);
+  // M-6 FIX: Clamp limit to max 100 to prevent excessive DB queries
+  const rawLimit = parseInt(searchParams.get("limit") || "20", 10);
+  const limit = Math.max(1, Math.min(100, Number.isFinite(rawLimit) ? rawLimit : 20));
   const unreadOnly = searchParams.get("unreadOnly") === "true";
 
   const [notifications, unreadCount] = await Promise.all([

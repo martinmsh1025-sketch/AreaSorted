@@ -12,12 +12,18 @@ export function CancelBookingSection({ bookingId }: { bookingId: string }) {
   async function handleCancel() {
     setError(null);
     setSubmitting(true);
-    const fd = new FormData();
-    fd.set("bookingId", bookingId);
-    fd.set("reason", reason);
-    const result = await cancelBookingAction(fd);
-    if (result?.error) {
-      setError(result.error);
+    // H-40 FIX: Wrap server action in try/catch to prevent uncaught promise rejection
+    try {
+      const fd = new FormData();
+      fd.set("bookingId", bookingId);
+      fd.set("reason", reason);
+      const result = await cancelBookingAction(fd);
+      if (result?.error) {
+        setError(result.error);
+        setSubmitting(false);
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
       setSubmitting(false);
     }
   }

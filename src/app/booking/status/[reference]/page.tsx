@@ -1,14 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
 import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
-
-function formatMoney(value: unknown) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(Number(value || 0));
-}
+import { formatMoney } from "@/lib/format";
 
 type BookingStatusPageProps = {
   params: Promise<{ reference: string }>;

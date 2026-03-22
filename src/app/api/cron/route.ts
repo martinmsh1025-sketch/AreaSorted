@@ -3,6 +3,12 @@ import { getPrisma } from "@/lib/db";
 import { getEnv } from "@/lib/config/env";
 import { cancelDirectChargePaymentIntent } from "@/lib/stripe/connect";
 
+// L-H FIX: Named timing constants instead of magic numbers
+const ABANDONED_BOOKING_CUTOFF_MS = 2 * 60 * 60 * 1000; // 2 hours
+const CONFIRMATION_CUTOFF_MS = 24 * 60 * 60 * 1000; // 24 hours
+const COUNTER_OFFER_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
+const TOKEN_CLEANUP_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 /**
  * Cron endpoint for cleaning up stale data:
  * 1. Abandoned checkouts — bookings stuck in AWAITING_PAYMENT for >2 hours
@@ -32,7 +38,7 @@ export async function GET(request: NextRequest) {
     const results: Record<string, number> = {};
 
     // 1. Abandoned checkouts — AWAITING_PAYMENT for >2 hours
-    const abandonedCutoff = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const abandonedCutoff = new Date(now.getTime() - ABANDONED_BOOKING_CUTOFF_MS);
     const abandonedResult = await prisma.booking.updateMany({
       where: {
         bookingStatus: "AWAITING_PAYMENT",
@@ -47,11 +53,14 @@ export async function GET(request: NextRequest) {
     results.abandonedCheckouts = abandonedResult.count;
 
     // 2. Expire unconfirmed booking holds after 24 hours
-    const confirmationCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const confirmationCutoff = new Date(now.getTime() - CONFIRMATION_CUTOFF_MS);
+    // H-23 FIX: Use createdAt instead of updatedAt for auth hold expiry.
+    // updatedAt resets on any booking field change (reschedule, counter-offer, etc.)
+    // which could extend the hold window beyond the intended 24 hours.
     const expiredAuthorisations = await prisma.booking.findMany({
       where: {
         bookingStatus: "PENDING_ASSIGNMENT",
-        updatedAt: { lt: confirmationCutoff },
+        createdAt: { lt: confirmationCutoff },
       },
       include: {
         paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
@@ -60,7 +69,9 @@ export async function GET(request: NextRequest) {
     });
 
     let releasedAuthorisations = 0;
-    for (const booking of expiredAuthorisations) {
+
+    // H-36 FIX: Cancel Stripe PIs in parallel with Promise.allSettled to avoid N+1
+    const cancelPromises = expiredAuthorisations.map(async (booking) => {
       const paymentRecord = booking.paymentRecords[0];
       const stripeAccountId = booking.marketplaceProviderCompany?.stripeConnectedAccount?.stripeAccountId;
 
@@ -74,15 +85,25 @@ export async function GET(request: NextRequest) {
           // Non-critical; continue to local cleanup so stale bookings do not linger.
         }
       }
+    });
+    await Promise.allSettled(cancelPromises);
 
-      await prisma.booking.update({
-        where: { id: booking.id },
+    for (const booking of expiredAuthorisations) {
+      // H7 FIX: Add status guard to prevent overwriting if provider accepted
+      // between the findMany and this update.
+      const updateResult = await prisma.booking.updateMany({
+        where: { id: booking.id, bookingStatus: "PENDING_ASSIGNMENT" },
         data: {
           bookingStatus: "NO_CLEANER_FOUND",
           cancelledByType: "SYSTEM",
           cancelledReason: "Provider did not confirm within 24 hours",
         },
       });
+
+      if (updateResult.count === 0) {
+        // Booking was accepted/cancelled in the meantime, skip cleanup
+        continue;
+      }
       await prisma.paymentRecord.updateMany({
         where: { bookingId: booking.id },
         data: { paymentState: "CANCELLED" },
@@ -99,7 +120,7 @@ export async function GET(request: NextRequest) {
     results.expiredAuthorisations = releasedAuthorisations;
 
     // 3. Expired counter-offers — PENDING for >48 hours
-    const offerCutoff = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const offerCutoff = new Date(now.getTime() - COUNTER_OFFER_EXPIRY_MS);
     const expiredOffers = await prisma.counterOffer.updateMany({
       where: {
         status: "PENDING",
@@ -144,7 +165,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. Clean up old consumed/expired auth tokens (>7 days)
-    const tokenCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const tokenCutoff = new Date(now.getTime() - TOKEN_CLEANUP_AGE_MS);
     const deletedCustomerTokens = await prisma.customerAuthToken.deleteMany({
       where: {
         OR: [
@@ -165,14 +186,20 @@ export async function GET(request: NextRequest) {
     });
     results.cleanedProviderTokens = deletedProviderTokens.count;
 
+    // M-3 FIX: Don't return internal cleanup counts — only return generic OK
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[CRON] Completed:", JSON.stringify(results));
+    }
     return NextResponse.json({
       ok: true,
       timestamp: now.toISOString(),
-      results,
     });
   } catch (error) {
+    // H-29 FIX: Don't leak internal error messages in production
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("[CRON] Error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[CRON] Error:", message);
+    }
+    return NextResponse.json({ error: "Internal cron error" }, { status: 500 });
   }
 }

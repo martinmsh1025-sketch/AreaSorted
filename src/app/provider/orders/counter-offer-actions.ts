@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db";
 import { requireProviderOrdersAccess } from "@/lib/provider-auth";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
+import { getAppUrl } from "@/lib/config/env";
 
 /**
  * Provider submits a counter offer on a booking.
@@ -16,7 +17,7 @@ export async function createCounterOfferAction(formData: FormData) {
   const proposedPriceStr = String(formData.get("proposedPrice") || "").trim();
   const proposedDateStr = String(formData.get("proposedDate") || "").trim();
   const proposedStartTime = String(formData.get("proposedStartTime") || "").trim() || null;
-  const message = String(formData.get("message") || "").trim() || null;
+  const message = String(formData.get("message") || "").trim().slice(0, 2000) || null;
 
   if (!bookingId) return { error: "Missing booking ID" };
 
@@ -97,7 +98,7 @@ export async function createCounterOfferAction(formData: FormData) {
         ...(message ? ["", `Provider's message: "${message}"`] : []),
         "",
         "Please log in to your AreaSorted account to accept or decline this offer:",
-        `${process.env.NEXT_PUBLIC_BASE_URL ?? "https://areasorted.com"}/account/bookings/${ref}`,
+        `${getAppUrl()}/account/bookings/${ref}`,
         "",
         "If you take no action, the original booking terms remain in place.",
         "",
@@ -107,7 +108,9 @@ export async function createCounterOfferAction(formData: FormData) {
     });
   } catch {
     // Email sending is non-critical — the customer can still see it in their dashboard
-    console.warn("[counter-offer] Failed to send email notification to customer");
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[counter-offer] Failed to send email notification to customer");
+    }
   }
 
   revalidatePath("/provider/orders");
@@ -125,22 +128,27 @@ export async function withdrawCounterOfferAction(formData: FormData) {
 
   const prisma = getPrisma();
 
-  const offer = await prisma.counterOffer.findFirst({
+  // C4 FIX: Atomically claim the counter offer for withdrawal.
+  // Only PENDING offers owned by this provider can be withdrawn.
+  const claimResult = await prisma.counterOffer.updateMany({
     where: {
       id: counterOfferId,
       providerCompanyId: session.providerCompany.id,
       status: "PENDING",
     },
-  });
-
-  if (!offer) return { error: "Counter offer not found or already resolved" };
-
-  await prisma.counterOffer.update({
-    where: { id: counterOfferId },
     data: { status: "WITHDRAWN", respondedAt: new Date() },
   });
 
+  if (claimResult.count === 0) return { error: "Counter offer not found or already resolved" };
+
+  const offer = await prisma.counterOffer.findUnique({
+    where: { id: counterOfferId },
+    select: { bookingId: true },
+  });
+
   revalidatePath("/provider/orders");
-  revalidatePath(`/provider/orders/${offer.bookingId}`);
+  if (offer) {
+    revalidatePath(`/provider/orders/${offer.bookingId}`);
+  }
   return { success: true };
 }

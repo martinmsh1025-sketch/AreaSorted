@@ -452,8 +452,12 @@ export default function HomePage() {
           {serviceItems.map((item) => {
             return (
               <article key={item.label} className="panel card span-4 homepage-info-card homepage-service-card">
-                <div className="homepage-service-illustration-wrap">
-                  <img src={item.image} alt={item.label} className="homepage-service-photo" />
+                <div
+                  className="homepage-service-illustration-wrap homepage-service-photo-bg"
+                  style={{ backgroundImage: `url(${item.image})` }}
+                  aria-label={item.label}
+                >
+                  <span className="sr-only">{item.label}</span>
                 </div>
                 <strong>{item.label}</strong>
                 <p className="lead" style={{ fontSize: "0.98rem", margin: "0.55rem 0 0" }}>{item.description}</p>

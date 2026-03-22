@@ -14,7 +14,7 @@ export default function AdminError({ error, reset }: { error: Error; reset: () =
           </div>
           <CardTitle className="text-lg">Something went wrong</CardTitle>
           <CardDescription>
-            {error.message || "An unexpected error occurred in the admin panel."}
+            An unexpected error occurred in the admin panel. Please try again or contact support.
           </CardDescription>
         </CardHeader>
         <CardContent>

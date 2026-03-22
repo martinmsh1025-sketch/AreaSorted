@@ -5,11 +5,19 @@ import { buildProviderVerifyEmailUrl, consumeProviderOtp, createProviderOtp } fr
 import { createProviderAuthToken } from "@/lib/providers/auth-tokens";
 import { findProviderCompanyByEmail, setProviderEmailVerified } from "@/lib/providers/repository";
 import { getProviderDefaultRoute } from "@/lib/providers/portal-routing";
+import { checkRateLimit, OTP_RATE_LIMIT, OTP_SEND_RATE_LIMIT } from "@/lib/security/rate-limit";
 
 export async function verifyProviderEmailOtpAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const code = String(formData.get("code") || "").trim();
   const purpose = String(formData.get("purpose") || "LOGIN").trim().toUpperCase();
+
+  // C-2 FIX: Rate limit OTP verification attempts to prevent brute-force.
+  // 6-digit code has 900K possibilities; 5 attempts per 15min makes brute-force impractical.
+  const rl = checkRateLimit(OTP_RATE_LIMIT, `${email}:${purpose}`);
+  if (!rl.allowed) {
+    redirect(`/provider/verify-email?email=${encodeURIComponent(email)}&purpose=${purpose}&error=rate_limited`);
+  }
 
   const consumed = await consumeProviderOtp({ email, code, purpose });
   if (!consumed) {
@@ -37,6 +45,13 @@ export async function verifyProviderEmailOtpAction(formData: FormData) {
 export async function sendProviderLoginOtpAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const purpose = String(formData.get("purpose") || "LOGIN").trim().toUpperCase();
+
+  // C-2 FIX: Rate limit OTP sending to prevent spam
+  const rl = checkRateLimit(OTP_SEND_RATE_LIMIT, email);
+  if (!rl.allowed) {
+    redirect(`/provider/verify-email?email=${encodeURIComponent(email)}&purpose=${purpose}&error=rate_limited`);
+  }
+
   const provider = await findProviderCompanyByEmail(email);
   if (!provider) redirect("/provider/login?error=1");
 

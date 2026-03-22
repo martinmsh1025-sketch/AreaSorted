@@ -7,6 +7,7 @@ import {
   calculatePriceBreakdown,
 } from "@/lib/pricing/shared-pricing";
 import { cleaningConditionOptions } from "@/lib/service-catalog";
+import { formatMoney } from "@/lib/format";
 
 /* ─── Types ─── */
 
@@ -48,16 +49,6 @@ type PricingCalculatorProps = {
   bookingFeeMode?: string;
   commissionPercent: number;
 };
-
-/* ─── Helpers ─── */
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
-}
 
 /* ─── Component ─── */
 

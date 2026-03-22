@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCustomerAuthToken } from "@/lib/customers/auth-tokens";
 import { resetCustomerPasswordAction } from "./actions";
+import { FormSubmitButton } from "@/components/shared/form-submit-button";
 
 type Props = {
   params: Promise<{ token: string }>;
@@ -79,9 +80,7 @@ export default async function CustomerResetPasswordPage({ params, searchParams }
               </p>
             )}
 
-            <button type="submit" className="button button-primary" style={{ width: "100%" }}>
-              Save new password
-            </button>
+            <FormSubmitButton label="Save new password" pendingLabel="Saving..." className="button button-primary" />
           </form>
 
           <p style={{ textAlign: "center", marginTop: "1.25rem", fontSize: "0.9rem" }}>

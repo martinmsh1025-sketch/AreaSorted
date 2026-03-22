@@ -1,6 +1,7 @@
 import { getPrisma } from "@/lib/db";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
 import { formatPreferredScheduleOption, parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
+import { getAppUrl } from "@/lib/config/env";
 
 /**
  * Send booking authorisation email to the customer after card hold is placed.
@@ -33,7 +34,7 @@ export async function sendBookingConfirmationEmail(bookingId: string) {
     : "To be confirmed";
   const timeStr = booking.scheduledStartTime || "To be confirmed";
   const serviceLabel = booking.quoteRequest?.serviceKey || "Service";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const bookingUrl = `${appUrl}/account/bookings/${reference}`;
 
   const totalAmount = booking.priceSnapshot?.customerTotalAmount
@@ -101,7 +102,7 @@ export async function sendBookingStatusEmail(
   const customer = booking.customer;
   const provider = booking.marketplaceProviderCompany;
   const reference = booking.quoteRequest?.reference || booking.id.slice(-8).toUpperCase();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
   const bookingUrl = `${appUrl}/account/bookings/${reference}`;
   const serviceLabel = booking.quoteRequest?.serviceKey || "Service";
 

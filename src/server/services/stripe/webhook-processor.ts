@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
+import { syncProviderLifecycleState } from "@/server/services/providers/activation";
 
 function toJsonValue<T>(value: T) {
   return JSON.parse(JSON.stringify(value));
@@ -34,13 +35,22 @@ async function syncAccountUpdated(event: Stripe.Event) {
     },
   });
 
+  // C6 FIX: Update paymentReady flag, but do NOT unconditionally overwrite
+  // provider status. Instead, delegate to syncProviderLifecycleState which
+  // respects identity locks (SUSPENDED, REJECTED, etc.) and ACTIVE status.
   await prisma.providerCompany.update({
     where: { id: connected.providerCompanyId },
     data: {
       paymentReady: account.charges_enabled && account.payouts_enabled,
-      status: account.charges_enabled && account.payouts_enabled ? "PRICING_PENDING" : "STRIPE_RESTRICTED",
     },
   });
+
+  // Let the lifecycle state machine determine the correct status
+  try {
+    await syncProviderLifecycleState(connected.providerCompanyId);
+  } catch {
+    // Non-critical — the provider status will be corrected on next sync
+  }
 
   return { ignored: false };
 }
@@ -49,7 +59,9 @@ async function syncPaymentIntent(event: Stripe.Event) {
   const prisma = getPrisma();
   const paymentIntent = event.data.object as Stripe.PaymentIntent;
   const isCaptured = event.type === "payment_intent.succeeded";
+  const isCanceled = event.type === "payment_intent.canceled";
   const isAuthorised = event.type === "payment_intent.amount_capturable_updated" || paymentIntent.status === "requires_capture";
+  const isFailed = event.type === "payment_intent.payment_failed";
 
   let record = await prisma.paymentRecord.findFirst({
     where: { stripePaymentIntentId: paymentIntent.id },
@@ -64,7 +76,7 @@ async function syncPaymentIntent(event: Stripe.Event) {
         bookingId,
         stripeAccountId: typeof event.account === "string" ? event.account : undefined,
         stripePaymentIntentId: paymentIntent.id,
-        paymentState: isCaptured ? "PAID" : event.type === "payment_intent.payment_failed" ? "FAILED" : "PENDING",
+        paymentState: isCaptured ? "PAID" : isFailed ? "FAILED" : isCanceled ? "CANCELLED" : "PENDING",
         grossAmount: (paymentIntent.amount || 0) / 100,
         metadataJson: toJsonValue(paymentIntent.metadata || {}),
       },
@@ -79,7 +91,13 @@ async function syncPaymentIntent(event: Stripe.Event) {
     data: {
       stripeAccountId: typeof event.account === "string" ? event.account : record.stripeAccountId,
       stripePaymentIntentId: paymentIntent.id,
-      paymentState: isCaptured ? "PAID" : event.type === "payment_intent.payment_failed" ? "FAILED" : record.paymentState,
+      // H-25 FIX: Backfill stripeChargeId from the PaymentIntent's latest_charge
+      stripeChargeId: (() => {
+        const charge = paymentIntent.latest_charge;
+        if (!charge) return record.stripeChargeId;
+        return typeof charge === "string" ? charge : charge.id;
+      })(),
+      paymentState: isCaptured ? "PAID" : isFailed ? "FAILED" : isCanceled ? "CANCELLED" : record.paymentState,
       grossAmount: (paymentIntent.amount || 0) / 100,
       metadataJson: toJsonValue({
         ...(typeof record.metadataJson === "object" && record.metadataJson !== null ? record.metadataJson : {}),
@@ -91,12 +109,29 @@ async function syncPaymentIntent(event: Stripe.Event) {
     },
   });
 
-  await prisma.booking.update({
-    where: { id: updated.bookingId },
-    data: {
-      bookingStatus: isCaptured ? record.booking.bookingStatus : isAuthorised ? "PENDING_ASSIGNMENT" : record.booking.bookingStatus,
-    },
-  });
+  // H8 FIX: Only update booking status if the current status allows it.
+  // Don't overwrite ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED, etc.
+  if (isCaptured || isAuthorised) {
+    const currentBooking = await prisma.booking.findUnique({
+      where: { id: updated.bookingId },
+      select: { bookingStatus: true },
+    });
+
+    const currentStatus = currentBooking?.bookingStatus;
+    // Only transition to PENDING_ASSIGNMENT from AWAITING_PAYMENT or ACCEPTING
+    const allowedForAuth = ["AWAITING_PAYMENT", "ACCEPTING"];
+    // For captured payments, don't overwrite terminal or advanced statuses
+    const terminalStatuses = ["CANCELLED", "COMPLETED", "NO_CLEANER_FOUND"];
+
+    if (isAuthorised && currentStatus && allowedForAuth.includes(currentStatus)) {
+      await prisma.booking.update({
+        where: { id: updated.bookingId },
+        data: { bookingStatus: "PENDING_ASSIGNMENT" },
+      });
+    }
+    // For captured payments, don't change status — it should already be ASSIGNED
+    // (the capture happens after provider accept)
+  }
 
   // Generate invoices when payment is captured
   if (isCaptured) {
@@ -197,6 +232,23 @@ async function syncDispute(event: Stripe.Event) {
       platformAbsorbsLoss: false,
     },
   });
+
+  // H-26 FIX: Notify admin (via provider notification to providerCompanyId) about the dispute
+  // This ensures disputes are not silently recorded without anyone being alerted.
+  try {
+    if (providerCompanyId) {
+      await createProviderNotification({
+        providerCompanyId,
+        type: "SYSTEM_MESSAGE",
+        title: `Payment dispute — ${dispute.reason || "unknown reason"}`,
+        message: `A dispute for £${(dispute.amount / 100).toFixed(2)} has been ${event.type === "charge.dispute.created" ? "opened" : "updated"} on booking. Status: ${statusMap[dispute.status] || dispute.status}`,
+        link: `/provider/orders/${payment.bookingId}`,
+        bookingId: payment.bookingId,
+      });
+    }
+  } catch {
+    // Non-critical
+  }
 
   return { ignored: false };
 }
@@ -319,7 +371,9 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
           bookingId: record.bookingId,
         });
       }
-    } catch {}
+    } catch {
+      // Non-critical: notification delivery failure should not affect payment processing
+    }
   }
 
   return { ignored: false };
@@ -388,6 +442,7 @@ export async function processStripeWebhookEvent(event: Stripe.Event) {
       case "payment_intent.succeeded":
       case "payment_intent.amount_capturable_updated":
       case "payment_intent.payment_failed":
+      case "payment_intent.canceled":
         result = await syncPaymentIntent(event);
         break;
       case "checkout.session.completed":

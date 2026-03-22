@@ -40,14 +40,7 @@ import {
   ProviderDailyVolumeChart,
   type ProviderBookingSummary,
 } from "@/components/provider/dashboard-charts";
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
-}
+import { formatMoney } from "@/lib/format";
 
 /** Compute earnings summary for a set of bookings */
 function computeEarnings(

@@ -113,3 +113,27 @@ export async function cancelDirectChargePaymentIntent(params: {
     stripeAccount: params.connectedAccountId,
   });
 }
+
+/**
+ * H2 FIX: Create a refund on a direct charge connected account.
+ * Supports full and partial refunds.
+ */
+export async function createDirectChargeRefund(params: {
+  connectedAccountId: string;
+  paymentIntentId: string;
+  /** Amount in pence (smallest currency unit). Omit for full refund. */
+  amount?: number;
+  reason?: "duplicate" | "fraudulent" | "requested_by_customer";
+}) {
+  const stripe = getStripe();
+  return stripe.refunds.create(
+    {
+      payment_intent: params.paymentIntentId,
+      ...(params.amount ? { amount: params.amount } : {}),
+      ...(params.reason ? { reason: params.reason } : {}),
+    },
+    {
+      stripeAccount: params.connectedAccountId,
+    },
+  );
+}

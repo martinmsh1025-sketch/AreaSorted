@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
+import { checkRateLimit, QUOTE_ESTIMATE_RATE_LIMIT } from "@/lib/security/rate-limit";
 
 /**
  * Lightweight pricing preview — does provider matching + pricing calculation
@@ -32,6 +33,16 @@ const schema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // M-9 FIX: Rate limit quote estimate requests
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rateLimitResult = checkRateLimit(QUOTE_ESTIMATE_RATE_LIMIT, ip);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { status: "error", error: "Too many requests. Please try again shortly." },
+        { status: 429 },
+      );
+    }
+
     const payload = schema.parse(await request.json());
 
     // 1. Match provider
@@ -47,37 +58,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "no_coverage" }, { status: 404 });
     }
 
-    const provider = match.providers[0];
+    let best:
+      | {
+          provider: (typeof match.providers)[number];
+          preview: Awaited<ReturnType<typeof previewProviderPricing>>;
+        }
+      | null = null;
 
-    // 2. Calculate real price using provider's pricing rules
-    const preview = await previewProviderPricing({
-      providerCompanyId: provider.providerCompanyId,
-      categoryKey: payload.categoryKey,
-      serviceKey: payload.serviceKey,
-      postcodePrefix: provider.postcodePrefix,
-      estimatedHours: payload.estimatedHours,
-      quantity: payload.quantity,
-      sameDay: payload.sameDay,
-      weekend: payload.weekend,
-      weekendCount: payload.weekendCount,
-      bedrooms: payload.bedrooms,
-      bathrooms: payload.bathrooms,
-      kitchens: payload.kitchens,
-      cleaningCondition: payload.cleaningCondition,
-      supplies: payload.supplies,
-      propertyType: payload.propertyType,
-      jobSize: payload.jobSize,
-      addOns: payload.addOns,
-    });
+    for (const provider of match.providers) {
+      try {
+        const preview = await previewProviderPricing({
+          providerCompanyId: provider.providerCompanyId,
+          categoryKey: payload.categoryKey,
+          serviceKey: payload.serviceKey,
+          postcodePrefix: provider.postcodePrefix,
+          estimatedHours: payload.estimatedHours,
+          quantity: payload.quantity,
+          sameDay: payload.sameDay,
+          weekend: payload.weekend,
+          weekendCount: payload.weekendCount,
+          bedrooms: payload.bedrooms,
+          bathrooms: payload.bathrooms,
+          kitchens: payload.kitchens,
+          cleaningCondition: payload.cleaningCondition,
+          supplies: payload.supplies,
+          propertyType: payload.propertyType,
+          jobSize: payload.jobSize,
+          addOns: payload.addOns,
+        });
+
+        if (!best || preview.totalCustomerPay < best.preview.totalCustomerPay) {
+          best = { provider, preview };
+        }
+      } catch {
+        // Skip providers without a usable pricing rule for this request.
+      }
+    }
+
+    if (!best) {
+      return NextResponse.json({ status: "no_pricing" }, { status: 404 });
+    }
 
     // 3. Return customer-facing price breakdown (hide internal fields)
     return NextResponse.json({
       status: "ok",
-      servicePrice: preview.providerBasePrice,
-      bookingFee: preview.bookingFee,
-      postcodeSurcharge: preview.postcodeSurcharge,
-      addOnsTotal: preview.optionalExtrasAmount,
-      totalCustomerPay: preview.totalCustomerPay,
+      servicePrice: best.preview.providerBasePrice,
+      bookingFee: best.preview.bookingFee,
+      postcodeSurcharge: best.preview.postcodeSurcharge,
+      addOnsTotal: best.preview.optionalExtrasAmount,
+      totalCustomerPay: best.preview.totalCustomerPay,
     });
   } catch (error) {
     // Provider has no pricing rule for this service
@@ -90,8 +119,12 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+    // H-29 FIX: Don't leak internal error messages in production
+    if (process.env.NODE_ENV !== "production" && error instanceof Error) {
+      console.error("[quote-estimate] Internal error:", error.message);
+    }
     return NextResponse.json(
-      { status: "error", error: error instanceof Error ? error.message : "Unable to estimate price" },
+      { status: "error", error: "Unable to estimate price" },
       { status: 500 },
     );
   }

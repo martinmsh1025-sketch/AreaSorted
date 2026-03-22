@@ -13,20 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Prisma } from "@prisma/client";
+import { Prisma, BookingStatus } from "@prisma/client";
+import { formatMoney } from "@/lib/format";
 import { acceptBookingAction, rejectBookingAction } from "./actions";
 import { AcceptOrderButton, DeclineOrderButton } from "@/components/provider/order-action-dialogs";
 import { Clock, CheckCircle, TrendingUp, ShoppingCart } from "lucide-react";
 import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { serviceTypeLabels, formatEnumLabel } from "@/lib/providers/service-catalog-mapping";
-
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
-}
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   AWAITING_PAYMENT: "outline",
@@ -95,7 +88,7 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
   }
 
   const statusFilterClause: Prisma.BookingWhereInput = statusFilter
-    ? { bookingStatus: statusFilter as any }
+    ? { bookingStatus: statusFilter as BookingStatus }
     : {};
 
   const bookings = await prisma.booking.findMany({
@@ -105,7 +98,16 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
       ...statusFilterClause,
     },
     include: {
-      customer: true,
+      // M-17 FIX: Exclude passwordHash from customer data
+      customer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
       priceSnapshot: true,
       quoteRequest: {
         select: { inputJson: true },

@@ -78,3 +78,30 @@ export function requireEnv(name: keyof AppEnv) {
   }
   return value;
 }
+
+/**
+ * L-A FIX: Centralised app URL accessor.
+ * Returns NEXT_PUBLIC_APP_URL in production (validated as required),
+ * falls back to localhost:3000 in development/test.
+ */
+export function getAppUrl(): string {
+  const env = getEnv();
+  return env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+}
+
+/**
+ * L-B FIX: Typed accessor for Prisma AdminSetting valueJson fields.
+ * AdminSetting stores JSON in the shape { value: T }.
+ * This eliminates `(setting?.valueJson as any)?.value` casts.
+ */
+export function getSettingValue<T = unknown>(
+  setting: { valueJson: unknown } | null | undefined,
+  fallback: T,
+): T {
+  if (!setting || setting.valueJson == null) return fallback;
+  const json = setting.valueJson as Record<string, unknown>;
+  if (typeof json === "object" && json !== null && "value" in json) {
+    return (json.value as T) ?? fallback;
+  }
+  return fallback;
+}

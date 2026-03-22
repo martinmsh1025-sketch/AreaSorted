@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from "react";
 import { Check, Loader2, Save, AlertCircle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatMoney } from "@/lib/format";
 
 /* ─── Types ─── */
 
@@ -59,10 +60,6 @@ function toNum(v: string): number | null {
   if (trimmed === "") return null;
   const n = Number(trimmed);
   return Number.isFinite(n) ? n : null;
-}
-
-function formatMoney(v: number) {
-  return `£${v.toFixed(2)}`;
 }
 
 /* ─── Component ─── */

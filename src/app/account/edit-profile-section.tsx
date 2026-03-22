@@ -71,16 +71,16 @@ export function EditProfileSection({ customer }: Props) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
         <label className="quote-field-stack">
           <span>First name</span>
-          <input type="text" name="firstName" defaultValue={customer.firstName} required />
+          <input type="text" name="firstName" defaultValue={customer.firstName} required maxLength={60} />
         </label>
         <label className="quote-field-stack">
           <span>Last name</span>
-          <input type="text" name="lastName" defaultValue={customer.lastName} required />
+          <input type="text" name="lastName" defaultValue={customer.lastName} required maxLength={60} />
         </label>
       </div>
       <label className="quote-field-stack">
         <span>Phone</span>
-        <input type="tel" name="phone" defaultValue={customer.phone} required />
+        <input type="tel" name="phone" defaultValue={customer.phone} required maxLength={20} />
       </label>
       <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", margin: 0 }}>
         Email cannot be changed. Contact support if you need to update your email address.

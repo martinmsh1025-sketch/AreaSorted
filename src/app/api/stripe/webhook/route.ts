@@ -18,13 +18,22 @@ export async function POST(request: NextRequest) {
 
     event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Invalid webhook" }, { status: 400 });
+    // M-2 FIX: Don't leak Stripe signature verification error details
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[stripe-webhook] Signature verification failed:", error instanceof Error ? error.message : "Unknown error");
+    }
+    return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
 
   try {
     const result = await processStripeWebhookEvent(event);
-    return NextResponse.json({ received: true, ...result });
+    // M-2 FIX: Don't spread internal result details in response
+    return NextResponse.json({ received: true, type: event.type });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Webhook processing failed" }, { status: 500 });
+    // M-2 FIX: Don't leak internal error messages
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[stripe-webhook] Processing failed:", error instanceof Error ? error.message : "Unknown error");
+    }
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
   }
 }

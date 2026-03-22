@@ -1,17 +1,31 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ADMIN_SESSION_COOKIE } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/security/password";
 import { signSessionValue } from "@/lib/security/session";
+import { checkRateLimit, LOGIN_RATE_LIMIT, isAccountLocked, recordFailedLogin, clearFailedLogins } from "@/lib/security/rate-limit";
 
 export async function adminLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
   if (!email || !password) {
     redirect("/admin/login?error=1");
+  }
+
+  // C-1 FIX: Rate limit admin login attempts (stricter — admin is high-value target)
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+  const rl = checkRateLimit(LOGIN_RATE_LIMIT, `${ip}:${email}`);
+  if (!rl.allowed) {
+    redirect("/admin/login?error=rate_limited");
+  }
+
+  // H-18 FIX: Check account lockout
+  if (isAccountLocked(email)) {
+    redirect("/admin/login?error=account_locked");
   }
 
   const prisma = getPrisma();
@@ -35,8 +49,12 @@ export async function adminLoginAction(formData: FormData) {
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) {
+    recordFailedLogin(email);
     redirect("/admin/login?error=1");
   }
+
+  // Successful login — clear lockout counter
+  clearFailedLogins(email);
 
   const cookieStore = await cookies();
   cookieStore.set(ADMIN_SESSION_COOKIE, signSessionValue(user.id), {

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatMoney } from "@/lib/format";
 
 type PricingRule = {
   id: string;
@@ -40,15 +41,6 @@ type PricingOverviewProps = {
   deletePricingConfigAction: (formData: FormData) => void;
   saveAreaOverrideAction: (formData: FormData) => void;
 };
-
-function formatMoney(value: number | null | undefined) {
-  if (value == null) return "—";
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(Number(value));
-}
 
 function pricingModeLabel(mode: string) {
   switch (mode) {

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
+import { BookingStatus } from "@prisma/client";
+import { formatMoney } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -25,14 +27,6 @@ import { Separator } from "@/components/ui/separator";
 
 function dec(value: Decimal | null | undefined): number {
   return value ? Number(value) : 0;
-}
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(value);
 }
 
 function bookingStatusVariant(
@@ -85,7 +79,7 @@ export default async function AdminPayoutsPage({
   const dateTo = endDate ? (() => { const d = new Date(endDate); d.setDate(d.getDate() + 1); return d; })() : new Date(today.getTime() + 86400000);
 
   // Fetch captured bookings with price snapshots for the date range.
-  const payoutStatuses = [
+  const payoutStatuses: BookingStatus[] = [
     "PAID",
     "ASSIGNED",
     "IN_PROGRESS",
@@ -98,7 +92,7 @@ export default async function AdminPayoutsPage({
         gte: dateFrom,
         lt: dateTo,
       },
-      bookingStatus: { in: payoutStatuses as any },
+      bookingStatus: { in: payoutStatuses },
       providerCompanyId: providerFilter ? providerFilter : undefined,
     },
     include: {

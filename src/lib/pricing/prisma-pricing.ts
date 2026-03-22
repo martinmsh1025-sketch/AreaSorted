@@ -2,6 +2,7 @@ import { getPrisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { jobTypeCatalog } from "@/lib/service-catalog";
 import { estimateCleaningHours, roundMoney } from "@/lib/pricing/shared-pricing";
+import { getSettingValue } from "@/lib/config/env";
 
 export type ProviderPricingPortalRow = {
   id: string;
@@ -451,13 +452,13 @@ export async function previewProviderPricing(input: PricingPreviewInput): Promis
   const quoteRequired = false;
 
   // Booking fee: supports fixed amount or percentage of provider base price
-  const bookingFeeMode = ((bookingFeeModeSetting?.valueJson as any)?.value as string) || "fixed";
-  const bookingFeeValue = Number((areaOverride?.bookingFeeOverride ?? (bookingFeeSetting?.valueJson as any)?.value) ?? 12);
+  const bookingFeeMode = getSettingValue<string>(bookingFeeModeSetting, "fixed");
+  const bookingFeeValue = Number(areaOverride?.bookingFeeOverride ?? getSettingValue<number>(bookingFeeSetting, 12));
   const bookingFee = bookingFeeMode === "percent"
     ? roundMoney(providerBasePrice * (bookingFeeValue / 100))
     : bookingFeeValue;
 
-  const commissionPercent = Number((areaOverride?.commissionPercentOverride ?? (commissionSetting?.valueJson as any)?.value) ?? 12);
+  const commissionPercent = Number(areaOverride?.commissionPercentOverride ?? getSettingValue<number>(commissionSetting, 12));
   const postcodeSurcharge = asNumber(areaOverride?.surchargeAmount) ?? 0;
 
   const commissionAmount = roundMoney(providerBasePrice * (commissionPercent / 100));

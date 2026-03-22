@@ -194,7 +194,7 @@ export function Address3DMap({ addressLine1, addressLine2 = "", city = "", postc
         ) : null}
       </div>
       <div className="button-row" style={{ marginTop: "1rem" }}>
-        <a className="button button-secondary" href={mapsUrl} target="_blank" rel="noreferrer">
+        <a className="button button-secondary" href={mapsUrl} target="_blank" rel="noopener noreferrer">
           Open in Google Maps
         </a>
       </div>

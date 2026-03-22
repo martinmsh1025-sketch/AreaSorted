@@ -28,13 +28,19 @@ export function AcceptOrderButton({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleConfirm() {
+    setError(null);
     const fd = new FormData();
     fd.set("bookingId", bookingId);
     startTransition(async () => {
-      await action(fd);
-      setOpen(false);
+      try {
+        await action(fd);
+        setOpen(false);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      }
     });
   }
 
@@ -61,6 +67,9 @@ export function AcceptOrderButton({
             The customer will be notified.
           </DialogDescription>
         </DialogHeader>
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>
             Cancel
@@ -93,14 +102,20 @@ export function DeclineOrderButton({
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleConfirm() {
+    setError(null);
     const fd = new FormData();
     fd.set("bookingId", bookingId);
     fd.set("reason", reason || "Provider declined via portal");
     startTransition(async () => {
-      await action(fd);
-      setOpen(false);
+      try {
+        await action(fd);
+        setOpen(false);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      }
     });
   }
 
@@ -132,8 +147,12 @@ export function DeclineOrderButton({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}
+            maxLength={1000}
           />
         </div>
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>
             Cancel
@@ -159,13 +178,19 @@ export function StartJobButton({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleConfirm() {
+    setError(null);
     const fd = new FormData();
     fd.set("bookingId", bookingId);
     startTransition(async () => {
-      await action(fd);
-      setOpen(false);
+      try {
+        await action(fd);
+        setOpen(false);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      }
     });
   }
 
@@ -181,6 +206,9 @@ export function StartJobButton({
             This marks the booking as in progress. You can mark it as completed once the work is done.
           </DialogDescription>
         </DialogHeader>
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>
             Cancel
@@ -210,13 +238,19 @@ export function CompleteJobButton({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleConfirm() {
+    setError(null);
     const fd = new FormData();
     fd.set("bookingId", bookingId);
     startTransition(async () => {
-      await action(fd);
-      setOpen(false);
+      try {
+        await action(fd);
+        setOpen(false);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      }
     });
   }
 
@@ -232,6 +266,9 @@ export function CompleteJobButton({
             This confirms the work is done. The customer will be notified and payment processing will begin.
           </DialogDescription>
         </DialogHeader>
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 rounded px-3 py-2">{error}</p>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>
             Cancel

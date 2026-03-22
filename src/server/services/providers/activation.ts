@@ -66,6 +66,17 @@ export async function syncProviderLifecycleState(providerCompanyId: string) {
     nextStatus = "REJECTED";
   } else if (provider.status === "CHANGES_REQUESTED") {
     nextStatus = "CHANGES_REQUESTED";
+  } else if (provider.status === "ACTIVE") {
+    // H6 FIX: Once ACTIVE, don't regress unless Stripe is explicitly broken.
+    // If Stripe becomes non-functional, downgrade to STRIPE_RESTRICTED so
+    // the provider can't accept new bookings. Otherwise stay ACTIVE.
+    if (!stripeReady && provider.stripeConnectedAccount) {
+      nextStatus = provider.stripeConnectedAccount.chargesEnabled || provider.stripeConnectedAccount.payoutsEnabled
+        ? "STRIPE_RESTRICTED"
+        : "STRIPE_PENDING";
+    } else {
+      nextStatus = "ACTIVE";
+    }
   } else if (provider.status === "UNDER_REVIEW" || provider.status === "SUBMITTED_FOR_REVIEW") {
     // These statuses are transitional — admin review can change them.
     // However, automated lifecycle sync should NOT auto-progress them;

@@ -15,7 +15,7 @@ export default async function ProviderForgotPasswordPage({ searchParams }: Provi
   const params = (await searchParams) ?? {};
   const hasError = params.error === "1";
   const sent = params.sent === "1";
-  const devLink = typeof params.devLink === "string" ? decodeURIComponent(params.devLink) : "";
+  // H-16 FIX: devLink no longer passed via URL params (logged to server console instead)
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
@@ -47,12 +47,6 @@ export default async function ProviderForgotPasswordPage({ searchParams }: Provi
                 <div className="flex items-start gap-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-800 dark:bg-green-950/50 dark:text-green-300">
                   <CheckCircle className="mt-0.5 size-4 shrink-0" />
                   <span>If the account exists, a reset link has been prepared. If you never completed your invite, use the original invite email or contact support.</span>
-                </div>
-              )}
-
-              {devLink && (
-                <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground break-all">
-                  Dev reset link: <a href={devLink} className="text-blue-600 underline">{devLink}</a>
                 </div>
               )}
 

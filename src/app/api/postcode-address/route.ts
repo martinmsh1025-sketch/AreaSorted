@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
+import { checkRateLimit, POSTCODE_RATE_LIMIT } from "@/lib/security/rate-limit";
 
 const API_BASE_URL = "https://api.simplylookupadmin.co.uk/full_v3/getselectedaddress";
 
 export async function GET(request: Request) {
+  // M-10 FIX: Rate limit postcode address requests
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rateLimitResult = checkRateLimit(POSTCODE_RATE_LIMIT, ip);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again shortly." },
+      { status: 429 },
+    );
+  }
+
   const apiKey = process.env.SIMPLY_POSTCODE_API_KEY;
   const { searchParams } = new URL(request.url);
   const lineId = searchParams.get("id")?.trim();
@@ -24,7 +35,11 @@ export async function GET(request: Request) {
     const data = await response.json();
 
     if (!response.ok || data.error || !data.found) {
-      return NextResponse.json({ error: data.licenseStatus || "Unable to fetch selected address." }, { status: 502 });
+      // M-4 FIX: Don't forward upstream error messages (like licenseStatus) to client
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[postcode-address] Upstream error:", data.licenseStatus || data.error || `HTTP ${response.status}`);
+      }
+      return NextResponse.json({ error: "Unable to fetch selected address. Please try again." }, { status: 502 });
     }
 
     return NextResponse.json({
