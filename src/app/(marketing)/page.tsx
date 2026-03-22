@@ -1,14 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getCoverageForPostcode, normalisePostcode } from "@/lib/postcode-coverage";
 import { PageLoading } from "@/components/shared/page-loading";
 
 type IconProps = { className?: string };
-
-type IllustrationProps = { className?: string };
 
 function SearchIcon({ className = "" }: IconProps) {
   return (
@@ -93,91 +91,6 @@ function GardenIcon({ className = "" }: IconProps) {
   );
 }
 
-function CleaningIllustration({ className = "" }: IllustrationProps) {
-  return (
-    <svg viewBox="0 0 240 160" className={className} aria-hidden="true">
-      <rect width="240" height="160" rx="28" fill="#F7F9FD" />
-      <rect x="18" y="98" width="204" height="36" rx="14" fill="#FFFFFF" stroke="#E3E8F0" />
-      <path d="M84 46l16-8 10 20-16 8z" fill="#FFCF8A" />
-      <path d="M70 54l20-10 26 52-20 10z" fill="#E12B2B" />
-      <path d="M108 90l24 18" stroke="#F39A28" strokeWidth="8" strokeLinecap="round" />
-      <circle cx="165" cy="68" r="22" fill="#E9F3FF" />
-      <path d="M154 73l7 7 16-20" stroke="#1E2C24" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M142 112h42" stroke="#D8E0EC" strokeWidth="10" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PestIllustration({ className = "" }: IllustrationProps) {
-  return (
-    <svg viewBox="0 0 240 160" className={className} aria-hidden="true">
-      <rect width="240" height="160" rx="28" fill="#F7F9FD" />
-      <rect x="26" y="34" width="94" height="92" rx="22" fill="#FFFFFF" stroke="#E3E8F0" />
-      <path d="M62 98c24-8 38-24 44-48" stroke="#E12B2B" strokeWidth="7" strokeLinecap="round" />
-      <circle cx="62" cy="98" r="12" fill="#1F2D25" />
-      <path d="M156 52c0-10 8-18 18-18s18 8 18 18c0 20-18 36-18 36s-18-16-18-36z" fill="#FFE9C8" />
-      <path d="M166 52l6 6 12-12" stroke="#E12B2B" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M144 108h52" stroke="#D8E0EC" strokeWidth="10" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function HandymanIllustration({ className = "" }: IllustrationProps) {
-  return (
-    <svg viewBox="0 0 240 160" className={className} aria-hidden="true">
-      <rect width="240" height="160" rx="28" fill="#F7F9FD" />
-      <path d="M86 46l18-10 20 34-18 10z" fill="#E12B2B" />
-      <path d="M104 36l16-10 14 22-16 10z" fill="#1F2D25" />
-      <path d="M148 92l22-22 16 16-22 22z" fill="#FFCF8A" />
-      <rect x="30" y="100" width="78" height="24" rx="12" fill="#FFFFFF" stroke="#E3E8F0" />
-      <path d="M138 112h56" stroke="#D8E0EC" strokeWidth="10" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function AssemblyIllustration({ className = "" }: IllustrationProps) {
-  return (
-    <svg viewBox="0 0 240 160" className={className} aria-hidden="true">
-      <rect width="240" height="160" rx="28" fill="#F7F9FD" />
-      <path d="M48 70l40-24 40 24-40 24-40-24z" fill="#FFFFFF" stroke="#E3E8F0" strokeWidth="2" />
-      <path d="M128 70l40-24 40 24-40 24-40-24z" fill="#FFF2EA" stroke="#E3E8F0" strokeWidth="2" />
-      <path d="M48 70v32l40 24 40-24V70" fill="#FFFFFF" stroke="#E3E8F0" strokeWidth="2" />
-      <path d="M128 70v32l40 24 40-24V70" fill="#FFF2EA" stroke="#E3E8F0" strokeWidth="2" />
-      <path d="M88 56v28M74 70h28" stroke="#E12B2B" strokeWidth="6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function WasteIllustration({ className = "" }: IllustrationProps) {
-  return (
-    <svg viewBox="0 0 240 160" className={className} aria-hidden="true">
-      <rect width="240" height="160" rx="28" fill="#F7F9FD" />
-      <rect x="34" y="78" width="92" height="48" rx="18" fill="#FFFFFF" stroke="#E3E8F0" />
-      <rect x="54" y="56" width="18" height="22" rx="6" fill="#1F2D25" />
-      <rect x="82" y="52" width="24" height="26" rx="8" fill="#E12B2B" />
-      <rect x="146" y="48" width="56" height="74" rx="18" fill="#FFF2EA" stroke="#E3E8F0" />
-      <path d="M160 60h28" stroke="#1F2D25" strokeWidth="6" strokeLinecap="round" />
-      <path d="M162 78l24 28" stroke="#E12B2B" strokeWidth="7" strokeLinecap="round" />
-      <path d="M186 78l-24 28" stroke="#E12B2B" strokeWidth="7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function GardenIllustration({ className = "" }: IllustrationProps) {
-  return (
-    <svg viewBox="0 0 240 160" className={className} aria-hidden="true">
-      <rect width="240" height="160" rx="28" fill="#F7F9FD" />
-      <path d="M18 118c30-16 60-16 90 0s64 16 114 0v24H18v-24z" fill="#DBEFD8" />
-      <path d="M78 124V68" stroke="#1F2D25" strokeWidth="8" strokeLinecap="round" />
-      <path d="M78 68c0-16 12-28 28-28 0 20-10 34-28 34" fill="#74C765" />
-      <path d="M78 78c-17 0-28-12-28-31 17 0 28 11 28 31" fill="#A3DB90" />
-      <path d="M146 124V82" stroke="#E12B2B" strokeWidth="7" strokeLinecap="round" />
-      <path d="M128 98h36" stroke="#E12B2B" strokeWidth="7" strokeLinecap="round" />
-      <rect x="170" y="94" width="30" height="28" rx="12" fill="#FFE9C8" />
-    </svg>
-  );
-}
-
 function StepOneIcon({ className = "" }: IconProps) {
   return <PinIcon className={className} />;
 }
@@ -191,12 +104,12 @@ function StepThreeIcon({ className = "" }: IconProps) {
 }
 
 const serviceItems = [
-  { label: "Cleaning", description: "Regular, deep, and move-out cleaning.", image: "/images/homepage/chatgpt-services-notext/cleaning.jpg" },
-  { label: "Pest control", description: "Inspections and common pest treatments.", image: "/images/homepage/chatgpt-services-notext/pest-control.jpg" },
-  { label: "Handyman", description: "Repairs, fittings, and home fixes.", image: "/images/homepage/chatgpt-services-notext/handyman.jpg" },
-  { label: "Furniture assembly", description: "Flat-pack assembly and setup work.", image: "/images/homepage/chatgpt-services-notext/furniture-assembly.jpg" },
-  { label: "Waste removal", description: "Bulky waste, rubbish, and clearances.", image: "/images/homepage/chatgpt-services-notext/waste-removal.jpg" },
-  { label: "Garden maintenance", description: "Lawn care, tidy-ups, and trimming.", image: "/images/homepage/chatgpt-services-notext/garden-maintenance.jpg" },
+  { label: "Cleaning", description: "Regular, deep, and move-out cleaning.", image: "/images/homepage/service-pic-notext/cleaning.png" },
+  { label: "Pest control", description: "Inspections and common pest treatments.", image: "/images/homepage/service-pic-notext/pest-control.png" },
+  { label: "Handyman", description: "Repairs, fittings, and home fixes.", image: "/images/homepage/service-pic-notext/handyman.png" },
+  { label: "Furniture assembly", description: "Flat-pack assembly and setup work.", image: "/images/homepage/service-pic-notext/furniture-assembly.png" },
+  { label: "Waste removal", description: "Bulky waste, rubbish, and clearances.", image: "/images/homepage/service-pic-notext/waste-removal.png" },
+  { label: "Garden maintenance", description: "Lawn care, tidy-ups, and trimming.", image: "/images/homepage/service-pic-notext/garden-maintenance.png" },
 ];
 
 const howItWorks = [
@@ -231,13 +144,39 @@ export default function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
+  const [lookupReady, setLookupReady] = useState(false);
 
   const coverage = useMemo(() => getCoverageForPostcode(postcode), [postcode]);
   const selectedAddress = addresses.find((item) => item.ID === addressId);
 
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>(".js-reveal-section"));
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.16, rootMargin: "0px 0px -8% 0px" },
+    );
+
+    sections.forEach((section, index) => {
+      section.style.setProperty("--reveal-delay", `${index * 70}ms`);
+      observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   function updatePostcode(value: string) {
     setPostcode(value.toUpperCase());
     setSubmitMessage("");
+    setLookupReady(false);
   }
 
   async function lookupAddresses() {
@@ -265,6 +204,7 @@ export default function HomePage() {
 
       setAddresses(data.results || []);
       setAddressId("");
+      setLookupReady(Boolean(data.results?.length));
       setSubmitMessage(
         data.instructionsTxt ||
           (data.results?.length
@@ -276,8 +216,8 @@ export default function HomePage() {
       setAddressId("");
       setSubmitMessage("Unable to look up addresses right now. Please use manual address entry.");
     } finally {
-      setIsLookingUp(false);
-    }
+    setIsLookingUp(false);
+  }
   }
 
   const coverageAreas = [
@@ -476,6 +416,17 @@ export default function HomePage() {
                   </>
                 )}
 
+                {(lookupReady || selectedAddress || manualAddress1.trim()) && (
+                  <div className="homepage-live-status">
+                    <span className="homepage-live-status-dot" />
+                    {selectedAddress
+                      ? "Address ready — continue to live booking"
+                      : manualAddress1.trim()
+                        ? "Manual address ready — continue to booking"
+                        : "Postcode recognised — choose your address"}
+                  </div>
+                )}
+
                 {postcode ? <p className="hero-minimal-note">{coverage.leadTimeLabel}</p> : <p className="hero-minimal-note">Enter your postcode to check whether services are available in your area.</p>}
                 {submitMessage ? <p className="hero-minimal-note" style={{ color: "var(--color-error)" }}>{submitMessage}</p> : null}
 
@@ -492,7 +443,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="homepage-section homepage-section-gap-large">
+      <section className="homepage-section homepage-section-gap-large js-reveal-section">
         <div className="homepage-section-head">
           <div className="eyebrow">Services</div>
           <h2 className="homepage-section-title">Services available in your area</h2>
@@ -502,7 +453,7 @@ export default function HomePage() {
             return (
               <article key={item.label} className="panel card span-4 homepage-info-card homepage-service-card">
                 <div className="homepage-service-illustration-wrap">
-                  <Image src={item.image} alt={item.label} fill className="homepage-service-photo" sizes="(max-width: 960px) 100vw, 33vw" />
+                  <img src={item.image} alt={item.label} className="homepage-service-photo" />
                 </div>
                 <strong>{item.label}</strong>
                 <p className="lead" style={{ fontSize: "0.98rem", margin: "0.55rem 0 0" }}>{item.description}</p>
@@ -512,7 +463,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="homepage-section homepage-coverage-section">
+      <section className="homepage-section homepage-coverage-section js-reveal-section">
         <div className="homepage-coverage-copy">
           <div className="homepage-coverage-kicker">Covering all of London</div>
           <h2 className="homepage-coverage-title">Every Borough. Every Postcode.</h2>
@@ -531,7 +482,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="homepage-section homepage-how-section">
+      <section className="homepage-section homepage-how-section js-reveal-section">
         <div className="homepage-how-media panel">
           <Image src="/images/homepage/howitworks.png" alt="Book trusted home services" fill className="homepage-how-media-image" sizes="(max-width: 960px) 100vw, 50vw" />
           <div className="homepage-how-badge">
@@ -569,7 +520,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="homepage-section homepage-app-section">
+      <section className="homepage-section homepage-app-section js-reveal-section">
         <div className="homepage-app-copy">
           <div className="homepage-app-kicker">Built for mobile booking</div>
           <h2 className="homepage-section-title">Book quickly on your phone, without downloading an app.</h2>
@@ -596,7 +547,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="homepage-section homepage-faq-section">
+      <section className="homepage-section homepage-faq-section js-reveal-section">
         <div className="homepage-section-head homepage-section-head-center">
           <div className="eyebrow">FAQ</div>
           <h2 className="homepage-section-title">Frequently asked questions</h2>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, Bug, CreditCard, Hammer, PackageOpen, Sparkles, Trash2, Trees } from "lucide-react";
 import { listPublicCategories, listJobTypesForCategory, getServiceValueForCategory } from "@/lib/public-quote/service-mapping";
 import {
   jobTypeCatalog,
@@ -16,6 +17,15 @@ import { UploadDropzone } from "@/lib/uploadthing";
 import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 
 type PublicCategoryKey = ReturnType<typeof listPublicCategories>[number]["key"];
+
+const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  CLEANING: Sparkles,
+  PEST_CONTROL: Bug,
+  HANDYMAN: Hammer,
+  FURNITURE_ASSEMBLY: PackageOpen,
+  WASTE_REMOVAL: Trash2,
+  GARDEN_MAINTENANCE: Trees,
+};
 
 /* ── Helpers ── */
 
@@ -85,6 +95,27 @@ const HALF_HOUR_TIMES = Array.from({ length: 24 * 2 }, (_, index) => {
 });
 
 const DEFAULT_SCHEDULE_TIME = "09:30";
+const BOOKING_TIME_SLOTS = HALF_HOUR_TIMES.filter((time) => time >= "08:00" && time <= "18:00");
+
+type SlotAvailability = "available" | "limited" | "unavailable";
+
+function getSlotAvailability(date: string, time: string): SlotAvailability {
+  if (!date) return "available";
+  const slotMinutes = Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+  const day = new Date(`${date}T12:00:00`).getDay();
+  const isWeekendDay = day === 0 || day === 6;
+
+  if (isWeekendDay) {
+    if (slotMinutes < 10 * 60 || slotMinutes > 16 * 60 + 30) return "unavailable";
+    if (slotMinutes <= 11 * 60 || slotMinutes >= 15 * 60 + 30) return "limited";
+    return "available";
+  }
+
+  if (slotMinutes < 8 * 60 + 30 || slotMinutes > 18 * 60) return "unavailable";
+  if (slotMinutes < 9 * 60 || slotMinutes >= 17 * 60) return "limited";
+  if (slotMinutes === 12 * 60 + 30) return "limited";
+  return "available";
+}
 
 /* ── Main component ── */
 
@@ -138,7 +169,6 @@ export function PublicQuoteForm() {
     const day = d.getDay();
     return day === 0 || day === 6;
   }, [form.scheduledDate]);
-  const [schedulePassed, setSchedulePassed] = useState(false);
 
   const allScheduleOptions = useMemo(
     () => [
@@ -207,8 +237,10 @@ export function PublicQuoteForm() {
   const [estimate, setEstimate] = useState<ServerEstimate | null>(null);
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [estimateError, setEstimateError] = useState("");
+  const [animatedTotal, setAnimatedTotal] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Build estimated hours for the API payload (same logic as before, needed for server)
   const estimatedHours = useMemo(() => {
@@ -229,7 +261,7 @@ export function PublicQuoteForm() {
   }, [selectedJob, form.bedrooms, form.bathrooms, form.kitchens, form.propertyType, form.cleaningCondition, form.jobSize, isCleaning, roomCount]);
 
   // Fetch server estimate whenever pricing-relevant fields change
-  const applyWeekendSurcharge = schedulePassed && weekendVisitCount > 0;
+  const applyWeekendSurcharge = weekendVisitCount > 0;
 
   useEffect(() => {
     // Need at least postcode + serviceKey to estimate
@@ -256,7 +288,7 @@ export function PublicQuoteForm() {
         quantity: scheduleVisitCount,
         sameDay: form.sameDay,
         weekend: applyWeekendSurcharge,
-        weekendCount: schedulePassed ? weekendVisitCount : 0,
+        weekendCount: weekendVisitCount,
       };
 
       // Cleaning-specific
@@ -336,6 +368,35 @@ export function PublicQuoteForm() {
     isCleaning, isPestControl, roomCount, showPropertyType,
   ]);
 
+  useEffect(() => {
+    if (!estimate) {
+      setAnimatedTotal(0);
+      return;
+    }
+
+    const target = estimate.totalCustomerPay;
+    const startValue = animatedTotal;
+    const startTime = performance.now();
+    const duration = 520;
+
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+
+    const stepFrame = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const nextValue = startValue + (target - startValue) * eased;
+      setAnimatedTotal(nextValue);
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(stepFrame);
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(stepFrame);
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, [estimate?.totalCustomerPay]);
+
   const sizeOptions = useMemo(() => {
     if (!selectedJob) return [];
     return selectedJob.sizeOptions.map((s) => ({ value: s.value, label: s.label }));
@@ -395,7 +456,6 @@ export function PublicQuoteForm() {
       return;
     }
     setStepErrors((prev) => ({ ...prev, [step]: "" }));
-    if (step === 3) setSchedulePassed(true);
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -415,8 +475,31 @@ export function PublicQuoteForm() {
   function chooseService(jobValue: string) {
     setServiceKey(jobValue);
     setStepErrors((prev) => ({ ...prev, 1: "" }));
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function renderTimeSlotGrid(currentDate: string, currentTime: string, onSelect: (time: string) => void) {
+    return (
+      <div className="quote-slot-grid">
+        {BOOKING_TIME_SLOTS.map((time) => {
+          const availability = getSlotAvailability(currentDate, time);
+          const selected = currentTime === time;
+          return (
+            <button
+              key={time}
+              type="button"
+              className={`quote-slot-button quote-slot-${availability}${selected ? " quote-slot-selected" : ""}`}
+              disabled={availability === "unavailable"}
+              onClick={() => onSelect(time)}
+            >
+              <strong>{time}</strong>
+              <span>
+                {availability === "available" ? "Available" : availability === "limited" ? "Limited" : "Unavailable"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
   }
 
   const progressPct = Math.round(((step + 1) / STEPS.length) * 100);
@@ -560,7 +643,7 @@ export function PublicQuoteForm() {
 
             {/* ═══════ STEP 0: ADDRESS ═══════ */}
             {step === 0 && (
-              <div className="panel card quote-section-card">
+              <div className="panel card quote-section-card quote-step-panel">
                 <div className="quote-section-head">
                   <strong>Confirm your service address</strong>
                   <p>Check the address below or update if needed.</p>
@@ -610,15 +693,16 @@ export function PublicQuoteForm() {
 
             {/* ═══════ STEP 1: SERVICE SELECTION ═══════ */}
             {step === 1 && (
-              <div className="panel card quote-section-card">
-                {/* Sub-step A: pick a category (show when no serviceKey yet) */}
-                {!serviceKey ? (
-                  <>
-                    <div className="quote-section-head">
-                      <strong>What do you need help with?</strong>
-                    </div>
-                    <div className="service-chip-grid">
-                      {categories.map((cat) => (
+              <div className="panel card quote-section-card quote-step-panel">
+                <div className="quote-section-head">
+                  <strong>What do you need help with?</strong>
+                  <p>Choose a service to start building a live booking with real-time price updates.</p>
+                </div>
+                <div className="service-chip-grid">
+                  {categories.map((cat) => (
+                    (() => {
+                      const Icon = categoryIcons[cat.key];
+                      return (
                         <button
                           key={cat.key}
                           type="button"
@@ -626,66 +710,47 @@ export function PublicQuoteForm() {
                           onClick={() => {
                             const nextCategory = cat.key as PublicCategoryKey;
                             setCategoryKey(nextCategory);
-                            /* Don't auto-select a job — let user pick */
                           }}
                         >
+                          <span className="service-chip-icon">{Icon ? <Icon className="size-4" /> : null}</span>
                           <strong>{cat.label}</strong>
                         </button>
-                      ))}
-                    </div>
+                      );
+                    })()
+                  ))}
+                </div>
 
-                    {/* Show job types for selected category as list rows */}
-                    {categoryKey && (
-                      <div className="job-list" style={{ marginTop: "1.5rem" }}>
-                        {currentServiceCatalog.map((sub) => (
-                          sub.jobs.length > 0 && (
-                            <div key={sub.value} className="job-list-group">
-                              <div className="job-list-group-title">{sub.label}</div>
-                              {sub.jobs.map((job) => (
-                                <button
-                                  key={job.value}
-                                  type="button"
-                                  className="job-list-row"
-                                  onClick={() => chooseService(job.value)}
-                                >
-                                  <span className="job-list-row-name">{job.label}</span>
-                                  <span className="job-list-row-price">From {money(job.startingPrice)}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  /* Sub-step B: category chosen + job selected — show summary with change option */
-                  <>
-                    <div className="quote-section-head">
-                      <strong>Your selection</strong>
-                    </div>
-                    <div className="quote-service-chosen">
-                      <div className="quote-service-chosen-info">
-                        <span className="muted">{categories.find((c) => c.key === categoryKey)?.label}</span>
-                        <strong>{selectedJob?.label}</strong>
-                      </div>
-                      <button
-                        type="button"
-                        className="button button-secondary"
-                        style={{ whiteSpace: "nowrap" }}
-                        onClick={() => setServiceKey("")}
-                      >
-                        Change
-                      </button>
-                    </div>
-                  </>
+                {categoryKey && (
+                  <div className="job-list" style={{ marginTop: "1.5rem" }}>
+                    {currentServiceCatalog.map((sub) => (
+                      sub.jobs.length > 0 && (
+                        <div key={sub.value} className="job-list-group">
+                          <div className="job-list-group-title">{sub.label}</div>
+                          {sub.jobs.map((job) => {
+                            const isSelected = serviceKey === job.value;
+                            return (
+                              <button
+                                key={job.value}
+                                type="button"
+                                className={`job-list-row ${isSelected ? "job-list-row-selected" : ""}`}
+                                onClick={() => chooseService(job.value)}
+                              >
+                                <span className="job-list-row-name">{job.label}</span>
+                                <span className="job-list-row-price">{money(job.startingPrice)}<em>base price</em></span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )
+                    ))}
+                  </div>
                 )}
               </div>
             )}
 
             {/* ═══════ STEP 2: SERVICE DETAILS ═══════ */}
             {step === 2 && (
-              <div className="panel card quote-section-card">
+              <div className="panel card quote-section-card quote-step-panel">
                 <div className="quote-section-head">
                   <strong>Service details</strong>
                   <p>Tell us more about the job so we can provide an accurate quote.</p>
@@ -783,17 +848,14 @@ export function PublicQuoteForm() {
                     <span>Preferred date</span>
                     <input type="date" min={getTomorrowDate()} value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} />
                   </label>
-                  <label className="quote-field-stack">
-                    <span>Preferred time</span>
-                    <select value={form.scheduledTimeLabel} onChange={(e) => setForm({ ...form, scheduledTimeLabel: e.target.value })}>
-                      {HALF_HOUR_TIMES.map((time) => <option key={time} value={time}>{time}</option>)}
-                    </select>
-                  </label>
-                  <label className="quote-check-item">
-                    <input type="checkbox" checked={form.sameDay} onChange={(e) => setForm({ ...form, sameDay: e.target.checked })} />
-                    <span>Same-day service</span>
-                  </label>
                 </div>
+                <div className="quote-field-stack" style={{ marginTop: "1rem" }}>
+                  <span>Preferred time</span>
+                  {renderTimeSlotGrid(form.scheduledDate, form.scheduledTimeLabel, (time) => setForm({ ...form, scheduledTimeLabel: time }))}
+                </div>
+                <p style={{ marginTop: "0.65rem", fontSize: "0.8rem", color: "var(--color-text-muted)", lineHeight: 1.55 }}>
+                  Availability updates in real time. Final confirmation still depends on the provider accepting the booking.
+                </p>
                 <div style={{ marginTop: "1rem", display: "grid", gap: "0.75rem" }}>
                   {form.additionalScheduleOptions.map((option, index) => (
                     <div key={`${option.date}-${index}`} className="panel" style={{ padding: "1rem", display: "grid", gap: "0.9rem", border: "1px solid var(--color-border)" }}>
@@ -824,19 +886,14 @@ export function PublicQuoteForm() {
                           }}
                         />
                       </label>
-                      <label className="quote-field-stack">
-                        <span>Time</span>
-                        <select
-                          value={option.time}
-                          onChange={(e) => {
-                            const next = [...form.additionalScheduleOptions];
-                            next[index] = { ...next[index], time: e.target.value };
-                            setForm({ ...form, additionalScheduleOptions: next });
-                          }}
-                        >
-                          {HALF_HOUR_TIMES.map((time) => <option key={time} value={time}>{time}</option>)}
-                        </select>
-                      </label>
+                      </div>
+                      <div className="quote-field-stack">
+                        <span>Available time</span>
+                        {renderTimeSlotGrid(option.date, option.time, (time) => {
+                          const next = [...form.additionalScheduleOptions];
+                          next[index] = { ...next[index], time };
+                          setForm({ ...form, additionalScheduleOptions: next });
+                        })}
                       </div>
                     </div>
                   ))}
@@ -872,7 +929,7 @@ export function PublicQuoteForm() {
             {/* ═══════ STEP 4: NOTES & PHOTOS ═══════ */}
             {step === 4 && (
               <div style={{ display: "grid", gap: "1rem" }}>
-                <div className="panel card quote-section-card">
+                <div className="panel card quote-section-card quote-step-panel">
                   <div className="quote-section-head">
                     <strong>Job description / notes</strong>
                     <p>Describe any special requirements or details the provider should know. This step is optional.</p>
@@ -894,7 +951,7 @@ export function PublicQuoteForm() {
                   )}
                 </div>
 
-                <div className="panel card quote-section-card">
+                <div className="panel card quote-section-card quote-step-panel">
                   <div className="quote-section-head">
                     <strong>Photos</strong>
                     <p>Upload up to 5 photos to help providers assess the job scope.</p>
@@ -960,7 +1017,7 @@ export function PublicQuoteForm() {
 
             {/* ═══════ STEP 5: CONTACT INFO (LAST) ═══════ */}
             {step === 5 && (
-              <div className="panel card quote-section-card">
+              <div className="panel card quote-section-card quote-step-panel">
                 <div className="quote-section-head">
                   <strong>Your contact details</strong>
                   <p>We will use this to send your quote and booking confirmation.</p>
@@ -1017,19 +1074,14 @@ export function PublicQuoteForm() {
                 Back
               </button>
             )}
-            {step === 4 && (
-              <button type="button" className="quote-step-skip" onClick={goNext} style={{ marginRight: "auto" }}>
-                Skip this step &rarr;
-              </button>
-            )}
-            {step < STEPS.length - 1 && step !== 1 && (
+            {step < STEPS.length - 1 && (
               <button type="button" className="button button-primary" onClick={goNext}>
-                Continue
+                <span className="button-inline-icon"><span>Continue</span><ArrowRight size={16} /></span>
               </button>
             )}
             {step === STEPS.length - 1 && (
               <button className="button button-primary" type="submit" disabled={submitting}>
-                {submitting ? "Preparing booking..." : "Continue Booking"}
+                {submitting ? "Preparing booking..." : <span className="button-inline-icon"><span>Go to payment</span><CreditCard size={16} /></span>}
               </button>
             )}
           </div>
@@ -1054,8 +1106,12 @@ export function PublicQuoteForm() {
               {estimate ? (
                 <>
                   <h2 className="quote-total-number" style={estimateLoading ? { opacity: 0.5 } : undefined}>
-                    {money(estimate.totalCustomerPay)}
+                    {money(animatedTotal || estimate.totalCustomerPay)}
                   </h2>
+                  <div className="quote-live-pill">
+                    <span className="quote-live-dot" />
+                    Live booking price
+                  </div>
                   <div className="quote-summary-list">
                     <div><span>Service dates</span><strong>{scheduleVisitCount}</strong></div>
                     <div><span>Service</span><strong>{selectedJob?.label ?? serviceKey}</strong></div>
