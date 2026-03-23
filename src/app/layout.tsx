@@ -4,6 +4,7 @@ import "./globals.css";
 import { NavigationLoadingOverlay } from "@/components/shared/navigation-loading-overlay";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { CookieConsentBanner } from "@/components/analytics/cookie-consent-banner";
+import { Analytics } from "@vercel/analytics/next";
 
 function getSafeSiteUrl() {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -93,6 +94,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </Suspense>
         <CookieConsentBanner />
         <div className="page-shell">{children}</div>
+        <Analytics />
       </body>
     </html>
   );
