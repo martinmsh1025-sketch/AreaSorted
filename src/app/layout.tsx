@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import { NavigationLoadingOverlay } from "@/components/shared/navigation-loading-overlay";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { CookieConsentBanner } from "@/components/analytics/cookie-consent-banner";
 
 function getSafeSiteUrl() {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -90,6 +91,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Suspense fallback={null}>
           <NavigationLoadingOverlay />
         </Suspense>
+        <CookieConsentBanner />
         <div className="page-shell">{children}</div>
       </body>
     </html>
