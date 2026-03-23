@@ -6,8 +6,9 @@ import { SiteHeaderMobileNav } from "@/components/layout/site-header-mobile-nav"
 const navItems = [
   { href: "/services", label: "Services", icon: "spark" },
   { href: "/pricing", label: "Pricing", icon: "tag" },
-  { href: "/quote", label: "Book", icon: "pin" },
-  { href: "/become-a-cleaner", label: "Cleaners", icon: "people" },
+  { href: "/quote", label: "Book Now", icon: "pin" },
+  { href: "/london", label: "Areas", icon: "pin" },
+  { href: "/become-a-cleaner", label: "For Providers", icon: "people" },
   { href: "/faq", label: "FAQ", icon: "chat" },
   { href: "/contact", label: "Contact", icon: "phone" },
 ];

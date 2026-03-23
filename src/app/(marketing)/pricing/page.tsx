@@ -10,11 +10,11 @@ import {
 export const metadata: Metadata = {
   title: "Pricing — Transparent Service Pricing",
   description:
-    "See starting prices for all 57 service types across cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance in London. No hidden fees.",
+    "See starting prices for all 57 service types across cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance in London. Clear totals, clear adjustments, no hidden charges.",
   openGraph: {
     title: "Pricing — Transparent Service Pricing | AreaSorted",
     description:
-      "Transparent pricing for all 57 service types in London. See starting prices, add-ons, and fee breakdown before you book.",
+      "Transparent pricing for all 57 service types in London. See starting prices, add-ons, and what affects your total before you book.",
   },
 };
 
@@ -102,13 +102,13 @@ export default function PricingPage() {
               },
               {
                 num: "3",
-                title: "Platform commission",
-                desc: "A 12% commission is applied to cover platform operations. This is added to the service price, not deducted from the provider.",
+                title: "Location and timing adjustments",
+                desc: "Your total can change based on postcode, urgency, weekend slots, evening timings, or service-specific requirements.",
               },
               {
                 num: "4",
-                title: "Booking fee",
-                desc: "A fixed booking fee (typically £12–£19) covers payment processing, provider matching, and customer support.",
+                title: "Booking support fee",
+                desc: "A separate booking fee may apply to cover secure checkout, managed booking support, and confirmation handling.",
               },
             ].map((item) => (
               <div key={item.num} className="panel card" style={{ display: "flex", gap: "1rem", alignItems: "start" }}>
@@ -140,7 +140,7 @@ export default function PricingPage() {
             ))}
           </div>
           <p style={{ color: "var(--color-text-muted)", margin: "1.2rem auto 0", maxWidth: 860, textAlign: "center", lineHeight: 1.6 }}>
-            AreaSorted places a temporary card hold when you continue booking. Payment is only captured once the matched provider confirms the job.
+            AreaSorted places a temporary card hold when you continue booking. Payment is only captured once your booking is confirmed.
           </p>
         </div>
       </section>
@@ -154,7 +154,7 @@ export default function PricingPage() {
               Prices by service category
             </h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.5rem" }}>
-              Starting prices shown are for the smallest job size at a flat/apartment. Final price depends on your specific requirements.
+              Starting prices shown are for the smallest job size at a flat or apartment. Final price depends on your postcode, property, timing, job size, and any extras you choose.
             </p>
           </div>
 
@@ -257,8 +257,7 @@ export default function PricingPage() {
               For cleaning services, condition matters.
             </h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.5rem", lineHeight: 1.6 }}>
-              If a property needs extra attention, the cleaning condition multiplier adjusts the price accordingly. 
-              This ensures providers are fairly compensated for heavier work.
+              If a property needs extra attention, the price may be adjusted to reflect the extra time and work involved.
             </p>
           </div>
           <div className="panel card">

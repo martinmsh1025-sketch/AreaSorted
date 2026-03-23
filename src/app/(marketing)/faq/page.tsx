@@ -5,11 +5,11 @@ import { FaqAccordion, type FaqCategory } from "./faq-accordion";
 export const metadata: Metadata = {
   title: "FAQ — Frequently Asked Questions",
   description:
-    "Answers to common questions about booking services, payments, cancellations, provider verification, and how AreaSorted works across London.",
+    "Answers to common questions about booking services, pricing, payments, cancellations, and how AreaSorted works across London.",
   openGraph: {
     title: "FAQ — Frequently Asked Questions | AreaSorted",
     description:
-      "Everything you need to know about booking services through AreaSorted — payments, cancellations, provider verification, and more.",
+      "Everything you need to know about booking services through AreaSorted — pricing, payments, cancellations, coverage, and more.",
   },
 };
 
@@ -35,7 +35,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "What does the booking fee cover?",
         answer:
-          "The booking fee covers the cost of running the platform — including provider matching, payment processing, customer support, and the managed booking flow. It is shown separately in your quote breakdown so there are no hidden charges.",
+          "The booking fee helps cover secure checkout, booking support, and the managed confirmation process. It is shown separately in your quote breakdown so there are no hidden charges.",
       },
       {
         question: "Are there any hidden fees?",
@@ -75,22 +75,22 @@ const faqCategories: FaqCategory[] = [
       {
         question: "Who carries out the work?",
         answer:
-          "All services are carried out by independent, self-employed professionals who have been vetted and onboarded through the AreaSorted platform. They are not employees of AreaSorted — the platform arranges the booking and handles payment on their behalf.",
+          "Services are carried out by vetted independent professionals who have been approved to work through AreaSorted.",
       },
       {
         question: "How are providers verified?",
         answer:
-          "Every provider goes through a structured onboarding process that includes email verification, identity document upload, right-to-work checks, capability assessment, coverage area setup, and admin review. Only approved providers can accept jobs.",
+          "Providers go through a structured onboarding and review process before they can accept work. Checks can include identity, eligibility, service fit, coverage setup, and admin approval.",
       },
       {
         question: "Can I choose my provider?",
         answer:
-          "The platform automatically matches you with the best available provider for your postcode and service type. This ensures you get someone who covers your area and has the right capabilities for the job.",
+          "AreaSorted matches bookings based on coverage, service fit, and availability so you can move through the booking process more quickly.",
       },
       {
         question: "Will I know who my provider is before the booking?",
         answer:
-          "Provider details are shared after the booking has been confirmed and payment has been captured. Before that, your quote shows that the service will be carried out by a verified local provider.",
+          "Booking details are confirmed as the booking progresses. Before confirmation, your quote shows that the service will be handled by a vetted local professional.",
       },
       {
         question: "Do providers bring their own equipment?",
@@ -140,7 +140,7 @@ const faqCategories: FaqCategory[] = [
       {
         question: "I want to become a service provider. How do I apply?",
         answer:
-          "Visit the provider recruitment page to learn about the onboarding process and requirements. You will need to provide identity documents, proof of right to work, and go through a review process before being approved.",
+          "Visit the provider page to learn about onboarding and requirements. We work with independent professionals across multiple service categories, not just cleaners.",
       },
     ],
   },

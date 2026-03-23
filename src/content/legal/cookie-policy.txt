@@ -1,104 +1,93 @@
 [PLATFORM NAME]
 COOKIE POLICY
-Version 1.0
+Version 1.1
 Effective Date: [DATE]
 
-This Cookie Policy explains how [LEGAL ENTITY NAME] trading as [PLATFORM NAME] ("Platform", "we", "us", "our") uses cookies and similar technologies on our website, app, portal, and related online services.
+This Cookie Policy explains how [LEGAL ENTITY NAME] trading as [PLATFORM NAME] ("Platform", "we", "us", "our") uses cookies and similar technologies on our website, app, portals, and related online services.
 
 1. WHAT ARE COOKIES?
 
 Cookies are small text files placed on your device when you visit a website or use an online service. Similar technologies may also be used to store or access information on your device.
 
-2. WHY WE USE COOKIES
+2. HOW WE CURRENTLY USE COOKIES
 
-We may use cookies and similar technologies to:
-(a) make our website and platform work properly;
-(b) keep you logged in where applicable;
-(c) remember your preferences and settings;
-(d) support security and fraud prevention;
-(e) understand how our website and services are used;
-(f) improve performance and user experience; and
-(g) where you consent, support analytics, advertising, and marketing activities.
+We currently use cookies and similar technologies to:
+(a) keep the website and booking flow working properly;
+(b) maintain secure login and session state where applicable;
+(c) remember limited interface preferences;
+(d) support security and fraud prevention; and
+(e) where you choose to accept analytics cookies, understand how visitors use our website so we can improve booking journeys and site performance.
 
-3. TYPES OF COOKIES WE USE
+We do not currently enable advertising or marketing cookies through our main cookie banner.
+
+3. COOKIE CATEGORIES WE CURRENTLY USE
 
 3.1 Strictly Necessary Cookies
 These cookies are required for the operation, security, and core functionality of our website or platform. For example, they may:
-(a) enable page navigation;
-(b) remember items added during a booking process;
-(c) keep your session secure; or
-(d) support load balancing or fraud prevention.
+(a) keep you logged in;
+(b) maintain session integrity during the booking process;
+(c) support security checks, fraud prevention, and rate limiting; and
+(d) remember essential technical state needed for core website features.
 
 Because these cookies are necessary for the service you request, they may be used without consent where the law allows.
 
-3.2 Functional Cookies
-These cookies help remember your settings and choices, such as language, region, or other preferences.
+3.2 Analytics / Performance Cookies
+If you choose "Accept analytics" in our cookie banner, we may load analytics technologies to understand how visitors use the website, such as which pages are viewed, how users move through the booking flow, and where improvements may be needed.
 
-3.3 Analytics / Performance Cookies
-These cookies help us understand how visitors use our website or platform, such as which pages are visited and how users move through the booking process. We use this information to improve our website and services.
+If you choose "Only necessary", analytics cookies are not loaded.
 
-Where required by law, we only use analytics or performance cookies with your consent unless a lawful exemption applies.
-
-3.4 Advertising / Marketing Cookies
-These cookies may be used to:
-(a) measure advertising performance;
-(b) limit how often you see an ad;
-(c) understand the effectiveness of campaigns; or
-(d) personalise marketing content.
-
-We only use advertising or marketing cookies where you have given consent.
+3.3 Functional Preferences
+We may store limited preference information connected with website behaviour or interface settings where needed for the user experience. Where a preference is strictly necessary for a feature you request, it may operate without separate consent.
 
 4. COOKIE CONSENT
 
-4.1 When you first visit our website, we may show you a cookie banner or similar consent tool.
+4.1 When you first visit our website, we show a cookie banner asking you to choose between:
+(a) "Only necessary"; or
+(b) "Accept analytics".
 
-4.2 You can choose whether to accept or reject non-essential cookies.
+4.2 Strictly necessary cookies remain active regardless of your choice because they are required for login, security, booking, and essential site operation.
 
-4.3 Strictly necessary cookies do not require consent, but we still provide information about them in this Policy.
+4.3 Analytics cookies are only loaded if you actively choose "Accept analytics".
 
-4.4 You can change your cookie preferences at any time through our cookie settings tool or by contacting us, where applicable.
+4.4 After making a choice, you can reopen the cookie settings control shown on the site and change your preference at any time.
 
-5. MANAGING COOKIES
+5. HOW WE STORE YOUR CHOICE
 
-You can usually control or delete cookies through your browser settings. Please note that disabling strictly necessary cookies may affect the operation, security, or functionality of our website or booking process.
+We store your cookie preference so we can remember it on future visits. This record may be stored using browser storage and/or a cookie for up to 12 months unless you clear it earlier through your browser or change your setting on the site.
 
-6. THIRD-PARTY COOKIES
+6. THIRD-PARTY SERVICES
 
-Some cookies or similar technologies may be set by third-party services we use, such as analytics, payment, chat, customer support, or advertising providers.
+Where analytics is accepted, third-party analytics providers may place or read cookies or receive usage data in accordance with their own service design.
 
-Where third-party non-essential cookies are used, we will seek consent where required by law.
+We also use third-party technical services for payments, file handling, security challenges, maps, fonts, and infrastructure support. Not all of these services place non-essential cookies through the banner flow, but they may still process technical connection data when their features are used.
 
-7. HOW LONG COOKIES LAST
+7. MANAGING COOKIES
 
-Some cookies last only for your browsing session and are deleted when you close your browser. Others may remain on your device for a longer period so that your preferences or settings can be recognised when you return.
+You can usually control or delete cookies through your browser settings. Please note that disabling strictly necessary cookies may affect the operation, security, login state, or functionality of our website and booking process.
 
-We aim to keep cookie duration appropriate to the purpose for which the cookie is used.
+You can also change your analytics preference using the cookie settings control available on the site.
 
 8. COOKIE LIST
 
-Our website may use one or more of the following categories of cookies:
+Our website currently uses, or may use, one or more of the following categories:
 
 (a) Strictly Necessary
-Purpose: website operation, security, booking flow, fraud prevention
-Typical duration: session / short-term
+Purpose: login, session integrity, booking flow, security, fraud prevention, essential technical operation
+Typical duration: session / short-term / up to 12 months where needed for preference retention
 
-(b) Functional
-Purpose: remembering settings and preferences
-Typical duration: session / medium-term
+(b) Analytics / Performance
+Purpose: measuring site usage and improving booking journeys and website performance
+Typical duration: as configured by the analytics provider, only after consent
 
-(c) Analytics / Performance
-Purpose: measuring and improving website and service usage
-Typical duration: short-term / medium-term / as configured
-
-(d) Advertising / Marketing
-Purpose: ad measurement, campaign attribution, and marketing
-Typical duration: as configured by the relevant provider
+(c) Limited Functional Preferences
+Purpose: remembering selected site behaviour or interface preferences
+Typical duration: session / medium-term, depending on the feature
 
 We may update this list from time to time as our website and tools change.
 
 9. DO NOT TRACK
 
-Our website may not respond to all browser-based "Do Not Track" signals. Where legally required, our cookie choices and consent mechanisms will apply instead.
+Our website may not respond to all browser-based "Do Not Track" signals. Where legally required, the cookie choices you make through our on-site consent mechanism will apply instead.
 
 10. CHANGES TO THIS POLICY
 

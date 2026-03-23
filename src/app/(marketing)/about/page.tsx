@@ -4,11 +4,11 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "AreaSorted connects London customers with vetted, independent service providers for cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance.",
+    "AreaSorted helps London customers book trusted local services with clearer pricing, structured booking, and vetted professionals across multiple service categories.",
   openGraph: {
     title: "About AreaSorted — Trusted Local Services in London",
     description:
-      "Learn about AreaSorted's mission, provider verification process, and how we connect London customers with vetted local service providers.",
+      "Learn how AreaSorted helps London customers book trusted local services with clearer pricing, postcode-first coverage checks, and vetted professionals.",
   },
 };
 
@@ -26,12 +26,12 @@ const values = [
   {
     title: "One managed flow",
     description:
-      "From quote to completion, everything is handled through one booking system. No chasing, no separate invoices, no guesswork.",
+      "From quote to booking confirmation, everything is handled through one structured flow. No chasing around for prices, availability, or next steps.",
   },
   {
     title: "Local knowledge",
     description:
-      "Providers are matched by postcode coverage, availability, and capability — so you get someone who actually works in your area.",
+      "We focus on London coverage, postcode fit, and practical service matching so customers can book with more confidence.",
   },
 ];
 
@@ -40,25 +40,25 @@ const steps = [
     number: "01",
     title: "Enter your postcode",
     description:
-      "Check coverage for your area. We serve all 32 London boroughs and match you with a provider who covers your postcode.",
+      "Check coverage for your area first. We focus on London and use postcode-led matching to keep the process practical and local.",
   },
   {
     number: "02",
     title: "Get an instant quote",
     description:
-      "Choose your service, property type, and any add-ons. The pricing engine calculates a transparent quote with no hidden fees.",
+      "Choose your service, property type, and any add-ons. You see a clear quote before deciding whether to continue.",
   },
   {
     number: "03",
     title: "Continue booking securely",
     description:
-      "Confirm your booking and pay online. Your payment is processed securely and the provider is assigned automatically.",
+      "Continue securely online. We place a temporary card hold first and only capture payment once the booking is confirmed.",
   },
   {
     number: "04",
     title: "Service is carried out",
     description:
-      "An independent, vetted provider carries out the work at the scheduled time. Everything is tracked through the platform.",
+      "A vetted local professional carries out the work at the scheduled time, with support available if booking details need to change.",
   },
 ];
 
@@ -77,12 +77,10 @@ export default function AboutPage() {
         <div className="container" style={{ maxWidth: 860 }}>
           <div className="eyebrow">About AreaSorted</div>
           <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
-            A London services platform built around trust, structure, and verified onboarding.
+            A clearer way to book trusted local services in London.
           </h1>
           <p className="lead">
-            AreaSorted connects customers with independent, vetted service providers across London. 
-            We handle the booking, payment, and provider matching — so both sides get a clear, 
-            structured experience from start to finish.
+            AreaSorted is built for customers who want transparent pricing, vetted professionals, and a smoother booking experience across London. We bring pricing, coverage checks, and booking support into one place.
           </p>
         </div>
       </section>
@@ -131,14 +129,10 @@ export default function AboutPage() {
           </div>
           <div>
             <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, margin: 0 }}>
-              Most local service marketplaces are either opaque on pricing, unreliable on quality, or both. 
-              AreaSorted was built to solve this by putting structure at the centre: a shared pricing engine, 
-              proper provider onboarding, and a single managed booking flow that keeps everything in one place.
+              Booking local services is often frustrating: unclear prices, patchy communication, and too much uncertainty before the job is even confirmed. AreaSorted is designed to make that experience simpler, clearer, and easier to trust.
             </p>
             <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, marginTop: "1rem" }}>
-              Providers are self-employed professionals who set their own availability and coverage areas. 
-              AreaSorted handles the customer-facing booking, payment processing, and job assignment — so 
-              providers can focus on the work itself.
+              We focus on postcode-first coverage, transparent quote building, and vetted professionals across key home service categories so customers can move from research to booking with less friction.
             </p>
           </div>
         </div>
@@ -207,28 +201,23 @@ export default function AboutPage() {
       <section className="section muted-block">
         <div className="container grid-2" style={{ alignItems: "start" }}>
           <div>
-            <div className="eyebrow">Provider verification</div>
+            <div className="eyebrow">Trust and standards</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>
-              Every provider goes through a 12-step onboarding process.
+              Every professional on the platform goes through structured onboarding.
             </h2>
             <p className="lead" style={{ fontSize: "1rem" }}>
-              This is not a simple sign-up. Providers submit documentation, complete identity verification, 
-              and go through admin review before they can accept any jobs on the platform.
+              We do proper checks before a professional can accept work through AreaSorted. That helps create a more reliable experience for customers from the start.
             </p>
           </div>
           <div className="panel card">
-            <strong style={{ display: "block", marginBottom: "1rem" }}>Onboarding includes</strong>
+              <strong style={{ display: "block", marginBottom: "1rem" }}>Checks can include</strong>
             <ul className="list-clean" style={{ color: "var(--color-text-muted)" }}>
-              <li>Email verification and account setup</li>
-              <li>Business details and trading name</li>
-              <li>Identity document upload</li>
-              <li>Right-to-work verification</li>
-              <li>Service capability selection</li>
-              <li>Coverage area and postcode mapping</li>
-              <li>Availability schedule configuration</li>
-              <li>Admin review and approval</li>
-              <li>Stripe Connect payment onboarding</li>
-              <li>Pricing confirmation</li>
+              <li>Identity and account verification</li>
+              <li>Eligibility and document checks</li>
+              <li>Service capability review</li>
+              <li>Coverage area setup</li>
+              <li>Availability and operational setup</li>
+              <li>Admin approval before activation</li>
             </ul>
           </div>
         </div>
