@@ -34,7 +34,7 @@ Because these cookies are necessary for the service you request, they may be use
 3.2 Analytics / Performance Cookies
 If you choose "Accept analytics" in our cookie banner, we may load analytics technologies to understand how visitors use the website, such as which pages are viewed, how users move through the booking flow, and where improvements may be needed.
 
-If you choose "Only necessary", analytics cookies are not loaded.
+If you choose "Reject analytics" or "Only necessary", analytics cookies are not loaded.
 
 3.3 Functional Preferences
 We may store limited preference information connected with website behaviour or interface settings where needed for the user experience. Where a preference is strictly necessary for a feature you request, it may operate without separate consent.
@@ -42,14 +42,17 @@ We may store limited preference information connected with website behaviour or 
 4. COOKIE CONSENT
 
 4.1 When you first visit our website, we show a cookie banner asking you to choose between:
-(a) "Only necessary"; or
-(b) "Accept analytics".
+(a) "Reject analytics";
+(b) "Only necessary"; or
+(c) "Accept analytics".
 
 4.2 Strictly necessary cookies remain active regardless of your choice because they are required for login, security, booking, and essential site operation.
 
 4.3 Analytics cookies are only loaded if you actively choose "Accept analytics".
 
-4.4 After making a choice, you can reopen the cookie settings control shown on the site and change your preference at any time.
+4.4 Both "Reject analytics" and "Only necessary" keep non-essential analytics turned off.
+
+4.5 After making a choice, you can reopen the cookie settings control shown on the site and change your preference at any time.
 
 5. HOW WE STORE YOUR CHOICE
 

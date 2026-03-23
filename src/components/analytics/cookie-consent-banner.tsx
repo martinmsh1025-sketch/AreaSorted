@@ -63,6 +63,9 @@ export function CookieConsentBanner() {
             </div>
             <div className="cookie-consent-actions">
               <button type="button" className="button button-secondary" onClick={() => saveChoice("necessary")}>
+                Reject analytics
+              </button>
+              <button type="button" className="button button-secondary" onClick={() => saveChoice("necessary")}>
                 Only necessary
               </button>
               <button type="button" className="button button-primary" onClick={() => saveChoice("accepted")}>
@@ -70,7 +73,7 @@ export function CookieConsentBanner() {
               </button>
             </div>
             <p className="cookie-consent-meta">
-              You can change this later. Read our <Link href="/cookie-policy">Cookie Policy</Link> and{" "}
+              Reject analytics and only necessary both keep non-essential analytics turned off. You can change this later. Read our <Link href="/cookie-policy">Cookie Policy</Link> and{" "}
               <Link href="/privacy-policy">Privacy Policy</Link>.
             </p>
           </div>
