@@ -35,22 +35,43 @@ export default function ServicesPage() {
       <section className="section">
         <div className="container" style={{ maxWidth: 860 }}>
           <div className="eyebrow">Our services</div>
-          <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
-            {serviceCatalog.length} service categories. {jobTypeCatalog.length} bookable job types.
+          <h1 className="display" style={{ marginTop: "0.65rem", fontSize: "clamp(2.2rem, 3.4vw, 3.5rem)", maxWidth: 760 }}>
+            Trusted local services across London, all in one place.
           </h1>
-          <p className="lead">
-            Every service is arranged through AreaSorted and carried out by an independent, vetted provider 
-            in your area. Browse the full catalogue below, then get a quote in minutes.
+          <p className="lead" style={{ marginTop: "0.95rem", maxWidth: 760 }}>
+            Browse cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance services, then get a clear quote based on your area and job details.
           </p>
-          <p style={{ color: "var(--color-text-muted)", marginTop: "0.9rem", lineHeight: 1.7 }}>
-            We currently support bookings across London for cleaning, pest control, handyman jobs,
-            furniture assembly, waste removal, and garden maintenance. If you are comparing local service
-            options in Camden, Islington, Westminster, Hackney, Lambeth, or nearby boroughs, AreaSorted is
-            designed to help you check coverage, pricing, and booking terms quickly in one place.
+          <p style={{ color: "var(--color-text-muted)", marginTop: "0.8rem", lineHeight: 1.7, maxWidth: 760 }}>
+            We support bookings across all 32 London boroughs and make it easier to compare service options, understand pricing, and continue to booking without chasing separate quotes.
           </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", marginTop: "1.25rem" }}>
+            {[
+              `${serviceCatalog.length} service categories`,
+              `${jobTypeCatalog.length} bookable job types`,
+              "Coverage across London",
+            ].map((item) => (
+              <span
+                key={item}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 38,
+                  padding: "0.55rem 0.85rem",
+                  borderRadius: 999,
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-surface-muted)",
+                  color: "var(--color-text)",
+                  fontSize: "0.92rem",
+                  fontWeight: 600,
+                }}
+              >
+                {item}
+              </span>
+            ))}
+          </div>
           <div className="button-row" style={{ marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Continue booking</Link>
-            <Link className="button button-secondary" href="/faq">See booking FAQ</Link>
+            <Link className="button button-primary" href="/quote">Get a quote</Link>
+            <Link className="button button-secondary" href="/faq">How booking works</Link>
           </div>
         </div>
       </section>
@@ -68,18 +89,18 @@ export default function ServicesPage() {
                   key={cat.value}
                   href={`#${cat.value}`}
                   className="panel card"
-                  style={{ textDecoration: "none", color: "inherit" }}
+                  style={{ textDecoration: "none", color: "inherit", padding: "1.35rem 1.4rem" }}
                 >
-                  <div style={{ fontSize: "1.6rem", marginBottom: "0.4rem" }}>
+                  <div style={{ fontSize: "2.1rem", lineHeight: 1, marginBottom: "0.7rem" }}>
                     {categoryIcons[cat.value] ?? "📋"}
                   </div>
-                  <strong>{cat.label}</strong>
-                  <p style={{ color: "var(--color-text-muted)", margin: "0.3rem 0 0", fontSize: "0.92rem", lineHeight: 1.5 }}>
+                  <strong style={{ fontSize: "1.03rem" }}>{cat.label}</strong>
+                  <p style={{ color: "var(--color-text-muted)", margin: "0.45rem 0 0", fontSize: "0.92rem", lineHeight: 1.6 }}>
                     {cat.strapline}
                   </p>
-                  <div style={{ marginTop: "0.8rem", display: "flex", gap: "1rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-                    <span><strong style={{ color: "var(--color-text)" }}>{jobCount}</strong> job types</span>
-                    <span>From <strong style={{ color: "var(--color-text)" }}>£{lowestPrice}</strong></span>
+                  <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem", flexWrap: "wrap", fontSize: "0.84rem", color: "var(--color-text-muted)" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}><strong style={{ color: "var(--color-text)" }}>{jobCount}</strong> job types</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>From <strong style={{ color: "var(--color-text)" }}>£{lowestPrice}</strong></span>
                   </div>
                 </a>
               );
@@ -206,7 +227,7 @@ export default function ServicesPage() {
             You can also review <Link href="/pricing" style={{ color: "var(--color-brand)", fontWeight: 600 }}>how pricing works</Link> or visit the <Link href="/faq" style={{ color: "var(--color-brand)", fontWeight: 600 }}>help centre</Link> before continuing.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Continue booking</Link>
+            <Link className="button button-primary" href="/quote">Get a quote</Link>
             <Link className="button button-secondary" href="/pricing">View pricing</Link>
           </div>
         </div>
