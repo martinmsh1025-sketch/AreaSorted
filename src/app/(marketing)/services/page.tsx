@@ -28,6 +28,15 @@ const bookingModeLabels: Record<string, string> = {
   inspection: "Inspection first",
 };
 
+const detailedServicePages: Partial<Record<string, string>> = {
+  cleaning: "/services/cleaning",
+  "pest-control": "/services/pest-control",
+  handyman: "/services/handyman",
+  "furniture-assembly": "/services/furniture-assembly",
+  "waste-removal": "/services/waste-removal",
+  "garden-maintenance": "/services/garden-maintenance",
+};
+
 export default function ServicesPage() {
   return (
     <main>
@@ -87,7 +96,7 @@ export default function ServicesPage() {
               return (
                 <a
                   key={cat.value}
-                  href={`#${cat.value}`}
+                  href={detailedServicePages[cat.value] ?? `#${cat.value}`}
                   className="panel card"
                   style={{ textDecoration: "none", color: "inherit", padding: "1.35rem 1.4rem" }}
                 >
@@ -102,6 +111,11 @@ export default function ServicesPage() {
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}><strong style={{ color: "var(--color-text)" }}>{jobCount}</strong> job types</span>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.2rem" }}>From <strong style={{ color: "var(--color-text)" }}>£{lowestPrice}</strong></span>
                   </div>
+                  {detailedServicePages[cat.value] ? (
+                    <div style={{ marginTop: "1rem" }}>
+                      <span style={{ color: "var(--color-brand)", fontWeight: 700, fontSize: "0.9rem" }}>Learn more</span>
+                    </div>
+                  ) : null}
                 </a>
               );
             })}
@@ -122,6 +136,13 @@ export default function ServicesPage() {
                   {jobs.length} job types across {cat.subcategories.length} subcategories. 
                   All services arranged through AreaSorted.
                 </p>
+                {detailedServicePages[cat.value] ? (
+                  <p style={{ marginTop: "0.7rem" }}>
+                    <Link href={detailedServicePages[cat.value]!} style={{ color: "var(--color-brand)", fontWeight: 700 }}>
+                      Read the full {cat.label.toLowerCase()} guide
+                    </Link>
+                  </p>
+                ) : null}
                 <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.6, maxWidth: 860 }}>
                   Looking for {cat.label.toLowerCase()} in London? Use AreaSorted to check postcode coverage,
                   compare job sizes, understand what affects pricing, and continue booking with a temporary
@@ -224,7 +245,7 @@ export default function ServicesPage() {
             Enter your postcode to check coverage and get an instant quote for any of the {jobTypeCatalog.length} services above.
           </p>
           <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.6 }}>
-            You can also review <Link href="/pricing" style={{ color: "var(--color-brand)", fontWeight: 600 }}>how pricing works</Link> or visit the <Link href="/faq" style={{ color: "var(--color-brand)", fontWeight: 600 }}>help centre</Link> before continuing.
+            You can also review <Link href="/how-it-works" style={{ color: "var(--color-brand)", fontWeight: 600 }}>how booking works</Link>, compare <Link href="/services/cleaning" style={{ color: "var(--color-brand)", fontWeight: 600 }}>cleaning</Link>, <Link href="/services/handyman" style={{ color: "var(--color-brand)", fontWeight: 600 }}>handyman</Link>, or <Link href="/services/pest-control" style={{ color: "var(--color-brand)", fontWeight: 600 }}>pest control</Link> options, or visit the <Link href="/faq" style={{ color: "var(--color-brand)", fontWeight: 600 }}>help centre</Link> before continuing.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
             <Link className="button button-primary" href="/quote">Get a quote</Link>

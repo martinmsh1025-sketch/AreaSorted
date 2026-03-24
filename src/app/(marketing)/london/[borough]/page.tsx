@@ -44,6 +44,11 @@ export default async function BoroughPage({ params }: Props) {
           <div className="button-row" style={{ marginTop: "1.5rem" }}>
             <Link className="button button-primary" href="/quote">Continue booking</Link>
             <Link className="button button-secondary" href="/services">Browse services</Link>
+            {[
+              "camden",
+              "islington",
+              "westminster",
+            ].includes(page.slug) ? <Link className="button button-secondary" href={`/london/${page.slug}/cleaning`}>Local cleaning</Link> : null}
           </div>
         </div>
       </section>
