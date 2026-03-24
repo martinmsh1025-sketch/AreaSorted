@@ -56,11 +56,11 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
 
             {/* Right sidebar: price + action + map */}
             <aside className="quote-sidebar-stack">
-              <section className="panel card quote-summary-panel">
-                <div className="eyebrow">Price snapshot</div>
-                <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>
+            <section className="panel card quote-summary-panel">
+              <div className="eyebrow">Price snapshot</div>
+              <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>
                   {money(quote.priceSnapshot.totalCustomerPay)}
-                </h2>
+              </h2>
                 <div className="quote-summary-list">
                   <div><span>Service price</span><strong>{money(quote.priceSnapshot.providerBasePrice)}</strong></div>
                   <div><span>Booking fee</span><strong>{money(quote.priceSnapshot.bookingFee)}</strong></div>
@@ -81,15 +81,20 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
                   <form action={startInstantBookingAction} style={{ marginTop: "1rem" }}>
                     <input type="hidden" name="reference" value={quote.reference} />
                     <FormSubmitButton
-                      label="Continue booking"
+                      label="Continue to secure hold"
                       pendingLabel="Processing..."
                       className="button button-primary"
                     />
                   </form>
                 )}
                 <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                  All prices include platform fees. We place a temporary hold on your card, and you are only charged once the matched provider confirms the job.
+                  All prices include platform fees. Next, we place a temporary card hold to secure your booking request. You are only charged once the matched provider confirms the job.
                 </p>
+                {!unavailable && (
+                  <p style={{ marginTop: "0.6rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+                    After you continue, you will see a booking confirmation page with the next steps and your current status.
+                  </p>
+                )}
               </section>
 
               {embedUrl && (

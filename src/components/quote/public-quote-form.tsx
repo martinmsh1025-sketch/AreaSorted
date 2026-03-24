@@ -275,7 +275,7 @@ export function PublicQuoteForm() {
     if (!serviceKey) {
       setEstimate(null);
       setEstimateLoading(false);
-      setEstimateError(categoryKey ? "Choose a job type to see your live price." : "Choose a service category to start your live booking price.");
+      setEstimateError(categoryKey ? "Choose a job type to see your estimated total." : "Choose a service category to start your quote preview.");
       return;
     }
 
@@ -504,7 +504,7 @@ export function PublicQuoteForm() {
             >
               <strong>{time}</strong>
               <span>
-                {availability === "available" ? "Available" : availability === "limited" ? "Limited" : "Unavailable"}
+                {availability === "available" ? "Typical" : availability === "limited" ? "Limited" : "Unavailable"}
               </span>
             </button>
           );
@@ -613,12 +613,12 @@ export function PublicQuoteForm() {
 
   return (
     <div className="panel card">
-      <div className="eyebrow">Continue booking</div>
+      <div className="eyebrow">Get your quote</div>
       <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
         Tell us about your job
       </h1>
       <p className="lead" style={{ marginTop: "0.3rem", marginBottom: "0", fontSize: "0.95rem", color: "var(--color-text-muted)" }}>
-        Complete each step below and we will match you with an available provider in your area.
+        Complete each step below and we will prepare your quote before you move to the booking request stage.
       </p>
 
       {/* ── Progress bar ── */}
@@ -1091,7 +1091,7 @@ export function PublicQuoteForm() {
             )}
             {step === STEPS.length - 1 && (
               <button className="button button-primary" type="submit" disabled={submitting}>
-                {submitting ? "Preparing booking..." : <span className="button-inline-icon"><span>Go to payment</span><CreditCard size={16} /></span>}
+                {submitting ? "Preparing quote..." : <span className="button-inline-icon"><span>Review booking request</span><CreditCard size={16} /></span>}
               </button>
             )}
           </div>
@@ -1102,7 +1102,7 @@ export function PublicQuoteForm() {
           <aside className="quote-sidebar-stack">
             {/* Pricing estimate */}
             <section className="panel card quote-summary-panel">
-              <div className="eyebrow">Your price</div>
+              <div className="eyebrow">Quote preview</div>
               {estimateLoading && !estimate && (
                 <div style={{ padding: "1.5rem 0", textAlign: "center" }}>
                   <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)" }}>Calculating price...</p>
@@ -1120,7 +1120,7 @@ export function PublicQuoteForm() {
                   </h2>
                   <div className="quote-live-pill">
                     <span className="quote-live-dot" />
-                    Live booking price
+                    Current estimated total
                   </div>
                   <div className="quote-summary-list">
                     <div><span>Service dates</span><strong>{scheduleVisitCount}</strong></div>
@@ -1135,14 +1135,14 @@ export function PublicQuoteForm() {
                     <div><span>Booking fee</span><strong>{money(estimate.bookingFee)}</strong></div>
                   </div>
                   <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                    This is your current price. Continue booking to place a temporary card hold, then the provider confirms the job before any payment is captured.
+                    This is your current estimated total based on the details entered so far. You will review the booking request next, then we place a temporary card hold before provider confirmation.
                   </p>
                 </>
               ) : !estimateLoading && !estimateError ? (
                 <>
                   <h2 className="quote-total-number" style={{ color: "var(--color-text-muted)" }}>—</h2>
                   <p style={{ fontSize: "0.88rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                    Select a service to see your price.
+                    Complete your job details to see your quote preview.
                   </p>
                 </>
               ) : null}

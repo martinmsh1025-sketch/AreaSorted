@@ -196,7 +196,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
                 {canCancel && (
                   <CancelBookingSection bookingId={booking.id} />
                 )}
-                <Link href="/contact" className="button button-secondary">
+                <Link href="/support" className="button button-secondary">
                   Contact support
                 </Link>
               </div>
@@ -211,7 +211,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
                     : "If you need help with this booking, please contact our support team."}
               </p>
               {booking.bookingStatus !== "CANCELLED" && (
-                <Link href="/contact" className="button button-secondary">
+                <Link href="/support" className="button button-secondary">
                   Contact support
                 </Link>
               )}

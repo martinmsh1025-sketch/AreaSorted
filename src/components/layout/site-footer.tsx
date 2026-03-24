@@ -5,7 +5,7 @@ const customerLinks = [
   ["/pricing", "Pricing"],
   ["/quote", "Continue Booking"],
   ["/faq", "FAQ"],
-  ["/contact", "Contact Us"],
+  ["/support", "Customer Support"],
 ];
 
 const cleanerLinks = [
@@ -54,8 +54,8 @@ export function SiteFooter() {
             </p>
             <ul className="list-clean" style={{ color: "var(--color-text-muted)" }}>
               <li>support@areasorted.com</li>
-              <li>020 0000 0000</li>
               <li>Mon-Fri, 9am-6pm</li>
+              <li>London coverage across all 32 boroughs</li>
             </ul>
           </div>
           <div className="footer-column">
@@ -75,7 +75,7 @@ export function SiteFooter() {
             <LinkList items={sitemapLinks} />
           </div>
         </div>
-        <div className="footer-bottom">© 2026 AreaSorted.com. Company number to be added before launch.</div>
+        <div className="footer-bottom">© 2026 AreaSorted.com.</div>
       </div>
     </footer>
   );

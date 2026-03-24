@@ -41,9 +41,19 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
             <div><span>Total quoted</span><strong>{formatMoney(quote.priceSnapshot?.totalCustomerPay)}</strong></div>
             <div><span>Payment</span><strong>{getPaymentStatusLabel(paymentStatus)}</strong></div>
           </div>
+          {!unavailable && quote.booking?.bookingStatus === "PENDING_ASSIGNMENT" && (
+            <div className="panel" style={{ marginTop: "1rem", background: "var(--color-surface-muted)" }}>
+              <strong style={{ display: "block", marginBottom: "0.45rem" }}>What happens next</strong>
+              <ol style={{ margin: 0, paddingLeft: "1.1rem", color: "var(--color-text-muted)", lineHeight: 1.65 }}>
+                <li>Your booking request is waiting for provider confirmation.</li>
+                <li>Your card hold remains in place while confirmation is pending.</li>
+                <li>If the booking cannot be confirmed, the hold is released automatically.</li>
+              </ol>
+            </div>
+          )}
           {canBookNow && (
             <div className="button-row" style={{ marginTop: "1rem" }}>
-              <a className="button button-primary" href={`/quote/${quote.reference}`}>Review quote and pay</a>
+              <a className="button button-primary" href={`/quote/${quote.reference}`}>Review quote and continue</a>
             </div>
           )}
           {!isPaid && (
@@ -51,10 +61,13 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
               {unavailable
                   ? "We could not prepare a quote for this request. Please contact support if you need help with a revised booking."
                   : quote.booking?.bookingStatus === "PENDING_ASSIGNMENT"
-                    ? "Your temporary card hold is active. The provider has up to 24 hours to confirm before the hold is released automatically."
+                    ? "Your temporary card hold is active. The provider usually has up to 24 hours to confirm before the hold is released automatically."
                     : "Provider details are shared after the booking is confirmed and payment is captured."}
             </p>
           )}
+          <div className="button-row" style={{ marginTop: "1rem" }}>
+            <a className="button button-secondary" href="/support">Get support</a>
+          </div>
         </div>
       </div>
     </main>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ContactForm } from "./contact-form";
 
 export const metadata: Metadata = {

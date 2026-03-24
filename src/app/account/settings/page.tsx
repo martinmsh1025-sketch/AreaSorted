@@ -28,7 +28,7 @@ export default async function AccountSettingsPage() {
           <p style={{ color: "var(--color-text-muted)", lineHeight: 1.65, marginBottom: "1rem" }}>
             If something looks wrong with a booking, pricing, or provider update, contact support from the help page.
           </p>
-          <Link href="/contact" className="button button-secondary">Contact support</Link>
+          <Link href="/support" className="button button-secondary">Contact support</Link>
         </div>
       </div>
 

@@ -50,6 +50,14 @@ export default async function BookingConfirmationPage({ params }: BookingConfirm
           <p className="lead" style={{ marginTop: "0.5rem" }}>
             Your booking request has been received. We have placed a temporary card hold and are waiting for provider confirmation.
           </p>
+          <div className="panel" style={{ marginTop: "1rem", background: "var(--color-surface-muted)" }}>
+            <strong style={{ display: "block", marginBottom: "0.45rem" }}>What happens next</strong>
+            <ol style={{ margin: 0, paddingLeft: "1.1rem", color: "var(--color-text-muted)", lineHeight: 1.65 }}>
+              <li>We send your booking request for provider confirmation.</li>
+              <li>Your card remains on temporary hold while confirmation is pending.</li>
+              <li>Once confirmed, payment is captured and your booking status updates automatically.</li>
+            </ol>
+          </div>
           <div className="quote-summary-list" style={{ marginTop: "1.25rem" }}>
             <div><span>Booking reference</span><strong>{reference}</strong></div>
             <div><span>Provider</span><strong>{providerName}</strong></div>
@@ -60,14 +68,17 @@ export default async function BookingConfirmationPage({ params }: BookingConfirm
           <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
             {isCaptured
               ? <>Your service will be carried out by <strong>{providerName}</strong>, an independent provider arranged through AreaSorted.</>
-              : <>A verified local provider is reviewing your booking. You are only charged once the provider confirms the job.</>}
+              : <>A verified local provider is reviewing your booking. You are only charged once the provider confirms the job. Most booking requests are reviewed within 24 hours.</>}
           </p>
           <div style={{ marginTop: "1.25rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-            <Link href="/account/bookings" className="button button-primary">
-              View my bookings
+            <Link href={`/booking/status/${reference}`} className="button button-primary">
+              View booking status
             </Link>
-            <Link href="/" className="button button-secondary">
-              Back to home
+            <Link href="/account/bookings" className="button button-secondary">
+              Manage in my account
+            </Link>
+            <Link href="/support" className="button button-secondary">
+              Get support
             </Link>
           </div>
         </div>

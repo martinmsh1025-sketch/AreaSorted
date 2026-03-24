@@ -47,7 +47,7 @@ export function ContactForm() {
       {status === "sent" ? (
         <div className="panel" style={{ textAlign: "center", padding: "2rem 1rem" }}>
           <strong>Message sent!</strong>
-          <p style={{ marginTop: "0.5rem" }}>We will get back to you as soon as possible.</p>
+          <p style={{ marginTop: "0.5rem" }}>We will get back to you as soon as possible. For existing booking issues, customer support is available at support@areasorted.com.</p>
           <button type="button" className="button button-secondary" style={{ marginTop: "1rem" }} onClick={() => setStatus("idle")}>
             Send another message
           </button>
@@ -56,7 +56,7 @@ export function ContactForm() {
         <>
           <input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
           <input placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} />
-          <textarea placeholder="How can we help?" rows={6} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={5000} />
+          <textarea placeholder="Tell us about your enquiry, provider question, or business request." rows={6} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={5000} />
           {errorMessage ? <p style={{ color: "var(--color-error)", fontSize: "0.9rem", margin: 0 }}>{errorMessage}</p> : null}
           <button type="submit" className="button button-primary" disabled={status === "sending"}>
             {status === "sending" ? "Sending..." : "Send message"}

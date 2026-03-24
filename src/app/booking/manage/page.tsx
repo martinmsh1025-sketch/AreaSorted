@@ -83,7 +83,7 @@ export default async function BookingManagePage({ searchParams }: BookingManageP
                 </div>
               </div>
               <div className="button-row" style={{ marginTop: "1.25rem" }}>
-                <a className="button button-secondary" href="/contact">Contact support</a>
+                <a className="button button-secondary" href="/support">Contact support</a>
               </div>
             </>
           )}
