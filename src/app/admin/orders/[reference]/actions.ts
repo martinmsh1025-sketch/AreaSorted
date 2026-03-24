@@ -7,6 +7,7 @@ import { isAdminAuthenticated, requireAdminSession } from "@/lib/admin-auth";
 import { captureDirectChargePaymentIntent, cancelDirectChargePaymentIntent, createDirectChargeRefund } from "@/lib/stripe/connect";
 import type { BookingStatus } from "@prisma/client";
 import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
+import { verifyPassword } from "@/lib/security/password";
 
 // C-10 FIX: Whitelist of valid BookingStatus values
 const VALID_BOOKING_STATUSES: Set<BookingStatus> = new Set([
@@ -307,9 +308,21 @@ export async function createAdminRefundAction(formData: FormData) {
   const reason = String(formData.get("reason") || "requested_by_customer");
   const policyNote = String(formData.get("policyNote") || "").trim();
   const partialAmount = Number(formData.get("partialAmount") || 0);
+  const adminPassword = String(formData.get("adminPassword") || "");
+  const confirmAmount = Number(formData.get("confirmAmount") || 0);
+  const acknowledge = formData.get("acknowledgeRefund") === "on";
 
   if (!bookingId) {
     redirect("/admin/orders");
+  }
+
+  const validPassword = await verifyPassword(adminPassword, admin.passwordHash);
+  if (!validPassword) {
+    redirect(`/admin/orders/${bookingId}?refundError=Admin password is incorrect.`);
+  }
+
+  if (!acknowledge) {
+    redirect(`/admin/orders/${bookingId}?refundError=Please confirm the refund acknowledgement before submitting.`);
   }
 
   const booking = await prisma.booking.findUnique({
@@ -337,7 +350,7 @@ export async function createAdminRefundAction(formData: FormData) {
 
   const paymentRecord = booking.paymentRecords[0];
   const stripeAccountId = paymentRecord?.stripeAccountId || booking.marketplaceProviderCompany?.stripeConnectedAccount?.stripeAccountId;
-  if (!paymentRecord?.stripePaymentIntentId || !stripeAccountId || paymentRecord.paymentState !== "PAID") {
+  if (!paymentRecord || paymentRecord.paymentState !== "PAID") {
     redirect(`/admin/orders/${bookingId}?refundError=Only captured payments can be refunded here.`);
   }
 
@@ -350,26 +363,86 @@ export async function createAdminRefundAction(formData: FormData) {
   }
 
   const amountInPence = refundType === "PARTIAL" ? Math.round(partialAmount * 100) : undefined;
+  const refundAmount = refundType === "PARTIAL" ? partialAmount : Number(paymentRecord.grossAmount);
+  const isManualRefund = !paymentRecord.stripePaymentIntentId || !stripeAccountId;
+
+  if (Math.abs(confirmAmount - refundAmount) > 0.009) {
+    redirect(`/admin/orders/${bookingId}?refundError=Refund amount confirmation does not match the final refund amount.`);
+  }
 
   try {
-    const refund = await createDirectChargeRefund({
-      connectedAccountId: stripeAccountId,
-      paymentIntentId: paymentRecord.stripePaymentIntentId,
-      ...(amountInPence ? { amount: amountInPence } : {}),
-      reason: reason === "duplicate" || reason === "fraudulent" ? reason : "requested_by_customer",
-    });
+    const paymentIntentId = paymentRecord.stripePaymentIntentId;
+    const refund = isManualRefund
+      ? {
+          id: null,
+          status: "succeeded",
+        }
+      : await createDirectChargeRefund({
+          connectedAccountId: stripeAccountId,
+          paymentIntentId: paymentIntentId as string,
+          ...(amountInPence ? { amount: amountInPence } : {}),
+          reason: reason === "duplicate" || reason === "fraudulent" ? reason : "requested_by_customer",
+        });
 
     await prisma.refundRecord.create({
       data: {
         bookingId,
         paymentRecordId: paymentRecord.id,
         stripeRefundId: refund.id,
-        amount: refundType === "PARTIAL" ? partialAmount : Number(paymentRecord.grossAmount),
-        refundReason: policyNote || reason,
+        amount: refundAmount,
+        refundReason: isManualRefund
+          ? [policyNote, "Manual refund recorded for mock/test payment."].filter(Boolean).join(" ")
+          : (policyNote || reason),
         liability: "PLATFORM",
         refundApplicationFee: false,
         status: refund.status === "succeeded" ? "PROCESSED" : "PENDING",
         actorId: admin.id,
+      },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        actorType: "ADMIN",
+        actorId: admin.id,
+        actionType: refundType === "PARTIAL" ? "ADMIN_PARTIAL_REFUND_CREATED" : "ADMIN_FULL_REFUND_CREATED",
+        entityType: "BOOKING",
+        entityId: bookingId,
+        oldValues: {
+          paymentState: paymentRecord.paymentState,
+          bookingStatus: booking.bookingStatus,
+          payoutStatus: booking.payoutRecords[0]?.status ?? null,
+        },
+        newValues: {
+          refundType,
+          refundAmount,
+          reason,
+          policyNote,
+          isManualRefund,
+        },
+      },
+    });
+
+    const ym = `${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    const existingCount = await prisma.invoiceRecord.count({
+      where: { number: { startsWith: `CRN-${ym}-` } },
+    });
+    await prisma.invoiceRecord.create({
+      data: {
+        bookingId,
+        number: `CRN-${ym}-${String(existingCount + 1).padStart(5, "0")}`,
+        strategy: "REFUND_ADJUSTMENT_NOTE",
+        issuer: "AreaSorted",
+        recipient: `${booking.customerId}`,
+        totalAmount: refundAmount,
+        currency: "GBP",
+        metadataJson: {
+          variant: "refund",
+          refundType,
+          reason,
+          policyNote,
+          isManualRefund,
+          bookingReference: bookingId,
+        },
       },
     });
 
@@ -414,10 +487,88 @@ export async function createAdminRefundAction(formData: FormData) {
     revalidatePath("/admin/orders");
     revalidatePath("/admin/payouts");
     revalidatePath("/account/bookings");
-    redirect(`/admin/orders/${bookingId}?refundStatus=${encodeURIComponent(refundType === "PARTIAL" ? "Partial refund created." : "Full refund created.")}`);
+    redirect(`/admin/orders/${bookingId}?refundStatus=${encodeURIComponent(
+      isManualRefund
+        ? (refundType === "PARTIAL" ? "Manual partial refund recorded for mock payment." : "Manual full refund recorded for mock payment.")
+        : (refundType === "PARTIAL" ? "Partial refund created." : "Full refund created.")
+    )}`);
   } catch (error) {
     redirect(`/admin/orders/${bookingId}?refundError=${encodeURIComponent(error instanceof Error ? error.message : "Refund failed")}`);
   }
+}
+
+export async function applyRefundPolicyAction(formData: FormData) {
+  const admin = await requireAdminSession();
+  const prisma = getPrisma();
+
+  const bookingId = String(formData.get("bookingId") || "");
+  const policy = String(formData.get("policy") || "");
+  const adminPassword = String(formData.get("adminPassword") || "");
+  const confirmAmount = Number(formData.get("confirmAmount") || 0);
+  const acknowledge = formData.get("acknowledgeRefund") === "on";
+
+  if (!bookingId) {
+    redirect("/admin/orders");
+  }
+
+  const validPassword = await verifyPassword(adminPassword, admin.passwordHash);
+  if (!validPassword) {
+    redirect(`/admin/orders/${bookingId}?refundError=Admin password is incorrect.`);
+  }
+
+  if (!acknowledge) {
+    redirect(`/admin/orders/${bookingId}?refundError=Please confirm the refund acknowledgement before submitting.`);
+  }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      priceSnapshot: {
+        select: {
+          customerTotalAmount: true,
+          platformBookingFee: true,
+        },
+      },
+    },
+  });
+
+  if (!booking?.paymentRecords[0] || booking.paymentRecords[0].paymentState !== "PAID") {
+    redirect(`/admin/orders/${bookingId}?refundError=Policy refunds only apply to captured payments.`);
+  }
+
+  let refundType = "FULL";
+  let partialAmount = 0;
+  let policyNote = "";
+
+  if (policy === "PROVIDER_NO_SHOW") {
+    refundType = "FULL";
+    policyNote = "Provider no-show - full refund";
+  } else if (policy === "CUSTOMER_LATE_CANCEL") {
+    refundType = "PARTIAL";
+    const total = Number(booking.priceSnapshot?.customerTotalAmount ?? booking.totalAmount);
+    const bookingFee = Number(booking.priceSnapshot?.platformBookingFee ?? 0);
+    partialAmount = Math.max(0, total - bookingFee);
+    policyNote = `Customer cancelled within 24 hours - refund customer less booking fee (${bookingFee.toFixed(2)})`;
+  } else {
+    redirect(`/admin/orders/${bookingId}?refundError=Unknown refund policy.`);
+  }
+
+  const expectedAmount = refundType === "PARTIAL" ? partialAmount : Number(booking.paymentRecords[0].grossAmount);
+  if (Math.abs(confirmAmount - expectedAmount) > 0.009) {
+    redirect(`/admin/orders/${bookingId}?refundError=Refund amount confirmation does not match the policy refund amount.`);
+  }
+
+  const refundForm = new FormData();
+  refundForm.set("bookingId", bookingId);
+  refundForm.set("refundType", refundType);
+  refundForm.set("reason", "requested_by_customer");
+  refundForm.set("policyNote", policyNote);
+  if (refundType === "PARTIAL") {
+    refundForm.set("partialAmount", partialAmount.toFixed(2));
+  }
+
+  return createAdminRefundAction(refundForm);
 }
 
 // Counter offers are now handled directly between providers and customers.

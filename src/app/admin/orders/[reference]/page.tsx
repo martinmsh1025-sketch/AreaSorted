@@ -3,7 +3,7 @@ import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
-import { confirmBookingOnBehalfAction, createAdminRefundAction, updateBookingStatusAction } from "./actions";
+import { applyRefundPolicyAction, confirmBookingOnBehalfAction, createAdminRefundAction, updateBookingStatusAction } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -60,6 +60,10 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
       },
       refunds: { orderBy: { createdAt: "desc" } },
       refundRecords: { orderBy: { createdAt: "desc" } },
+      invoiceRecords: {
+        where: { strategy: "REFUND_ADJUSTMENT_NOTE" },
+        orderBy: { createdAt: "desc" },
+      },
       addons: true,
       priceSnapshot: true,
       quoteRequest: { select: { reference: true } },
@@ -73,6 +77,15 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
   });
 
   if (!booking) notFound();
+
+  const refundAuditLogs = await prisma.auditLog.findMany({
+    where: {
+      entityType: "BOOKING",
+      entityId: booking.id,
+      actionType: { in: ["ADMIN_FULL_REFUND_CREATED", "ADMIN_PARTIAL_REFUND_CREATED"] },
+    },
+    orderBy: { createdAt: "desc" },
+  });
 
   const serviceAddress = [
     booking.serviceAddressLine1,
@@ -113,11 +126,19 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
       : getDisplayPaymentStatus({ bookingStatus: booking.bookingStatus });
 
   const stripeSessionId = latestPaymentRecord?.stripeCheckoutSessionId || "-";
+  const isMockCapturedPayment = Boolean(
+    latestPaymentRecord?.paymentState === "PAID" &&
+    latestPaymentRecord?.stripeCheckoutSessionId?.startsWith("mock_") &&
+    !latestPaymentRecord?.stripePaymentIntentId
+  );
   const latestPayoutRecord = booking.payoutRecords[0];
   const refundStatusMessage = typeof resolvedSearchParams.refundStatus === "string" ? resolvedSearchParams.refundStatus : "";
   const refundErrorMessage = typeof resolvedSearchParams.refundError === "string" ? resolvedSearchParams.refundError : "";
 
   const bookingRef = booking.quoteRequest?.reference || booking.id.slice(0, 12).toUpperCase();
+  const capturedAmount = Number(latestPaymentRecord?.grossAmount ?? booking.totalAmount ?? 0);
+  const bookingFeeAmount = dec(booking.priceSnapshot?.platformBookingFee);
+  const lateCancelRefundAmount = Math.max(0, capturedAmount - bookingFeeAmount);
 
   const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
 
@@ -537,6 +558,42 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {isMockCapturedPayment ? (
+                  <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    This is a mock/test payment. Refund actions here will update AreaSorted records only and will not send a real refund to Stripe.
+                  </div>
+                ) : null}
+                <div className="grid gap-2 sm:grid-cols-2 mb-4">
+                  <form action={applyRefundPolicyAction} className="space-y-2">
+                    <input type="hidden" name="bookingId" value={booking.id} />
+                    <input type="hidden" name="policy" value="PROVIDER_NO_SHOW" />
+                    <input type="hidden" name="confirmAmount" value={capturedAmount.toFixed(2)} />
+                    <input type="hidden" name="acknowledgeRefund" value="on" />
+                    <Input name="adminPassword" type="password" autoComplete="current-password" placeholder="Admin password" required />
+                    <button
+                      type="submit"
+                      className="inline-flex h-9 w-full items-center justify-center rounded-md border border-red-300 bg-white px-4 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50"
+                    >
+                      Provider no-show (refund {capturedAmount.toFixed(2)})
+                    </button>
+                  </form>
+                  <form action={applyRefundPolicyAction} className="space-y-2">
+                    <input type="hidden" name="bookingId" value={booking.id} />
+                    <input type="hidden" name="policy" value="CUSTOMER_LATE_CANCEL" />
+                    <input type="hidden" name="confirmAmount" value={lateCancelRefundAmount.toFixed(2)} />
+                    <input type="hidden" name="acknowledgeRefund" value="on" />
+                    <Input name="adminPassword" type="password" autoComplete="current-password" placeholder="Admin password" required />
+                    <button
+                      type="submit"
+                      className="inline-flex h-9 w-full items-center justify-center rounded-md border border-amber-300 bg-white px-4 text-sm font-medium text-amber-700 shadow-sm hover:bg-amber-50"
+                    >
+                      Customer late cancel (refund {lateCancelRefundAmount.toFixed(2)})
+                    </button>
+                  </form>
+                </div>
+
+                <Separator className="mb-4" />
+
                 <form action={createAdminRefundAction} className="space-y-4">
                   <input type="hidden" name="bookingId" value={booking.id} />
 
@@ -583,6 +640,21 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="confirmAmount">Confirm final refund amount (&pound;)</Label>
+                    <Input id="confirmAmount" name="confirmAmount" type="number" step="0.01" min="0" placeholder="Enter the exact refund amount to confirm" required />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="adminPassword">Admin password</Label>
+                    <Input id="adminPassword" name="adminPassword" type="password" autoComplete="current-password" required />
+                  </div>
+
+                  <label className="flex items-start gap-2 rounded-md border border-red-200 bg-white px-3 py-2 text-xs text-red-800">
+                    <input type="checkbox" name="acknowledgeRefund" className="mt-0.5" required />
+                    <span>I confirm the refund amount above is correct and I want to proceed with this refund action.</span>
+                  </label>
+
                   <button
                     type="submit"
                     className="inline-flex h-9 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-medium text-white shadow hover:bg-red-700"
@@ -590,6 +662,44 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                     Create refund
                   </button>
                 </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {(booking.refundRecords.length > 0 || booking.invoiceRecords.length > 0 || refundAuditLogs.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Refund history</CardTitle>
+                <CardDescription>Audit trail and reconciliation notes for refund activity on this booking.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {booking.refundRecords.map((refund) => (
+                  <div key={refund.id} className="rounded-md border p-3 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <strong>&pound;{Number(refund.amount).toFixed(2)}</strong>
+                      <Badge variant="outline">{refund.status}</Badge>
+                    </div>
+                    <p className="mt-1 text-muted-foreground">{refund.refundReason || "No refund note recorded."}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{refund.createdAt.toISOString().slice(0, 19).replace("T", " ")}</p>
+                  </div>
+                ))}
+
+                {booking.invoiceRecords.map((invoice) => (
+                  <div key={invoice.id} className="rounded-md border p-3 text-sm bg-muted/20">
+                    <div className="flex items-center justify-between gap-3">
+                      <strong>{invoice.number}</strong>
+                      <span className="text-muted-foreground">Refund note</span>
+                    </div>
+                    <p className="mt-1 text-muted-foreground">Amount: &pound;{Number(invoice.totalAmount).toFixed(2)}</p>
+                  </div>
+                ))}
+
+                {refundAuditLogs.map((log) => (
+                  <div key={log.id} className="rounded-md border p-3 text-xs text-muted-foreground">
+                    <strong className="text-foreground">{log.actionType}</strong>
+                    <div className="mt-1">{log.createdAt.toISOString().slice(0, 19).replace("T", " ")}</div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           )}

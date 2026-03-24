@@ -39,6 +39,13 @@ export async function releasePayoutAction(formData: FormData) {
   const payoutRecordId = String(formData.get("payoutRecordId") || "");
   if (!payoutRecordId) redirect("/admin/payouts");
 
+  const current = await prisma.payoutRecord.findUnique({
+    where: { id: payoutRecordId },
+    select: { status: true },
+  });
+  if (!current) redirect("/admin/payouts");
+  if (["PAID", "CANCELLED"].includes(current.status)) redirect("/admin/payouts");
+
   await prisma.payoutRecord.update({
     where: { id: payoutRecordId },
     data: {
@@ -59,6 +66,15 @@ export async function blockPayoutAction(formData: FormData) {
   const payoutRecordId = String(formData.get("payoutRecordId") || "");
   const reason = String(formData.get("reason") || "").trim() || "Blocked by admin";
   if (!payoutRecordId) redirect("/admin/payouts");
+
+  const current = await prisma.payoutRecord.findUnique({
+    where: { id: payoutRecordId },
+    select: { status: true },
+  });
+  if (!current) redirect("/admin/payouts");
+  if (["RELEASED", "PAID", "CANCELLED"].includes(current.status)) {
+    redirect("/admin/payouts");
+  }
 
   await prisma.payoutRecord.update({
     where: { id: payoutRecordId },
@@ -81,9 +97,10 @@ export async function extendPayoutHoldAction(formData: FormData) {
 
   const current = await prisma.payoutRecord.findUnique({
     where: { id: payoutRecordId },
-    select: { holdUntil: true, holdDays: true },
+    select: { holdUntil: true, holdDays: true, status: true },
   });
   if (!current) redirect("/admin/payouts");
+  if (["RELEASED", "PAID", "CANCELLED"].includes(current.status)) redirect("/admin/payouts");
 
   const base = current.holdUntil ?? new Date();
   const holdUntil = addBusinessDays(base, extraDays);

@@ -1101,6 +1101,7 @@ enum ChargeModel {
 enum InvoiceStrategy {
   PROVIDER_SERVICE_PLUS_PLATFORM_FEE_RECEIPT
   COMBINED_CUSTOMER_RECEIPT
+  REFUND_ADJUSTMENT_NOTE
 }
 
 enum RefundLiability {

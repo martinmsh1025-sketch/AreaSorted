@@ -592,26 +592,34 @@ export default async function AdminPayoutsPage({
                               <TableCell className="py-1.5">
                                 {b.payoutRecordId ? (
                                   <div className="flex justify-end gap-1.5">
-                                    <form action={releasePayoutAction}>
-                                      <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
-                                      <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
-                                        Release
-                                      </button>
-                                    </form>
-                                    <form action={extendPayoutHoldAction} className="flex items-center gap-1">
-                                      <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
-                                      <input type="hidden" name="extraDays" value="3" />
-                                      <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
-                                        +3d
-                                      </button>
-                                    </form>
-                                    <form action={blockPayoutAction}>
-                                      <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
-                                      <input type="hidden" name="reason" value="Blocked by admin review" />
-                                      <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100">
-                                        Block
-                                      </button>
-                                    </form>
+                                    {! ["RELEASED", "PAID", "CANCELLED"].includes(b.payoutStatus) ? (
+                                      <>
+                                        <form action={releasePayoutAction}>
+                                          <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
+                                          <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                                            Release
+                                          </button>
+                                        </form>
+                                        <form action={extendPayoutHoldAction} className="flex items-center gap-1">
+                                          <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
+                                          <input type="hidden" name="extraDays" value="3" />
+                                          <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                                            +3d
+                                          </button>
+                                        </form>
+                                      </>
+                                    ) : null}
+                                    {! ["RELEASED", "PAID", "CANCELLED"].includes(b.payoutStatus) ? (
+                                      <form action={blockPayoutAction}>
+                                        <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
+                                        <input type="hidden" name="reason" value="Blocked by admin review" />
+                                        <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100">
+                                          Block
+                                        </button>
+                                      </form>
+                                    ) : (
+                                      <div className="text-right text-xs text-muted-foreground">Locked</div>
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="text-right text-xs text-muted-foreground">—</div>
