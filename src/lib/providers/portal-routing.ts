@@ -5,12 +5,12 @@ export function getProviderDefaultRoute(status: string) {
     return "/provider";
   }
 
-  if (canProviderAccessPricing(status)) {
-    return "/provider/pricing";
-  }
-
   if (canProviderAccessStripe(status)) {
     return "/provider/payment";
+  }
+
+  if (canProviderAccessPricing(status)) {
+    return "/provider/pricing";
   }
 
   if (["SUBMITTED_FOR_REVIEW", "UNDER_REVIEW", "CHANGES_REQUESTED", "REJECTED"].includes(status)) {

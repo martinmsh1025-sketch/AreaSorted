@@ -658,7 +658,7 @@ function SetupWizard({
     <>
       <div className="relative overflow-hidden rounded-3xl border border-blue-200/70 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_38%),linear-gradient(135deg,rgba(239,246,255,0.96),rgba(255,255,255,0.98))] shadow-sm dark:border-blue-900/60 dark:bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.22),_transparent_36%),linear-gradient(135deg,rgba(2,6,23,0.96),rgba(15,23,42,0.98))]">
         <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[radial-gradient(circle_at_center,_rgba(96,165,250,0.16),_transparent_62%)] lg:block" />
-        <div className="relative grid gap-6 px-5 py-6 sm:px-6 lg:grid-cols-[minmax(0,1.35fr)_320px] lg:px-8 lg:py-8">
+        <div className="relative space-y-6 px-5 py-6 sm:px-6 lg:px-8 lg:py-8">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-700 shadow-sm backdrop-blur dark:border-blue-800 dark:bg-slate-950/50 dark:text-blue-300">
               <Rocket className="size-3.5" />
@@ -711,81 +711,171 @@ function SetupWizard({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-            <div className="rounded-2xl border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
-              <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                <CreditCard className="size-3.5 text-blue-600 dark:text-blue-400" />
-                Payments
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)]">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold tracking-tight text-slate-950 dark:text-slate-50">Launch readiness</div>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">These are the key items that decide whether your account can go live.</p>
+                </div>
+                <Badge className="border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-900 dark:bg-blue-900/40 dark:text-blue-300">
+                  Priority
+                </Badge>
               </div>
-              <div className="text-2xl font-semibold text-slate-950 dark:text-slate-50">
-                {stripeReady ? "Ready" : accountExists ? "In progress" : "Not started"}
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm ring-1 ring-blue-100/80 backdrop-blur dark:border-blue-900/70 dark:bg-slate-950/80 dark:ring-blue-950/60">
+                  <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    <CreditCard className="size-3.5 text-blue-600 dark:text-blue-400" />
+                    Payments
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-2xl font-semibold text-slate-950 dark:text-slate-50">
+                      {stripeReady ? "Ready" : accountExists ? "In progress" : "Not started"}
+                    </div>
+                    <Badge className={stripeReady ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}>
+                      {stripeReady ? "Complete" : "Action needed"}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-5 text-slate-700 dark:text-slate-300">
+                    {stripeReady
+                      ? "Charges and payouts are enabled."
+                      : accountExists
+                        ? "Stripe account exists but still needs completion."
+                        : "Create your Stripe Express account."}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm ring-1 ring-blue-100/80 backdrop-blur dark:border-blue-900/70 dark:bg-slate-950/80 dark:ring-blue-950/60">
+                  <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    <PoundSterling className="size-3.5 text-blue-600 dark:text-blue-400" />
+                    Pricing
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-2xl font-semibold text-slate-950 dark:text-slate-50">
+                      {pricingReady ? "Configured" : "Pending"}
+                    </div>
+                    <Badge className={pricingReady ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}>
+                      {pricingReady ? "Complete" : "Action needed"}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-5 text-slate-700 dark:text-slate-300">
+                    {pricingReady
+                      ? "At least one active rule is ready."
+                      : "Review the pre-filled pricing and save it."}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm ring-1 ring-amber-100/80 backdrop-blur dark:border-amber-900/70 dark:bg-slate-950/80 dark:ring-amber-950/60">
+                  <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                    <ShoppingCart className="size-3.5 text-blue-600 dark:text-blue-400" />
+                    Orders
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-2xl font-semibold text-slate-950 dark:text-slate-50">
+                      {canProviderAccessOrders(provider.status) ? "Open" : "Locked"}
+                    </div>
+                    <Badge className={canProviderAccessOrders(provider.status) ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}>
+                      {canProviderAccessOrders(provider.status) ? "Ready" : "Waiting"}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-5 text-slate-700 dark:text-slate-300">
+                    {canProviderAccessOrders(provider.status)
+                      ? "You can now receive and manage bookings."
+                      : "Orders unlock after payment and pricing are ready."}
+                  </p>
+                </div>
               </div>
-              <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">
-                {stripeReady
-                  ? "Charges and payouts are enabled."
-                  : accountExists
-                    ? "Stripe account exists but still needs completion."
-                    : "Create your Stripe Express account."}
-              </p>
             </div>
 
-            <div className="rounded-2xl border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
-              <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                <PoundSterling className="size-3.5 text-blue-600 dark:text-blue-400" />
-                Pricing
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm font-semibold tracking-tight text-slate-950 dark:text-slate-50">Business setup</div>
+                <p className="text-sm text-slate-600 dark:text-slate-300">Operational details that help your account run smoothly once orders open.</p>
               </div>
-              <div className="text-2xl font-semibold text-slate-950 dark:text-slate-50">
-                {pricingReady ? "Configured" : "Pending"}
-              </div>
-              <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">
-                {pricingReady
-                  ? "At least one active rule is ready."
-                  : "Review the pre-filled pricing and save it."}
-              </p>
-            </div>
+              <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-4 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/20">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <MapPin className="size-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium">Coverage Areas</span>
+                  </div>
+                  <p className="text-3xl font-bold tracking-tight">{coverageCount}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {coverageCount > 0 ? "Postcode areas from your application" : "No coverage areas yet"}
+                  </p>
+                  {canAccessPricing && (
+                    <Link
+                      href="/provider/coverage"
+                      className="mt-2 inline-flex items-center text-xs text-primary hover:underline"
+                    >
+                      Manage areas
+                      <ArrowRight className="ml-1 size-3" />
+                    </Link>
+                  )}
+                </div>
 
-            <div className="rounded-2xl border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
-              <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                <ShoppingCart className="size-3.5 text-blue-600 dark:text-blue-400" />
-                Orders
+                <div className="rounded-2xl border border-blue-200 bg-blue-50/80 px-4 py-4 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/20">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <CalendarClock className="size-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium">Availability</span>
+                  </div>
+                  <p className="text-3xl font-bold tracking-tight">{availabilityCount > 0 ? `${availabilityCount} days` : "Default"}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {availabilityCount > 0 ? "Custom schedule configured" : "Mon-Fri 9am-5pm (default)"}
+                  </p>
+                  {canAccessPricing && (
+                    <Link
+                      href="/provider/availability"
+                      className="mt-2 inline-flex items-center text-xs text-primary hover:underline"
+                    >
+                      {availabilityCount > 0 ? "Edit schedule" : "Customise hours"}
+                      <ArrowRight className="ml-1 size-3" />
+                    </Link>
+                  )}
+                </div>
+
+                <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-4 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/20">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <ShoppingCart className="size-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-sm font-medium">Orders</span>
+                  </div>
+                  <p className="text-3xl font-bold tracking-tight">{canProviderAccessOrders(provider.status) ? "Open" : "Locked"}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {canProviderAccessOrders(provider.status)
+                      ? "You can receive and manage bookings"
+                      : "Complete setup to start receiving bookings"}
+                  </p>
+                </div>
               </div>
-              <div className="text-2xl font-semibold text-slate-950 dark:text-slate-50">
-                {canProviderAccessOrders(provider.status) ? "Open" : "Locked"}
-              </div>
-              <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">
-                {canProviderAccessOrders(provider.status)
-                  ? "You can now receive and manage bookings."
-                  : "Orders unlock after payment and pricing are ready."}
-              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {currentStep && currentStep.href && (
-        <Card className="overflow-hidden border-blue-200 bg-gradient-to-r from-blue-600 via-blue-600 to-sky-500 text-white shadow-sm dark:border-blue-900">
-          <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">
-                Current action
-              </p>
-              <h3 className="mt-1 text-lg font-semibold">{currentStep.title}</h3>
-              <p className="mt-1 text-sm text-blue-50/90">{currentStep.detail}</p>
-            </div>
-            <Button
-              size="sm"
-              render={<Link href={currentStep.href} />}
-              className="bg-white text-blue-700 hover:bg-blue-50"
-            >
-              {currentStep.ctaLabel}
-              <ArrowRight className="ml-1.5 size-3.5" />
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_380px]">
+        <div className="space-y-4">
+          {currentStep && currentStep.href && (
+            <Card className="overflow-hidden border-blue-300 bg-gradient-to-r from-blue-600 via-blue-600 to-sky-500 text-white shadow-sm dark:border-blue-900">
+              <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">
+                    Current action
+                  </p>
+                  <h3 className="mt-1 text-lg font-semibold">{currentStep.title}</h3>
+                  <p className="mt-1 text-sm text-blue-50/90">{currentStep.detail}</p>
+                </div>
+                <Button
+                  size="sm"
+                  render={<Link href={currentStep.href} />}
+                  className="bg-white text-blue-700 hover:bg-blue-50"
+                >
+                  {currentStep.ctaLabel}
+                  <ArrowRight className="ml-1.5 size-3.5" />
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_320px]">
-        <div className="space-y-3">
+          <div className="space-y-3">
           {steps.map((step, idx) => {
             const isOptional = step.key === "availability";
             const isCurrent = step.status === "current";
@@ -867,12 +957,13 @@ function SetupWizard({
                   </div>
                 </CardContent>
               </Card>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         <div className="space-y-4">
-          <Card className="border-slate-200/80 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
+          <Card className="border-blue-200/80 bg-white shadow-sm ring-1 ring-blue-100/70 dark:border-blue-900/60 dark:bg-slate-950/80 dark:ring-blue-950/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">Launch notes</CardTitle>
             </CardHeader>
@@ -889,65 +980,6 @@ function SetupWizard({
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200/80 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-950/70">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Business setup</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4 dark:border-blue-900/50 dark:bg-blue-950/10">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <MapPin className="size-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-medium">Coverage Areas</span>
-                </div>
-                <p className="text-2xl font-bold">{coverageCount}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {coverageCount > 0 ? "Postcode areas from your application" : "No coverage areas yet"}
-                </p>
-                {canAccessPricing && (
-                  <Link
-                    href="/provider/coverage"
-                    className="mt-2 inline-flex items-center text-xs text-primary hover:underline"
-                  >
-                    Manage areas
-                    <ArrowRight className="ml-1 size-3" />
-                  </Link>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-4 dark:border-blue-900/50 dark:bg-blue-950/10">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <CalendarClock className="size-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-medium">Availability</span>
-                </div>
-                <p className="text-2xl font-bold">{availabilityCount > 0 ? `${availabilityCount} days` : "Default"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {availabilityCount > 0 ? "Custom schedule configured" : "Mon-Fri 9am-5pm (default)"}
-                </p>
-                {canAccessPricing && (
-                  <Link
-                    href="/provider/availability"
-                    className="mt-2 inline-flex items-center text-xs text-primary hover:underline"
-                  >
-                    {availabilityCount > 0 ? "Edit schedule" : "Customise hours"}
-                    <ArrowRight className="ml-1 size-3" />
-                  </Link>
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/70">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <ShoppingCart className="size-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-medium">Orders</span>
-                </div>
-                <p className="text-2xl font-bold">{canProviderAccessOrders(provider.status) ? "Open" : "Locked"}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {canProviderAccessOrders(provider.status)
-                    ? "You can receive and manage bookings"
-                    : "Complete setup to start receiving bookings"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 

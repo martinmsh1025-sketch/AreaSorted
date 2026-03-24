@@ -56,7 +56,10 @@ type AvailabilityGridProps = {
   initialSchedule: DaySchedule[];
   initialOverrides: DateOverride[];
   saveAllAction: (formData: FormData) => Promise<void>;
-  saveDateOverrideAction: (formData: FormData) => Promise<void>;
+  saveDateOverrideAction: (formData: FormData) => Promise<
+    | { success: true; override: DateOverride }
+    | { success: false; error: string }
+  >;
   deleteDateOverrideAction: (formData: FormData) => Promise<void>;
 };
 
@@ -125,6 +128,7 @@ export function AvailabilityGrid({
 
   function handleAddOverride() {
     if (!newOverrideDate) return;
+    setError(null);
 
     const fd = new FormData();
     fd.set("date", newOverrideDate);
@@ -135,7 +139,35 @@ export function AvailabilityGrid({
 
     startTransition(async () => {
       try {
-        await saveDateOverrideAction(fd);
+        const result = await saveDateOverrideAction(fd);
+        if (result && typeof result === "object" && "success" in result && !result.success) {
+          setError(result.error);
+          return;
+        }
+
+        const savedOverride =
+          result && typeof result === "object" && "success" in result && result.success
+            ? result.override
+            : {
+                id: `local-${newOverrideDate}`,
+                date: newOverrideDate,
+                isAvailable: newOverrideAvailable,
+                startTime: newOverrideAvailable ? newOverrideStart : null,
+                endTime: newOverrideAvailable ? newOverrideEnd : null,
+                note: newOverrideNote.trim() || null,
+              };
+
+        setOverrides((prev) => {
+          const next = prev.some((override) => override.id === savedOverride.id || override.date === savedOverride.date)
+            ? prev.map((override) =>
+                override.id === savedOverride.id || override.date === savedOverride.date
+                  ? savedOverride
+                  : override
+              )
+            : [...prev, savedOverride];
+
+          return next.sort((a, b) => a.date.localeCompare(b.date));
+        });
         setShowAddOverride(false);
         setNewOverrideDate("");
         setNewOverrideAvailable(false);

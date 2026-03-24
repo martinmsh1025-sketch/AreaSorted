@@ -150,11 +150,11 @@ export function PricingCalculator({
   const hasRule = !!rule && rule.active;
 
   return (
-    <div className="rounded-lg border bg-card overflow-hidden">
+    <div className="rounded-lg border border-slate-800 bg-slate-950 text-white overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b bg-blue-50/60 dark:bg-blue-950/20">
-        <Calculator className="size-4 text-blue-600 dark:text-blue-400" />
-        <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-700 bg-slate-900">
+        <Calculator className="size-5 text-white" />
+        <span className="text-lg font-semibold text-white">
           Price Calculator
         </span>
       </div>
@@ -162,7 +162,7 @@ export function PricingCalculator({
       <div className="p-4 space-y-4">
         {/* Service selector */}
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label className="text-base font-medium text-slate-100">
             Service
           </label>
           <select
@@ -171,7 +171,7 @@ export function PricingCalculator({
               setSelectedService(e.target.value);
               setSelectedSize("standard");
             }}
-            className="w-full rounded-md border bg-background px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-md border border-slate-600 bg-white px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-white"
           >
             {services.map((s) => (
               <option key={s.key} value={s.key}>
@@ -184,7 +184,7 @@ export function PricingCalculator({
         {/* Cleaning: property details */}
         {isCleaning && pricingMode === "hourly" && (
           <div className="space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label className="text-base font-medium text-slate-100">
               Simulate property
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -218,13 +218,13 @@ export function PricingCalculator({
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-muted-foreground">
+                <label className="text-sm text-slate-300">
                   Property
                 </label>
                 <select
                   value={propertyType}
                   onChange={(e) => setPropertyType(e.target.value)}
-                  className="w-full rounded-md border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-slate-600 bg-white px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-white"
                 >
                   <option value="flat">Flat</option>
                   <option value="terraced">Terraced</option>
@@ -234,13 +234,13 @@ export function PricingCalculator({
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-muted-foreground">
+                <label className="text-sm text-slate-300">
                   Condition
                 </label>
                 <select
                   value={cleaningCondition}
                   onChange={(e) => setCleaningCondition(e.target.value)}
-                  className="w-full rounded-md border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-md border border-slate-600 bg-white px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-white"
                 >
                   {cleaningConditionOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -250,9 +250,9 @@ export function PricingCalculator({
                 </select>
               </div>
             </div>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-sm text-slate-300">
               Est. hours:{" "}
-              <span className="font-medium text-foreground/70">
+              <span className="font-semibold text-white">
                 {estimateCleaningHours(
                   bedrooms,
                   bathrooms,
@@ -271,7 +271,7 @@ export function PricingCalculator({
           service.sizeOptions.length > 0 &&
           !(isCleaning && pricingMode === "hourly") && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
+              <label className="text-base font-medium text-slate-100">
                 {isPestControl ? "Job size" : "Property size"}
               </label>
               <div className="grid grid-cols-3 gap-1">
@@ -280,10 +280,10 @@ export function PricingCalculator({
                     key={s.value}
                     type="button"
                     onClick={() => setSelectedSize(s.value)}
-                    className={`rounded-md px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                    className={`rounded-md px-2.5 py-2.5 text-sm font-semibold transition-colors ${
                       selectedSize === s.value
-                        ? "bg-blue-600 text-white"
-                        : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                        ? "bg-white text-slate-950"
+                        : "bg-slate-800 text-white hover:bg-slate-700"
                     }`}
                   >
                     {s.label}
@@ -295,7 +295,7 @@ export function PricingCalculator({
 
         {/* Toggles */}
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+          <label className="flex items-center gap-1.5 text-base text-slate-100 cursor-pointer">
             <input
               type="checkbox"
               checked={sameDay}
@@ -304,7 +304,7 @@ export function PricingCalculator({
             />
             Same-day
           </label>
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+          <label className="flex items-center gap-1.5 text-base text-slate-100 cursor-pointer">
             <input
               type="checkbox"
               checked={weekend}
@@ -316,16 +316,16 @@ export function PricingCalculator({
         </div>
 
         {/* Divider */}
-        <div className="border-t" />
+        <div className="border-t border-slate-700" />
 
         {/* Price breakdown */}
         <div className="space-y-3">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          <h3 className="text-base font-semibold text-slate-100 uppercase tracking-wider">
             Price Breakdown
           </h3>
 
           {!hasRule || !breakdown ? (
-            <p className="text-xs text-muted-foreground italic py-3 text-center">
+            <p className="text-base text-slate-300 italic py-3 text-center">
               Set prices for this service to see the breakdown.
             </p>
           ) : (
@@ -350,7 +350,7 @@ export function PricingCalculator({
               </div>
 
               {/* Provider payout — highlighted */}
-              <div className="rounded-md bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 px-3 py-2">
+              <div className="rounded-md bg-white border border-slate-300 px-3 py-2">
                 <BreakdownRow
                   label="You receive"
                   value={formatMoney(breakdown.providerPayout)}
@@ -376,7 +376,7 @@ export function PricingCalculator({
                 />
               </div>
 
-              <div className="border-t pt-2">
+              <div className="border-t border-slate-700 pt-2">
                 <BreakdownRow
                   label="Customer pays"
                   value={formatMoney(breakdown.customerTotal)}
@@ -388,8 +388,8 @@ export function PricingCalculator({
 
           {/* Add-ons */}
           {service && service.addOns.length > 0 && (
-            <div className="border-t pt-2 space-y-1.5">
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="border-t border-slate-700 pt-2 space-y-1.5">
+              <span className="text-sm font-medium text-slate-300 uppercase tracking-wider">
                 Optional add-ons (platform-set)
               </span>
               {service.addOns.map((addon) => (
@@ -423,11 +423,11 @@ function SelectField({
 }) {
   return (
     <div>
-      <label className="text-[10px] text-muted-foreground">{label}</label>
+      <label className="text-sm text-slate-300">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-md border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full rounded-md border border-slate-600 bg-white px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-white"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -464,12 +464,12 @@ function BreakdownRow({
   return (
     <div className="flex items-baseline justify-between gap-3">
       <span
-        className={`text-xs ${muted ? "text-muted-foreground" : "text-foreground/80"}`}
+        className={`text-base ${muted ? "text-slate-200" : variant === "success" ? "text-slate-700" : "text-white"}`}
       >
         {label}
       </span>
       <span
-        className={`text-xs tabular-nums ${bold ? "font-bold" : "font-medium"} ${valueColor}`}
+        className={`text-lg tabular-nums ${bold ? "font-bold" : "font-semibold"} ${valueColor}`}
       >
         {value}
       </span>

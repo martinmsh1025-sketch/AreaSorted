@@ -5,11 +5,14 @@ import { getPrisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   acceptBookingAction,
   rejectBookingAction,
   startBookingAction,
   completeBookingAction,
+  requestOrderSupportAction,
 } from "../actions";
 import {
   AcceptOrderButton,
@@ -30,6 +33,7 @@ import {
   Mail,
   ExternalLink,
   FileText,
+  AlertTriangle,
 } from "lucide-react";
 import { serviceTypeLabels, propertyTypeLabels, formatEnumLabel } from "@/lib/providers/service-catalog-mapping";
 import { formatPreferredScheduleOption, parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
@@ -78,11 +82,13 @@ function buildGoogleMapsUrl(booking: {
 
 type OrderDetailPageProps = {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function ProviderOrderDetailPage({ params }: OrderDetailPageProps) {
+export default async function ProviderOrderDetailPage({ params, searchParams }: OrderDetailPageProps) {
   const session = await requireProviderOrdersAccess();
   const { id } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
   const prisma = getPrisma();
 
   const booking = await prisma.booking.findFirst({
@@ -129,6 +135,8 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
   const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
 
   const hasPendingCounterOffer = booking.counterOffers.some((co) => co.status === "PENDING");
+  const supportStatus = typeof resolvedSearchParams.supportStatus === "string" ? resolvedSearchParams.supportStatus : "";
+  const supportError = typeof resolvedSearchParams.supportError === "string" ? resolvedSearchParams.supportError : "";
   const counterOffers = booking.counterOffers.map((co) => ({
     id: co.id,
     proposedPrice: co.proposedPrice ? Number(co.proposedPrice) : null,
@@ -269,6 +277,59 @@ export default async function ProviderOrderDetailPage({ params }: OrderDetailPag
               </p>
             </div>
             <CompleteJobButton bookingId={booking.id} action={completeBookingAction} />
+          </CardContent>
+        </Card>
+      )}
+
+      {supportStatus && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/20 dark:text-blue-300">
+          {supportStatus}
+        </div>
+      )}
+
+      {supportError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300">
+          {supportError}
+        </div>
+      )}
+
+      {(isAssigned || isInProgress) && (
+        <Card className="border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="size-4" />
+              Need to change or report something?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              If you need to request a reschedule, report an issue, or ask support to cancel this accepted job, send the details here. Support will review the request before any booking changes are made.
+            </p>
+            <form action={requestOrderSupportAction} className="space-y-4">
+              <input type="hidden" name="bookingId" value={booking.id} />
+              <div className="space-y-2">
+                <Label htmlFor="message">What happened?</Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  required
+                  minLength={10}
+                  placeholder="Add the reason, what has changed, and what you need support to do."
+                  className="min-h-[120px]"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="submit" name="requestType" value="RESCHEDULE" className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                  Request reschedule
+                </button>
+                <button type="submit" name="requestType" value="ISSUE" className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                  Report issue
+                </button>
+                <button type="submit" name="requestType" value="CANCEL" className="inline-flex h-9 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-medium text-white shadow hover:bg-blue-700">
+                  Request cancellation
+                </button>
+              </div>
+            </form>
           </CardContent>
         </Card>
       )}

@@ -67,9 +67,14 @@ export async function reviewProviderStatusAction(formData: FormData) {
     console.log("[reviewProviderStatusAction] updateProviderReview result:", { id: result.id, status: result.status, approvedAt: result.approvedAt });
   }
 
-  // Do NOT call syncProviderLifecycleState() here — admin review is an explicit
-  // decision, not an automated lifecycle transition. The sync function has
-  // identity locks that can interfere with the admin's intended status change.
+  // Keep admin review as the source of truth for review outcomes, but once a
+  // provider is explicitly approved we should immediately reconcile their
+  // operational status (APPROVED / PRICING_PENDING / STRIPE_PENDING / ACTIVE)
+  // based on the current setup state. Identity-lock statuses like SUSPENDED,
+  // REJECTED, and CHANGES_REQUESTED are still protected inside the sync logic.
+  if (reviewStatus === "APPROVED") {
+    await syncProviderLifecycleState(providerCompanyId);
+  }
 
   redirect(`/admin/provider/${providerCompanyId}?status=${reviewStatus.toLowerCase()}`);
 }

@@ -206,10 +206,9 @@ export default function HomePage() {
       setAddressId("");
       setLookupReady(Boolean(data.results?.length));
       setSubmitMessage(
-        data.instructionsTxt ||
-          (data.results?.length
-            ? "Select your address from the list."
-            : "No addresses found. You can use manual address instead."),
+        data.results?.length
+          ? ""
+          : (data.instructionsTxt || "No addresses found. You can use manual address instead."),
       );
     } catch {
       setAddresses([]);
@@ -416,18 +415,7 @@ export default function HomePage() {
                   </>
                 )}
 
-                {(lookupReady || selectedAddress || manualAddress1.trim()) && (
-                  <div className="homepage-live-status">
-                    <span className="homepage-live-status-dot" />
-                    {selectedAddress
-                      ? "Address ready — continue to live booking"
-                      : manualAddress1.trim()
-                        ? "Manual address ready — continue to booking"
-                        : "Postcode recognised — choose your address"}
-                  </div>
-                )}
-
-                {postcode ? <p className="hero-minimal-note">{coverage.leadTimeLabel}</p> : <p className="hero-minimal-note">Enter your postcode to check whether services are available in your area.</p>}
+                {!postcode && <p className="hero-minimal-note">Enter your postcode to check whether services are available in your area.</p>}
                 {submitMessage ? <p className="hero-minimal-note" style={{ color: "var(--color-error)" }}>{submitMessage}</p> : null}
 
                 <button type="button" className="button button-primary homepage-quote-button" onClick={handleCoverageCheck} disabled={isSubmitting}>

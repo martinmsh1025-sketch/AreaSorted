@@ -42,20 +42,20 @@ export default async function BookingConfirmationPage({ params }: BookingConfirm
   return (
     <main className="section">
       <div className="container" style={{ maxWidth: 900 }}>
-        <div className="panel card">
+        <div className="panel card" style={{ overflowWrap: "anywhere" }}>
           <div className="eyebrow">Booking confirmation</div>
-          <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>
+          <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)", maxWidth: 680, lineHeight: 1.08 }}>
             Thank you for your booking!
           </h1>
-          <p className="lead" style={{ marginTop: "0.5rem" }}>
+          <p className="lead" style={{ marginTop: "0.5rem", maxWidth: 720, lineHeight: 1.65 }}>
             Your booking request has been received. We have placed a temporary card hold and are waiting for provider confirmation.
           </p>
-          <div className="panel" style={{ marginTop: "1rem", background: "var(--color-surface-muted)" }}>
+          <div className="panel" style={{ marginTop: "1rem", background: "var(--color-surface-muted)", padding: "1rem 1.1rem" }}>
             <strong style={{ display: "block", marginBottom: "0.45rem" }}>What happens next</strong>
-            <ol style={{ margin: 0, paddingLeft: "1.1rem", color: "var(--color-text-muted)", lineHeight: 1.65 }}>
-              <li>We send your booking request for provider confirmation.</li>
-              <li>Your card remains on temporary hold while confirmation is pending.</li>
-              <li>Once confirmed, payment is captured and your booking status updates automatically.</li>
+            <ol style={{ margin: 0, paddingLeft: "1.1rem", color: "var(--color-text-muted)", lineHeight: 1.65, display: "grid", gap: "0.45rem" }}>
+              <li>We send your booking request for confirmation.</li>
+              <li>Your card stays on temporary hold while you wait.</li>
+              <li>Once confirmed, payment is captured and your status updates.</li>
             </ol>
           </div>
           <div className="quote-summary-list" style={{ marginTop: "1.25rem" }}>
@@ -65,7 +65,7 @@ export default async function BookingConfirmationPage({ params }: BookingConfirm
             <div><span>Payment</span><strong>{getPaymentStatusLabel(paymentStatus)}</strong></div>
             <div><span>Total</span><strong>{money(booking.priceSnapshot?.customerTotalAmount)}</strong></div>
           </div>
-          <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
+          <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--color-text-muted)", lineHeight: 1.6, maxWidth: 720 }}>
             {isCaptured
               ? <>Your service will be carried out by <strong>{providerName}</strong>, an independent provider arranged through AreaSorted.</>
               : <>A verified local provider is reviewing your booking. You are only charged once the provider confirms the job. Most booking requests are reviewed within 24 hours.</>}
