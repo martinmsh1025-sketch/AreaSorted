@@ -515,6 +515,7 @@ export function PublicQuoteForm() {
 
   const progressPct = Math.round(((step + 1) / STEPS.length) * 100);
   const showSidebar = step >= 1;
+  const showPricingPreview = step >= 2;
 
   const currentServiceCatalog = useMemo(() => {
     const cat = serviceCatalog.find((c) => c.value === (getServiceValueForCategory(categoryKey) ?? "cleaning"));
@@ -1103,17 +1104,22 @@ export function PublicQuoteForm() {
             {/* Pricing estimate */}
             <section className="panel card quote-summary-panel">
               <div className="eyebrow">Quote preview</div>
-              {estimateLoading && !estimate && (
+              {!showPricingPreview ? (
+                <>
+                  <h2 className="quote-total-number" style={{ color: "var(--color-text-muted)" }}>—</h2>
+                  <p style={{ fontSize: "0.88rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+                    Complete the details step to see your estimated total.
+                  </p>
+                </>
+              ) : estimateLoading && !estimate ? (
                 <div style={{ padding: "1.5rem 0", textAlign: "center" }}>
                   <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)" }}>Calculating price...</p>
                 </div>
-              )}
-              {estimateError && !estimate && (
+              ) : estimateError && !estimate ? (
                 <div style={{ padding: "1rem 0" }}>
                   <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>{estimateError}</p>
                 </div>
-              )}
-              {estimate ? (
+              ) : estimate ? (
                 <>
                   <h2 className="quote-total-number" style={estimateLoading ? { opacity: 0.5 } : undefined}>
                     {money(animatedTotal || estimate.totalCustomerPay)}
