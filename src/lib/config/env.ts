@@ -25,6 +25,10 @@ const envSchema = z.object({
   ADMIN_PASSWORD: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   SIMPLY_POSTCODE_API_KEY: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  NEXT_PUBLIC_SUPPORT_WHATSAPP_URL: z.string().url().optional(),
+  NEXT_PUBLIC_CRISP_WEBSITE_ID: z.string().optional(),
 }).superRefine((env, ctx) => {
   if (env.NODE_ENV !== "production") return;
 

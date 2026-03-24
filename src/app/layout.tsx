@@ -4,6 +4,7 @@ import "./globals.css";
 import { NavigationLoadingOverlay } from "@/components/shared/navigation-loading-overlay";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { CookieConsentBanner } from "@/components/analytics/cookie-consent-banner";
+import { CrispChat } from "@/components/support/crisp-chat";
 
 function getSafeSiteUrl() {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     },
   };
   const googleAnalyticsId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const crispWebsiteId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
 
   return (
     <html lang="en">
@@ -87,6 +89,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <Suspense fallback={null}>
           {googleAnalyticsId ? <GoogleAnalytics measurementId={googleAnalyticsId} /> : null}
+        </Suspense>
+        <Suspense fallback={null}>
+          {crispWebsiteId ? <CrispChat websiteId={crispWebsiteId} /> : null}
         </Suspense>
         <Suspense fallback={null}>
           <NavigationLoadingOverlay />

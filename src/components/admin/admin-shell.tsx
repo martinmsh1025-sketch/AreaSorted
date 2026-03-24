@@ -8,6 +8,7 @@ import {
   ShoppingCart,
   Settings,
   Banknote,
+  Receipt,
   LogOut,
   ShieldCheck,
 } from "lucide-react";
@@ -37,6 +38,7 @@ const adminNavItems = [
       { href: "/admin/providers", label: "Providers", icon: Users },
       { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
       { href: "/admin/payouts", label: "Payouts", icon: Banknote },
+      { href: "/admin/refunds", label: "Refunds", icon: Receipt },
     ],
   },
   {

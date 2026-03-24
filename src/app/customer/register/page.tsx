@@ -3,6 +3,7 @@ import { customerRegisterAction } from "../login/actions";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { redirect } from "next/navigation";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
+import { GoogleSignInButton } from "@/components/customer/google-signin-button";
 
 type CustomerRegisterPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -20,6 +21,8 @@ export default async function CustomerRegisterPage({ searchParams }: CustomerReg
     weak_password: "Password must be at least 8 characters.",
     invalid_phone: "Please enter a valid UK phone number.",
     email_taken: "An account with this email already exists. Please sign in instead.",
+    google_unavailable: "Google sign-up is not configured yet. Use the email form for now.",
+    google_failed: "Google sign-up could not be completed. Please try again or use the email form.",
   };
 
   return (
@@ -58,6 +61,11 @@ export default async function CustomerRegisterPage({ searchParams }: CustomerReg
           <p className="lead" style={{ textAlign: "center", fontSize: "0.95rem", marginBottom: "1.5rem" }}>
             Create an account to track your bookings and manage your services.
           </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1.25rem" }}>
+            <GoogleSignInButton label="Continue with Google" />
+            <p style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--color-text-muted)", margin: 0 }}>or create an account with email</p>
+          </div>
 
           <form action={customerRegisterAction} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div className="auth-two-col-fields">

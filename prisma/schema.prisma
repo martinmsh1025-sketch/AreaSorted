@@ -323,6 +323,8 @@ model Customer {
   email            String      @unique
   phone            String
   passwordHash     String?
+  googleSub        String?     @unique
+  googleLinkedAt   DateTime?
   marketingConsent Boolean     @default(false)
   status           RecordStatus @default(ACTIVE)
   stripeCustomerId String?     @unique

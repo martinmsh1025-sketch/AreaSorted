@@ -300,6 +300,9 @@ export default async function AdminPayoutsPage({
         <p className="text-sm text-muted-foreground">
           Daily reconciliation for captured bookings only. Authorised card holds stay out of payouts until a provider confirms.
         </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Use this page to decide when provider funds stay on hold, become eligible, or are released. Need refund audit history instead? <Link href="/admin/refunds" className="text-primary hover:underline">View refunds</Link>.
+        </p>
       </div>
 
       {/* KPI Cards */}
@@ -387,6 +390,19 @@ export default async function AdminPayoutsPage({
               </button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Payout status definitions</CardTitle>
+          <CardDescription>Use these meanings when deciding whether to release, extend, or block provider funds.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 text-sm">
+          <div className="rounded-md border p-3"><div className="font-medium">ON_HOLD</div><p className="mt-1 text-muted-foreground">Captured payment exists, but provider funds are still waiting inside the hold window.</p></div>
+          <div className="rounded-md border p-3"><div className="font-medium">ELIGIBLE</div><p className="mt-1 text-muted-foreground">Hold period is over and the payout can now be released manually or automatically.</p></div>
+          <div className="rounded-md border p-3"><div className="font-medium">RELEASED</div><p className="mt-1 text-muted-foreground">AreaSorted approved release in the app. Treat this as committed unless recovery review is needed.</p></div>
+          <div className="rounded-md border p-3"><div className="font-medium">BLOCKED / CANCELLED</div><p className="mt-1 text-muted-foreground">Do not pay out. Use this when a refund, complaint, or manual review stops release.</p></div>
         </CardContent>
       </Card>
 

@@ -308,6 +308,7 @@ export async function createAdminRefundAction(formData: FormData) {
   const reason = String(formData.get("reason") || "requested_by_customer");
   const policyNote = String(formData.get("policyNote") || "").trim();
   const partialAmount = Number(formData.get("partialAmount") || 0);
+  const policyShortcut = String(formData.get("policyShortcut") || "").trim();
   const adminPassword = String(formData.get("adminPassword") || "");
   const confirmAmount = Number(formData.get("confirmAmount") || 0);
   const acknowledge = formData.get("acknowledgeRefund") === "on";
@@ -354,16 +355,34 @@ export async function createAdminRefundAction(formData: FormData) {
     redirect(`/admin/orders/${bookingId}?refundError=Only captured payments can be refunded here.`);
   }
 
-  if (!["FULL", "PARTIAL"].includes(refundType)) {
+  let effectiveRefundType = refundType;
+  let effectivePartialAmount = partialAmount;
+  let effectivePolicyNote = policyNote;
+
+  if (policyShortcut === "PROVIDER_NO_SHOW") {
+    effectiveRefundType = "FULL";
+    effectivePartialAmount = 0;
+    effectivePolicyNote = policyNote || "Provider no-show - full refund";
+  }
+
+  if (policyShortcut === "CUSTOMER_LATE_CANCEL") {
+    const bookingFee = Number(booking.priceSnapshot?.platformBookingFee ?? 0);
+    const total = Number(paymentRecord.grossAmount);
+    effectiveRefundType = "PARTIAL";
+    effectivePartialAmount = Math.max(0, total - bookingFee);
+    effectivePolicyNote = policyNote || `Customer cancelled within 24 hours - refund customer less booking fee (${bookingFee.toFixed(2)})`;
+  }
+
+  if (!["FULL", "PARTIAL"].includes(effectiveRefundType)) {
     redirect(`/admin/orders/${bookingId}?refundError=Invalid refund type.`);
   }
 
-  if (refundType === "PARTIAL" && (!Number.isFinite(partialAmount) || partialAmount <= 0)) {
+  if (effectiveRefundType === "PARTIAL" && (!Number.isFinite(effectivePartialAmount) || effectivePartialAmount <= 0)) {
     redirect(`/admin/orders/${bookingId}?refundError=Enter a valid partial refund amount.`);
   }
 
-  const amountInPence = refundType === "PARTIAL" ? Math.round(partialAmount * 100) : undefined;
-  const refundAmount = refundType === "PARTIAL" ? partialAmount : Number(paymentRecord.grossAmount);
+  const amountInPence = effectiveRefundType === "PARTIAL" ? Math.round(effectivePartialAmount * 100) : undefined;
+  const refundAmount = effectiveRefundType === "PARTIAL" ? effectivePartialAmount : Number(paymentRecord.grossAmount);
   const isManualRefund = !paymentRecord.stripePaymentIntentId || !stripeAccountId;
 
   if (Math.abs(confirmAmount - refundAmount) > 0.009) {
@@ -391,8 +410,8 @@ export async function createAdminRefundAction(formData: FormData) {
         stripeRefundId: refund.id,
         amount: refundAmount,
         refundReason: isManualRefund
-          ? [policyNote, "Manual refund recorded for mock/test payment."].filter(Boolean).join(" ")
-          : (policyNote || reason),
+          ? [effectivePolicyNote, "Manual refund recorded for mock/test payment."].filter(Boolean).join(" ")
+          : (effectivePolicyNote || reason),
         liability: "PLATFORM",
         refundApplicationFee: false,
         status: refund.status === "succeeded" ? "PROCESSED" : "PENDING",
@@ -404,7 +423,7 @@ export async function createAdminRefundAction(formData: FormData) {
       data: {
         actorType: "ADMIN",
         actorId: admin.id,
-        actionType: refundType === "PARTIAL" ? "ADMIN_PARTIAL_REFUND_CREATED" : "ADMIN_FULL_REFUND_CREATED",
+        actionType: effectiveRefundType === "PARTIAL" ? "ADMIN_PARTIAL_REFUND_CREATED" : "ADMIN_FULL_REFUND_CREATED",
         entityType: "BOOKING",
         entityId: bookingId,
         oldValues: {
@@ -413,10 +432,11 @@ export async function createAdminRefundAction(formData: FormData) {
           payoutStatus: booking.payoutRecords[0]?.status ?? null,
         },
         newValues: {
-          refundType,
+          refundType: effectiveRefundType,
           refundAmount,
           reason,
-          policyNote,
+          policyNote: effectivePolicyNote,
+          policyShortcut: policyShortcut || null,
           isManualRefund,
         },
       },
@@ -437,9 +457,9 @@ export async function createAdminRefundAction(formData: FormData) {
         currency: "GBP",
         metadataJson: {
           variant: "refund",
-          refundType,
+          refundType: effectiveRefundType,
           reason,
-          policyNote,
+          policyNote: effectivePolicyNote,
           isManualRefund,
           bookingReference: bookingId,
         },
@@ -449,14 +469,14 @@ export async function createAdminRefundAction(formData: FormData) {
     await prisma.paymentRecord.update({
       where: { id: paymentRecord.id },
       data: {
-        paymentState: refundType === "PARTIAL" ? "PARTIALLY_REFUNDED" : "REFUNDED",
+        paymentState: effectiveRefundType === "PARTIAL" ? "PARTIALLY_REFUNDED" : "REFUNDED",
       },
     });
 
     await prisma.booking.update({
       where: { id: bookingId },
       data: {
-        bookingStatus: refundType === "PARTIAL" ? "REFUND_PENDING" : "REFUNDED",
+        bookingStatus: effectiveRefundType === "PARTIAL" ? "REFUND_PENDING" : "REFUNDED",
       },
     });
 
@@ -469,16 +489,16 @@ export async function createAdminRefundAction(formData: FormData) {
           ? {
               status: "BLOCKED",
               blockedAt: new Date(),
-              blockedReason: refundType === "PARTIAL"
-                ? `Partial refund issued after payout release. Review provider recovery. ${policyNote}`.trim()
-                : `Full refund issued after payout release. Review provider recovery. ${policyNote}`.trim(),
+              blockedReason: effectiveRefundType === "PARTIAL"
+                ? `Partial refund issued after payout release. Review provider recovery. ${effectivePolicyNote}`.trim()
+                : `Full refund issued after payout release. Review provider recovery. ${effectivePolicyNote}`.trim(),
             }
           : {
-              status: refundType === "PARTIAL" ? "BLOCKED" : "CANCELLED",
+              status: effectiveRefundType === "PARTIAL" ? "BLOCKED" : "CANCELLED",
               blockedAt: new Date(),
-              blockedReason: refundType === "PARTIAL"
-                ? `Partial refund issued before payout release. ${policyNote}`.trim()
-                : `Refund issued before payout release. ${policyNote}`.trim(),
+              blockedReason: effectiveRefundType === "PARTIAL"
+                ? `Partial refund issued before payout release. ${effectivePolicyNote}`.trim()
+                : `Refund issued before payout release. ${effectivePolicyNote}`.trim(),
             },
       });
     }
@@ -489,86 +509,12 @@ export async function createAdminRefundAction(formData: FormData) {
     revalidatePath("/account/bookings");
     redirect(`/admin/orders/${bookingId}?refundStatus=${encodeURIComponent(
       isManualRefund
-        ? (refundType === "PARTIAL" ? "Manual partial refund recorded for mock payment." : "Manual full refund recorded for mock payment.")
-        : (refundType === "PARTIAL" ? "Partial refund created." : "Full refund created.")
+        ? (effectiveRefundType === "PARTIAL" ? "Manual partial refund recorded for mock payment." : "Manual full refund recorded for mock payment.")
+        : (effectiveRefundType === "PARTIAL" ? "Partial refund created." : "Full refund created.")
     )}`);
   } catch (error) {
     redirect(`/admin/orders/${bookingId}?refundError=${encodeURIComponent(error instanceof Error ? error.message : "Refund failed")}`);
   }
-}
-
-export async function applyRefundPolicyAction(formData: FormData) {
-  const admin = await requireAdminSession();
-  const prisma = getPrisma();
-
-  const bookingId = String(formData.get("bookingId") || "");
-  const policy = String(formData.get("policy") || "");
-  const adminPassword = String(formData.get("adminPassword") || "");
-  const confirmAmount = Number(formData.get("confirmAmount") || 0);
-  const acknowledge = formData.get("acknowledgeRefund") === "on";
-
-  if (!bookingId) {
-    redirect("/admin/orders");
-  }
-
-  const validPassword = await verifyPassword(adminPassword, admin.passwordHash);
-  if (!validPassword) {
-    redirect(`/admin/orders/${bookingId}?refundError=Admin password is incorrect.`);
-  }
-
-  if (!acknowledge) {
-    redirect(`/admin/orders/${bookingId}?refundError=Please confirm the refund acknowledgement before submitting.`);
-  }
-
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    include: {
-      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
-      priceSnapshot: {
-        select: {
-          customerTotalAmount: true,
-          platformBookingFee: true,
-        },
-      },
-    },
-  });
-
-  if (!booking?.paymentRecords[0] || booking.paymentRecords[0].paymentState !== "PAID") {
-    redirect(`/admin/orders/${bookingId}?refundError=Policy refunds only apply to captured payments.`);
-  }
-
-  let refundType = "FULL";
-  let partialAmount = 0;
-  let policyNote = "";
-
-  if (policy === "PROVIDER_NO_SHOW") {
-    refundType = "FULL";
-    policyNote = "Provider no-show - full refund";
-  } else if (policy === "CUSTOMER_LATE_CANCEL") {
-    refundType = "PARTIAL";
-    const total = Number(booking.priceSnapshot?.customerTotalAmount ?? booking.totalAmount);
-    const bookingFee = Number(booking.priceSnapshot?.platformBookingFee ?? 0);
-    partialAmount = Math.max(0, total - bookingFee);
-    policyNote = `Customer cancelled within 24 hours - refund customer less booking fee (${bookingFee.toFixed(2)})`;
-  } else {
-    redirect(`/admin/orders/${bookingId}?refundError=Unknown refund policy.`);
-  }
-
-  const expectedAmount = refundType === "PARTIAL" ? partialAmount : Number(booking.paymentRecords[0].grossAmount);
-  if (Math.abs(confirmAmount - expectedAmount) > 0.009) {
-    redirect(`/admin/orders/${bookingId}?refundError=Refund amount confirmation does not match the policy refund amount.`);
-  }
-
-  const refundForm = new FormData();
-  refundForm.set("bookingId", bookingId);
-  refundForm.set("refundType", refundType);
-  refundForm.set("reason", "requested_by_customer");
-  refundForm.set("policyNote", policyNote);
-  if (refundType === "PARTIAL") {
-    refundForm.set("partialAmount", partialAmount.toFixed(2));
-  }
-
-  return createAdminRefundAction(refundForm);
 }
 
 // Counter offers are now handled directly between providers and customers.

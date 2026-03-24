@@ -15,6 +15,7 @@ import {
 } from "@/lib/service-catalog";
 import { UploadDropzone } from "@/lib/uploadthing";
 import { normalizeUkPhone } from "@/lib/validation/uk-phone";
+import { GoogleSignInButton } from "@/components/customer/google-signin-button";
 
 type PublicCategoryKey = ReturnType<typeof listPublicCategories>[number]["key"];
 
@@ -1053,6 +1054,12 @@ export function PublicQuoteForm() {
                 <div className="quote-section-head" style={{ marginTop: "1.5rem" }}>
                   <strong>Create your account</strong>
                   <p>Set a password so you can track your booking and manage your account.</p>
+                </div>
+                <div style={{ marginBottom: "1rem", display: "grid", gap: "0.75rem" }}>
+                  <GoogleSignInButton label="Continue with Google" />
+                  <p style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--color-text-muted)", margin: 0 }}>
+                    or create your account with email and password below
+                  </p>
                 </div>
                 <div className="quote-two-col-fields">
                   <label className="quote-field-stack">

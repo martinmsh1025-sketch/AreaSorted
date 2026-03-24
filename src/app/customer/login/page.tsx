@@ -3,6 +3,7 @@ import { customerLoginAction } from "./actions";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { redirect } from "next/navigation";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
+import { GoogleSignInButton } from "@/components/customer/google-signin-button";
 
 type CustomerLoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -16,6 +17,10 @@ export default async function CustomerLoginPage({ searchParams }: CustomerLoginP
   const error = typeof params.error === "string" ? params.error : "";
   const errorMessage = error === "invalid_reset_token"
     ? "This reset link is invalid or has expired. Request a new password reset email."
+    : error === "google_unavailable"
+      ? "Google sign-in is not configured yet. Use email and password for now."
+      : error === "google_failed"
+        ? "Google sign-in could not be completed. Please try again or use email and password."
     : error
       ? "Incorrect email or password."
       : "";
@@ -56,6 +61,11 @@ export default async function CustomerLoginPage({ searchParams }: CustomerLoginP
             <p className="lead" style={{ textAlign: "center", fontSize: "0.95rem", marginBottom: "1.5rem" }}>
               Access your bookings, manage your account, and review your latest service updates.
             </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1.25rem" }}>
+              <GoogleSignInButton label="Continue with Google" />
+              <p style={{ textAlign: "center", fontSize: "0.8rem", color: "var(--color-text-muted)", margin: 0 }}>or sign in with email</p>
+            </div>
 
             <form action={customerLoginAction} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <label className="quote-field-stack">

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
-import { applyRefundPolicyAction, confirmBookingOnBehalfAction, createAdminRefundAction, updateBookingStatusAction } from "./actions";
+import { confirmBookingOnBehalfAction, createAdminRefundAction, updateBookingStatusAction } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -178,6 +178,27 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {refundErrorMessage}
         </div>
       ) : null}
+
+      <div className="grid gap-3 md:grid-cols-5">
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Booking</div><div className="mt-2"><Badge>{booking.bookingStatus}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Payment</div><div className="mt-2"><Badge variant={getPaymentStatusVariant(paymentStatus)}>{getPaymentStatusLabel(paymentStatus)}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Refund</div><div className="mt-2"><Badge variant="outline">{booking.refundRecords[0]?.status || "NONE"}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Payout</div><div className="mt-2"><Badge variant="outline">{latestPayoutRecord?.status || "NONE"}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Payment mode</div><div className="mt-2"><Badge variant={isMockCapturedPayment ? "destructive" : "secondary"}>{isMockCapturedPayment ? "MOCK" : "LIVE"}</Badge></div></CardContent></Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Status guide</CardTitle>
+          <CardDescription>Quick definitions for the states used on this order.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 text-sm">
+          <div><div className="font-medium mb-1">Booking</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">PENDING_ASSIGNMENT</strong> - Waiting for provider confirmation.</p><p><strong className="text-foreground">ASSIGNED / IN_PROGRESS</strong> - Provider accepted and work is active.</p><p><strong className="text-foreground">COMPLETED</strong> - Job marked finished.</p><p><strong className="text-foreground">CANCELLED / REFUNDED</strong> - Booking stopped or money returned.</p></div></div>
+          <div><div className="font-medium mb-1">Payment</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">PENDING</strong> - Hold or payment setup exists, not captured yet.</p><p><strong className="text-foreground">PAID</strong> - Customer payment captured.</p><p><strong className="text-foreground">PARTIALLY_REFUNDED</strong> - Only part of the captured amount returned.</p><p><strong className="text-foreground">REFUNDED</strong> - Full captured amount returned.</p></div></div>
+          <div><div className="font-medium mb-1">Refund</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">NONE</strong> - No refund record exists.</p><p><strong className="text-foreground">PENDING</strong> - Refund requested but not fully processed yet.</p><p><strong className="text-foreground">PROCESSED</strong> - Refund record completed successfully.</p></div></div>
+          <div><div className="font-medium mb-1">Payout</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">ON_HOLD</strong> - Provider funds are still inside hold period.</p><p><strong className="text-foreground">ELIGIBLE</strong> - Hold period passed and payout can be released.</p><p><strong className="text-foreground">RELEASED</strong> - AreaSorted approved payout release in app.</p><p><strong className="text-foreground">BLOCKED / CANCELLED</strong> - Do not release funds without further review.</p></div></div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left column — info cards */}
@@ -563,39 +584,29 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                     This is a mock/test payment. Refund actions here will update AreaSorted records only and will not send a real refund to Stripe.
                   </div>
                 ) : null}
-                <div className="grid gap-2 sm:grid-cols-2 mb-4">
-                  <form action={applyRefundPolicyAction} className="space-y-2">
-                    <input type="hidden" name="bookingId" value={booking.id} />
-                    <input type="hidden" name="policy" value="PROVIDER_NO_SHOW" />
-                    <input type="hidden" name="confirmAmount" value={capturedAmount.toFixed(2)} />
-                    <input type="hidden" name="acknowledgeRefund" value="on" />
-                    <Input name="adminPassword" type="password" autoComplete="current-password" placeholder="Admin password" required />
+                <form action={createAdminRefundAction} className="space-y-4">
+                  <input type="hidden" name="bookingId" value={booking.id} />
+
+                  <div className="grid gap-2 sm:grid-cols-2">
                     <button
                       type="submit"
+                      name="policyShortcut"
+                      value="PROVIDER_NO_SHOW"
                       className="inline-flex h-9 w-full items-center justify-center rounded-md border border-red-300 bg-white px-4 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50"
                     >
                       Provider no-show (refund {capturedAmount.toFixed(2)})
                     </button>
-                  </form>
-                  <form action={applyRefundPolicyAction} className="space-y-2">
-                    <input type="hidden" name="bookingId" value={booking.id} />
-                    <input type="hidden" name="policy" value="CUSTOMER_LATE_CANCEL" />
-                    <input type="hidden" name="confirmAmount" value={lateCancelRefundAmount.toFixed(2)} />
-                    <input type="hidden" name="acknowledgeRefund" value="on" />
-                    <Input name="adminPassword" type="password" autoComplete="current-password" placeholder="Admin password" required />
                     <button
                       type="submit"
+                      name="policyShortcut"
+                      value="CUSTOMER_LATE_CANCEL"
                       className="inline-flex h-9 w-full items-center justify-center rounded-md border border-amber-300 bg-white px-4 text-sm font-medium text-amber-700 shadow-sm hover:bg-amber-50"
                     >
                       Customer late cancel (refund {lateCancelRefundAmount.toFixed(2)})
                     </button>
-                  </form>
-                </div>
+                  </div>
 
-                <Separator className="mb-4" />
-
-                <form action={createAdminRefundAction} className="space-y-4">
-                  <input type="hidden" name="bookingId" value={booking.id} />
+                  <Separator />
 
                   <div>
                     <Label htmlFor="refundType">Refund type</Label>

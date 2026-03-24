@@ -31,6 +31,7 @@ function buildProviderNav(status: string): NavGroup[] {
 
   if (canProviderAccessOrders(status)) {
     mainItems.push({ href: "/provider/invoices", label: "Invoices", icon: "Invoices" });
+    mainItems.push({ href: "/provider/payouts", label: "Payouts", icon: "Invoices" });
   }
 
   groups.push({ label: null, items: mainItems });

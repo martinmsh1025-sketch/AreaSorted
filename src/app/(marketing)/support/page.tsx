@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { SupportForm } from "./support-form";
 
 export const metadata: Metadata = {
   title: "Customer Support",
@@ -16,6 +17,8 @@ const supportTopics = [
 ];
 
 export default function SupportPage() {
+  const whatsappUrl = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP_URL || "";
+
   return (
     <main className="section">
       <div className="container grid-2" style={{ alignItems: "start" }}>
@@ -39,8 +42,11 @@ export default function SupportPage() {
           </div>
         </div>
 
-        <div className="panel mini-form">
-          <strong style={{ display: "block", marginBottom: "0.8rem" }}>Support topics we can help with</strong>
+        <div className="space-y-4">
+          <SupportForm />
+
+          <div className="panel mini-form">
+            <strong style={{ display: "block", marginBottom: "0.8rem" }}>Support topics we can help with</strong>
           <ul className="list-clean" style={{ color: "var(--color-text-muted)", marginBottom: "1rem" }}>
             {supportTopics.map((topic) => (
               <li key={topic}>{topic}</li>
@@ -51,6 +57,11 @@ export default function SupportPage() {
             <a className="button button-primary" href="mailto:support@areasorted.com?subject=AreaSorted%20support%20request">
               Email support
             </a>
+            {whatsappUrl ? (
+              <a className="button button-secondary" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                WhatsApp support
+              </a>
+            ) : null}
             <Link className="button button-secondary" href="/account/bookings">
               View my bookings
             </Link>
@@ -59,6 +70,7 @@ export default function SupportPage() {
           <p style={{ color: "var(--color-text-muted)", lineHeight: 1.65, marginTop: "1rem" }}>
             Need general business or provider help instead? Visit <Link href="/contact" style={{ color: "var(--color-brand)", fontWeight: 600 }}>Contact us</Link>.
           </p>
+          </div>
         </div>
       </div>
     </main>
