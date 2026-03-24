@@ -24,10 +24,13 @@ type ChecklistItem = {
 };
 
 type ProviderDocument = {
+  id: string;
   documentKey: string;
+  label: string;
   status: string;
   fileName: string;
   sizeBytes?: number | null;
+  reviewNotes?: string | null;
 };
 
 type ProviderOnboardingClientProps = {
@@ -273,6 +276,10 @@ export function ProviderOnboardingClient({
   const coverageComplete = selectedPostcodes.length > 0;
   const readyForConfirmation = profileComplete && servicesComplete && coverageComplete && agreementAccepted;
   const totalPendingUploadBytes = Object.values(pendingUploads).reduce((sum, item) => sum + item.sizeBytes, 0);
+  const flaggedDocuments = provider.documents.filter((document) =>
+    ["REJECTED", "NEEDS_RESUBMISSION"].includes(document.status),
+  );
+  const hasReviewFeedback = Boolean(provider.reviewNotes?.trim() || flaggedDocuments.length > 0);
 
   const visibleChecklist = checklist
     .filter((item) => ["profile", "categories", "coverage", "documents_uploaded", "agreement", "submitted", "approved", "stripe", "pricing"].includes(item.key))
@@ -321,6 +328,46 @@ export function ProviderOnboardingClient({
           </Badge>
         </div>
       </div>
+
+      {hasReviewFeedback && canEdit && (
+        <Card className="border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10">
+          <CardHeader>
+            <CardTitle className="text-base">Review feedback</CardTitle>
+            <CardDescription>
+              The review team has flagged changes. Update the relevant sections below and re-submit when ready.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {provider.reviewNotes?.trim() && (
+              <div className="rounded-md border border-amber-200 bg-background p-4 dark:border-amber-900">
+                <div className="mb-2 text-sm font-medium">Application notes</div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{provider.reviewNotes.trim()}</p>
+              </div>
+            )}
+
+            {flaggedDocuments.length > 0 && (
+              <div className="rounded-md border border-amber-200 bg-background p-4 dark:border-amber-900">
+                <div className="mb-3 text-sm font-medium">Documents to review or replace</div>
+                <div className="space-y-3">
+                  {flaggedDocuments.map((document) => (
+                    <div key={document.id} className="rounded-md border p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-sm">{document.label}</span>
+                        <Badge variant="destructive" className="text-[10px]">
+                          {document.status === "NEEDS_RESUBMISSION" ? "Resubmission needed" : "Rejected"}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
+                        {document.reviewNotes?.trim() || "Please upload a corrected version of this document before re-submitting."}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ─── Status messages ─── */}
       {statusMessage && (

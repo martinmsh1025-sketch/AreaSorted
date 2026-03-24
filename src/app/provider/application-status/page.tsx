@@ -32,6 +32,19 @@ function getStatusDescription(status: string) {
   return "You can monitor the latest status of your onboarding from this page.";
 }
 
+function getActionableFeedback(provider: Awaited<ReturnType<typeof requireProviderSession>>["providerCompany"]) {
+  const applicationNotes = provider.reviewNotes?.trim() || "";
+  const flaggedDocuments = provider.documents.filter((document) =>
+    ["REJECTED", "NEEDS_RESUBMISSION"].includes(document.status),
+  );
+
+  return {
+    applicationNotes,
+    flaggedDocuments,
+    hasActionableFeedback: Boolean(applicationNotes || flaggedDocuments.length > 0),
+  };
+}
+
 export default async function ProviderApplicationStatusPage({ searchParams }: ProviderApplicationStatusPageProps) {
   const session = await requireProviderSession();
   const provider = session.providerCompany;
@@ -52,6 +65,7 @@ export default async function ProviderApplicationStatusPage({ searchParams }: Pr
           : { href: "/provider", label: "Open dashboard" };
 
   const StatusIcon = getStatusIcon(provider.status);
+  const feedback = getActionableFeedback(provider);
 
   return (
     <div className="space-y-6">
@@ -90,6 +104,50 @@ export default async function ProviderApplicationStatusPage({ searchParams }: Pr
           </div>
         </CardContent>
       </Card>
+
+      {feedback.hasActionableFeedback && (
+        <Card className="border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/10">
+          <CardHeader>
+            <CardTitle className="text-base">What needs attention</CardTitle>
+            <CardDescription>
+              Review the notes below and update your application where needed.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {feedback.applicationNotes && (
+              <div className="rounded-md border border-amber-200 bg-background p-4 dark:border-amber-900">
+                <div className="mb-2 text-sm font-medium">Review notes from the team</div>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{feedback.applicationNotes}</p>
+              </div>
+            )}
+
+            {feedback.flaggedDocuments.length > 0 && (
+              <div className="rounded-md border border-amber-200 bg-background p-4 dark:border-amber-900">
+                <div className="mb-3 text-sm font-medium">Documents that need updating</div>
+                <div className="space-y-3">
+                  {feedback.flaggedDocuments.map((document) => (
+                    <div key={document.id} className="rounded-md border p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-sm">{document.label}</span>
+                        <Badge variant="destructive" className="text-[10px]">
+                          {document.status === "NEEDS_RESUBMISSION" ? "Resubmission needed" : "Rejected"}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">
+                        {document.reviewNotes?.trim() || "Please upload a clearer or corrected version of this document."}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="text-sm text-muted-foreground">
+              Tip: use <span className="font-medium text-foreground">Edit application</span> to reopen onboarding and update the sections or documents mentioned above.
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ─── Actions ─── */}
       <div className="flex flex-wrap items-center gap-2">
