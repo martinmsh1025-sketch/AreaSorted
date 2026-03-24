@@ -33,6 +33,16 @@ export default async function ProviderInvoicesPage() {
               lastName: true,
             },
           },
+          payoutRecords: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: {
+              status: true,
+              holdUntil: true,
+              releasedAt: true,
+              paidAt: true,
+            },
+          },
         },
       },
     },
@@ -66,6 +76,7 @@ export default async function ProviderInvoicesPage() {
                   <th className="text-left font-medium px-4 py-3">Service</th>
                   <th className="text-left font-medium px-4 py-3">Customer</th>
                   <th className="text-right font-medium px-4 py-3">Payout</th>
+                  <th className="text-left font-medium px-4 py-3">Payout Status</th>
                   <th className="text-left font-medium px-4 py-3">Order Status</th>
                   <th className="text-right font-medium px-4 py-3"></th>
                 </tr>
@@ -94,6 +105,8 @@ export default async function ProviderInvoicesPage() {
                   const statusColor = booking?.bookingStatus
                     ? getStatusColor(booking.bookingStatus)
                     : "text-muted-foreground";
+                  const payout = booking?.payoutRecords?.[0];
+                  const payoutLabel = payout?.status ? formatStatus(payout.status) : "—";
 
                   return (
                     <tr key={inv.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
@@ -110,6 +123,10 @@ export default async function ProviderInvoicesPage() {
                       <td className="px-4 py-3 text-muted-foreground">{customerName}</td>
                       <td className="px-4 py-3 text-right font-medium tabular-nums">
                         £{Number(inv.totalAmount).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        <div>{payoutLabel}</div>
+                        {payout?.holdUntil && <div>Hold until {new Date(payout.holdUntil).toLocaleDateString("en-GB")}</div>}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-medium ${statusColor}`}>

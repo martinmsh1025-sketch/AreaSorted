@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { syncProviderLifecycleState } from "@/server/services/providers/activation";
+import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
 
 function toJsonValue<T>(value: T) {
   return JSON.parse(JSON.stringify(value));
@@ -140,6 +141,15 @@ async function syncPaymentIntent(event: Stripe.Event) {
       await generateInvoicesForBooking(updated.bookingId);
     } catch {
       // Non-critical — invoices can be generated on-demand
+    }
+
+    try {
+      const payoutRecord = await ensurePayoutRecordForBooking(updated.bookingId, prisma);
+      if (payoutRecord) {
+        await refreshPayoutRecordState(payoutRecord.id, prisma);
+      }
+    } catch {
+      // Non-critical — payout hold records can be backfilled later
     }
 
   }

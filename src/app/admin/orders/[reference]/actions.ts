@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/db";
 import { isAdminAuthenticated, requireAdminSession } from "@/lib/admin-auth";
 import { captureDirectChargePaymentIntent, cancelDirectChargePaymentIntent, createDirectChargeRefund } from "@/lib/stripe/connect";
 import type { BookingStatus } from "@prisma/client";
+import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
 
 // C-10 FIX: Whitelist of valid BookingStatus values
 const VALID_BOOKING_STATUSES: Set<BookingStatus> = new Set([
@@ -82,6 +83,10 @@ export async function updateBookingStatusAction(formData: FormData) {
             where: { bookingId },
             data: { paymentState: "CANCELLED" },
           });
+          await prisma.payoutRecord.updateMany({
+            where: { bookingId },
+            data: { status: "CANCELLED", blockedReason: "Payment was cancelled before payout release." },
+          });
         } catch {
           if (process.env.NODE_ENV !== "production") {
             console.error(`[H-28] Failed to cancel PI for booking ${bookingId}`);
@@ -97,6 +102,10 @@ export async function updateBookingStatusAction(formData: FormData) {
           await prisma.paymentRecord.updateMany({
             where: { bookingId },
             data: { paymentState: "REFUNDED" },
+          });
+          await prisma.payoutRecord.updateMany({
+            where: { bookingId },
+            data: { status: "CANCELLED", blockedReason: "Refund issued before payout release." },
           });
         } catch {
           if (process.env.NODE_ENV !== "production") {
@@ -130,6 +139,10 @@ export async function updateBookingStatusAction(formData: FormData) {
           await prisma.paymentRecord.updateMany({
             where: { bookingId },
             data: { paymentState: "REFUNDED" },
+          });
+          await prisma.payoutRecord.updateMany({
+            where: { bookingId },
+            data: { status: "CANCELLED", blockedReason: "Refund issued before payout release." },
           });
         } catch {
           if (process.env.NODE_ENV !== "production") {
@@ -260,6 +273,15 @@ export async function confirmBookingOnBehalfAction(formData: FormData) {
       });
     }
   });
+
+  try {
+    const payout = await ensurePayoutRecordForBooking(bookingId, prisma);
+    if (payout) {
+      await refreshPayoutRecordState(payout.id, prisma);
+    }
+  } catch {
+    // Non-critical
+  }
 
   try {
     const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");

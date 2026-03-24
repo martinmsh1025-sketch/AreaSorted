@@ -79,6 +79,10 @@ export async function cancelBookingAction(formData: FormData) {
           where: { bookingId },
           data: { paymentState: "CANCELLED" },
         });
+        await prisma.payoutRecord.updateMany({
+          where: { bookingId },
+          data: { status: "CANCELLED", blockedReason: "Booking cancelled before payout release." },
+        });
       }
 
       // C-7/8 FIX: If payment was already captured (PAID), issue a full refund
@@ -93,6 +97,10 @@ export async function cancelBookingAction(formData: FormData) {
           await prisma.paymentRecord.updateMany({
             where: { bookingId },
             data: { paymentState: "REFUNDED" },
+          });
+          await prisma.payoutRecord.updateMany({
+            where: { bookingId },
+            data: { status: "CANCELLED", blockedReason: "Booking refunded before payout release." },
           });
           // Also update booking status to reflect refund
           await prisma.booking.update({

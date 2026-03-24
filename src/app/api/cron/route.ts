@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/db";
 import { getEnv } from "@/lib/config/env";
 import { cancelDirectChargePaymentIntent } from "@/lib/stripe/connect";
+import { ensurePayoutRecordForBooking, isProviderPayoutAutoReleaseEnabled, refreshPayoutRecordState } from "@/lib/payouts";
 
 // L-H FIX: Named timing constants instead of magic numbers
 const ABANDONED_BOOKING_CUTOFF_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -185,6 +186,39 @@ export async function GET(request: NextRequest) {
       },
     });
     results.cleanedProviderTokens = deletedProviderTokens.count;
+
+    // 5. Refresh provider payout hold states for captured bookings
+    const paidBookings = await prisma.booking.findMany({
+      where: {
+        bookingStatus: { in: ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"] },
+        providerCompanyId: { not: null },
+        paymentRecords: { some: { paymentState: "PAID" } },
+      },
+      select: { id: true },
+      take: 500,
+    });
+
+    const autoReleaseEnabled = await isProviderPayoutAutoReleaseEnabled(prisma);
+    let payoutEligible = 0;
+    let payoutReleased = 0;
+
+    for (const booking of paidBookings) {
+      const payout = await ensurePayoutRecordForBooking(booking.id, prisma);
+      if (!payout) continue;
+      const refreshed = await refreshPayoutRecordState(payout.id, prisma);
+      if (!refreshed) continue;
+      if (refreshed.status === "ELIGIBLE") payoutEligible += 1;
+
+      if (autoReleaseEnabled && refreshed.status === "ELIGIBLE") {
+        await prisma.payoutRecord.update({
+          where: { id: refreshed.id },
+          data: { status: "RELEASED", releasedAt: new Date() },
+        });
+        payoutReleased += 1;
+      }
+    }
+    results.payoutEligible = payoutEligible;
+    results.payoutReleased = payoutReleased;
 
     // M-3 FIX: Don't return internal cleanup counts — only return generic OK
     if (process.env.NODE_ENV !== "production") {

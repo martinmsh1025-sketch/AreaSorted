@@ -5,6 +5,8 @@ import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
 import { BookingStatus } from "@prisma/client";
 import { formatMoney } from "@/lib/format";
+import { getSettingValue } from "@/lib/config/env";
+import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -24,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { blockPayoutAction, extendPayoutHoldAction, releasePayoutAction, savePayoutPolicyAction } from "./actions";
 
 function dec(value: Decimal | null | undefined): number {
   return value ? Number(value) : 0;
@@ -49,6 +52,22 @@ function bookingStatusVariant(
   }
 }
 
+function payoutStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "PAID":
+      return "default";
+    case "ELIGIBLE":
+    case "RELEASED":
+      return "secondary";
+    case "BLOCKED":
+    case "CANCELLED":
+    case "FAILED":
+      return "destructive";
+    default:
+      return "outline";
+  }
+}
+
 type AdminPayoutsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -61,6 +80,12 @@ export default async function AdminPayoutsPage({
 
   const prisma = getPrisma();
   const params = (await searchParams) ?? {};
+  const [holdDaysSetting, autoReleaseSetting] = await Promise.all([
+    prisma.adminSetting.findUnique({ where: { key: "marketplace.provider_payout_hold_days" } }),
+    prisma.adminSetting.findUnique({ where: { key: "marketplace.provider_payout_auto_release" } }),
+  ]);
+  const payoutHoldDays = Number(getSettingValue<number>(holdDaysSetting, 3));
+  const autoReleaseEnabled = Boolean(Number(getSettingValue<number>(autoReleaseSetting, 0)));
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -114,10 +139,21 @@ export default async function AdminPayoutsPage({
           providerServiceAmount: true,
         },
       },
+      payoutRecords: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
       quoteRequest: { select: { reference: true } },
     },
     orderBy: { scheduledDate: "desc" },
   });
+
+  const payoutMap = new Map<string, Awaited<ReturnType<typeof ensurePayoutRecordForBooking>>>();
+  for (const booking of bookings) {
+    const ensured = await ensurePayoutRecordForBooking(booking.id, prisma);
+    const refreshed = ensured ? await refreshPayoutRecordState(ensured.id, prisma) : null;
+    payoutMap.set(booking.id, refreshed ?? ensured);
+  }
 
   // Fetch all providers for the filter dropdown
   const allProviders = await prisma.providerCompany.findMany({
@@ -143,17 +179,21 @@ export default async function AdminPayoutsPage({
     totalCommission: number;
     bookingCount: number;
     completedCount: number;
-    bookings: {
-      id: string;
-      ref: string;
-      customerName: string;
-      serviceDate: string;
-      payout: number;
-      platformFee: number;
-      commission: number;
-      status: string;
-    }[];
-  };
+      bookings: {
+        id: string;
+        ref: string;
+        customerName: string;
+        serviceDate: string;
+        payout: number;
+        platformFee: number;
+        commission: number;
+        status: string;
+        payoutStatus: string;
+        payoutRecordId: string | null;
+        payoutHoldUntil: string | null;
+        payoutBlockedReason: string | null;
+      }[];
+    };
 
   type DayGroup = {
     date: string;
@@ -194,6 +234,7 @@ export default async function AdminPayoutsPage({
     const payout = dec(booking.priceSnapshot?.providerExpectedPayout);
     const platformFee = dec(booking.priceSnapshot?.platformBookingFee);
     const commission = dec(booking.priceSnapshot?.platformCommissionAmount);
+    const payoutRecord = payoutMap.get(booking.id);
 
     entry.totalPayout += payout;
     entry.totalPlatformFee += platformFee;
@@ -212,6 +253,10 @@ export default async function AdminPayoutsPage({
       platformFee,
       commission,
       status: booking.bookingStatus,
+      payoutStatus: payoutRecord?.status ?? "PENDING",
+      payoutRecordId: payoutRecord?.id ?? null,
+      payoutHoldUntil: payoutRecord?.holdUntil ? payoutRecord.holdUntil.toISOString().slice(0, 10) : null,
+      payoutBlockedReason: payoutRecord?.blockedReason ?? null,
     });
   }
 
@@ -317,6 +362,34 @@ export default async function AdminPayoutsPage({
       </div>
 
       {/* Filters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Payout hold policy</CardTitle>
+          <CardDescription>
+            Control how long provider funds stay on hold before becoming eligible for release.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={savePayoutPolicyAction} className="grid gap-3 sm:grid-cols-12">
+            <div className="sm:col-span-4">
+              <Label htmlFor="holdDays" className="text-xs">Default hold days</Label>
+              <Input id="holdDays" name="holdDays" type="number" min={0} defaultValue={payoutHoldDays} className="h-8 text-sm" />
+            </div>
+            <div className="sm:col-span-4 flex items-end">
+              <label className="flex h-8 items-center gap-2 text-sm text-muted-foreground">
+                <input type="checkbox" name="autoRelease" defaultChecked={autoReleaseEnabled} />
+                Auto-release when eligible
+              </label>
+            </div>
+            <div className="sm:col-span-4 flex items-end">
+              <button type="submit" className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-white shadow hover:bg-primary/90">
+                Save payout policy
+              </button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent className="pt-6">
           <form method="GET" className="grid gap-3 sm:grid-cols-12">
@@ -461,14 +534,16 @@ export default async function AdminPayoutsPage({
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow>
-                            <TableHead className="text-xs">Ref</TableHead>
-                            <TableHead className="text-xs">Customer</TableHead>
-                            <TableHead className="text-xs">Status</TableHead>
-                            <TableHead className="text-xs text-right">Payout</TableHead>
-                            <TableHead className="text-xs text-right">Fee</TableHead>
-                            <TableHead className="text-xs text-right">Commission</TableHead>
-                          </TableRow>
+                            <TableRow>
+                              <TableHead className="text-xs">Ref</TableHead>
+                              <TableHead className="text-xs">Customer</TableHead>
+                              <TableHead className="text-xs">Status</TableHead>
+                              <TableHead className="text-xs">Payout</TableHead>
+                              <TableHead className="text-xs text-right">Payout</TableHead>
+                              <TableHead className="text-xs text-right">Fee</TableHead>
+                              <TableHead className="text-xs text-right">Commission</TableHead>
+                              <TableHead className="text-xs text-right">Actions</TableHead>
+                            </TableRow>
                         </TableHeader>
                         <TableBody>
                           {provider.bookings.map((b) => (
@@ -492,6 +567,19 @@ export default async function AdminPayoutsPage({
                                   {b.status}
                                 </Badge>
                               </TableCell>
+                              <TableCell className="py-1.5">
+                                <div className="space-y-1">
+                                  <Badge variant={payoutStatusVariant(b.payoutStatus)} className="text-xs">
+                                    {b.payoutStatus}
+                                  </Badge>
+                                  {b.payoutHoldUntil && (
+                                    <div className="text-[11px] text-muted-foreground">Hold until {b.payoutHoldUntil}</div>
+                                  )}
+                                  {b.payoutBlockedReason && (
+                                    <div className="text-[11px] text-red-600 max-w-[160px]">{b.payoutBlockedReason}</div>
+                                  )}
+                                </div>
+                              </TableCell>
                               <TableCell className="text-right tabular-nums text-sm font-medium py-1.5">
                                 {formatMoney(b.payout)}
                               </TableCell>
@@ -500,6 +588,34 @@ export default async function AdminPayoutsPage({
                               </TableCell>
                               <TableCell className="text-right tabular-nums text-sm text-muted-foreground py-1.5">
                                 {formatMoney(b.commission)}
+                              </TableCell>
+                              <TableCell className="py-1.5">
+                                {b.payoutRecordId ? (
+                                  <div className="flex justify-end gap-1.5">
+                                    <form action={releasePayoutAction}>
+                                      <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
+                                      <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                                        Release
+                                      </button>
+                                    </form>
+                                    <form action={extendPayoutHoldAction} className="flex items-center gap-1">
+                                      <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
+                                      <input type="hidden" name="extraDays" value="3" />
+                                      <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                                        +3d
+                                      </button>
+                                    </form>
+                                    <form action={blockPayoutAction}>
+                                      <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
+                                      <input type="hidden" name="reason" value="Blocked by admin review" />
+                                      <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100">
+                                        Block
+                                      </button>
+                                    </form>
+                                  </div>
+                                ) : (
+                                  <div className="text-right text-xs text-muted-foreground">—</div>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))}

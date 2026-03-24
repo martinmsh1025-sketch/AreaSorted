@@ -7,6 +7,7 @@ import { requireProviderOrdersAccess } from "@/lib/provider-auth";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { cancelDirectChargePaymentIntent, captureDirectChargePaymentIntent } from "@/lib/stripe/connect";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
+import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
 
 /**
  * Provider accepts a booking — captures authorised funds and moves status to ASSIGNED.
@@ -64,12 +65,21 @@ export async function acceptBookingAction(formData: FormData) {
           },
         });
       }
-    } else {
-      await prisma.paymentRecord.updateMany({
-        where: { bookingId },
-        data: { paymentState: "PAID" },
-      });
+  } else {
+    await prisma.paymentRecord.updateMany({
+      where: { bookingId },
+      data: { paymentState: "PAID" },
+    });
+  }
+
+  try {
+    const payout = await ensurePayoutRecordForBooking(bookingId, prisma);
+    if (payout) {
+      await refreshPayoutRecordState(payout.id, prisma);
     }
+  } catch {
+    // Non-critical
+  }
   } catch (captureError) {
     // Roll back the claim — restore to PENDING_ASSIGNMENT so it can be retried
     await prisma.booking.updateMany({

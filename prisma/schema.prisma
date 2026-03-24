@@ -1120,7 +1120,11 @@ enum DisputeCaseStatus {
 
 enum ProviderPayoutStatus {
   PENDING
+  ON_HOLD
   CREATED
+  ELIGIBLE
+  RELEASED
+  BLOCKED
   PAID
   FAILED
   CANCELLED
@@ -1574,13 +1578,23 @@ model PayoutRecord {
   stripePayoutId    String?              @unique
   status            ProviderPayoutStatus @default(PENDING)
   amount            Decimal              @db.Decimal(10, 2)
-  availableOn       DateTime?
-  paidAt            DateTime?
-  failureCode       String?
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-  booking           Booking              @relation(fields: [bookingId], references: [id])
-  providerCompany   ProviderCompany      @relation(fields: [providerCompanyId], references: [id])
+   holdDays         Int?                 @default(3)
+   availableOn       DateTime?
+   holdUntil        DateTime?
+   releasedAt       DateTime?
+   releasedByAdminId String?
+   blockedAt        DateTime?
+   blockedReason    String?
+   paidAt            DateTime?
+   failureCode       String?
+   createdAt         DateTime             @default(now())
+   updatedAt         DateTime             @updatedAt
+   booking           Booking              @relation(fields: [bookingId], references: [id])
+   providerCompany   ProviderCompany      @relation(fields: [providerCompanyId], references: [id])
+
+   @@index([status])
+   @@index([holdUntil])
+   @@index([providerCompanyId, status])
 }
 
 model LedgerEntry {
