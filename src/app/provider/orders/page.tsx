@@ -78,13 +78,13 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
 
   let dateFilter: Prisma.BookingWhereInput = {};
   if (period === "custom" && (dateFrom || dateTo)) {
-    const createdAt: Record<string, Date> = {};
-    if (dateFrom) createdAt.gte = new Date(`${dateFrom}T00:00:00`);
-    if (dateTo) createdAt.lte = new Date(`${dateTo}T23:59:59.999`);
-    dateFilter = { createdAt };
+    const scheduledDate: Record<string, Date> = {};
+    if (dateFrom) scheduledDate.gte = new Date(`${dateFrom}T00:00:00`);
+    if (dateTo) scheduledDate.lte = new Date(`${dateTo}T23:59:59.999`);
+    dateFilter = { scheduledDate };
   } else {
     const range = getQuickPickRange(period);
-    if (range) dateFilter = { createdAt: range };
+    if (range) dateFilter = { scheduledDate: range };
   }
 
   const statusFilterClause: Prisma.BookingWhereInput = statusFilter
@@ -113,7 +113,7 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
         select: { inputJson: true },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ scheduledDate: "asc" }, { scheduledStartTime: "asc" }],
     take: 200,
   });
 
@@ -167,7 +167,7 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
       <div>
         <h1 className="text-xl font-semibold tracking-tight">My Orders</h1>
         <p className="text-sm text-muted-foreground">
-          View and manage your bookings. Accept new orders and track progress.
+          View and manage your bookings by scheduled service date. Accept new orders and track upcoming work.
         </p>
       </div>
 
@@ -270,11 +270,11 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dateFrom">From</Label>
+                <Label htmlFor="dateFrom">Scheduled from</Label>
                 <Input type="date" id="dateFrom" name="dateFrom" defaultValue={dateFrom} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dateTo">To</Label>
+                <Label htmlFor="dateTo">Scheduled to</Label>
                 <Input type="date" id="dateTo" name="dateTo" defaultValue={dateTo} />
               </div>
               <div className="space-y-2">

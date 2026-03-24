@@ -25,6 +25,10 @@ function buildProviderNav(status: string): NavGroup[] {
     mainItems.push({ href: "/provider/orders", label: "My Orders", icon: "Orders" });
   }
 
+  if (canProviderAccessAccount(status)) {
+    mainItems.push({ href: "/provider/notifications", label: "Notifications", icon: "Notifications" });
+  }
+
   if (canProviderAccessOrders(status)) {
     mainItems.push({ href: "/provider/invoices", label: "Invoices", icon: "Invoices" });
   }
