@@ -3,7 +3,7 @@ import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
-import { confirmBookingOnBehalfAction, updateBookingStatusAction } from "./actions";
+import { confirmBookingOnBehalfAction, createAdminRefundAction, updateBookingStatusAction } from "./actions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -24,13 +24,15 @@ function formatService(value: string) {
 
 type AdminBookingDetailPageProps = {
   params: Promise<{ reference: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function AdminBookingDetailPage({ params }: AdminBookingDetailPageProps) {
+export default async function AdminBookingDetailPage({ params, searchParams }: AdminBookingDetailPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
 
   const { reference } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
   const prisma = getPrisma();
 
   const booking = await prisma.booking.findUnique({
@@ -43,6 +45,7 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
       },
       payments: { orderBy: { createdAt: "desc" } },
       paymentRecords: { orderBy: { createdAt: "desc" } },
+      payoutRecords: { orderBy: { createdAt: "desc" } },
       jobs: {
         include: {
           assignedCleaner: { select: { id: true, firstName: true, lastName: true, email: true } },
@@ -110,6 +113,9 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
       : getDisplayPaymentStatus({ bookingStatus: booking.bookingStatus });
 
   const stripeSessionId = latestPaymentRecord?.stripeCheckoutSessionId || "-";
+  const latestPayoutRecord = booking.payoutRecords[0];
+  const refundStatusMessage = typeof resolvedSearchParams.refundStatus === "string" ? resolvedSearchParams.refundStatus : "";
+  const refundErrorMessage = typeof resolvedSearchParams.refundError === "string" ? resolvedSearchParams.refundError : "";
 
   const bookingRef = booking.quoteRequest?.reference || booking.id.slice(0, 12).toUpperCase();
 
@@ -139,6 +145,18 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
           </Link>
         )}
       </div>
+
+      {refundStatusMessage ? (
+        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {refundStatusMessage}
+        </div>
+      ) : null}
+
+      {refundErrorMessage ? (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {refundErrorMessage}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left column — info cards */}
@@ -510,6 +528,72 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
             </CardContent>
           </Card>
 
+          {latestPaymentRecord?.paymentState === "PAID" && (
+            <Card className="border-red-200 bg-red-50/40">
+              <CardHeader>
+                <CardTitle>Refund controls</CardTitle>
+                <CardDescription>
+                  Create a full or partial refund for this captured payment.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={createAdminRefundAction} className="space-y-4">
+                  <input type="hidden" name="bookingId" value={booking.id} />
+
+                  <div>
+                    <Label htmlFor="refundType">Refund type</Label>
+                    <select
+                      id="refundType"
+                      name="refundType"
+                      defaultValue="FULL"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="FULL">Full refund</option>
+                      <option value="PARTIAL">Partial refund</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="partialAmount">Partial refund amount (&pound;)</Label>
+                    <Input id="partialAmount" name="partialAmount" type="number" step="0.01" min="0" placeholder="Only used for partial refunds" />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="reason">Stripe reason</Label>
+                    <select
+                      id="reason"
+                      name="reason"
+                      defaultValue="requested_by_customer"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="requested_by_customer">Requested by customer</option>
+                      <option value="duplicate">Duplicate</option>
+                      <option value="fraudulent">Fraudulent</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="policyNote">Policy note</Label>
+                    <textarea
+                      id="policyNote"
+                      name="policyNote"
+                      rows={3}
+                      className="flex min-h-[84px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="e.g. Provider no-show — full refund, or Customer cancelled within 24 hours — retain booking fee"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="inline-flex h-9 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-medium text-white shadow hover:bg-red-700"
+                  >
+                    Create refund
+                  </button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>{booking.bookingStatus === "PENDING_ASSIGNMENT" ? "Authorised amount" : "Captured amount"}</CardDescription>
@@ -535,6 +619,12 @@ export default async function AdminBookingDetailPage({ params }: AdminBookingDet
                   <dt className="text-muted-foreground">Assignment</dt>
                   <dd>
                     <Badge>{latestAssignment?.assignmentStatus || "UNASSIGNED"}</Badge>
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Payout status</dt>
+                  <dd>
+                    <Badge variant="outline">{latestPayoutRecord?.status || "NONE"}</Badge>
                   </dd>
                 </div>
               </dl>

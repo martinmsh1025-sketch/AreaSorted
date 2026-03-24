@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db";
 import { isAdminAuthenticated, requireAdminSession } from "@/lib/admin-auth";
 import { captureDirectChargePaymentIntent, cancelDirectChargePaymentIntent, createDirectChargeRefund } from "@/lib/stripe/connect";
@@ -295,6 +296,128 @@ export async function confirmBookingOnBehalfAction(formData: FormData) {
   revalidatePath("/account/bookings");
   revalidatePath(`/provider/orders/${bookingId}`);
   revalidatePath("/provider/orders");
+}
+
+export async function createAdminRefundAction(formData: FormData) {
+  const admin = await requireAdminSession();
+  const prisma = getPrisma();
+
+  const bookingId = String(formData.get("bookingId") || "");
+  const refundType = String(formData.get("refundType") || "FULL");
+  const reason = String(formData.get("reason") || "requested_by_customer");
+  const policyNote = String(formData.get("policyNote") || "").trim();
+  const partialAmount = Number(formData.get("partialAmount") || 0);
+
+  if (!bookingId) {
+    redirect("/admin/orders");
+  }
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      payoutRecords: { orderBy: { createdAt: "desc" }, take: 1 },
+      marketplaceProviderCompany: {
+        select: { stripeConnectedAccount: { select: { stripeAccountId: true } } },
+      },
+      priceSnapshot: {
+        select: {
+          customerTotalAmount: true,
+          providerExpectedPayout: true,
+          platformBookingFee: true,
+          platformCommissionAmount: true,
+        },
+      },
+    },
+  });
+
+  if (!booking) {
+    redirect(`/admin/orders/${bookingId}?refundError=Booking not found`);
+  }
+
+  const paymentRecord = booking.paymentRecords[0];
+  const stripeAccountId = paymentRecord?.stripeAccountId || booking.marketplaceProviderCompany?.stripeConnectedAccount?.stripeAccountId;
+  if (!paymentRecord?.stripePaymentIntentId || !stripeAccountId || paymentRecord.paymentState !== "PAID") {
+    redirect(`/admin/orders/${bookingId}?refundError=Only captured payments can be refunded here.`);
+  }
+
+  if (!["FULL", "PARTIAL"].includes(refundType)) {
+    redirect(`/admin/orders/${bookingId}?refundError=Invalid refund type.`);
+  }
+
+  if (refundType === "PARTIAL" && (!Number.isFinite(partialAmount) || partialAmount <= 0)) {
+    redirect(`/admin/orders/${bookingId}?refundError=Enter a valid partial refund amount.`);
+  }
+
+  const amountInPence = refundType === "PARTIAL" ? Math.round(partialAmount * 100) : undefined;
+
+  try {
+    const refund = await createDirectChargeRefund({
+      connectedAccountId: stripeAccountId,
+      paymentIntentId: paymentRecord.stripePaymentIntentId,
+      ...(amountInPence ? { amount: amountInPence } : {}),
+      reason: reason === "duplicate" || reason === "fraudulent" ? reason : "requested_by_customer",
+    });
+
+    await prisma.refundRecord.create({
+      data: {
+        bookingId,
+        paymentRecordId: paymentRecord.id,
+        stripeRefundId: refund.id,
+        amount: refundType === "PARTIAL" ? partialAmount : Number(paymentRecord.grossAmount),
+        refundReason: policyNote || reason,
+        liability: "PLATFORM",
+        refundApplicationFee: false,
+        status: refund.status === "succeeded" ? "PROCESSED" : "PENDING",
+        actorId: admin.id,
+      },
+    });
+
+    await prisma.paymentRecord.update({
+      where: { id: paymentRecord.id },
+      data: {
+        paymentState: refundType === "PARTIAL" ? "PARTIALLY_REFUNDED" : "REFUNDED",
+      },
+    });
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        bookingStatus: refundType === "PARTIAL" ? "REFUND_PENDING" : "REFUNDED",
+      },
+    });
+
+    const payoutRecord = booking.payoutRecords[0];
+    if (payoutRecord) {
+      const payoutStatus = payoutRecord.status;
+      await prisma.payoutRecord.update({
+        where: { id: payoutRecord.id },
+        data: ["PAID", "RELEASED"].includes(payoutStatus)
+          ? {
+              status: "BLOCKED",
+              blockedAt: new Date(),
+              blockedReason: refundType === "PARTIAL"
+                ? `Partial refund issued after payout release. Review provider recovery. ${policyNote}`.trim()
+                : `Full refund issued after payout release. Review provider recovery. ${policyNote}`.trim(),
+            }
+          : {
+              status: refundType === "PARTIAL" ? "BLOCKED" : "CANCELLED",
+              blockedAt: new Date(),
+              blockedReason: refundType === "PARTIAL"
+                ? `Partial refund issued before payout release. ${policyNote}`.trim()
+                : `Refund issued before payout release. ${policyNote}`.trim(),
+            },
+      });
+    }
+
+    revalidatePath(`/admin/orders/${bookingId}`);
+    revalidatePath("/admin/orders");
+    revalidatePath("/admin/payouts");
+    revalidatePath("/account/bookings");
+    redirect(`/admin/orders/${bookingId}?refundStatus=${encodeURIComponent(refundType === "PARTIAL" ? "Partial refund created." : "Full refund created.")}`);
+  } catch (error) {
+    redirect(`/admin/orders/${bookingId}?refundError=${encodeURIComponent(error instanceof Error ? error.message : "Refund failed")}`);
+  }
 }
 
 // Counter offers are now handled directly between providers and customers.
