@@ -1,4 +1,6 @@
 import Link from "next/link";
+import path from "node:path";
+import { readFile } from "node:fs/promises";
 import { notFound } from "next/navigation";
 import { requireProviderOnboardingAccess } from "@/lib/provider-auth";
 import { getAgreementAsset } from "@/lib/providers/agreement-access";
@@ -17,6 +19,8 @@ export default async function ProviderAgreementPage({ params }: Props) {
   }
 
   const agreement = getAgreementAsset(type);
+  const agreementFilePath = path.join(process.cwd(), "public", agreement.downloadUrl.replace(/^\//, ""));
+  const agreementText = await readFile(agreementFilePath, "utf8");
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-8">
@@ -38,11 +42,9 @@ export default async function ProviderAgreementPage({ params }: Props) {
       </div>
 
       <div className="rounded-xl border bg-background shadow-sm">
-        <iframe
-          src={agreement.downloadUrl}
-          title={agreement.title}
-          className="h-[72vh] w-full rounded-xl"
-        />
+        <pre className="max-h-[72vh] overflow-auto whitespace-pre-wrap break-words rounded-xl p-6 text-sm leading-7 text-foreground">
+          {agreementText}
+        </pre>
       </div>
     </main>
   );

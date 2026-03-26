@@ -20,16 +20,16 @@ export default function BecomeCleanerPage() {
               We work with self-employed professionals across cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance. Every application goes through a structured onboarding and review process before work can begin.
             </p>
             <div className="button-row">
-              <a className="button button-primary" href="/contact">Apply to Join</a>
+              <a className="button button-primary" href="/provider/apply">Apply to Join</a>
               <a className="button button-secondary" href="/contact">Talk to the Team</a>
             </div>
           </div>
           <div className="panel card">
             <strong>Before you apply</strong>
             <ul className="list-clean" style={{ marginTop: "1rem", color: "var(--color-text-muted)" }}>
-              <li>ID and right-to-work documents are required</li>
+              <li>ID and core eligibility documents are required</li>
               <li>You should have relevant experience for the services you offer</li>
-              <li>Proof of address and business details may be requested</li>
+              <li>Sole traders and limited companies will see different document requirements during onboarding</li>
               <li>Some categories may need extra checks before activation</li>
             </ul>
           </div>

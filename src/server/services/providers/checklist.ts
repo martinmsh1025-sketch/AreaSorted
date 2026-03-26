@@ -86,7 +86,7 @@ function isProfileComplete(provider: ProviderChecklistSource | null) {
 
 function hasRequiredDocuments(provider: ProviderChecklistSource | null) {
   if (!provider?.documents?.length) return false;
-  const required = getRequiredProviderDocuments();
+  const required = getRequiredProviderDocuments(getBusinessType(provider));
   return required.every((document) =>
     provider.documents?.some((item) => item.documentKey === document.key && ["PENDING", "APPROVED"].includes(item.status)),
   );
@@ -94,7 +94,7 @@ function hasRequiredDocuments(provider: ProviderChecklistSource | null) {
 
 function areDocumentsApproved(provider: ProviderChecklistSource | null) {
   if (!provider?.documents?.length) return false;
-  const required = getRequiredProviderDocuments();
+  const required = getRequiredProviderDocuments(getBusinessType(provider));
   return required.every((document) =>
     provider.documents?.some((item) => item.documentKey === document.key && item.status === "APPROVED"),
   );

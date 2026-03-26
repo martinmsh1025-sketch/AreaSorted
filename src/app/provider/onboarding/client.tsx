@@ -6,8 +6,8 @@ import { Check, Circle, Upload, FileText, AlertCircle, ChevronRight, ChevronLeft
 import { ProviderStatusBadge } from "@/components/providers/status-badge";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { getPostcodesForCouncils, londonCouncilOptions } from "@/lib/providers/london-coverage";
-import { providerDocumentAcceptedFileTypes, providerDocumentAcceptedFormatsLabel, providerDocumentMaxFileSizeBytes, providerDocumentTotalMaxSizeBytes, providerRequiredDocuments } from "@/lib/providers/onboarding-config";
-import { getProviderCategoryByKey } from "@/lib/providers/service-catalog-mapping";
+import { getProviderDocuments, providerDocumentAcceptedFileTypes, providerDocumentAcceptedFormatsLabel, providerDocumentMaxFileSizeBytes, providerDocumentTotalMaxSizeBytes } from "@/lib/providers/onboarding-config";
+import { getProviderCategoryByKey, providerServiceCatalog } from "@/lib/providers/service-catalog-mapping";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,178 @@ const stepMeta = [
   { label: "Coverage", icon: MapPin },
   { label: "Documents", icon: FileCheck },
 ] as const;
+
+const nationalityOptions = [
+  "British",
+  "Irish",
+  "Afghan",
+  "American",
+  "Australian",
+  "Bangladeshi",
+  "Brazilian",
+  "Canadian",
+  "Chinese",
+  "French",
+  "German",
+  "Ghanaian",
+  "Hong Konger",
+  "Indian",
+  "Italian",
+  "Japanese",
+  "Kenyan",
+  "Malaysian",
+  "Nigerian",
+  "Pakistani",
+  "Philippine",
+  "Polish",
+  "Portuguese",
+  "Romanian",
+  "South African",
+  "Spanish",
+  "Sri Lankan",
+  "Ukrainian",
+  "Other",
+] as const;
+const companyCountryOptions = ["United Kingdom", "Ireland", "Other"] as const;
+const companyTypeOptions = ["Private Limited Company (Ltd)", "LLP", "Partnership", "Other"] as const;
+const hmrcStatusOptions = ["Registered", "In progress", "Not registered yet"] as const;
+const authorityOptions = ["Director", "Owner", "Manager", "Authorised signatory", "Other"] as const;
+const workerCountOptions = ["1", "2-5", "6-10", "11-25", "25+"] as const;
+const phoneCountryOptions = [
+  { code: "+44", label: "United Kingdom", flag: "GB" },
+  { code: "+353", label: "Ireland", flag: "IE" },
+  { code: "+852", label: "Hong Kong", flag: "HK" },
+  { code: "+1", label: "United States", flag: "US" },
+  { code: "+61", label: "Australia", flag: "AU" },
+  { code: "+1", label: "Canada", flag: "CA" },
+  { code: "+64", label: "New Zealand", flag: "NZ" },
+  { code: "+49", label: "Germany", flag: "DE" },
+  { code: "+33", label: "France", flag: "FR" },
+  { code: "+39", label: "Italy", flag: "IT" },
+  { code: "+34", label: "Spain", flag: "ES" },
+  { code: "+31", label: "Netherlands", flag: "NL" },
+  { code: "+32", label: "Belgium", flag: "BE" },
+  { code: "+41", label: "Switzerland", flag: "CH" },
+  { code: "+45", label: "Denmark", flag: "DK" },
+  { code: "+46", label: "Sweden", flag: "SE" },
+  { code: "+47", label: "Norway", flag: "NO" },
+  { code: "+351", label: "Portugal", flag: "PT" },
+  { code: "+48", label: "Poland", flag: "PL" },
+  { code: "+40", label: "Romania", flag: "RO" },
+  { code: "+36", label: "Hungary", flag: "HU" },
+  { code: "+420", label: "Czech Republic", flag: "CZ" },
+  { code: "+421", label: "Slovakia", flag: "SK" },
+  { code: "+30", label: "Greece", flag: "GR" },
+  { code: "+91", label: "India", flag: "IN" },
+  { code: "+92", label: "Pakistan", flag: "PK" },
+  { code: "+880", label: "Bangladesh", flag: "BD" },
+  { code: "+94", label: "Sri Lanka", flag: "LK" },
+  { code: "+63", label: "Philippines", flag: "PH" },
+  { code: "+60", label: "Malaysia", flag: "MY" },
+  { code: "+65", label: "Singapore", flag: "SG" },
+  { code: "+86", label: "China", flag: "CN" },
+  { code: "+81", label: "Japan", flag: "JP" },
+  { code: "+82", label: "South Korea", flag: "KR" },
+  { code: "+971", label: "United Arab Emirates", flag: "AE" },
+  { code: "+966", label: "Saudi Arabia", flag: "SA" },
+  { code: "+234", label: "Nigeria", flag: "NG" },
+  { code: "+27", label: "South Africa", flag: "ZA" },
+  { code: "+233", label: "Ghana", flag: "GH" },
+  { code: "+254", label: "Kenya", flag: "KE" },
+  { code: "+20", label: "Egypt", flag: "EG" },
+  { code: "+55", label: "Brazil", flag: "BR" },
+  { code: "+52", label: "Mexico", flag: "MX" },
+  { code: "+90", label: "Turkey", flag: "TR" },
+  { code: "+380", label: "Ukraine", flag: "UA" },
+] as const;
+
+const onboardingSelectClass = "flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-white dark:text-slate-950 dark:focus:border-blue-700 dark:focus:ring-blue-950 appearance-none";
+const onboardingInputClass = "h-11 rounded-xl border-slate-200 bg-white px-3 py-2 text-slate-950 shadow-sm dark:border-slate-700 dark:bg-white dark:text-slate-950";
+
+function normaliseDateInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (!digits) return "";
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function toFlagEmoji(countryCode: string) {
+  return countryCode
+    .toUpperCase()
+    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
+}
+
+function splitPhone(value: string) {
+  const trimmed = value.trim();
+  const matched = phoneCountryOptions.find((option) => trimmed.startsWith(option.code));
+  if (!matched) {
+    return { countryCode: "+44", localNumber: trimmed.replace(/^\+\d+\s*/, "") };
+  }
+  return {
+    countryCode: matched.code,
+    localNumber: trimmed.slice(matched.code.length).trim(),
+  };
+}
+
+function combinePhone(countryCode: string, localNumber: string) {
+  const cleaned = localNumber.replace(/\s+/g, " ").trim();
+  return cleaned ? `${countryCode} ${cleaned}` : countryCode;
+}
+
+function PhoneField({
+  id,
+  name,
+  label,
+  countryCode,
+  localNumber,
+  onCountryCodeChange,
+  onLocalNumberChange,
+  disabled,
+  required,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  countryCode: string;
+  localNumber: string;
+  onCountryCodeChange: (value: string) => void;
+  onLocalNumberChange: (value: string) => void;
+  disabled: boolean;
+  required?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}{required ? <span className="text-red-500"> *</span> : null}</Label>
+      <input type="hidden" name={name} value={combinePhone(countryCode, localNumber)} />
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,220px)_1fr]">
+        <select
+          value={countryCode}
+          onChange={(event) => onCountryCodeChange(event.target.value)}
+          disabled={disabled}
+          className={onboardingSelectClass}
+        >
+          {phoneCountryOptions.map((option, index) => (
+            <option key={`${option.flag}-${option.code}-${index}`} value={option.code}>
+              {toFlagEmoji(option.flag)} {option.label} ({option.code})
+            </option>
+          ))}
+        </select>
+        <Input
+          id={id}
+          value={localNumber}
+          onChange={(event) => onLocalNumberChange(event.target.value)}
+          disabled={disabled}
+          required={required}
+          placeholder="Phone number"
+          inputMode="tel"
+          className="h-11 rounded-xl px-3 py-2"
+        />
+      </div>
+    </div>
+  );
+}
 
 function StepIndicator({ currentStep, unlockedStep, onStepClick }: { currentStep: number; unlockedStep: number; onStepClick: (step: number) => void }) {
   return (
@@ -196,7 +368,8 @@ export function ProviderOnboardingClient({
   submitAction,
 }: ProviderOnboardingClientProps) {
   const totalSteps = 4;
-  const lockedCategory = getProviderCategoryByKey(inviteCategoryKey || provider.serviceCategories[0]?.categoryKey || "");
+  const isInviteFlow = Boolean(inviteCategoryKey);
+  const lockedCategory = getProviderCategoryByKey(inviteCategoryKey || "");
   const initialCategories = lockedCategory ? [lockedCategory.key] : provider.serviceCategories.map((item) => item.categoryKey);
   const savedServiceKeys =
     provider.stripeRequirementsJson &&
@@ -205,12 +378,13 @@ export function ProviderOnboardingClient({
     Array.isArray(provider.stripeRequirementsJson.approvedServiceKeys)
       ? provider.stripeRequirementsJson.approvedServiceKeys.map((item) => String(item)).filter(Boolean)
       : inviteServiceKeys;
-  const initialPostcodes = Array.from(new Set(provider.coverageAreas.map((item) => item.postcodePrefix)));
+  const initialPostcodes = isInviteFlow ? [] : Array.from(new Set(provider.coverageAreas.map((item) => item.postcodePrefix)));
   const initialCouncils = londonCouncilOptions.filter((council) =>
     getPostcodesForCouncils([council]).some((postcode) => initialPostcodes.includes(postcode)),
   );
   const [businessType, setBusinessType] = useState<"company" | "sole_trader">(onboardingMetadata.businessType || "company");
   const agreement = getAgreementContent(businessType);
+  const providerDocuments = useMemo(() => getProviderDocuments(businessType), [businessType]);
   const agreementSigned = provider.agreements.some((agreement) => agreement.status === "SIGNED");
   const initialUnlockedStep = (() => {
     const hasStep1 = Boolean(provider.legalName?.trim() && provider.companyNumber?.trim() && provider.registeredAddress?.trim() && provider.contactEmail.trim() && provider.phone?.trim());
@@ -227,7 +401,10 @@ export function ProviderOnboardingClient({
   const [tradingName, setTradingName] = useState(provider.tradingName || "");
   const [companyNumber, setCompanyNumber] = useState(provider.companyNumber || "");
   const [contactEmail, setContactEmail] = useState(provider.contactEmail || "");
-  const [phone, setPhone] = useState(provider.phone || "");
+  const initialPhone = splitPhone(provider.phone || "");
+  const [phoneCountryCode, setPhoneCountryCode] = useState(initialPhone.countryCode);
+  const [phoneLocalNumber, setPhoneLocalNumber] = useState(initialPhone.localNumber);
+  const phone = combinePhone(phoneCountryCode, phoneLocalNumber);
   const [registeredAddress, setRegisteredAddress] = useState(provider.registeredAddress || "");
   const [vatNumber, setVatNumber] = useState(provider.vatNumber || "");
   const [companyCountry, setCompanyCountry] = useState(onboardingMetadata.companyCountry || "United Kingdom");
@@ -237,11 +414,17 @@ export function ProviderOnboardingClient({
   const [authorisedSignatoryName, setAuthorisedSignatoryName] = useState(onboardingMetadata.authorisedSignatoryName || "");
   const [authorisedSignatoryTitle, setAuthorisedSignatoryTitle] = useState(onboardingMetadata.authorisedSignatoryTitle || "");
   const [authorisedSignatoryEmail, setAuthorisedSignatoryEmail] = useState(onboardingMetadata.authorisedSignatoryEmail || "");
-  const [authorisedSignatoryPhone, setAuthorisedSignatoryPhone] = useState(onboardingMetadata.authorisedSignatoryPhone || "");
+  const initialAuthorisedSignatoryPhone = splitPhone(onboardingMetadata.authorisedSignatoryPhone || "");
+  const [authorisedSignatoryPhoneCountryCode, setAuthorisedSignatoryPhoneCountryCode] = useState(initialAuthorisedSignatoryPhone.countryCode);
+  const [authorisedSignatoryPhoneLocalNumber, setAuthorisedSignatoryPhoneLocalNumber] = useState(initialAuthorisedSignatoryPhone.localNumber);
+  const authorisedSignatoryPhone = combinePhone(authorisedSignatoryPhoneCountryCode, authorisedSignatoryPhoneLocalNumber);
   const [authorisedSignatoryAuthority, setAuthorisedSignatoryAuthority] = useState(onboardingMetadata.authorisedSignatoryAuthority || "");
   const [operationsContactName, setOperationsContactName] = useState(onboardingMetadata.operationsContactName || "");
   const [operationsContactRole, setOperationsContactRole] = useState(onboardingMetadata.operationsContactRole || "");
-  const [operationsContactPhone, setOperationsContactPhone] = useState(onboardingMetadata.operationsContactPhone || "");
+  const initialOperationsContactPhone = splitPhone(onboardingMetadata.operationsContactPhone || "");
+  const [operationsContactPhoneCountryCode, setOperationsContactPhoneCountryCode] = useState(initialOperationsContactPhone.countryCode);
+  const [operationsContactPhoneLocalNumber, setOperationsContactPhoneLocalNumber] = useState(initialOperationsContactPhone.localNumber);
+  const operationsContactPhone = combinePhone(operationsContactPhoneCountryCode, operationsContactPhoneLocalNumber);
   const [operationsContactEmail, setOperationsContactEmail] = useState(onboardingMetadata.operationsContactEmail || "");
   const [emergencyContactName, setEmergencyContactName] = useState(onboardingMetadata.emergencyContactName || "");
   const [emergencyContactRole, setEmergencyContactRole] = useState(onboardingMetadata.emergencyContactRole || "");
@@ -254,8 +437,8 @@ export function ProviderOnboardingClient({
   const [nationalInsuranceNumber, setNationalInsuranceNumber] = useState(onboardingMetadata.nationalInsuranceNumber || "");
   const [utrNumber, setUtrNumber] = useState(onboardingMetadata.utrNumber || "");
   const [hmrcStatus, setHmrcStatus] = useState(onboardingMetadata.hmrcStatus || "");
-  const [selectedCategories] = useState<string[]>(initialCategories);
-  const [selectedServices, setSelectedServices] = useState<string[]>(savedServiceKeys);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(isInviteFlow ? initialCategories : []);
+  const [selectedServices, setSelectedServices] = useState<string[]>(isInviteFlow ? savedServiceKeys : []);
   const [selectedCouncils, setSelectedCouncils] = useState<string[]>(initialCouncils);
   const [selectedPostcodes, setSelectedPostcodes] = useState<string[]>(initialPostcodes);
   const [agreementAccepted, setAgreementAccepted] = useState(agreementSigned && !canEdit);
@@ -280,6 +463,7 @@ export function ProviderOnboardingClient({
     ["REJECTED", "NEEDS_RESUBMISSION"].includes(document.status),
   );
   const hasReviewFeedback = Boolean(provider.reviewNotes?.trim() || flaggedDocuments.length > 0);
+  const availableServices = selectedCategories.flatMap((categoryKey) => getProviderCategoryByKey(categoryKey)?.services || []);
 
   const visibleChecklist = checklist
     .filter((item) => ["profile", "categories", "coverage", "documents_uploaded", "agreement", "submitted", "approved", "stripe", "pricing"].includes(item.key))
@@ -436,13 +620,17 @@ export function ProviderOnboardingClient({
           {agreementAccepted && <input type="hidden" name="agreementAccepted" value="on" />}
 
           {/* ─── Step 1: Business details ─── */}
-          <Card style={{ display: step === 1 ? "flex" : "none" }}>
+          <Card className="provider-form-card" style={{ display: step === 1 ? "flex" : "none" }}>
             <CardHeader>
               <CardTitle>{businessType === "sole_trader" ? "Provider details" : "Company details"}</CardTitle>
-              <CardDescription>{businessType === "sole_trader" ? "Complete your sole trader onboarding profile." : "Provide your registered company information and signatory details."}</CardDescription>
+              <CardDescription>{businessType === "sole_trader" ? "Complete your sole trader onboarding profile with the core identity, contact, and tax details we need to review your application." : "Provide your registered company, signatory, and operational contact details in one place."}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="space-y-3">
+              <div className="provider-form-section space-y-3">
+                <div>
+                  <h3 className="provider-form-section-title">Business identity</h3>
+                  <p className="provider-form-section-copy">Start with the business type, legal identity, and primary provider contact details.</p>
+                </div>
                 <Label>Business type <span className="text-red-500">*</span></Label>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {onboardingBusinessTypeOptions.map((option) => (
@@ -458,136 +646,195 @@ export function ProviderOnboardingClient({
                   ))}
                 </div>
               </div>
+              <div className="provider-form-section">
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+                <div className="provider-field-stack">
                   <Label htmlFor="legalName">{businessType === "sole_trader" ? "Full legal name" : "Legal company name"} <span className="text-red-500">*</span></Label>
-                  <Input id="legalName" name="legalName" value={legalName} onChange={(event) => setLegalName(event.target.value)} required disabled={!canEdit} placeholder={businessType === "sole_trader" ? "e.g. Jane Smith" : "e.g. ABC Cleaning Ltd"} />
+                  <Input id="legalName" name="legalName" className={onboardingInputClass} value={legalName} onChange={(event) => setLegalName(event.target.value)} required disabled={!canEdit} placeholder={businessType === "sole_trader" ? "e.g. Jane Smith" : "e.g. ABC Cleaning Ltd"} />
+                  <p className="provider-field-help">This should match the name used for verification and payout setup.</p>
                 </div>
-                <div className="space-y-2">
+                <div className="provider-field-stack">
                   <Label htmlFor="tradingName">Trading name</Label>
-                  <Input id="tradingName" name="tradingName" value={tradingName} onChange={(event) => setTradingName(event.target.value)} disabled={!canEdit} placeholder="Leave blank if same as legal name" />
+                  <Input id="tradingName" name="tradingName" className={onboardingInputClass} value={tradingName} onChange={(event) => setTradingName(event.target.value)} disabled={!canEdit} placeholder="Leave blank if same as legal name" />
+                  <p className="provider-field-help">Only add a trading name if customers know you by a different brand.</p>
                 </div>
               </div>
               <div className={`grid gap-4 ${businessType === "sole_trader" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
                 {businessType === "company" && (
-                  <div className="space-y-2">
+                  <div className="provider-field-stack">
                     <Label htmlFor="companyNumber">Company number <span className="text-red-500">*</span></Label>
-                    <Input id="companyNumber" name="companyNumber" value={companyNumber} onChange={(event) => setCompanyNumber(event.target.value)} required disabled={!canEdit} placeholder="e.g. 12345678" />
+                    <Input id="companyNumber" name="companyNumber" className={onboardingInputClass} value={companyNumber} onChange={(event) => setCompanyNumber(event.target.value)} required disabled={!canEdit} placeholder="e.g. 12345678" />
+                    <p className="provider-field-help">Used to verify registered companies.</p>
                   </div>
                 )}
-                <div className="space-y-2">
+                <div className="provider-field-stack">
                   <Label htmlFor="contactEmail">Email <span className="text-red-500">*</span></Label>
                   <input type="hidden" name="contactEmail" value={contactEmail} />
-                  <Input id="contactEmail" type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} required readOnly disabled={!canEdit} />
+                  <Input id="contactEmail" type="email" className={onboardingInputClass} value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} required readOnly disabled={!canEdit} />
+                  <p className="provider-field-help">We use this for verification, booking updates, and payout-related contact.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
-                  <Input id="phone" name="phone" value={phone} onChange={(event) => setPhone(event.target.value)} required disabled={!canEdit} placeholder="e.g. 07123 456789" />
+                <div className="provider-field-stack">
+                  <PhoneField
+                    id="phone"
+                    name="phone"
+                    label="Phone"
+                    countryCode={phoneCountryCode}
+                    localNumber={phoneLocalNumber}
+                    onCountryCodeChange={setPhoneCountryCode}
+                    onLocalNumberChange={setPhoneLocalNumber}
+                    disabled={!canEdit}
+                    required
+                  />
+                  <p className="provider-field-help">This should be the main number we can use for urgent booking contact.</p>
                 </div>
               </div>
+              </div>
               {businessType === "sole_trader" ? (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
+                <div className="provider-form-section grid gap-4 sm:grid-cols-2">
+                  <div className="provider-field-stack">
                     <Label htmlFor="dateOfBirth">Date of birth <span className="text-red-500">*</span></Label>
-                    <Input id="dateOfBirth" type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} disabled={!canEdit} />
+                    <Input id="dateOfBirth" type="text" inputMode="numeric" className={onboardingInputClass} value={dateOfBirth} onChange={(event) => setDateOfBirth(normaliseDateInput(event.target.value))} disabled={!canEdit} placeholder="DD/MM/YYYY" />
+                    <p className="provider-field-help">Type naturally and we will format it for you.</p>
                   </div>
-                  <div className="space-y-2">
+                  <div className="provider-field-stack">
                     <Label htmlFor="nationality">Nationality <span className="text-red-500">*</span></Label>
-                    <Input id="nationality" value={nationality} onChange={(event) => setNationality(event.target.value)} disabled={!canEdit} placeholder="e.g. British" />
+                    <select id="nationality" value={nationality} onChange={(event) => setNationality(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                      <option value="">Select nationality</option>
+                      {nationalityOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                    <p className="provider-field-help">If your nationality is not listed, choose Other and we can confirm later during review.</p>
                   </div>
                 </div>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-2">
+                <div className="provider-form-section grid gap-4 sm:grid-cols-3">
+                  <div className="provider-field-stack">
                     <Label htmlFor="companyCountry">Country of incorporation</Label>
-                    <Input id="companyCountry" value={companyCountry} onChange={(event) => setCompanyCountry(event.target.value)} disabled={!canEdit} />
+                    <select id="companyCountry" value={companyCountry} onChange={(event) => setCompanyCountry(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                      {companyCountryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
                   </div>
-                  <div className="space-y-2">
+                  <div className="provider-field-stack">
                     <Label htmlFor="companyIncorporationDate">Date of incorporation</Label>
-                    <Input id="companyIncorporationDate" type="date" value={companyIncorporationDate} onChange={(event) => setCompanyIncorporationDate(event.target.value)} disabled={!canEdit} />
+                    <Input id="companyIncorporationDate" type="text" inputMode="numeric" className={onboardingInputClass} value={companyIncorporationDate} onChange={(event) => setCompanyIncorporationDate(normaliseDateInput(event.target.value))} disabled={!canEdit} placeholder="DD/MM/YYYY" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="provider-field-stack">
                     <Label htmlFor="companyType">Company type</Label>
-                    <Input id="companyType" value={companyType} onChange={(event) => setCompanyType(event.target.value)} disabled={!canEdit} placeholder="e.g. Ltd, PLC, LLP" />
+                    <select id="companyType" value={companyType} onChange={(event) => setCompanyType(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                      {companyTypeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
                   </div>
                 </div>
               )}
-              <div className="space-y-2">
+              <div className="provider-form-section provider-field-stack">
                 <Label htmlFor="registeredAddress">{businessType === "sole_trader" ? "Home address" : "Registered address"} <span className="text-red-500">*</span></Label>
-                <Input id="registeredAddress" name="registeredAddress" value={registeredAddress} onChange={(event) => setRegisteredAddress(event.target.value)} required disabled={!canEdit} placeholder={businessType === "sole_trader" ? "Home address" : "Full registered address"} />
+                <Input id="registeredAddress" name="registeredAddress" className={onboardingInputClass} value={registeredAddress} onChange={(event) => setRegisteredAddress(event.target.value)} required disabled={!canEdit} placeholder={businessType === "sole_trader" ? "Home address" : "Full registered address"} />
+                <p className="provider-field-help">Use the address tied to your company registration or sole trader identity checks.</p>
               </div>
+              <div className="provider-form-section">
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+                <div className="provider-field-stack">
                   <Label htmlFor="vatNumber">VAT number <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                  <Input id="vatNumber" name="vatNumber" value={vatNumber} onChange={(event) => setVatNumber(event.target.value)} disabled={!canEdit} placeholder="e.g. GB123456789" />
+                  <Input id="vatNumber" name="vatNumber" className={onboardingInputClass} value={vatNumber} onChange={(event) => setVatNumber(event.target.value)} disabled={!canEdit} placeholder="e.g. GB123456789" />
                 </div>
-                <div className="space-y-2">
+                <div className="provider-field-stack">
                   <Label htmlFor="website">Website <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                  <Input id="website" value={website} onChange={(event) => setWebsite(event.target.value)} disabled={!canEdit} placeholder="https://example.com" />
+                  <Input id="website" className={onboardingInputClass} value={website} onChange={(event) => setWebsite(event.target.value)} disabled={!canEdit} placeholder="https://example.com" />
                 </div>
+              </div>
               </div>
               {businessType === "sole_trader" ? (
                 <>
+                  <div className="provider-form-section">
                   <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="businessAddress">Business address</Label>
-                      <Input id="businessAddress" value={businessAddress} onChange={(event) => setBusinessAddress(event.target.value)} disabled={!canEdit} placeholder="If different from home address" />
+                      <Input id="businessAddress" className={onboardingInputClass} value={businessAddress} onChange={(event) => setBusinessAddress(event.target.value)} disabled={!canEdit} placeholder="If different from home address" />
                     </div>
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="nationalInsuranceNumber">National Insurance no.</Label>
-                      <Input id="nationalInsuranceNumber" value={nationalInsuranceNumber} onChange={(event) => setNationalInsuranceNumber(event.target.value)} disabled={!canEdit} />
+                      <Input id="nationalInsuranceNumber" className={onboardingInputClass} value={nationalInsuranceNumber} onChange={(event) => setNationalInsuranceNumber(event.target.value)} disabled={!canEdit} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="utrNumber">UTR</Label>
-                      <Input id="utrNumber" value={utrNumber} onChange={(event) => setUtrNumber(event.target.value)} disabled={!canEdit} />
+                      <Input id="utrNumber" className={onboardingInputClass} value={utrNumber} onChange={(event) => setUtrNumber(event.target.value)} disabled={!canEdit} />
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="provider-field-stack mt-4">
                     <Label htmlFor="hmrcStatus">HMRC self-employed status</Label>
-                    <Input id="hmrcStatus" value={hmrcStatus} onChange={(event) => setHmrcStatus(event.target.value)} disabled={!canEdit} placeholder="Yes / No / In progress" />
+                    <select id="hmrcStatus" value={hmrcStatus} onChange={(event) => setHmrcStatus(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                      <option value="">Select status</option>
+                      {hmrcStatusOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                  </div>
                   </div>
                 </>
               ) : (
                 <>
+                  <div className="provider-form-section">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="authorisedSignatoryName">Authorised signatory name <span className="text-red-500">*</span></Label>
-                      <Input id="authorisedSignatoryName" value={authorisedSignatoryName} onChange={(event) => setAuthorisedSignatoryName(event.target.value)} disabled={!canEdit} />
+                      <Input id="authorisedSignatoryName" className={onboardingInputClass} value={authorisedSignatoryName} onChange={(event) => setAuthorisedSignatoryName(event.target.value)} disabled={!canEdit} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="authorisedSignatoryTitle">Authorised signatory title</Label>
-                      <Input id="authorisedSignatoryTitle" value={authorisedSignatoryTitle} onChange={(event) => setAuthorisedSignatoryTitle(event.target.value)} disabled={!canEdit} />
+                      <Input id="authorisedSignatoryTitle" className={onboardingInputClass} value={authorisedSignatoryTitle} onChange={(event) => setAuthorisedSignatoryTitle(event.target.value)} disabled={!canEdit} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="authorisedSignatoryEmail">Authorised signatory email <span className="text-red-500">*</span></Label>
-                      <Input id="authorisedSignatoryEmail" type="email" value={authorisedSignatoryEmail} onChange={(event) => setAuthorisedSignatoryEmail(event.target.value)} disabled={!canEdit} />
+                      <Input id="authorisedSignatoryEmail" type="email" className={onboardingInputClass} value={authorisedSignatoryEmail} onChange={(event) => setAuthorisedSignatoryEmail(event.target.value)} disabled={!canEdit} />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="authorisedSignatoryPhone">Authorised signatory phone</Label>
-                      <Input id="authorisedSignatoryPhone" value={authorisedSignatoryPhone} onChange={(event) => setAuthorisedSignatoryPhone(event.target.value)} disabled={!canEdit} />
+                    <div className="provider-field-stack">
+                      <PhoneField
+                        id="authorisedSignatoryPhone"
+                        name="authorisedSignatoryPhone"
+                        label="Authorised signatory phone"
+                        countryCode={authorisedSignatoryPhoneCountryCode}
+                        localNumber={authorisedSignatoryPhoneLocalNumber}
+                        onCountryCodeChange={setAuthorisedSignatoryPhoneCountryCode}
+                        onLocalNumberChange={setAuthorisedSignatoryPhoneLocalNumber}
+                        disabled={!canEdit}
+                      />
                     </div>
                   </div>
+                  </div>
+                  <div className="provider-form-section">
                   <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="authorisedSignatoryAuthority">Authority basis</Label>
-                      <Input id="authorisedSignatoryAuthority" value={authorisedSignatoryAuthority} onChange={(event) => setAuthorisedSignatoryAuthority(event.target.value)} disabled={!canEdit} placeholder="Director / Manager / Owner" />
+                      <select id="authorisedSignatoryAuthority" value={authorisedSignatoryAuthority} onChange={(event) => setAuthorisedSignatoryAuthority(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                        <option value="">Select authority</option>
+                        {authorityOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
                     </div>
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="operationsContactName">Operations contact</Label>
-                      <Input id="operationsContactName" value={operationsContactName} onChange={(event) => setOperationsContactName(event.target.value)} disabled={!canEdit} />
+                      <Input id="operationsContactName" className={onboardingInputClass} value={operationsContactName} onChange={(event) => setOperationsContactName(event.target.value)} disabled={!canEdit} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="operationsContactEmail">Operations email</Label>
-                      <Input id="operationsContactEmail" type="email" value={operationsContactEmail} onChange={(event) => setOperationsContactEmail(event.target.value)} disabled={!canEdit} />
+                      <Input id="operationsContactEmail" type="email" className={onboardingInputClass} value={operationsContactEmail} onChange={(event) => setOperationsContactEmail(event.target.value)} disabled={!canEdit} />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="operationsContactPhone">Operations phone</Label>
-                      <Input id="operationsContactPhone" value={operationsContactPhone} onChange={(event) => setOperationsContactPhone(event.target.value)} disabled={!canEdit} />
+                    <div className="provider-field-stack">
+                      <PhoneField
+                        id="operationsContactPhone"
+                        name="operationsContactPhone"
+                        label="Operations phone"
+                        countryCode={operationsContactPhoneCountryCode}
+                        localNumber={operationsContactPhoneLocalNumber}
+                        onCountryCodeChange={setOperationsContactPhoneCountryCode}
+                        onLocalNumberChange={setOperationsContactPhoneLocalNumber}
+                        disabled={!canEdit}
+                      />
                     </div>
-                    <div className="space-y-2">
+                    <div className="provider-field-stack">
                       <Label htmlFor="workerCount">Workers / cleaners available</Label>
-                      <Input id="workerCount" value={workerCount} onChange={(event) => setWorkerCount(event.target.value)} disabled={!canEdit} />
+                      <select id="workerCount" value={workerCount} onChange={(event) => setWorkerCount(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                        <option value="">Select range</option>
+                        {workerCountOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
                     </div>
+                  </div>
                   </div>
                 </>
               )}
@@ -609,10 +856,37 @@ export function ProviderOnboardingClient({
                 </div>
               )}
 
+              {!lockedCategory && (
+                <div className="space-y-3">
+                  <Label>Service categories <span className="text-red-500">*</span></Label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {providerServiceCatalog.map((category) => {
+                      const isSelected = selectedCategories.includes(category.key);
+                      return (
+                        <button
+                          key={category.key}
+                          type="button"
+                          onClick={() => canEdit && setSelectedCategories(toggleValue(selectedCategories, category.key))}
+                          disabled={!canEdit}
+                          className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
+                            isSelected
+                              ? "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100"
+                              : "border-border bg-background text-foreground hover:border-blue-200 hover:bg-muted/50"
+                          } ${!canEdit ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
+                        >
+                          <div className="font-medium">{category.label}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">{category.services.length} services available</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-3">
                 <Label>Services <span className="text-red-500">*</span></Label>
                 <div className="space-y-2">
-                  {(lockedCategory?.services || []).map((service) => {
+                  {availableServices.map((service) => {
                     const isSelected = selectedServices.includes(service.key);
                     return (
                       <button
@@ -635,7 +909,7 @@ export function ProviderOnboardingClient({
                       </button>
                     );
                   })}
-                  {!lockedCategory?.services.length && (
+                  {!availableServices.length && (
                     <p className="text-sm text-muted-foreground">No services found for this category.</p>
                   )}
                 </div>
@@ -643,6 +917,9 @@ export function ProviderOnboardingClient({
                   <p className="text-xs text-red-600">Select at least one service to continue.</p>
                 )}
               </div>
+              {selectedCategories.map((categoryKey) => (
+                <input key={categoryKey} type="hidden" name="categories" value={categoryKey} />
+              ))}
               {selectedServices.map((serviceKey) => (
                 <input key={serviceKey} type="hidden" name="serviceKeys" value={serviceKey} />
               ))}
@@ -714,11 +991,16 @@ export function ProviderOnboardingClient({
           <Card style={{ display: step === 4 ? "flex" : "none" }}>
             <CardHeader>
               <CardTitle>Documents and agreement</CardTitle>
-              <CardDescription>Upload required documents and accept the provider agreement.</CardDescription>
+              <CardDescription>Upload the documents that apply to your business type and accept the provider agreement.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              {businessType === "sole_trader" && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+                  DBS is optional for sole traders. However, providers with a DBS may be prioritised for some jobs where another applicant has stronger trust credentials.
+                </div>
+              )}
               <div className="grid gap-4 sm:grid-cols-2">
-                {providerRequiredDocuments.map((document) => {
+                {providerDocuments.map((document) => {
                   const uploaded = provider.documents.find((item) => item.documentKey === document.key);
                   const pendingUpload = pendingUploads[document.key];
                   const displaySize = pendingUpload?.sizeBytes || uploaded?.sizeBytes || null;
@@ -731,9 +1013,9 @@ export function ProviderOnboardingClient({
                         <div className="space-y-0.5">
                           <p className="text-sm font-medium">
                             {document.label}
-                            {document.required && <span className="text-red-500"> *</span>}
+                            {document.requiredFor.includes(businessType) && <span className="text-red-500"> *</span>}
                           </p>
-                          <p className="text-xs text-muted-foreground">{providerDocumentAcceptedFormatsLabel}</p>
+                          <p className="text-xs text-muted-foreground">{document.helperText} {providerDocumentAcceptedFormatsLabel}</p>
                         </div>
                         <Badge variant={badge.variant}>{badge.label}</Badge>
                       </div>
@@ -841,36 +1123,32 @@ export function ProviderOnboardingClient({
                     ))}
                   </div>
                 </div>
-                <details className="rounded-lg border bg-background p-4">
-                  <summary className="cursor-pointer text-sm font-medium">Read full agreement text</summary>
-                  <div className="mt-3 space-y-3">
-                    <p className="text-xs text-muted-foreground">
-                      Open the full agreement in a dedicated page, download a copy, or print it to PDF before accepting.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <a
-                        href={businessType === "sole_trader" ? "/provider/agreements/sole-trader" : "/provider/agreements/company"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                      >
-                        Open full agreement
-                      </a>
-                      <a
-                        href={businessType === "sole_trader" ? "/provider-agreements/sole-trader-v1.txt" : "/provider-agreements/company-provider-v1.txt"}
-                        download
-                        className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                      >
-                        Download text
-                      </a>
-                    </div>
-                    <iframe
-                      src={businessType === "sole_trader" ? "/provider-agreements/sole-trader-v1.txt" : "/provider-agreements/company-provider-v1.txt"}
-                      title={`${agreement.title} full text`}
-                      className="h-72 w-full rounded-lg border bg-white"
-                    />
+                <div className="rounded-lg border bg-background p-4 space-y-3">
+                  <p className="text-sm font-medium">Read the full agreement before accepting</p>
+                  <p className="text-xs text-muted-foreground">
+                    Open the full agreement in a dedicated page, or download a copy before accepting.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href={businessType === "sole_trader" ? "/provider/agreements/sole-trader" : "/provider/agreements/company"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                    >
+                      Open full agreement
+                    </a>
+                    <a
+                      href={businessType === "sole_trader" ? "/provider-agreements/sole-trader-v1.txt" : "/provider-agreements/company-provider-v1.txt"}
+                      download
+                      className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                    >
+                      Download text
+                    </a>
                   </div>
-                </details>
+                  <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+                    The full agreement opens in its own page so you can read, print, or download it without leaving the onboarding flow open in the background.
+                  </div>
+                </div>
                 <label className={`flex items-start gap-3 ${canEdit ? "cursor-pointer" : "pointer-events-none opacity-70"}`}>
                   <input
                     type="checkbox"

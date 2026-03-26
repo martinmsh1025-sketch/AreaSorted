@@ -3,6 +3,7 @@ import path from "node:path";
 import { readFile, stat } from "node:fs/promises";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getProviderSession } from "@/lib/provider-auth";
+import { getPrisma } from "@/lib/db";
 
 /**
  * C-5 FIX: Authenticated document serving endpoint.
@@ -33,11 +34,24 @@ export async function GET(
 
   // Auth check: admin or the provider themselves
   const isAdmin = await isAdminAuthenticated();
+  const prisma = getPrisma();
+  const documentRecord = await prisma.providerOnboardingDocument.findFirst({
+    where: {
+      providerCompanyId,
+      OR: [
+        { storedFileName: path.basename(fileName) },
+        { storagePath: { endsWith: fileName } },
+      ],
+    },
+    select: { status: true },
+  });
+
   if (!isAdmin) {
     const providerSession = await getProviderSession();
     if (!providerSession || providerSession.providerCompany.id !== providerCompanyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
   }
 
   const filePath = path.join(process.cwd(), ".data", "provider-documents", providerCompanyId, fileName);

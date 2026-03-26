@@ -124,8 +124,10 @@ export function PublicQuoteForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categories = listPublicCategories();
+  const requestedStep = Number(searchParams.get("step") || 1);
+  const initialStep = Number.isFinite(requestedStep) ? Math.min(STEPS.length - 1, Math.max(0, requestedStep - 1)) : 0;
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(initialStep);
   const [categoryKey, setCategoryKey] = useState<PublicCategoryKey>((categories[0]?.key || "CLEANING") as PublicCategoryKey);
   const options = useMemo(() => listJobTypesForCategory(categoryKey), [categoryKey]);
   const [serviceKey, setServiceKey] = useState("");
@@ -1108,6 +1110,16 @@ export function PublicQuoteForm() {
         {/* ── Right sidebar: pricing + info (visible from Step 1 onwards) ── */}
         {showSidebar && (
           <aside className="quote-sidebar-stack">
+            {form.postcode && form.addressLine1 && (
+              <section className="panel card quote-summary-panel">
+                <div className="eyebrow">Service address</div>
+                <div style={{ marginTop: "0.5rem", display: "grid", gap: "0.25rem" }}>
+                  <strong style={{ lineHeight: 1.5 }}>{form.addressLine1}{form.addressLine2 ? `, ${form.addressLine2}` : ""}</strong>
+                  <span style={{ color: "var(--color-text-muted)", lineHeight: 1.6 }}>{form.city || "London"}, {form.postcode}</span>
+                </div>
+              </section>
+            )}
+
             {/* Pricing estimate */}
             <section className="panel card quote-summary-panel">
               <div className="eyebrow">Quote preview</div>

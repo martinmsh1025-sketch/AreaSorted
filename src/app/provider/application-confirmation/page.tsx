@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Check, ChevronLeft, FileText, MapPin, Briefcase, Building2 } from "lucide-react";
 import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
+import { getProviderOnboardingMetadata } from "@/lib/providers/onboarding-profile";
 
 type ProviderApplicationConfirmationPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -28,13 +29,15 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
   }
 
   const checklist = buildProviderChecklist(provider);
+  const onboardingMetadata = getProviderOnboardingMetadata(provider.stripeRequirementsJson);
+  const businessType = onboardingMetadata.businessType;
   const summaryItems = checklist.items.filter((item) =>
     ["profile", "categories", "coverage", "documents_uploaded", "agreement"].includes(item.key),
   );
   const missingBeforeSubmit = checklist.items.filter(
     (item) => ["email_verified", "password_set", "profile", "categories", "coverage", "documents_uploaded", "agreement"].includes(item.key) && !item.complete,
   );
-  const lockedCategory = getProviderCategoryByKey(session.latestInvite?.approvedCategoryKey || provider.serviceCategories[0]?.categoryKey || "");
+  const primaryCategory = getProviderCategoryByKey(provider.serviceCategories[0]?.categoryKey || "");
   const selectedServiceKeys =
     provider.stripeRequirementsJson &&
     typeof provider.stripeRequirementsJson === "object" &&
@@ -42,7 +45,10 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
     Array.isArray(provider.stripeRequirementsJson.approvedServiceKeys)
       ? provider.stripeRequirementsJson.approvedServiceKeys.map((item) => String(item))
       : [];
-  const selectedServices = lockedCategory?.services.filter((service) => selectedServiceKeys.includes(service.key)) || [];
+  const selectedServices = provider.serviceCategories.flatMap((category) => {
+    const matchedCategory = getProviderCategoryByKey(category.categoryKey);
+    return matchedCategory?.services.filter((service) => selectedServiceKeys.includes(service.key)) || [];
+  });
   const coveragePostcodes = Array.from(new Set(provider.coverageAreas.map((item) => item.postcodePrefix))).sort();
   const groupedCoveragePostcodes = groupPostcodePrefixes(coveragePostcodes);
   const uploadedDocuments = provider.documents.filter((document) => ["PENDING", "APPROVED"].includes(document.status));
@@ -111,17 +117,17 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
 
       {/* ─── Summary cards ─── */}
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* Company details */}
+        {/* Profile details */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Building2 className="size-4 text-blue-600" />
-              <CardTitle className="text-sm">Company details</CardTitle>
+              <CardTitle className="text-sm">{businessType === "sole_trader" ? "Provider details" : "Company details"}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Legal name</span><span className="font-medium">{provider.legalName || "Missing"}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Company number</span><span className="font-medium">{provider.companyNumber || "Missing"}</span></div>
+            {businessType === "company" ? <div className="flex justify-between"><span className="text-muted-foreground">Company number</span><span className="font-medium">{provider.companyNumber || "Missing"}</span></div> : null}
             <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{provider.contactEmail || session.user.email}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Phone</span><span className="font-medium">{provider.phone || "Missing"}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Address</span><span className="max-w-[200px] text-right font-medium">{provider.registeredAddress || "Missing"}</span></div>
@@ -142,7 +148,7 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
             </div>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Category</span><span className="font-medium">{lockedCategory?.label || "Missing"}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Primary category</span><span className="font-medium">{primaryCategory?.label || "Missing"}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Services</span><span className="font-medium">{selectedServices.length}</span></div>
             {selectedServices.length > 0 && (
               <p className="text-xs text-muted-foreground">{selectedServices.map((service) => service.label).join(", ")}</p>
@@ -223,14 +229,21 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
           <ChevronLeft className="size-4" />
           Back to onboarding
         </Button>
-        <form action={submitProviderForReviewAction}>
-          <FormSubmitButton
-            label="Confirm and submit"
-            pendingLabel="Submitting..."
-            disabled={Boolean(missingBeforeSubmit.length)}
-            className="bg-blue-600 hover:bg-blue-700 text-white inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent px-2.5 h-8 text-sm font-medium transition-all"
-          />
-        </form>
+        <div className="flex flex-col items-end gap-2">
+          {missingBeforeSubmit.length > 0 ? (
+            <p className="text-xs text-red-600 text-right max-w-sm">
+              Complete the missing items above before you can submit this application.
+            </p>
+          ) : null}
+          <form action={submitProviderForReviewAction}>
+            <FormSubmitButton
+              label={missingBeforeSubmit.length > 0 ? "Complete missing items to submit" : "Confirm and submit"}
+              pendingLabel="Submitting..."
+              disabled={Boolean(missingBeforeSubmit.length)}
+              className="bg-blue-600 hover:bg-blue-700 text-white inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent px-3 h-9 text-sm font-medium transition-all disabled:opacity-60"
+            />
+          </form>
+        </div>
       </div>
     </div>
   );

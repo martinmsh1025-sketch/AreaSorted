@@ -88,6 +88,27 @@ export async function createProviderCompanyFromInvite(input: {
   return provider;
 }
 
+export async function createProviderCompanyFromPublicApplication(input: {
+  contactEmail: string;
+}) {
+  const prisma = getPrisma();
+  const email = input.contactEmail.toLowerCase();
+
+  const existing = await prisma.providerCompany.findFirst({
+    where: { contactEmail: email },
+  });
+  if (existing) {
+    return existing;
+  }
+
+  return prisma.providerCompany.create({
+    data: {
+      contactEmail: email,
+      status: "EMAIL_VERIFICATION_PENDING",
+    },
+  });
+}
+
 export async function beginStripeConnectOnboarding(input: {
   providerCompanyId: string;
   refreshUrl: string;

@@ -73,10 +73,12 @@ export function getProviderApplicationState(input: {
   status: string;
   reviewNotes?: string | null;
   documents?: Array<{ documentKey: string; label: string; status: string }>;
+  businessType?: "company" | "sole_trader";
 }) {
-  const requiredKeys = new Set<string>(getRequiredProviderDocuments().map((item) => item.key));
+  const businessType = input.businessType === "sole_trader" ? "sole_trader" : "company";
+  const requiredKeys = new Set<string>(getRequiredProviderDocuments(businessType).map((item) => item.key));
   const documents = input.documents || [];
-  const missingRequired = getRequiredProviderDocuments().find((document) => !documents.some((uploaded) => uploaded.documentKey === document.key && ["PENDING", "APPROVED"].includes(uploaded.status)));
+  const missingRequired = getRequiredProviderDocuments(businessType).find((document) => !documents.some((uploaded) => uploaded.documentKey === document.key && ["PENDING", "APPROVED"].includes(uploaded.status)));
   const flaggedDocument = documents.find((document) => requiredKeys.has(document.documentKey) && ["REJECTED", "NEEDS_RESUBMISSION"].includes(document.status));
 
   if (input.status === "REJECTED") {

@@ -1077,6 +1077,7 @@ enum ProviderCompanyStatus {
 }
 
 enum ProviderDocumentStatus {
+  PENDING_SCAN
   PENDING
   APPROVED
   REJECTED

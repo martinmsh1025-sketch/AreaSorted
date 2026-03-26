@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Mail, ShieldCheck } from "lucide-react";
+import { getPrisma } from "@/lib/db";
 
 type ProviderVerifyEmailPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -13,7 +14,6 @@ type ProviderVerifyEmailPageProps = {
 export default async function ProviderVerifyEmailPage({ searchParams }: ProviderVerifyEmailPageProps) {
   const params = (await searchParams) ?? {};
   const email = typeof params.email === "string" ? params.email : "";
-  const devCode = typeof params.devCode === "string" ? params.devCode : "";
   const delivery = typeof params.delivery === "string" ? params.delivery : "";
   const deliveryReason = typeof params.deliveryReason === "string" ? params.deliveryReason : "";
   const purpose = typeof params.purpose === "string" ? params.purpose : "INVITE";
@@ -21,22 +21,50 @@ export default async function ProviderVerifyEmailPage({ searchParams }: Provider
   const routed = params.routed === "1";
   const showDevFallback = delivery === "dev";
   const sentByEmail = delivery === "email";
+  let devCode = "";
+
+  if (showDevFallback && email && process.env.NODE_ENV !== "production") {
+    const prisma = getPrisma();
+    const latestOtpLog = await prisma.notificationLogV2.findFirst({
+      where: {
+        recipient: email.toLowerCase(),
+        templateCode: `provider_otp_${purpose.toLowerCase()}`,
+      },
+      orderBy: { createdAt: "desc" },
+      select: { payloadJson: true },
+    });
+
+    const payload = latestOtpLog?.payloadJson;
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+      const rawCode = (payload as Record<string, unknown>).devCode;
+      if (typeof rawCode === "string") {
+        devCode = rawCode;
+      }
+    }
+  }
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-1 text-center">
-          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-            <ShieldCheck className="size-5" />
+    <div className="provider-auth-shell">
+      <div className="provider-auth-panel provider-auth-grid">
+        <div className="provider-auth-hero">
+          <div className="provider-auth-eyebrow">
+            <ShieldCheck className="size-3.5" />
+            Email verification
           </div>
-          <h1 className="mt-3 text-xl font-semibold tracking-tight">Verify your email</h1>
-          <p className="text-sm text-muted-foreground">
-            Confirm the invited email before password setup.
+          <h1 className="provider-auth-title">Verify your provider email to continue onboarding.</h1>
+          <p className="provider-auth-copy">
+            We send a one-time code before password setup so every new provider account starts from a verified email address.
           </p>
+          <div className="provider-auth-note">
+            <strong>Why this matters</strong>
+            Verified email gives you access to password setup, onboarding progress, and all later provider portal updates.
+          </div>
         </div>
 
+        <div className="space-y-4">
+
         {/* Delivery info */}
-        <Card className="bg-muted/50">
+        <Card className="provider-auth-card border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
           <CardContent className="pt-4 pb-4 space-y-1.5">
             <div className="flex items-center gap-2">
               <Mail className="size-4 text-muted-foreground" />
@@ -66,7 +94,7 @@ export default async function ProviderVerifyEmailPage({ searchParams }: Provider
         </Card>
 
         {/* OTP form */}
-        <Card>
+        <Card className="provider-auth-card">
           <CardContent className="pt-6">
             <form action={verifyProviderEmailOtpAction} className="space-y-4">
               <input type="hidden" name="email" value={email} />
@@ -104,6 +132,7 @@ export default async function ProviderVerifyEmailPage({ searchParams }: Provider
             className="w-full inline-flex items-center justify-center rounded-lg border border-input bg-background h-9 px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
           />
         </form>
+        </div>
       </div>
     </div>
   );

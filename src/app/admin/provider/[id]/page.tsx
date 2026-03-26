@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import path from "node:path";
+import { stat } from "node:fs/promises";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getProviderCompanyById } from "@/lib/providers/repository";
 import { providerStatusLabels } from "@/lib/providers/service-catalog-mapping";
@@ -52,6 +54,43 @@ function docStatusBadgeVariant(status: string): "default" | "secondary" | "destr
   }
 }
 
+function buildProviderDocumentUrl(providerCompanyId: string, storagePath: string) {
+  if (!storagePath) {
+    return "#";
+  }
+
+  if (storagePath.startsWith("/mock/documents/")) {
+    return storagePath;
+  }
+
+  const markers = [
+    `.data/provider-documents/${providerCompanyId}/`,
+    `/uploads/provider-documents/${providerCompanyId}/`,
+  ];
+
+  const matchedMarker = markers.find((marker) => storagePath.startsWith(marker));
+  const fileName = matchedMarker ? storagePath.slice(matchedMarker.length) : storagePath.split("/").pop() || storagePath;
+  return `/api/provider-documents/${providerCompanyId}/${fileName}`;
+}
+
+function getProviderDocumentCandidates(providerCompanyId: string, storagePath: string, storedFileName: string) {
+  const fileName = storedFileName || storagePath.split("/").pop() || "";
+  return [
+    path.join(process.cwd(), ".data", "provider-documents", providerCompanyId, fileName),
+    path.join(process.cwd(), "uploads", "provider-documents", providerCompanyId, fileName),
+    path.join(process.cwd(), "public", "mock", "documents", path.basename(storagePath)),
+  ];
+}
+
+async function fileExists(filePath: string) {
+  try {
+    await stat(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 type AdminProviderDetailPageProps = {
   params: Promise<{ id: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -67,8 +106,12 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
 
   const query = (await searchParams) ?? {};
   const status = typeof query.status === "string" ? query.status : "";
+  const error = typeof query.error === "string" ? decodeURIComponent(query.error) : "";
   const checklist = buildProviderChecklist(provider);
   const completedCount = checklist.items.filter((item) => item.complete).length;
+  const approvalBlockers = checklist.items.filter((item) =>
+    ["email_verified", "password_set", "profile", "categories", "coverage", "documents_uploaded", "documents_approved", "agreement"].includes(item.key) && !item.complete,
+  );
   const stripeReady =
     provider.stripeConnectedAccount?.chargesEnabled &&
     provider.stripeConnectedAccount?.payoutsEnabled;
@@ -91,6 +134,14 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
     pricingJson: (r.pricingJson as Record<string, number> | null) ?? null,
   }));
   const groupedCoverageAreas = groupPostcodePrefixes(provider.coverageAreas.map((area) => area.postcodePrefix));
+  const documentAvailability = new Map<string, boolean>();
+  await Promise.all(
+    provider.documents.map(async (document) => {
+      const candidates = getProviderDocumentCandidates(provider.id, document.storagePath, document.storedFileName);
+      const exists = (await Promise.all(candidates.map(fileExists))).some(Boolean);
+      documentAvailability.set(document.id, exists);
+    }),
+  );
 
   return (
     <div className="space-y-6">
@@ -124,6 +175,20 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
         <p className="text-sm text-green-600">
           {status.replace(/_/g, " ")}.
         </p>
+      )}
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p className="font-medium">Approval not saved</p>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {approvalBlockers.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-medium">Still blocking approval</p>
+          <p>{approvalBlockers.map((item) => `${item.label}: ${item.detail}`).join(" | ")}</p>
+        </div>
       )}
 
       {/* Summary stats */}
@@ -289,11 +354,16 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                         <div>
                           <p className="font-medium text-sm">{document.label}</p>
                           <a
-                            href={document.storagePath}
-                            className="text-xs text-primary underline-offset-4 hover:underline"
+                            href={documentAvailability.get(document.id) ? buildProviderDocumentUrl(provider.id, document.storagePath) : undefined}
+                            target={documentAvailability.get(document.id) ? "_blank" : undefined}
+                            rel={documentAvailability.get(document.id) ? "noopener noreferrer" : undefined}
+                            className={`text-xs underline-offset-4 ${documentAvailability.get(document.id) ? "text-primary hover:underline" : "text-muted-foreground cursor-not-allowed no-underline"}`}
                           >
                             {document.fileName}
                           </a>
+                          {!documentAvailability.get(document.id) ? (
+                            <p className="text-[11px] text-red-600 mt-1">File missing from storage. Ask the provider to re-upload this document.</p>
+                          ) : null}
                         </div>
                         <Badge variant={docStatusBadgeVariant(document.status)}>
                           {document.status}

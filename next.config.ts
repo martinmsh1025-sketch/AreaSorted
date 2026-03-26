@@ -4,12 +4,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
   experimental: {
+    proxyClientMaxBodySize: "30mb",
     serverActions: {
-      // H-30 FIX: Reduced from 30MB to 4MB — server actions don't need large bodies
-      // (file uploads go through uploadthing, not server actions)
-      // M-13 FIX: Raised to 10MB — provider onboarding document uploads go through
-      // server actions (saveProviderDocumentUploads) and can be up to 10MB per file.
-      bodySizeLimit: "10mb",
+      // Provider onboarding document uploads go through server actions.
+      // We allow up to 30MB total because onboarding can include multiple
+      // PDF/image files and the upload layer already enforces per-file limits.
+      bodySizeLimit: "30mb",
     },
   },
   // M-1 FIX: Security headers to protect against common web vulnerabilities

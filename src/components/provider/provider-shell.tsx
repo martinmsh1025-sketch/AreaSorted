@@ -135,6 +135,10 @@ export function ProviderShell({
   navGroups,
   logoutAction,
 }: ProviderShellProps) {
+  if (!providerName) {
+    return <>{children}</>;
+  }
+
   return (
     <SidebarProvider>
       <Sidebar variant="inset" collapsible="icon">

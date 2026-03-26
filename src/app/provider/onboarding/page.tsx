@@ -26,10 +26,12 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
   const status = typeof params.status === "string" ? params.status : "";
   const error = typeof params.error === "string" ? decodeURIComponent(params.error) : "";
   const currentStep = Number.parseInt(typeof params.step === "string" ? params.step : "1", 10);
-  const lockedCategoryKey = session.latestInvite?.approvedCategoryKey || provider.serviceCategories[0]?.categoryKey || null;
+  const isInviteFlow = Boolean(session.latestInvite?.approvedCategoryKey);
+  const lockedCategoryKey = isInviteFlow ? session.latestInvite?.approvedCategoryKey || null : null;
   const lockedCategory = getProviderCategoryByKey(lockedCategoryKey || "");
   const inviteServiceKeys = Array.isArray(session.latestInvite?.approvedServiceKeysJson) ? session.latestInvite?.approvedServiceKeysJson.map((item) => String(item)) : [];
   const onboardingMetadata = getProviderOnboardingMetadata(provider.stripeRequirementsJson);
+  const businessType = onboardingMetadata.businessType;
   const savedServiceKeys = provider.stripeRequirementsJson && typeof provider.stripeRequirementsJson === "object" && !Array.isArray(provider.stripeRequirementsJson) && Array.isArray((provider.stripeRequirementsJson as { approvedServiceKeys?: JsonValue }).approvedServiceKeys)
     ? ((provider.stripeRequirementsJson as { approvedServiceKeys: JsonValue[] }).approvedServiceKeys || []).map((item) => String(item)).filter(Boolean)
     : [];
@@ -42,7 +44,12 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
           provider.registeredAddress?.trim() &&
           (provider.contactEmail?.trim() || session.user.email?.trim()) &&
           provider.phone?.trim() &&
-          (onboardingMetadata.businessType === "sole_trader" || provider.companyNumber?.trim()),
+          (
+            businessType === "sole_trader"
+              ? (typeof onboardingMetadata.dateOfBirth === "string" && onboardingMetadata.dateOfBirth.trim()) &&
+                (typeof onboardingMetadata.nationality === "string" && onboardingMetadata.nationality.trim())
+              : provider.companyNumber?.trim()
+          ),
         ),
       };
     }
@@ -50,7 +57,7 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
     if (item.key === "categories") {
       return {
         ...item,
-        complete: Boolean(lockedCategory?.key && savedServiceKeys.length > 0),
+        complete: Boolean(provider.serviceCategories.length > 0 && savedServiceKeys.length > 0),
         detail: savedServiceKeys.length > 0 ? item.detail : "Choose at least one service and save",
       };
     }

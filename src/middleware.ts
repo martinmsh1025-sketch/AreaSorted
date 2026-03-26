@@ -30,6 +30,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/provider")) {
     const publicProviderPaths = [
       "/provider/login",
+      "/provider/apply",
       "/provider/forgot-password",
       "/provider/reset-password",
       "/provider/invite",

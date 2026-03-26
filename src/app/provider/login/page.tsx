@@ -4,8 +4,7 @@ import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { AlertCircle, LogIn } from "lucide-react";
+import { AlertCircle, ArrowRight, LogIn } from "lucide-react";
 
 type ProviderLoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -24,18 +23,42 @@ export default async function ProviderLoginPage({ searchParams }: ProviderLoginP
         : "";
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="space-y-1 text-center">
-          <div className="mx-auto flex size-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-            <LogIn className="size-5" />
+    <div className="provider-auth-shell">
+      <div className="provider-auth-panel provider-auth-grid">
+        <div className="provider-auth-hero">
+          <div className="provider-auth-eyebrow">
+            <LogIn className="size-3.5" />
+            AreaSorted provider portal
           </div>
-          <h1 className="mt-3 text-xl font-semibold tracking-tight">Provider sign in</h1>
-          <p className="text-sm text-muted-foreground">Use the email and password linked to your invite.</p>
+          <h1 className="provider-auth-title">Turn availability, service coverage, and pricing into repeat work.</h1>
+          <p className="provider-auth-copy">
+            AreaSorted helps independent providers turn their setup into real bookings. Manage your service areas, availability, pricing, and payout status from one place.
+          </p>
+          <div className="provider-auth-aside">
+            <div className="provider-auth-note">
+              <strong>Why providers use AreaSorted</strong>
+              Quote requests, booking confirmation, account setup, and payout visibility all stay in one structured portal.
+            </div>
+            <div className="provider-auth-note">
+              <strong>New provider?</strong>
+              Start with the public onboarding link, verify your email, and create your password before signing in.
+            </div>
+          </div>
         </div>
 
-        <Card>
-          <CardContent className="pt-6">
+        <Card className="provider-auth-card">
+          <CardHeader className="space-y-3">
+            <div className="flex size-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm shadow-blue-900/25">
+              <LogIn className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl tracking-tight">Sign in to your provider account</CardTitle>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Already onboarded? Use your provider email and password here.
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5 pt-0">
             <form action={providerLoginAction} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -59,25 +82,28 @@ export default async function ProviderLoginPage({ searchParams }: ProviderLoginP
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center justify-center rounded-lg h-9 px-4 text-sm font-medium transition-colors"
               />
             </form>
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-4 text-center dark:border-blue-900 dark:bg-blue-950/20">
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-50">Need to apply first?</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Use the public provider onboarding link if you have not yet created your provider account.
+                </p>
+              </div>
+              <a
+                href="/provider/apply"
+                className="inline-flex h-10 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-slate-950 transition-colors hover:bg-blue-50"
+              >
+                Apply now
+                <ArrowRight className="ml-1.5 size-4" />
+              </a>
+            </div>
+            <div className="text-center">
+              <Link href="/provider/forgot-password" className="text-xs text-muted-foreground hover:underline">
+                Forgot your password?
+              </Link>
+            </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-muted/50">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs font-medium text-muted-foreground mb-2">First time here?</p>
-            <ol className="space-y-1 text-xs text-muted-foreground">
-              <li className="flex gap-2"><span className="font-semibold text-foreground">1.</span> Open your invite link</li>
-              <li className="flex gap-2"><span className="font-semibold text-foreground">2.</span> Verify your email</li>
-              <li className="flex gap-2"><span className="font-semibold text-foreground">3.</span> Create your password</li>
-            </ol>
-          </CardContent>
-        </Card>
-
-        <div className="text-center">
-          <Button variant="link" size="sm" render={<Link href="/provider/forgot-password" />} className="text-xs text-muted-foreground">
-            Forgot your password?
-          </Button>
-        </div>
       </div>
     </div>
   );
