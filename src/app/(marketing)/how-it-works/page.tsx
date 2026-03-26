@@ -90,10 +90,22 @@ export default function HowItWorksPage() {
       },
     })),
   };
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How AreaSorted booking works",
+    description: "Check postcode coverage, see a quote, continue securely, and wait for provider confirmation.",
+    step: steps.map((step) => ({
+      "@type": "HowToStep",
+      name: step.title,
+      text: step.description,
+    })),
+  };
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
 
       <section className="section">
         <div className="container" style={{ maxWidth: 860 }}>

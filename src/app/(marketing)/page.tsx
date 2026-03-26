@@ -318,7 +318,7 @@ export default function HomePage() {
     setSubmitMessage("");
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 350));
-    router.push(`/quote?${new URLSearchParams({ postcode: cleanPostcode, line1, line2, city }).toString()}`);
+    router.push(`/quote?${new URLSearchParams({ postcode: cleanPostcode, line1, line2, city, step: "2" }).toString()}`);
   }
 
   return (
@@ -557,6 +557,44 @@ export default function HomePage() {
               </button>
             );
           })}
+        </div>
+      </section>
+
+      <section className="homepage-section js-reveal-section">
+        <div className="homepage-section-head homepage-section-head-center">
+          <div className="eyebrow">Advice</div>
+          <h2 className="homepage-section-title">Booking advice before you commit</h2>
+        </div>
+        <div className="section-card-grid">
+          {[
+            {
+              href: "/advice/how-much-does-cleaning-cost-in-london",
+              title: "How much does cleaning cost in London?",
+              copy: "Understand what changes the final quote before you checkout.",
+            },
+            {
+              href: "/advice/what-to-check-before-booking-a-handyman-in-london",
+              title: "What to check before booking a handyman",
+              copy: "Avoid mismatched tasks, missing fittings, and access surprises.",
+            },
+            {
+              href: "/advice/what-customers-should-know-about-temporary-card-holds",
+              title: "What a temporary card hold actually means",
+              copy: "See the difference between a hold and a captured payment.",
+            },
+          ].map((item) => (
+            <article key={item.href} className="panel card span-4 homepage-info-card">
+              <div className="eyebrow">Advice</div>
+              <strong style={{ marginTop: "0.5rem", display: "block" }}>{item.title}</strong>
+              <p className="lead" style={{ fontSize: "0.98rem", margin: "0.55rem 0 0" }}>{item.copy}</p>
+              <div style={{ marginTop: "0.9rem" }}>
+                <a href={item.href} style={{ color: "var(--color-brand)", fontWeight: 700 }}>Read article</a>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="button-row" style={{ justifyContent: "center", marginTop: "1.5rem" }}>
+          <button type="button" className="button button-secondary" onClick={() => router.push("/advice")}>Browse advice hub</button>
         </div>
       </section>
     </main>

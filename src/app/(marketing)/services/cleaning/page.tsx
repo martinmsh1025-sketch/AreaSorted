@@ -58,10 +58,30 @@ export default function CleaningServicePage() {
       },
     })),
   };
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Cleaning services in London",
+    areaServed: "London",
+    provider: {
+      "@type": "Organization",
+      name: "AreaSorted",
+    },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "GBP",
+      priceSpecification: {
+        "@type": "PriceSpecification",
+        minPrice: startingPrice,
+        priceCurrency: "GBP",
+      },
+    },
+  };
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
 
       <section className="section">
         <div className="container" style={{ maxWidth: 860 }}>

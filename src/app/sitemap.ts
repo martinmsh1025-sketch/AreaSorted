@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { boroughPages } from "@/lib/seo/borough-pages";
+import { advicePosts } from "@/lib/seo/advice-posts";
 
 function getSafeBaseUrl() {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -116,6 +117,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     {
+      url: `${BASE_URL}/advice`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+    {
       url: `${BASE_URL}/privacy-policy`,
       lastModified: now,
       changeFrequency: "yearly",
@@ -187,5 +194,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.75,
   }));
 
-  return [...staticPages, ...boroughLandingPages, ...serviceAreaPages, ...authPages];
+  const advicePages: MetadataRoute.Sitemap = advicePosts.map((post) => ({
+    url: `${BASE_URL}/advice/${post.slug}`,
+    lastModified: new Date(post.publishedAt),
+    changeFrequency: "monthly",
+    priority: 0.65,
+  }));
+
+  return [...staticPages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...authPages];
 }
