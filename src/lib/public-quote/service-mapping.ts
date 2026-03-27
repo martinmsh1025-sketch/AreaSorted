@@ -1,4 +1,5 @@
 import { jobTypeCatalog, serviceCatalog } from "@/lib/service-catalog";
+import type { ServiceValue } from "@/lib/service-catalog";
 
 export const publicCategoryOptions = [
   { key: "CLEANING", label: "Cleaning", serviceValue: "cleaning" },
@@ -23,8 +24,12 @@ export function listJobTypesForCategory(categoryKey: string) {
   return jobTypeCatalog.filter((job) => job.service === serviceValue);
 }
 
-export function listPublicCategories() {
-  return publicCategoryOptions.map((item) => ({
+export function listPublicCategories(enabledServiceValues?: ServiceValue[]) {
+  const filtered = enabledServiceValues?.length
+    ? publicCategoryOptions.filter((item) => enabledServiceValues.includes(item.serviceValue as ServiceValue))
+    : publicCategoryOptions;
+
+  return filtered.map((item) => ({
     ...item,
     strapline: serviceCatalog.find((service) => service.value === item.serviceValue)?.strapline || item.label,
   }));

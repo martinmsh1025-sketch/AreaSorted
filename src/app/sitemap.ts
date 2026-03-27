@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { boroughPages } from "@/lib/seo/borough-pages";
 import { advicePosts } from "@/lib/seo/advice-posts";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 function getSafeBaseUrl() {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -15,8 +16,9 @@ function getSafeBaseUrl() {
 
 const BASE_URL = getSafeBaseUrl();
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const enabledServiceValues = await getEnabledServiceValues();
 
   // Static marketing pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -42,42 +44,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${BASE_URL}/how-it-works`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/services/cleaning`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/services/handyman`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/services/pest-control`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/services/furniture-assembly`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/services/waste-removal`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/services/garden-maintenance`,
-      lastModified: now,
-      changeFrequency: "weekly",
       priority: 0.8,
     },
     {
@@ -183,16 +149,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  const serviceAreaPages: MetadataRoute.Sitemap = [
-    `${BASE_URL}/london/camden/cleaning`,
-    `${BASE_URL}/london/islington/cleaning`,
-    `${BASE_URL}/london/westminster/cleaning`,
-  ].map((url) => ({
-    url,
-    lastModified: now,
-    changeFrequency: "monthly" as const,
-    priority: 0.75,
-  }));
+  const servicePages: MetadataRoute.Sitemap = [
+    { service: "cleaning", path: "/services/cleaning" },
+    { service: "handyman", path: "/services/handyman" },
+    { service: "pest-control", path: "/services/pest-control" },
+    { service: "furniture-assembly", path: "/services/furniture-assembly" },
+    { service: "waste-removal", path: "/services/waste-removal" },
+    { service: "garden-maintenance", path: "/services/garden-maintenance" },
+  ]
+    .filter((entry) => enabledServiceValues.includes(entry.service as (typeof enabledServiceValues)[number]))
+    .map((entry) => ({
+      url: `${BASE_URL}${entry.path}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+
+  const serviceAreaPages: MetadataRoute.Sitemap = enabledServiceValues.includes("cleaning")
+    ? [
+        `${BASE_URL}/london/camden/cleaning`,
+        `${BASE_URL}/london/islington/cleaning`,
+        `${BASE_URL}/london/westminster/cleaning`,
+      ].map((url) => ({
+        url,
+        lastModified: now,
+        changeFrequency: "monthly" as const,
+        priority: 0.75,
+      }))
+    : [];
 
   const advicePages: MetadataRoute.Sitemap = advicePosts.map((post) => ({
     url: `${BASE_URL}/advice/${post.slug}`,
@@ -201,5 +185,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.65,
   }));
 
-  return [...staticPages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...authPages];
+  return [...staticPages, ...servicePages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...authPages];
 }

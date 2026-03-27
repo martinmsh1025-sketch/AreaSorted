@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import { jobTypeCatalog } from "@/lib/service-catalog";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 const wasteRemovalJobs = jobTypeCatalog.filter((job) => job.service === "waste-removal");
 const startingPrice = Math.min(...wasteRemovalJobs.map((job) => job.startingPrice));
@@ -45,7 +47,9 @@ const faqs = [
   },
 ];
 
-export default function WasteRemovalServicePage() {
+export default async function WasteRemovalServicePage() {
+  const enabledServiceValues = await getEnabledServiceValues();
+  if (!enabledServiceValues.includes("waste-removal")) notFound();
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

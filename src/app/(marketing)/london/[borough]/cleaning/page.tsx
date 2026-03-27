@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import { jobTypeCatalog } from "@/lib/service-catalog";
 import { getBoroughPage } from "@/lib/seo/borough-pages";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 type Props = {
   params: Promise<{ borough: string }>;
@@ -47,6 +48,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BoroughCleaningPage({ params }: Props) {
+  const enabledServiceValues = await getEnabledServiceValues();
+  if (!enabledServiceValues.includes("cleaning")) notFound();
+
   const { borough } = await params;
   if (!isSupportedBorough(borough)) notFound();
 

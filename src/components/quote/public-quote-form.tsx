@@ -16,6 +16,7 @@ import {
 import { UploadDropzone } from "@/lib/uploadthing";
 import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 import { GoogleSignInButton } from "@/components/customer/google-signin-button";
+import type { ServiceValue } from "@/lib/service-catalog";
 
 type PublicCategoryKey = ReturnType<typeof listPublicCategories>[number]["key"];
 
@@ -120,10 +121,10 @@ function getSlotAvailability(date: string, time: string): SlotAvailability {
 
 /* ── Main component ── */
 
-export function PublicQuoteForm() {
+export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues: ServiceValue[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const categories = listPublicCategories();
+  const categories = listPublicCategories(enabledServiceValues);
   const requestedStep = Number(searchParams.get("step") || 1);
   const initialStep = Number.isFinite(requestedStep) ? Math.min(STEPS.length - 1, Math.max(0, requestedStep - 1)) : 0;
 

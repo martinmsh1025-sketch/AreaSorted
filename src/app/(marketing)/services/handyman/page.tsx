@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import { jobTypeCatalog } from "@/lib/service-catalog";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 const handymanJobs = jobTypeCatalog.filter((job) => job.service === "handyman");
 const startingPrice = Math.min(...handymanJobs.map((job) => job.startingPrice));
@@ -45,7 +47,9 @@ const faqs = [
   },
 ];
 
-export default function HandymanServicePage() {
+export default async function HandymanServicePage() {
+  const enabledServiceValues = await getEnabledServiceValues();
+  if (!enabledServiceValues.includes("handyman")) notFound();
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

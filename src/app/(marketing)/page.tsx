@@ -104,12 +104,12 @@ function StepThreeIcon({ className = "" }: IconProps) {
 }
 
 const serviceItems = [
-  { label: "Cleaning", description: "Regular, deep, and move-out cleaning.", image: "/images/homepage/service-pic-notext/cleaning.png" },
-  { label: "Pest control", description: "Inspections and common pest treatments.", image: "/images/homepage/service-pic-notext/pest-control.png" },
-  { label: "Handyman", description: "Repairs, fittings, and home fixes.", image: "/images/homepage/service-pic-notext/handyman.png" },
-  { label: "Furniture assembly", description: "Flat-pack assembly and setup work.", image: "/images/homepage/service-pic-notext/furniture-assembly.png" },
-  { label: "Waste removal", description: "Bulky waste, rubbish, and clearances.", image: "/images/homepage/service-pic-notext/waste-removal.png" },
-  { label: "Garden maintenance", description: "Lawn care, tidy-ups, and trimming.", image: "/images/homepage/service-pic-notext/garden-maintenance.png" },
+  { serviceValue: "cleaning", label: "Cleaning", description: "Regular, deep, and move-out cleaning.", image: "/images/homepage/service-pic-notext/cleaning.png" },
+  { serviceValue: "pest-control", label: "Pest control", description: "Inspections and common pest treatments.", image: "/images/homepage/service-pic-notext/pest-control.png" },
+  { serviceValue: "handyman", label: "Handyman", description: "Repairs, fittings, and home fixes.", image: "/images/homepage/service-pic-notext/handyman.png" },
+  { serviceValue: "furniture-assembly", label: "Furniture assembly", description: "Flat-pack assembly and setup work.", image: "/images/homepage/service-pic-notext/furniture-assembly.png" },
+  { serviceValue: "waste-removal", label: "Waste removal", description: "Bulky waste, rubbish, and clearances.", image: "/images/homepage/service-pic-notext/waste-removal.png" },
+  { serviceValue: "garden-maintenance", label: "Garden maintenance", description: "Lawn care, tidy-ups, and trimming.", image: "/images/homepage/service-pic-notext/garden-maintenance.png" },
 ];
 
 const howItWorks = [
@@ -133,6 +133,7 @@ const howItWorks = [
 export default function HomePage() {
   const router = useRouter();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://areasorted.com";
+  const [enabledServiceValues, setEnabledServiceValues] = useState<string[]>(serviceItems.map((item) => item.serviceValue));
   const [postcode, setPostcode] = useState("");
   const [addressId, setAddressId] = useState("");
   const [addresses, setAddresses] = useState<Array<{ ID: string; Line: string }>>([]);
@@ -141,6 +142,24 @@ export default function HomePage() {
   const [manualAddress2, setManualAddress2] = useState("");
   const [manualCity, setManualCity] = useState("London");
   const [submitMessage, setSubmitMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/public-config")
+      .then((response) => response.json())
+      .then((data) => {
+        if (!active) return;
+        if (Array.isArray(data.enabledServiceValues) && data.enabledServiceValues.length > 0) {
+          setEnabledServiceValues(data.enabledServiceValues);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const visibleServiceItems = serviceItems.filter((item) => enabledServiceValues.includes(item.serviceValue));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
@@ -264,7 +283,7 @@ export default function HomePage() {
     areaServed: ["Greater London"],
     description:
       "AreaSorted helps customers book trusted local services across London, including cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance.",
-    makesOffer: serviceItems.map((service) => ({
+    makesOffer: visibleServiceItems.map((service) => ({
       "@type": "Offer",
       itemOffered: {
         "@type": "Service",
@@ -437,7 +456,7 @@ export default function HomePage() {
           <h2 className="homepage-section-title">Services available in your area</h2>
         </div>
         <div className="section-card-grid">
-          {serviceItems.map((item) => {
+          {visibleServiceItems.map((item) => {
             return (
               <article key={item.label} className="panel card span-4 homepage-info-card homepage-service-card">
                 <div

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import { jobTypeCatalog } from "@/lib/service-catalog";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 const furnitureAssemblyJobs = jobTypeCatalog.filter((job) => job.service === "furniture-assembly");
 const startingPrice = Math.min(...furnitureAssemblyJobs.map((job) => job.startingPrice));
@@ -45,7 +47,9 @@ const faqs = [
   },
 ];
 
-export default function FurnitureAssemblyServicePage() {
+export default async function FurnitureAssemblyServicePage() {
+  const enabledServiceValues = await getEnabledServiceValues();
+  if (!enabledServiceValues.includes("furniture-assembly")) notFound();
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

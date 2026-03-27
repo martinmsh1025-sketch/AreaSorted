@@ -5,22 +5,33 @@ import { getSettingValue } from "@/lib/config/env";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { saveMarketplaceSettingAction } from "@/app/admin/pricing/actions";
+import { saveEnabledServiceCategoriesAction, saveMarketplaceSettingAction } from "@/app/admin/pricing/actions";
 import { BookingFeeForm } from "@/app/admin/pricing/booking-fee-form";
+import { ALL_SERVICE_VALUES } from "@/lib/service-catalog-settings";
+import { serviceCatalog } from "@/lib/service-catalog";
 
-export default async function AdminSettingsPage() {
+type AdminSettingsPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminSettingsPage({ searchParams }: AdminSettingsPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
 
   const prisma = getPrisma();
+  const query = (await searchParams) ?? {};
+  const status = typeof query.status === "string" ? query.status : "";
 
-  const [bookingFeeSetting, bookingFeeModeSetting, commissionSetting, settings] =
+  const [bookingFeeSetting, bookingFeeModeSetting, commissionSetting, enabledServicesSetting, settings] =
     await Promise.all([
       prisma.adminSetting.findUnique({ where: { key: "marketplace.booking_fee" } }),
       prisma.adminSetting.findUnique({ where: { key: "marketplace.booking_fee_mode" } }),
       prisma.adminSetting.findUnique({ where: { key: "marketplace.commission_percent" } }),
+      prisma.adminSetting.findUnique({ where: { key: "marketplace.enabled_service_categories" } }),
       prisma.adminSetting.findMany({ orderBy: { key: "asc" } }),
     ]);
+
+  const enabledServices = getSettingValue<string[]>(enabledServicesSetting, ALL_SERVICE_VALUES);
 
   return (
     <div className="space-y-6">
@@ -30,6 +41,12 @@ export default async function AdminSettingsPage() {
           Platform configuration and fee settings.
         </p>
       </div>
+
+      {status === "service_visibility_saved" ? (
+        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          Service visibility updated.
+        </div>
+      ) : null}
 
       {/* Platform fee settings */}
       <Card>
@@ -75,6 +92,42 @@ export default async function AdminSettingsPage() {
       </Card>
 
       {/* Raw settings overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Live service categories</CardTitle>
+          <CardDescription>
+            Control which service categories are visible in the customer portal and public SEO pages.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={saveEnabledServiceCategoriesAction} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {serviceCatalog.map((service) => (
+                <label key={service.value} className="flex items-start gap-3 rounded-lg border p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="enabledServices"
+                    value={service.value}
+                    defaultChecked={enabledServices.includes(service.value)}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <div className="font-medium text-sm">{service.label}</div>
+                    <p className="text-xs text-muted-foreground mt-1">{service.strapline}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <button
+              type="submit"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
+            >
+              Save service visibility
+            </button>
+          </form>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>All settings</CardTitle>

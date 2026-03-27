@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { deleteProviderPricingRule, toggleProviderPricingRule, savePricingAreaOverride, saveProviderPricingRule } from "@/lib/pricing/prisma-pricing";
 import { getPrisma } from "@/lib/db";
+import { ALL_SERVICE_VALUES } from "@/lib/service-catalog-settings";
 
 function parseNumber(value: FormDataEntryValue | null, fallback = 0) {
   const parsed = Number(value ?? fallback);
@@ -105,4 +106,29 @@ export async function saveMarketplaceSettingAction(formData: FormData) {
 
   revalidatePath("/admin/pricing");
   revalidatePath("/admin/settings");
+}
+
+export async function saveEnabledServiceCategoriesAction(formData: FormData) {
+  const authenticated = await isAdminAuthenticated();
+  if (!authenticated) redirect("/admin/login");
+
+  const prisma = getPrisma();
+  const selected = formData
+    .getAll("enabledServices")
+    .map((value) => String(value))
+    .filter((value): value is (typeof ALL_SERVICE_VALUES)[number] => ALL_SERVICE_VALUES.includes(value as (typeof ALL_SERVICE_VALUES)[number]));
+
+  const value = selected.length > 0 ? selected : [ALL_SERVICE_VALUES[0]];
+
+  await prisma.adminSetting.upsert({
+    where: { key: "marketplace.enabled_service_categories" },
+    update: { valueJson: { value } },
+    create: { key: "marketplace.enabled_service_categories", valueJson: { value } },
+  });
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/services");
+  revalidatePath("/quote");
+  revalidatePath("/");
+  redirect("/admin/settings?status=service_visibility_saved");
 }

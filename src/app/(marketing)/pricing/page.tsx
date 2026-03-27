@@ -6,6 +6,7 @@ import {
   propertyTypeOptions,
   urgencyOptions,
 } from "@/lib/service-catalog";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 export const metadata: Metadata = {
   title: "Pricing — Transparent Service Pricing",
@@ -55,7 +56,10 @@ const adjustments = [
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const enabledServiceValues = await getEnabledServiceValues();
+  const visibleServiceCatalog = serviceCatalog.filter((cat) => enabledServiceValues.includes(cat.value));
+  const visibleJobTypeCatalog = jobTypeCatalog.filter((job) => enabledServiceValues.includes(job.service));
   return (
     <main>
       {/* Hero */}
@@ -159,8 +163,8 @@ export default function PricingPage() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-            {serviceCatalog.map((cat) => {
-              const jobs = jobTypeCatalog
+            {visibleServiceCatalog.map((cat) => {
+              const jobs = visibleJobTypeCatalog
                 .filter((j) => j.service === cat.value)
                 .sort((a, b) => a.startingPrice - b.startingPrice);
               const lowestPrice = jobs[0]?.startingPrice ?? 0;

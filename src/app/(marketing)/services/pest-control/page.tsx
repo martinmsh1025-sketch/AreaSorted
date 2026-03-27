@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import { jobTypeCatalog } from "@/lib/service-catalog";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 const pestControlJobs = jobTypeCatalog.filter((job) => job.service === "pest-control");
 const startingPrice = Math.min(...pestControlJobs.map((job) => job.startingPrice));
@@ -45,7 +47,9 @@ const faqs = [
   },
 ];
 
-export default function PestControlServicePage() {
+export default async function PestControlServicePage() {
+  const enabledServiceValues = await getEnabledServiceValues();
+  if (!enabledServiceValues.includes("pest-control")) notFound();
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",

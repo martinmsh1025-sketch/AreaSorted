@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { serviceCatalog, jobTypeCatalog } from "@/lib/service-catalog";
+import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
 export const metadata: Metadata = {
   title: "Services — Cleaning, Pest Control, Handyman & More",
@@ -37,7 +38,10 @@ const detailedServicePages: Partial<Record<string, string>> = {
   "garden-maintenance": "/services/garden-maintenance",
 };
 
-export default function ServicesPage() {
+export default async function ServicesPage() {
+  const enabledServiceValues = await getEnabledServiceValues();
+  const visibleServiceCatalog = serviceCatalog.filter((cat) => enabledServiceValues.includes(cat.value));
+  const visibleJobTypeCatalog = jobTypeCatalog.filter((job) => enabledServiceValues.includes(job.service));
   return (
     <main>
       {/* Hero */}
@@ -55,8 +59,8 @@ export default function ServicesPage() {
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", marginTop: "1.25rem" }}>
             {[
-              `${serviceCatalog.length} service categories`,
-              `${jobTypeCatalog.length} bookable job types`,
+              `${visibleServiceCatalog.length} service categories`,
+              `${visibleJobTypeCatalog.length} bookable job types`,
               "Coverage across London",
             ].map((item) => (
               <span
@@ -89,9 +93,9 @@ export default function ServicesPage() {
       <section className="section muted-block">
         <div className="container">
           <div className="grid-3" style={{ gap: "1.2rem" }}>
-            {serviceCatalog.map((cat) => {
-              const jobCount = jobTypeCatalog.filter((j) => j.service === cat.value).length;
-              const prices = jobTypeCatalog.filter((j) => j.service === cat.value).map((j) => j.startingPrice);
+            {visibleServiceCatalog.map((cat) => {
+              const jobCount = visibleJobTypeCatalog.filter((j) => j.service === cat.value).length;
+              const prices = visibleJobTypeCatalog.filter((j) => j.service === cat.value).map((j) => j.startingPrice);
               const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
               return (
                 <a
@@ -124,8 +128,8 @@ export default function ServicesPage() {
       </section>
 
       {/* Detailed listings per category */}
-      {serviceCatalog.map((cat) => {
-        const jobs = jobTypeCatalog.filter((j) => j.service === cat.value);
+      {visibleServiceCatalog.map((cat) => {
+        const jobs = visibleJobTypeCatalog.filter((j) => j.service === cat.value);
         return (
           <section key={cat.value} id={cat.value} className="section">
             <div className="container">
@@ -242,7 +246,7 @@ export default function ServicesPage() {
         <div className="container" style={{ textAlign: "center", maxWidth: 660 }}>
           <h2 className="title">Ready to book?</h2>
           <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.6 }}>
-            Enter your postcode to check coverage and get an instant quote for any of the {jobTypeCatalog.length} services above.
+            Enter your postcode to check coverage and get an instant quote for any of the {visibleJobTypeCatalog.length} services above.
           </p>
           <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.6 }}>
             You can also review <Link href="/how-it-works" style={{ color: "var(--color-brand)", fontWeight: 600 }}>how booking works</Link>, compare <Link href="/services/cleaning" style={{ color: "var(--color-brand)", fontWeight: 600 }}>cleaning</Link>, <Link href="/services/handyman" style={{ color: "var(--color-brand)", fontWeight: 600 }}>handyman</Link>, or <Link href="/services/pest-control" style={{ color: "var(--color-brand)", fontWeight: 600 }}>pest control</Link> options, browse the <Link href="/advice" style={{ color: "var(--color-brand)", fontWeight: 600 }}>advice hub</Link>, or visit the <Link href="/faq" style={{ color: "var(--color-brand)", fontWeight: 600 }}>help centre</Link> before continuing.
