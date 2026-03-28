@@ -4,6 +4,7 @@ import { getEnv, getAppUrl } from "@/lib/config/env";
 import { createDirectChargeCheckoutSession } from "@/lib/stripe/connect";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { createProviderNotification } from "@/lib/providers/notifications";
+import { sendLoggedEmail } from "@/lib/notifications/logged-email";
 import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import { jobTypeCatalog } from "@/lib/service-catalog";
@@ -495,6 +496,10 @@ export async function createInstantBookingFromQuote(reference: string) {
     // Notify provider about new paid booking (mock path)
     try {
       if (booking.providerCompanyId) {
+        const providerRecord = await prisma.providerCompany.findUnique({
+          where: { id: booking.providerCompanyId },
+          select: { contactEmail: true, tradingName: true, legalName: true },
+        });
         const dateStr = booking.scheduledDate
           ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
           : "TBC";
@@ -507,6 +512,26 @@ export async function createInstantBookingFromQuote(reference: string) {
           link: `/provider/orders/${booking.id}`,
           bookingId: booking.id,
         });
+        if (providerRecord?.contactEmail) {
+          await sendLoggedEmail({
+            to: providerRecord.contactEmail,
+            subject: `New booking request awaiting confirmation — ${bookingReference}`,
+            text: [
+              `A new booking request is waiting for your confirmation.`,
+              "",
+              `Reference: ${bookingReference}`,
+              `Date: ${dateStr}`,
+              `Postcode: ${booking.servicePostcode}`,
+              scheduleOptions.length > 1 ? `Other schedule options: ${scheduleOptions.length - 1}` : "",
+              "",
+              `Open the order: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/provider/orders/${booking.id}`,
+            ].filter(Boolean).join("\n"),
+            templateCode: "provider_new_job_request",
+            bookingId: booking.id,
+            providerCompanyId: booking.providerCompanyId,
+            payload: { bookingReference },
+          });
+        }
       }
     } catch {
       // Non-critical

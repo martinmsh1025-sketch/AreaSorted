@@ -100,6 +100,11 @@ export default async function ProviderApplicationStatusPage({ searchParams }: Pr
               <p className="text-sm text-muted-foreground">
                 {getStatusDescription(provider.status)}
               </p>
+              {provider.onboardingSubmittedAt ? (
+                <p className="text-xs text-muted-foreground">
+                  Submitted on {new Date(provider.onboardingSubmittedAt).toLocaleString("en-GB")}
+                </p>
+              ) : null}
             </div>
           </div>
         </CardContent>

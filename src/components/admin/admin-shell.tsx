@@ -144,6 +144,14 @@ export function AdminShell({ children, adminEmail, logoutAction }: AdminShellPro
               Admin
             </Badge>
           </div>
+          <div className="ml-auto flex items-center gap-2">
+            <form action={logoutAction}>
+              <button type="submit" className="inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-xs font-medium text-muted-foreground hover:bg-muted">
+                <LogOut className="size-3.5" />
+                Log out
+              </button>
+            </form>
+          </div>
         </header>
         <main className="flex-1 p-4 sm:p-6">
           {children}

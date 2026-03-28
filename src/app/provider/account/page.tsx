@@ -1,5 +1,4 @@
 import { requireProviderAccountAccess } from "@/lib/provider-auth";
-import { providerLogoutAction } from "@/app/provider/login/actions";
 import { updateProviderProfileAction, updateProviderPasswordAction } from "./actions";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   CreditCard,
-  LogOut,
 } from "lucide-react";
 import { EditableProfileForm } from "@/components/provider/editable-profile-form";
 
@@ -121,15 +119,6 @@ export default async function ProviderAccountPage({ searchParams }: ProviderAcco
             <CreditCard className="size-4" />
             Payment Account
           </Link>
-          <form action={providerLogoutAction}>
-            <button
-              type="submit"
-              className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-            >
-              <LogOut className="size-4" />
-              Logout
-            </button>
-          </form>
         </div>
       </div>
     </div>

@@ -22,16 +22,18 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
   const query = (await searchParams) ?? {};
   const status = typeof query.status === "string" ? query.status : "";
 
-  const [bookingFeeSetting, bookingFeeModeSetting, commissionSetting, enabledServicesSetting, settings] =
+  const [bookingFeeSetting, bookingFeeModeSetting, commissionSetting, enabledServicesSetting, opsEmailSetting, settings] =
     await Promise.all([
       prisma.adminSetting.findUnique({ where: { key: "marketplace.booking_fee" } }),
       prisma.adminSetting.findUnique({ where: { key: "marketplace.booking_fee_mode" } }),
       prisma.adminSetting.findUnique({ where: { key: "marketplace.commission_percent" } }),
       prisma.adminSetting.findUnique({ where: { key: "marketplace.enabled_service_categories" } }),
+      prisma.adminSetting.findUnique({ where: { key: "marketplace.ops_notification_emails" } }),
       prisma.adminSetting.findMany({ orderBy: { key: "asc" } }),
     ]);
 
   const enabledServices = getSettingValue<string[]>(enabledServicesSetting, ALL_SERVICE_VALUES);
+  const opsEmails = getSettingValue<string>(opsEmailSetting, process.env.SUPPORT_EMAIL || "support@areasorted.com");
 
   return (
     <div className="space-y-6">
@@ -88,6 +90,33 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               </button>
             </form>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ops notification emails</CardTitle>
+          <CardDescription>
+            Use a comma-separated list of internal emails for provider applications, booking alerts, and reminder notifications.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action={saveMarketplaceSettingAction} className="space-y-3 max-w-2xl">
+            <input type="hidden" name="key" value="marketplace.ops_notification_emails" />
+            <div>
+              <Label htmlFor="opsEmails">Notification recipients</Label>
+              <Input id="opsEmails" name="value" defaultValue={opsEmails} />
+              <p className="text-xs text-muted-foreground mt-1">
+                Example: ops@areasorted.com, founder@areasorted.com
+              </p>
+            </div>
+            <button
+              type="submit"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
+            >
+              Save notification emails
+            </button>
+          </form>
         </CardContent>
       </Card>
 

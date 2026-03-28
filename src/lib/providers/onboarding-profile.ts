@@ -24,6 +24,7 @@ export type ProviderOnboardingMetadata = {
   workerCount?: string;
   dateOfBirth?: string;
   nationality?: string;
+  rightToWorkStatus?: string;
   businessAddress?: string;
   nationalInsuranceNumber?: string;
   utrNumber?: string;
@@ -60,6 +61,7 @@ export function getProviderOnboardingMetadata(value: JsonValue | null | undefine
     workerCount: typeof record?.workerCount === "string" ? record.workerCount : "",
     dateOfBirth: typeof record?.dateOfBirth === "string" ? record.dateOfBirth : "",
     nationality: typeof record?.nationality === "string" ? record.nationality : "",
+    rightToWorkStatus: typeof record?.rightToWorkStatus === "string" ? record.rightToWorkStatus : "",
     businessAddress: typeof record?.businessAddress === "string" ? record.businessAddress : "",
     nationalInsuranceNumber: typeof record?.nationalInsuranceNumber === "string" ? record.nationalInsuranceNumber : "",
     utrNumber: typeof record?.utrNumber === "string" ? record.utrNumber : "",

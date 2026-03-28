@@ -3,6 +3,7 @@ import { getPrisma } from "@/lib/db";
 import { getEnv } from "@/lib/config/env";
 import { cancelDirectChargePaymentIntent } from "@/lib/stripe/connect";
 import { ensurePayoutRecordForBooking, isProviderPayoutAutoReleaseEnabled, refreshPayoutRecordState } from "@/lib/payouts";
+import { sendLoggedEmail } from "@/lib/notifications/logged-email";
 
 // L-H FIX: Named timing constants instead of magic numbers
 const ABANDONED_BOOKING_CUTOFF_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -219,6 +220,124 @@ export async function GET(request: NextRequest) {
     }
     results.payoutEligible = payoutEligible;
     results.payoutReleased = payoutReleased;
+
+    // 6. Booking reminders (24h window)
+    const reminderWindowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000);
+    const reminderWindowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    const upcomingBookings = await prisma.booking.findMany({
+      where: {
+        bookingStatus: { in: ["ASSIGNED", "IN_PROGRESS"] },
+        scheduledDate: { gte: reminderWindowStart, lte: reminderWindowEnd },
+      },
+      select: {
+        id: true,
+        scheduledDate: true,
+        scheduledStartTime: true,
+        servicePostcode: true,
+        customer: { select: { email: true, firstName: true } },
+        marketplaceProviderCompany: { select: { id: true, contactEmail: true, tradingName: true, legalName: true } },
+        quoteRequest: { select: { reference: true, serviceKey: true } },
+      },
+      take: 200,
+    });
+    let customerReminders = 0;
+    let providerReminders = 0;
+    for (const booking of upcomingBookings) {
+      const alreadySent = await prisma.notificationLogV2.findMany({
+        where: {
+          bookingId: booking.id,
+          templateCode: { in: ["customer_booking_reminder_24h", "provider_booking_reminder_24h"] },
+        },
+        select: { templateCode: true },
+      });
+      const sentTemplates = new Set(alreadySent.map((item) => item.templateCode));
+
+      if (booking.customer?.email && !sentTemplates.has("customer_booking_reminder_24h")) {
+        await sendLoggedEmail({
+          to: booking.customer.email,
+          subject: `Booking reminder — ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
+          text: [
+            `Hi ${booking.customer.firstName},`,
+            "",
+            `This is a reminder that your booking is scheduled for tomorrow.`,
+            `Service: ${booking.quoteRequest?.serviceKey || "Service"}`,
+            `Date: ${new Date(booking.scheduledDate).toLocaleDateString("en-GB")}`,
+            `Time: ${booking.scheduledStartTime || "To be confirmed"}`,
+            `Postcode: ${booking.servicePostcode}`,
+          ].join("\n"),
+          templateCode: "customer_booking_reminder_24h",
+          bookingId: booking.id,
+        });
+        customerReminders += 1;
+      }
+
+      if (booking.marketplaceProviderCompany?.contactEmail && !sentTemplates.has("provider_booking_reminder_24h")) {
+        await sendLoggedEmail({
+          to: booking.marketplaceProviderCompany.contactEmail,
+          subject: `Job reminder — ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
+          text: [
+            `Reminder: you have an AreaSorted booking scheduled for tomorrow.`,
+            "",
+            `Reference: ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
+            `Date: ${new Date(booking.scheduledDate).toLocaleDateString("en-GB")}`,
+            `Time: ${booking.scheduledStartTime || "To be confirmed"}`,
+            `Postcode: ${booking.servicePostcode}`,
+          ].join("\n"),
+          templateCode: "provider_booking_reminder_24h",
+          bookingId: booking.id,
+          providerCompanyId: booking.marketplaceProviderCompany.id,
+        });
+        providerReminders += 1;
+      }
+    }
+    results.customerReminders = customerReminders;
+    results.providerReminders = providerReminders;
+
+    // 7. Unfinished onboarding reminders
+    const onboardingCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const onboardingProviders = await prisma.providerCompany.findMany({
+      where: {
+        status: { in: ["EMAIL_VERIFICATION_PENDING", "PASSWORD_SETUP_PENDING", "ONBOARDING_IN_PROGRESS", "CHANGES_REQUESTED"] },
+        updatedAt: { lt: onboardingCutoff },
+      },
+      select: {
+        id: true,
+        contactEmail: true,
+        legalName: true,
+        status: true,
+        updatedAt: true,
+      },
+      take: 200,
+    });
+
+    let onboardingReminders = 0;
+    for (const provider of onboardingProviders) {
+      const alreadySent = await prisma.notificationLogV2.findFirst({
+        where: {
+          providerCompanyId: provider.id,
+          templateCode: "provider_onboarding_reminder",
+          createdAt: { gte: onboardingCutoff },
+        },
+      });
+      if (alreadySent || !provider.contactEmail) continue;
+
+      await sendLoggedEmail({
+        to: provider.contactEmail,
+        subject: "Complete your AreaSorted provider onboarding",
+        text: [
+          `Hi,`,
+          "",
+          `Your provider application is still incomplete and waiting for the next step.`,
+          `Current status: ${provider.status}`,
+          "",
+          `Continue here: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/provider/onboarding`,
+        ].join("\n"),
+        templateCode: "provider_onboarding_reminder",
+        providerCompanyId: provider.id,
+      });
+      onboardingReminders += 1;
+    }
+    results.onboardingReminders = onboardingReminders;
 
     // M-3 FIX: Don't return internal cleanup counts — only return generic OK
     if (process.env.NODE_ENV !== "production") {

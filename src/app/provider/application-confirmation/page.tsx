@@ -60,6 +60,11 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
         <div className="space-y-1">
           <h1 className="text-xl font-semibold tracking-tight">Confirm your application</h1>
           <p className="text-sm text-muted-foreground">Review your details before submitting for review.</p>
+          {provider.onboardingSubmittedAt ? (
+            <p className="text-xs text-muted-foreground">
+              Last submitted on {new Date(provider.onboardingSubmittedAt).toLocaleString("en-GB")}
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <ProviderStatusBadge status={provider.status} />
@@ -130,6 +135,7 @@ export default async function ProviderApplicationConfirmationPage({ searchParams
             {businessType === "company" ? <div className="flex justify-between"><span className="text-muted-foreground">Company number</span><span className="font-medium">{provider.companyNumber || "Missing"}</span></div> : null}
             <div className="flex justify-between"><span className="text-muted-foreground">Email</span><span className="font-medium">{provider.contactEmail || session.user.email}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Phone</span><span className="font-medium">{provider.phone || "Missing"}</span></div>
+            {businessType === "sole_trader" ? <div className="flex justify-between"><span className="text-muted-foreground">Right to work</span><span className="font-medium">{onboardingMetadata.rightToWorkStatus || "Missing"}</span></div> : null}
             <div className="flex justify-between"><span className="text-muted-foreground">Address</span><span className="max-w-[200px] text-right font-medium">{provider.registeredAddress || "Missing"}</span></div>
             <div className="pt-2">
               <Button variant="outline" size="sm" render={<Link href="/provider/onboarding?step=1" />}>

@@ -16,8 +16,8 @@ export const providerDocumentDefinitions = [
   {
     key: "insurance_proof",
     label: "Insurance proof",
-    requiredFor: ["company", "sole_trader"] as ProviderBusinessType[],
-    helperText: "Required where your service category needs active insurance cover.",
+    requiredFor: ["company"] as ProviderBusinessType[],
+    helperText: "Required for limited companies. Sole traders can upload insurance optionally if they have it.",
   },
   {
     key: "dbs_certificate",

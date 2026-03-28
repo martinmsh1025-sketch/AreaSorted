@@ -4,7 +4,6 @@ import type { JsonValue } from "@prisma/client/runtime/library";
 import { useMemo, useState } from "react";
 import { Check, Circle, Upload, FileText, AlertCircle, ChevronRight, ChevronLeft, Building2, Briefcase, MapPin, FileCheck } from "lucide-react";
 import { ProviderStatusBadge } from "@/components/providers/status-badge";
-import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { getPostcodesForCouncils, londonCouncilOptions } from "@/lib/providers/london-coverage";
 import { getProviderDocuments, providerDocumentAcceptedFileTypes, providerDocumentAcceptedFormatsLabel, providerDocumentMaxFileSizeBytes, providerDocumentTotalMaxSizeBytes } from "@/lib/providers/onboarding-config";
 import { getProviderCategoryByKey, providerServiceCatalog } from "@/lib/providers/service-catalog-mapping";
@@ -15,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAgreementContent, onboardingBusinessTypeOptions } from "@/lib/providers/onboarding-legal";
 import type { ProviderOnboardingMetadata } from "@/lib/providers/onboarding-profile";
+import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
 
 type ChecklistItem = {
   key: string;
@@ -113,6 +113,12 @@ const nationalityOptions = [
 const companyCountryOptions = ["United Kingdom", "Ireland", "Other"] as const;
 const companyTypeOptions = ["Private Limited Company (Ltd)", "LLP", "Partnership", "Other"] as const;
 const hmrcStatusOptions = ["Registered", "In progress", "Not registered yet"] as const;
+const rightToWorkOptions = [
+  "British or Irish citizen",
+  "EU or settled status holder",
+  "Visa or permit holder",
+  "Will provide documents during review",
+] as const;
 const authorityOptions = ["Director", "Owner", "Manager", "Authorised signatory", "Other"] as const;
 const workerCountOptions = ["1", "2-5", "6-10", "11-25", "25+"] as const;
 const phoneCountryOptions = [
@@ -433,6 +439,7 @@ export function ProviderOnboardingClient({
   const [workerCount, setWorkerCount] = useState(onboardingMetadata.workerCount || "");
   const [dateOfBirth, setDateOfBirth] = useState(onboardingMetadata.dateOfBirth || "");
   const [nationality, setNationality] = useState(onboardingMetadata.nationality || "");
+  const [rightToWorkStatus, setRightToWorkStatus] = useState(onboardingMetadata.rightToWorkStatus || "");
   const [businessAddress, setBusinessAddress] = useState(onboardingMetadata.businessAddress || "");
   const [nationalInsuranceNumber, setNationalInsuranceNumber] = useState(onboardingMetadata.nationalInsuranceNumber || "");
   const [utrNumber, setUtrNumber] = useState(onboardingMetadata.utrNumber || "");
@@ -451,9 +458,10 @@ export function ProviderOnboardingClient({
   );
   const isReviewSubmitted = ["SUBMITTED_FOR_REVIEW", "UNDER_REVIEW", "APPROVED", "CHANGES_REQUESTED", "REJECTED"].includes(provider.status);
   const availablePostcodes = useMemo(() => getPostcodesForCouncils(selectedCouncils), [selectedCouncils]);
+  const groupedAvailablePostcodes = useMemo(() => groupPostcodePrefixes(availablePostcodes), [availablePostcodes]);
   const takenPostcodesSet = useMemo(() => new Set(takenPostcodes), [takenPostcodes]);
   const profileComplete = businessType === "sole_trader"
-    ? Boolean(legalName.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && dateOfBirth.trim() && nationality.trim())
+    ? Boolean(legalName.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && dateOfBirth.trim() && nationality.trim() && rightToWorkStatus.trim())
     : Boolean(legalName.trim() && companyNumber.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && authorisedSignatoryName.trim() && authorisedSignatoryEmail.trim());
   const servicesComplete = selectedCategories.length > 0 && selectedServices.length > 0;
   const coverageComplete = selectedPostcodes.length > 0;
@@ -612,6 +620,7 @@ export function ProviderOnboardingClient({
           <input type="hidden" name="workerCount" value={workerCount} />
           <input type="hidden" name="dateOfBirth" value={dateOfBirth} />
           <input type="hidden" name="nationality" value={nationality} />
+          <input type="hidden" name="rightToWorkStatus" value={rightToWorkStatus} />
           <input type="hidden" name="businessAddress" value={businessAddress} />
           <input type="hidden" name="nationalInsuranceNumber" value={nationalInsuranceNumber} />
           <input type="hidden" name="utrNumber" value={utrNumber} />
@@ -703,6 +712,14 @@ export function ProviderOnboardingClient({
                       {nationalityOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                     </select>
                     <p className="provider-field-help">If your nationality is not listed, choose Other and we can confirm later during review.</p>
+                  </div>
+                  <div className="provider-field-stack sm:col-span-2">
+                    <Label htmlFor="rightToWorkStatus">Right to work in the UK <span className="text-red-500">*</span></Label>
+                    <select id="rightToWorkStatus" value={rightToWorkStatus} onChange={(event) => setRightToWorkStatus(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                      <option value="">Select your status</option>
+                      {rightToWorkOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                    <p className="provider-field-help">We use this to confirm whether you can legally take self-employed work in the UK.</p>
                   </div>
                 </div>
               ) : (
@@ -965,14 +982,24 @@ export function ProviderOnboardingClient({
                 <Label>Postcodes <span className="text-red-500">*</span></Label>
                 {selectedCouncils.length ? (
                   <>
-                    <ChipSelector
-                      options={availablePostcodes}
-                      selected={selectedPostcodes}
-                      disabled={!canEdit}
-                      taken={takenPostcodesSet}
-                      competitors={competitorPostcodes}
-                      onToggle={(value) => setSelectedPostcodes(toggleValue(selectedPostcodes, value))}
-                    />
+                    <div className="space-y-3">
+                      {groupedAvailablePostcodes.map((group) => (
+                        <div key={group.areaKey} className="rounded-lg border p-3">
+                          <div className="mb-2 flex items-center justify-between gap-2">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.areaName}</div>
+                            <Badge variant="outline" className="text-[10px]">{group.prefixes.length}</Badge>
+                          </div>
+                          <ChipSelector
+                            options={group.prefixes}
+                            selected={selectedPostcodes}
+                            disabled={!canEdit}
+                            taken={takenPostcodesSet}
+                            competitors={competitorPostcodes}
+                            onToggle={(value) => setSelectedPostcodes(toggleValue(selectedPostcodes, value))}
+                          />
+                        </div>
+                      ))}
+                    </div>
                     {Object.keys(competitorPostcodes).length > 0 && (
                       <p className="text-xs text-muted-foreground">
                         Postcodes showing a provider count already have active providers in the wider network view. Your final approved coverage is still controlled by AreaSorted.
@@ -1196,13 +1223,14 @@ export function ProviderOnboardingClient({
                   <ChevronRight className="size-4" />
                 </Button>
               ) : (
-                <FormSubmitButton
-                  label="Review and submit"
-                  pendingLabel="Checking..."
+                <button
+                  type="submit"
                   formAction={continueAction}
                   disabled={!canEdit || Boolean(uploadError) || Object.keys(uploadFieldErrors).length > 0}
-                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent px-2.5 h-8 text-sm font-medium transition-all"
-                />
+                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent px-3 h-9 text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Review and submit
+                </button>
               )}
             </div>
           </div>

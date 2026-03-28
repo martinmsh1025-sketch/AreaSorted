@@ -5,6 +5,7 @@ import { createProviderNotification } from "@/lib/providers/notifications";
 import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { syncProviderLifecycleState } from "@/server/services/providers/activation";
 import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
+import { sendLoggedEmail } from "@/lib/notifications/logged-email";
 
 function toJsonValue<T>(value: T) {
   return JSON.parse(JSON.stringify(value));
@@ -368,6 +369,10 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
         },
       });
       if (booking?.providerCompanyId) {
+        const providerRecord = await prisma.providerCompany.findUnique({
+          where: { id: booking.providerCompanyId },
+          select: { contactEmail: true },
+        });
         const dateStr = booking.scheduledDate
           ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
           : "TBC";
@@ -380,6 +385,26 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
           link: `/provider/orders/${record.bookingId}`,
           bookingId: record.bookingId,
         });
+        if (providerRecord?.contactEmail) {
+          await sendLoggedEmail({
+            to: providerRecord.contactEmail,
+            subject: `New booking request awaiting confirmation — ${record.bookingId.slice(0, 8)}`,
+            text: [
+              `A new booking request is waiting for your confirmation.`,
+              "",
+              `Booking ID: ${record.bookingId}`,
+              `Date: ${dateStr}`,
+              `Postcode: ${booking.servicePostcode}`,
+              scheduleOptions.length > 1 ? `Other schedule options: ${scheduleOptions.length - 1}` : "",
+              "",
+              `Open the order: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/provider/orders/${record.bookingId}`,
+            ].filter(Boolean).join("\n"),
+            templateCode: "provider_new_job_request",
+            bookingId: record.bookingId,
+            providerCompanyId: booking.providerCompanyId,
+            payload: { bookingId: record.bookingId },
+          });
+        }
       }
     } catch {
       // Non-critical: notification delivery failure should not affect payment processing

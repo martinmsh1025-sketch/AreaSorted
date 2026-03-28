@@ -83,7 +83,10 @@ export async function saveMarketplaceSettingAction(formData: FormData) {
 
   const prisma = getPrisma();
   const key = String(formData.get("key") || "");
-  const value = parseNumber(formData.get("value"), 0);
+  const rawValue = formData.get("value");
+  const value = key === "marketplace.ops_notification_emails"
+    ? String(rawValue || "").trim()
+    : parseNumber(rawValue, 0);
   if (!key) return;
 
   await prisma.adminSetting.upsert({

@@ -73,6 +73,7 @@ function getMissingProfileFields(provider: ProviderChecklistSource | null) {
   if (businessType === "sole_trader") {
     if (!hasValue(typeof metadata?.dateOfBirth === "string" ? metadata.dateOfBirth : "")) missing.push("date of birth");
     if (!hasValue(typeof metadata?.nationality === "string" ? metadata.nationality : "")) missing.push("nationality");
+    if (!hasValue(typeof metadata?.rightToWorkStatus === "string" ? metadata.rightToWorkStatus : "")) missing.push("right to work status");
   } else {
     if (!hasValue(typeof metadata?.authorisedSignatoryName === "string" ? metadata.authorisedSignatoryName : "")) missing.push("authorised signatory name");
     if (!hasValue(typeof metadata?.authorisedSignatoryEmail === "string" ? metadata.authorisedSignatoryEmail : "")) missing.push("authorised signatory email");

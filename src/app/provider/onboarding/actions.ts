@@ -8,6 +8,8 @@ import { getProviderAgreementVersion } from "@/lib/providers/onboarding-profile"
 import { markProviderAgreementSigned, submitProviderForReview, updateProviderCompanyProfile } from "@/lib/providers/repository";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
 import { saveProviderDocumentUploads } from "@/server/services/providers/documents";
+import { getOpsNotificationRecipients } from "@/lib/notifications/ops";
+import { sendLoggedEmail } from "@/lib/notifications/logged-email";
 
 function parseMultiValue(value: FormDataEntryValue | null) {
   return String(value || "")
@@ -115,6 +117,7 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
   const authorisedSignatoryEmail = String(formData.get("authorisedSignatoryEmail") || "").trim();
   const dateOfBirth = String(formData.get("dateOfBirth") || "").trim();
   const nationality = String(formData.get("nationality") || "").trim();
+  const rightToWorkStatus = String(formData.get("rightToWorkStatus") || "").trim();
   const categories = parseMultiValues(formData, "categories");
   const serviceKeys = parseServiceKeys(formData);
   const postcodePrefixes = parseMultiValue(formData.get("postcodePrefixes"));
@@ -128,6 +131,7 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
     if (businessType === "sole_trader") {
       if (!dateOfBirth) throw new Error("Date of birth is required for sole traders.");
       if (!nationality) throw new Error("Nationality is required for sole traders.");
+      if (!rightToWorkStatus) throw new Error("Right to work status is required for sole traders.");
     } else {
       if (!authorisedSignatoryName) throw new Error("Authorised signatory name is required.");
       if (!authorisedSignatoryEmail || !isValidEmail(authorisedSignatoryEmail)) throw new Error("A valid authorised signatory email is required.");
@@ -183,6 +187,7 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
       workerCount: String(formData.get("workerCount") || "").trim(),
       dateOfBirth: String(formData.get("dateOfBirth") || "").trim(),
       nationality: String(formData.get("nationality") || "").trim(),
+      rightToWorkStatus: String(formData.get("rightToWorkStatus") || "").trim(),
       businessAddress: String(formData.get("businessAddress") || "").trim(),
       nationalInsuranceNumber: String(formData.get("nationalInsuranceNumber") || "").trim(),
       utrNumber: String(formData.get("utrNumber") || "").trim(),
@@ -257,5 +262,36 @@ export async function submitProviderForReviewAction() {
   }
 
   await submitProviderForReview(session.providerCompany.id);
+
+  try {
+    const recipients = await getOpsNotificationRecipients();
+    const subject = `Provider application submitted: ${session.providerCompany.legalName || session.providerCompany.contactEmail}`;
+    const text = [
+      `A provider application has been submitted for review.`,
+      "",
+      `Provider: ${session.providerCompany.legalName || "—"}`,
+      `Email: ${session.providerCompany.contactEmail || session.user.email}`,
+      `Status: ${session.providerCompany.status}`,
+      `Submitted at: ${new Date().toISOString()}`,
+      "",
+      `Review here: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/admin/provider/${session.providerCompany.id}`,
+    ].join("\n");
+
+    await Promise.allSettled(
+      recipients.map((to) =>
+        sendLoggedEmail({
+          to,
+          subject,
+          text,
+          templateCode: "admin_provider_application_submitted",
+          providerCompanyId: session.providerCompany.id,
+          payload: { providerCompanyId: session.providerCompany.id },
+        }),
+      ),
+    );
+  } catch {
+    // Non-critical
+  }
+
   redirect("/provider/application-status?status=submitted");
 }

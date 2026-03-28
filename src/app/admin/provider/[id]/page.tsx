@@ -134,6 +134,10 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
     pricingJson: (r.pricingJson as Record<string, number> | null) ?? null,
   }));
   const groupedCoverageAreas = groupPostcodePrefixes(provider.coverageAreas.map((area) => area.postcodePrefix));
+  const latestDocumentReviewAt = provider.documents
+    .map((document) => document.reviewedAt)
+    .filter((value): value is Date => value instanceof Date)
+    .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
   const documentAvailability = new Map<string, boolean>();
   await Promise.all(
     provider.documents.map(async (document) => {
@@ -192,7 +196,7 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
       )}
 
       {/* Summary stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Provider state</CardDescription>
@@ -203,11 +207,23 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Review submitted</CardDescription>
+            <CardDescription>Application submitted</CardDescription>
             <CardTitle className="text-lg">
               {provider.onboardingSubmittedAt
-                ? new Date(provider.onboardingSubmittedAt).toLocaleDateString()
+                ? new Date(provider.onboardingSubmittedAt).toLocaleString("en-GB")
                 : "Not yet"}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>{provider.approvedAt ? "Approved at" : "Latest review activity"}</CardDescription>
+            <CardTitle className="text-lg">
+              {provider.approvedAt
+                ? new Date(provider.approvedAt).toLocaleString("en-GB")
+                : latestDocumentReviewAt
+                  ? new Date(latestDocumentReviewAt).toLocaleString("en-GB")
+                  : "Not yet"}
             </CardTitle>
           </CardHeader>
         </Card>

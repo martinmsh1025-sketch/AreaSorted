@@ -47,7 +47,8 @@ export default async function ProviderOnboardingPage({ searchParams }: ProviderO
           (
             businessType === "sole_trader"
               ? (typeof onboardingMetadata.dateOfBirth === "string" && onboardingMetadata.dateOfBirth.trim()) &&
-                (typeof onboardingMetadata.nationality === "string" && onboardingMetadata.nationality.trim())
+                (typeof onboardingMetadata.nationality === "string" && onboardingMetadata.nationality.trim()) &&
+                (typeof onboardingMetadata.rightToWorkStatus === "string" && onboardingMetadata.rightToWorkStatus.trim())
               : provider.companyNumber?.trim()
           ),
         ),
