@@ -10,6 +10,7 @@ import { getAppUrl } from "@/lib/config/env";
 
 export async function startInstantBookingAction(formData: FormData) {
   const reference = String(formData.get("reference") || "").trim();
+  const selectedQuoteOptionId = String(formData.get("selectedQuoteOptionId") || "").trim() || undefined;
 
   // C-3 FIX: Validate input + verify the quote actually exists before proceeding.
   // This prevents blind probing — an attacker would need to know a valid PRICED quote reference.
@@ -36,7 +37,7 @@ export async function startInstantBookingAction(formData: FormData) {
     throw new Error("Invalid request origin");
   }
 
-  const result = await createInstantBookingFromQuote(reference);
+  const result = await createInstantBookingFromQuote(reference, selectedQuoteOptionId);
 
   // Auto-login: set customer session cookie immediately after booking creation
   if (result.booking.customerId) {

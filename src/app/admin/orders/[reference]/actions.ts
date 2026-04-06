@@ -286,8 +286,9 @@ export async function confirmBookingOnBehalfAction(formData: FormData) {
   }
 
   try {
-    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    const { sendBookingStatusEmail, sendPaymentCapturedConfirmationEmail } = await import("@/lib/notifications/booking-emails");
     await sendBookingStatusEmail(bookingId, "ASSIGNED");
+    await sendPaymentCapturedConfirmationEmail(bookingId);
   } catch {
     // Non-critical
   }
@@ -507,6 +508,12 @@ export async function createAdminRefundAction(formData: FormData) {
     revalidatePath("/admin/orders");
     revalidatePath("/admin/payouts");
     revalidatePath("/account/bookings");
+    try {
+      const { sendRefundStatusEmail } = await import("@/lib/notifications/booking-emails");
+      await sendRefundStatusEmail(bookingId, refundAmount, effectiveRefundType as "FULL" | "PARTIAL");
+    } catch {
+      // Non-critical
+    }
     redirect(`/admin/orders/${bookingId}?refundStatus=${encodeURIComponent(
       isManualRefund
         ? (effectiveRefundType === "PARTIAL" ? "Manual partial refund recorded for mock payment." : "Manual full refund recorded for mock payment.")

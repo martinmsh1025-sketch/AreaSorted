@@ -3,6 +3,12 @@ import { getPrisma } from "@/lib/db";
 export type MatchedProvider = {
   providerCompanyId: string;
   providerName: string;
+  profileImageUrl?: string | null;
+  headline?: string | null;
+  bio?: string | null;
+  yearsExperience?: number | null;
+  hasDbs?: boolean;
+  hasInsurance?: boolean;
   postcodePrefix: string;
   paymentReady: boolean;
   hasActivePricing: boolean;
@@ -52,6 +58,10 @@ export async function matchProvidersForPublicQuote(
       providerCompany: {
         include: {
           stripeConnectedAccount: true,
+          documents: {
+            where: { status: "APPROVED", documentKey: { in: ["dbs_certificate", "insurance_proof"] } },
+            select: { documentKey: true },
+          },
           availabilityRules: true,
           pricingRules: {
             where: {
@@ -74,15 +84,21 @@ export async function matchProvidersForPublicQuote(
     const company = row.providerCompany;
     return {
       providerCompanyId: company.id,
-        providerName: company.tradingName || company.legalName || "Service provider",
-        postcodePrefix,
-        paymentReady: Boolean(
-          company.stripeConnectedAccount?.chargesEnabled &&
-          company.stripeConnectedAccount?.payoutsEnabled,
-        ),
-        hasActivePricing: company.pricingRules.length > 0,
-      };
-    });
+      providerName: company.tradingName || company.legalName || "Service provider",
+      profileImageUrl: company.profileImageUrl,
+      headline: company.headline,
+      bio: company.bio,
+      yearsExperience: company.yearsExperience,
+      hasDbs: company.documents.some((doc) => doc.documentKey === "dbs_certificate"),
+      hasInsurance: company.documents.some((doc) => doc.documentKey === "insurance_proof"),
+      postcodePrefix,
+      paymentReady: Boolean(
+        company.stripeConnectedAccount?.chargesEnabled &&
+        company.stripeConnectedAccount?.payoutsEnabled,
+      ),
+      hasActivePricing: company.pricingRules.length > 0,
+    };
+  });
 
   // Filter by provider availability if date/time provided
   if (input.scheduledDate && input.scheduledTime) {

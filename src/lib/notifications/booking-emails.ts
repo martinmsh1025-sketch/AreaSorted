@@ -3,6 +3,12 @@ import { sendTransactionalEmail } from "@/lib/notifications/email";
 import { formatPreferredScheduleOption, parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { getAppUrl } from "@/lib/config/env";
 
+function serviceLabelFor(booking: {
+  quoteRequest?: { serviceKey?: string | null } | null;
+}) {
+  return booking.quoteRequest?.serviceKey || "Service";
+}
+
 /**
  * Send booking authorisation email to the customer after card hold is placed.
  */
@@ -206,6 +212,141 @@ export async function sendBookingStatusEmail(
       to: customer.email,
       subject,
       text,
+    });
+  } catch {
+    // Non-critical
+  }
+}
+
+export async function sendPaymentCapturedConfirmationEmail(bookingId: string) {
+  const prisma = getPrisma();
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: { select: { firstName: true, email: true } },
+      marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
+      priceSnapshot: true,
+      quoteRequest: { select: { reference: true, serviceKey: true } },
+    },
+  });
+  if (!booking?.customer) return;
+
+  const reference = booking.quoteRequest?.reference || booking.id.slice(-8).toUpperCase();
+  const total = booking.priceSnapshot?.customerTotalAmount ? `£${Number(booking.priceSnapshot.customerTotalAmount).toFixed(2)}` : "";
+  const providerName = booking.marketplaceProviderCompany?.tradingName || booking.marketplaceProviderCompany?.legalName || "Your provider";
+  const bookingUrl = `${getAppUrl()}/account/bookings/${reference}`;
+
+  try {
+    await sendTransactionalEmail({
+      to: booking.customer.email,
+      subject: `Payment confirmed — ${reference}`,
+      text: [
+        `Hi ${booking.customer.firstName},`,
+        "",
+        `Your payment has now been captured and your booking is confirmed.`,
+        `Reference: ${reference}`,
+        `Service: ${serviceLabelFor(booking)}`,
+        total ? `Charged amount: ${total}` : "",
+        `Provider: ${providerName}`,
+        "",
+        bookingUrl,
+      ].filter(Boolean).join("\n"),
+    });
+  } catch {
+    // Non-critical
+  }
+}
+
+export async function sendRefundStatusEmail(bookingId: string, refundAmount: number, refundType: "FULL" | "PARTIAL") {
+  const prisma = getPrisma();
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: { select: { firstName: true, email: true } },
+      quoteRequest: { select: { reference: true, serviceKey: true } },
+    },
+  });
+  if (!booking?.customer) return;
+
+  const reference = booking.quoteRequest?.reference || booking.id.slice(-8).toUpperCase();
+  const bookingUrl = `${getAppUrl()}/account/bookings/${reference}`;
+  try {
+    await sendTransactionalEmail({
+      to: booking.customer.email,
+      subject: `${refundType === "FULL" ? "Refund confirmed" : "Partial refund confirmed"} — ${reference}`,
+      text: [
+        `Hi ${booking.customer.firstName},`,
+        "",
+        refundType === "FULL"
+          ? `A full refund has been created for your booking.`
+          : `A partial refund has been created for your booking.`,
+        `Refund amount: £${refundAmount.toFixed(2)}`,
+        `Reference: ${reference}`,
+        `Service: ${serviceLabelFor(booking)}`,
+        "",
+        bookingUrl,
+      ].join("\n"),
+    });
+  } catch {
+    // Non-critical
+  }
+}
+
+export async function sendProviderRescheduleEmail(bookingId: string, formattedDate: string, newTime: string) {
+  const prisma = getPrisma();
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      marketplaceProviderCompany: { select: { contactEmail: true, tradingName: true, legalName: true } },
+      quoteRequest: { select: { reference: true, serviceKey: true } },
+    },
+  });
+  if (!booking?.marketplaceProviderCompany?.contactEmail) return;
+  const reference = booking.quoteRequest?.reference || booking.id.slice(-8).toUpperCase();
+  try {
+    await sendTransactionalEmail({
+      to: booking.marketplaceProviderCompany.contactEmail,
+      subject: `Booking rescheduled — ${reference}`,
+      text: [
+        `A booking has been rescheduled.`,
+        "",
+        `Reference: ${reference}`,
+        `Service: ${serviceLabelFor(booking)}`,
+        `New date: ${formattedDate}`,
+        `New time: ${newTime}`,
+        "",
+        `${getAppUrl()}/provider/orders/${booking.id}`,
+      ].join("\n"),
+    });
+  } catch {
+    // Non-critical
+  }
+}
+
+export async function sendAbandonedBookingReminderEmail(bookingId: string) {
+  const prisma = getPrisma();
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: { select: { firstName: true, email: true } },
+      quoteRequest: { select: { reference: true, serviceKey: true } },
+    },
+  });
+  if (!booking?.customer) return;
+  const reference = booking.quoteRequest?.reference || booking.id.slice(-8).toUpperCase();
+  try {
+    await sendTransactionalEmail({
+      to: booking.customer.email,
+      subject: `Complete your booking — ${reference}`,
+      text: [
+        `Hi ${booking.customer.firstName},`,
+        "",
+        `Your booking has not been completed yet and will expire soon if checkout is not finished.`,
+        `Service: ${serviceLabelFor(booking)}`,
+        `Reference: ${reference}`,
+        "",
+        `${getAppUrl()}/booking/status/${reference}`,
+      ].join("\n"),
     });
   } catch {
     // Non-critical

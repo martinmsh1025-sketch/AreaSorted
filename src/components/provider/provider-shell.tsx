@@ -38,6 +38,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { NotificationBell } from "@/components/provider/notification-bell";
+import { AreaSortedLogo } from "@/components/branding/areasorted-logo";
 
 /* ── Types ─────────────────────────────────── */
 
@@ -146,14 +147,27 @@ export function ProviderShell({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" render={<Link href="/provider" />}>
-                <div className="bg-blue-600 text-white flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Building2 className="size-4" />
+                <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 text-white shadow-sm shadow-blue-900/25">
+                  <Building2 className="size-4.5" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-bold">{providerName || "AreaSorted"}</span>
-                  <span className="text-muted-foreground truncate text-xs">Provider Portal</span>
+                  <span className="truncate font-bold">AreaSorted</span>
+                  <span className="text-blue-700 truncate text-xs font-medium">Provider Portal</span>
                 </div>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+              <div className="rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50 to-white px-3 py-3 shadow-sm dark:border-blue-900/40 dark:from-blue-950/30 dark:to-slate-950">
+                <div className="mb-2">
+                  <AreaSortedLogo compact className="text-[0.92rem]" />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue-700 dark:text-blue-300">
+                  Your booking generator
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Manage setup, pricing, availability, jobs, and payout status from one AreaSorted workspace.
+                </p>
+              </div>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
@@ -187,7 +201,7 @@ export function ProviderShell({
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs font-semibold text-blue-700 border-blue-200">
+            <Badge variant="outline" className="text-xs font-semibold text-blue-700 border-blue-200 bg-blue-50/70">
               Provider
             </Badge>
             {providerName && (

@@ -4,6 +4,7 @@ import { getEnv } from "@/lib/config/env";
 import { cancelDirectChargePaymentIntent } from "@/lib/stripe/connect";
 import { ensurePayoutRecordForBooking, isProviderPayoutAutoReleaseEnabled, refreshPayoutRecordState } from "@/lib/payouts";
 import { sendLoggedEmail } from "@/lib/notifications/logged-email";
+import { getOpsNotificationRecipients } from "@/lib/notifications/ops";
 
 // L-H FIX: Named timing constants instead of magic numbers
 const ABANDONED_BOOKING_CUTOFF_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -39,7 +40,48 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const results: Record<string, number> = {};
 
-    // 1. Abandoned checkouts — AWAITING_PAYMENT for >2 hours
+    // 1. Abandoned checkout reminders — sent shortly before the 2h cancellation window
+    const abandonedReminderStart = new Date(now.getTime() - (ABANDONED_BOOKING_CUTOFF_MS - 30 * 60 * 1000));
+    const abandonedReminderTargets = await prisma.booking.findMany({
+      where: {
+        bookingStatus: "AWAITING_PAYMENT",
+        createdAt: { lte: abandonedReminderStart, gt: new Date(now.getTime() - ABANDONED_BOOKING_CUTOFF_MS) },
+      },
+      select: {
+        id: true,
+        customer: { select: { email: true } },
+        quoteRequest: { select: { reference: true } },
+      },
+      take: 200,
+    });
+    let abandonedReminders = 0;
+    for (const booking of abandonedReminderTargets) {
+      const alreadySent = await prisma.notificationLogV2.findFirst({
+        where: { bookingId: booking.id, templateCode: "customer_abandoned_booking_reminder" },
+      });
+      if (alreadySent || !booking.customer?.email) continue;
+      try {
+        const { sendAbandonedBookingReminderEmail } = await import("@/lib/notifications/booking-emails");
+        await sendAbandonedBookingReminderEmail(booking.id);
+        await prisma.notificationLogV2.create({
+          data: {
+            bookingId: booking.id,
+            channel: "EMAIL",
+            status: "SENT",
+            recipient: booking.customer.email,
+            subject: `Complete your booking — ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
+            templateCode: "customer_abandoned_booking_reminder",
+            payloadJson: {},
+          },
+        });
+        abandonedReminders += 1;
+      } catch {
+        // Non-critical
+      }
+    }
+    results.abandonedReminders = abandonedReminders;
+
+    // 2. Abandoned checkouts — AWAITING_PAYMENT for >2 hours
     const abandonedCutoff = new Date(now.getTime() - ABANDONED_BOOKING_CUTOFF_MS);
     const abandonedResult = await prisma.booking.updateMany({
       where: {
@@ -54,8 +96,49 @@ export async function GET(request: NextRequest) {
     });
     results.abandonedCheckouts = abandonedResult.count;
 
-    // 2. Expire unconfirmed booking holds after 24 hours
+    // 3. Pending-assignment escalation alerts before auth hold expiry
     const confirmationCutoff = new Date(now.getTime() - CONFIRMATION_CUTOFF_MS);
+    const pendingEscalationStart = new Date(now.getTime() - (CONFIRMATION_CUTOFF_MS - 2 * 60 * 60 * 1000));
+    const escalationBookings = await prisma.booking.findMany({
+      where: {
+        bookingStatus: "PENDING_ASSIGNMENT",
+        createdAt: { lte: pendingEscalationStart, gt: confirmationCutoff },
+      },
+      select: {
+        id: true,
+        servicePostcode: true,
+        quoteRequest: { select: { reference: true, serviceKey: true } },
+      },
+      take: 200,
+    });
+    const opsRecipients = await getOpsNotificationRecipients();
+    let pendingEscalations = 0;
+    for (const booking of escalationBookings) {
+      const alreadySent = await prisma.notificationLogV2.findFirst({
+        where: { bookingId: booking.id, templateCode: "ops_pending_assignment_escalation" },
+      });
+      if (alreadySent) continue;
+
+      await Promise.allSettled(opsRecipients.map((to) => sendLoggedEmail({
+        to,
+        subject: `Booking still pending provider confirmation — ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
+        text: [
+          `A booking is approaching the confirmation deadline and still has no provider confirmation.`,
+          "",
+          `Reference: ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
+          `Service: ${booking.quoteRequest?.serviceKey || "Service"}`,
+          `Postcode: ${booking.servicePostcode}`,
+          `Review here: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/admin/orders/${booking.id}`,
+        ].join("\n"),
+        templateCode: "ops_pending_assignment_escalation",
+        bookingId: booking.id,
+        payload: {},
+      })));
+      pendingEscalations += 1;
+    }
+    results.pendingAssignmentEscalations = pendingEscalations;
+
+    // 4. Expire unconfirmed booking holds after 24 hours
     // H-23 FIX: Use createdAt instead of updatedAt for auth hold expiry.
     // updatedAt resets on any booking field change (reschedule, counter-offer, etc.)
     // which could extend the hold window beyond the intended 24 hours.
@@ -121,7 +204,7 @@ export async function GET(request: NextRequest) {
     }
     results.expiredAuthorisations = releasedAuthorisations;
 
-    // 3. Expired counter-offers — PENDING for >48 hours
+    // 5. Expired counter-offers — PENDING for >48 hours
     const offerCutoff = new Date(now.getTime() - COUNTER_OFFER_EXPIRY_MS);
     const expiredOffers = await prisma.counterOffer.updateMany({
       where: {
@@ -166,7 +249,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 4. Clean up old consumed/expired auth tokens (>7 days)
+    // 6. Clean up old consumed/expired auth tokens (>7 days)
     const tokenCutoff = new Date(now.getTime() - TOKEN_CLEANUP_AGE_MS);
     const deletedCustomerTokens = await prisma.customerAuthToken.deleteMany({
       where: {
@@ -188,7 +271,7 @@ export async function GET(request: NextRequest) {
     });
     results.cleanedProviderTokens = deletedProviderTokens.count;
 
-    // 5. Refresh provider payout hold states for captured bookings
+    // 7. Refresh provider payout hold states for captured bookings
     const paidBookings = await prisma.booking.findMany({
       where: {
         bookingStatus: { in: ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"] },
@@ -221,7 +304,7 @@ export async function GET(request: NextRequest) {
     results.payoutEligible = payoutEligible;
     results.payoutReleased = payoutReleased;
 
-    // 6. Booking reminders (24h window)
+    // 8. Booking reminders (24h window)
     const reminderWindowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000);
     const reminderWindowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000);
     const upcomingBookings = await prisma.booking.findMany({
@@ -293,7 +376,7 @@ export async function GET(request: NextRequest) {
     results.customerReminders = customerReminders;
     results.providerReminders = providerReminders;
 
-    // 7. Unfinished onboarding reminders
+    // 9. Unfinished onboarding reminders
     const onboardingCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const onboardingProviders = await prisma.providerCompany.findMany({
       where: {

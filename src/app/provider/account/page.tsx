@@ -63,6 +63,11 @@ export default async function ProviderAccountPage({ searchParams }: ProviderAcco
       {/* Editable profile form */}
       <EditableProfileForm
         tradingName={provider.tradingName ?? ""}
+        profileImageUrl={provider.profileImageUrl ?? ""}
+        profileImageType={provider.profileImageType ?? "logo"}
+        headline={provider.headline ?? ""}
+        bio={provider.bio ?? ""}
+        yearsExperience={provider.yearsExperience != null ? String(provider.yearsExperience) : ""}
         contactEmail={provider.contactEmail}
         phone={provider.phone ?? ""}
         registeredAddress={provider.registeredAddress ?? ""}
@@ -118,6 +123,12 @@ export default async function ProviderAccountPage({ searchParams }: ProviderAcco
           >
             <CreditCard className="size-4" />
             Payment Account
+          </Link>
+          <Link
+            href="/provider/preview"
+            className="inline-flex h-9 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium hover:bg-muted transition-colors"
+          >
+            Preview profile
           </Link>
         </div>
       </div>

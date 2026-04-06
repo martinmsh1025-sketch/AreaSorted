@@ -63,6 +63,7 @@ type CreateQuoteInput = {
   addOns?: string[];
   /** Free-text notes */
   notes?: string;
+  preferredProviderCompanyId?: string;
 };
 
 function createReference(prefix: string) {
@@ -88,12 +89,10 @@ export async function createPublicQuote(input: CreateQuoteInput) {
     return match;
   }
 
-  let best:
-    | {
-        provider: (typeof match.providers)[number];
-        preview: Awaited<ReturnType<typeof previewProviderPricing>>;
-      }
-    | null = null;
+  const pricedProviders: Array<{
+    provider: (typeof match.providers)[number];
+    preview: Awaited<ReturnType<typeof previewProviderPricing>>;
+  }> = [];
 
   for (const provider of match.providers) {
     try {
@@ -116,20 +115,26 @@ export async function createPublicQuote(input: CreateQuoteInput) {
         addOns: input.addOns,
       });
 
-      if (!best || preview.totalCustomerPay < best.preview.totalCustomerPay) {
-        best = { provider, preview };
-      }
+      pricedProviders.push({ provider, preview });
     } catch {
       // Skip providers without a usable pricing rule for this request.
     }
   }
 
-  if (!best) {
+  if (!pricedProviders.length) {
     return { status: "no_coverage" as const };
   }
 
-  const matchedProvider = best.provider;
-  const preview = best.preview;
+  pricedProviders.sort((left, right) => {
+    if (left.preview.totalCustomerPay !== right.preview.totalCustomerPay) {
+      return left.preview.totalCustomerPay - right.preview.totalCustomerPay;
+    }
+    return left.provider.providerName.localeCompare(right.provider.providerName);
+  });
+
+  const preferred = pricedProviders.find((item) => item.provider.providerCompanyId === input.preferredProviderCompanyId);
+  const matchedProvider = (preferred || pricedProviders[0]).provider;
+  const preview = (preferred || pricedProviders[0]).preview;
 
   const prisma = getPrisma();
   const reference = createReference("QR");
@@ -231,8 +236,8 @@ export async function createPublicQuote(input: CreateQuoteInput) {
       },
       // Still create a QuoteOption record for audit/data consistency
       quoteOptions: {
-        create: [{
-          providerCompanyId: matchedProvider.providerCompanyId,
+        create: pricedProviders.map(({ provider, preview }) => ({
+          providerCompanyId: provider.providerCompanyId,
           pricingRuleId: preview.pricingRuleId,
           providerBasePrice: preview.providerBasePrice,
           bookingFee: preview.bookingFee,
@@ -245,8 +250,8 @@ export async function createPublicQuote(input: CreateQuoteInput) {
           sameDay: input.sameDay,
           weekend: input.weekend,
           quoteRequired: false,
-          paymentReady: matchedProvider.paymentReady,
-          providerName: matchedProvider.providerName,
+          paymentReady: provider.paymentReady,
+          providerName: provider.providerName,
           inputJson: toJsonValue({
             ...input.details,
             quantity: input.quantity,
@@ -258,13 +263,13 @@ export async function createPublicQuote(input: CreateQuoteInput) {
             kitchens: input.kitchens,
             cleaningCondition: input.cleaningCondition,
             supplies: input.supplies,
-              propertyType: input.propertyType,
-              jobSize: input.jobSize,
-              addOns: input.addOns,
-              notes: input.notes,
-              preferredScheduleOptions: input.preferredScheduleOptions,
-            }),
-        }],
+            propertyType: input.propertyType,
+            jobSize: input.jobSize,
+            addOns: input.addOns,
+            notes: input.notes,
+            preferredScheduleOptions: input.preferredScheduleOptions,
+          }),
+        })),
       },
     },
     include: {
@@ -272,6 +277,14 @@ export async function createPublicQuote(input: CreateQuoteInput) {
       quoteOptions: true,
     },
   });
+
+  const selectedOption = quoteRequest.quoteOptions.find((option) => option.providerCompanyId === matchedProvider.providerCompanyId) || quoteRequest.quoteOptions[0];
+  if (selectedOption) {
+    await prisma.quoteRequest.update({
+      where: { id: quoteRequest.id },
+      data: { selectedQuoteOptionId: selectedOption.id },
+    });
+  }
 
   return {
     status: "quoted" as const,
@@ -288,7 +301,29 @@ export async function getPublicQuoteByReference(reference: string) {
         select: { id: true, tradingName: true, legalName: true },
       },
       priceSnapshot: true,
-      quoteOptions: true,
+      quoteOptions: {
+        orderBy: [{ totalCustomerPay: "asc" }, { providerName: "asc" }],
+        include: {
+          providerCompany: {
+            select: {
+              id: true,
+              tradingName: true,
+              legalName: true,
+              profileImageUrl: true,
+              headline: true,
+              bio: true,
+              yearsExperience: true,
+              documents: {
+                where: {
+                  status: "APPROVED",
+                  documentKey: { in: ["dbs_certificate", "insurance_proof"] },
+                },
+                select: { documentKey: true },
+              },
+            },
+          },
+        },
+      },
       booking: {
         include: {
           priceSnapshot: true,
@@ -299,7 +334,7 @@ export async function getPublicQuoteByReference(reference: string) {
   });
 }
 
-export async function createInstantBookingFromQuote(reference: string) {
+export async function createInstantBookingFromQuote(reference: string, selectedQuoteOptionId?: string) {
   const prisma = getPrisma();
 
   // C1 FIX: Atomically claim the quote to prevent double-booking.
@@ -321,10 +356,11 @@ export async function createInstantBookingFromQuote(reference: string) {
         include: { stripeConnectedAccount: true },
       },
       priceSnapshot: true,
+      quoteOptions: true,
     },
   });
 
-  if (!quote || !quote.providerCompany || !quote.priceSnapshot) {
+  if (!quote || !quote.priceSnapshot) {
     // Roll back the claim since the data isn't ready
     await prisma.quoteRequest.updateMany({
       where: { reference, state: "BOOKING_IN_PROGRESS" },
@@ -332,6 +368,36 @@ export async function createInstantBookingFromQuote(reference: string) {
     });
     throw new Error("Quote request not ready for booking — provider must be selected first");
   }
+
+  const selectedOption = quote.quoteOptions.find((option) => option.id === (selectedQuoteOptionId || quote.selectedQuoteOptionId)) || quote.quoteOptions[0];
+  if (!selectedOption) {
+    await prisma.quoteRequest.updateMany({
+      where: { reference, state: "BOOKING_IN_PROGRESS" },
+      data: { state: "PRICED" },
+    });
+    throw new Error("Quote request not ready for booking — provider must be selected first");
+  }
+
+  const selectedProvider = await prisma.providerCompany.findUnique({
+    where: { id: selectedOption.providerCompanyId },
+    include: { stripeConnectedAccount: true },
+  });
+
+  if (!selectedProvider) {
+    await prisma.quoteRequest.updateMany({
+      where: { reference, state: "BOOKING_IN_PROGRESS" },
+      data: { state: "PRICED" },
+    });
+    throw new Error("Selected provider is no longer available");
+  }
+
+  await prisma.quoteRequest.update({
+    where: { id: quote.id },
+    data: {
+      providerCompanyId: selectedProvider.id,
+      selectedQuoteOptionId: selectedOption.id,
+    },
+  });
 
   // H-37 FIX: Wrap all DB writes (customer upsert, address, booking, payment record)
   // in a single interactive transaction to ensure atomicity. Stripe calls happen
@@ -367,7 +433,7 @@ export async function createInstantBookingFromQuote(reference: string) {
       data: {
         customerId: customer.id,
         customerAddressId: address.id,
-        providerCompanyId: quote.providerCompanyId,
+        providerCompanyId: selectedProvider.id,
         serviceAddressLine1: quote.addressLine1,
         serviceAddressLine2: quote.addressLine2,
         serviceCity: quote.city,
@@ -379,17 +445,17 @@ export async function createInstantBookingFromQuote(reference: string) {
         durationHours: Number(quote.priceSnapshot!.estimatedHours) || 2,
         additionalNotes: JSON.stringify({ ...toObjectRecord(quote.inputJson), bookingReference: txBookingReference }),
         bookingStatus: "AWAITING_PAYMENT",
-        totalAmount: quote.priceSnapshot!.totalCustomerPay,
-        cleanerPayoutAmount: quote.priceSnapshot!.expectedProviderPayoutBeforeFees,
-        platformMarginAmount: Number(quote.priceSnapshot!.bookingFee) + Number(quote.priceSnapshot!.commissionAmount),
+        totalAmount: selectedOption.totalCustomerPay,
+        cleanerPayoutAmount: selectedOption.expectedProviderPayoutBeforeFees,
+        platformMarginAmount: Number(selectedOption.bookingFee) + Number(selectedOption.commissionAmount),
         priceSnapshot: {
           create: {
-            providerServiceAmount: quote.priceSnapshot!.providerBasePrice,
-            platformBookingFee: quote.priceSnapshot!.bookingFee,
-            platformCommissionAmount: quote.priceSnapshot!.commissionAmount,
+            providerServiceAmount: selectedOption.providerBasePrice,
+            platformBookingFee: selectedOption.bookingFee,
+            platformCommissionAmount: selectedOption.commissionAmount,
             platformMarkupAmount: 0,
             optionalExtrasAmount: (() => {
-              const inputData = toObjectRecord(quote.priceSnapshot!.inputJson);
+              const inputData = toObjectRecord(selectedOption.inputJson);
               const addOnKeys = Array.isArray(inputData.addOns) ? inputData.addOns as string[] : [];
               if (addOnKeys.length === 0) return 0;
               const jobType = jobTypeCatalog.find((j) => j.value === quote.serviceKey);
@@ -398,9 +464,9 @@ export async function createInstantBookingFromQuote(reference: string) {
                 .filter((a) => addOnKeys.includes(a.value))
                 .reduce((sum, a) => sum + a.amount, 0);
             })(),
-            customerTotalAmount: quote.priceSnapshot!.totalCustomerPay,
-            providerExpectedPayout: quote.priceSnapshot!.expectedProviderPayoutBeforeFees,
-            pricingJson: toJsonValue(quote.priceSnapshot!.inputJson || {}),
+            customerTotalAmount: selectedOption.totalCustomerPay,
+            providerExpectedPayout: selectedOption.expectedProviderPayoutBeforeFees,
+            pricingJson: toJsonValue(selectedOption.inputJson || {}),
           },
         },
       },
@@ -412,13 +478,14 @@ export async function createInstantBookingFromQuote(reference: string) {
     const txPaymentRecord = await tx.paymentRecord.create({
       data: {
         bookingId: txBooking.id,
-        stripeAccountId: quote.providerCompany!.stripeConnectedAccount?.stripeAccountId,
+        stripeAccountId: selectedProvider.stripeConnectedAccount?.stripeAccountId,
         paymentState: "PENDING",
-        grossAmount: quote.priceSnapshot!.totalCustomerPay,
-        applicationFeeAmount: Number(quote.priceSnapshot!.bookingFee) + Number(quote.priceSnapshot!.commissionAmount),
+        grossAmount: selectedOption.totalCustomerPay,
+        applicationFeeAmount: Number(selectedOption.bookingFee) + Number(selectedOption.commissionAmount),
         metadataJson: toJsonValue({
           quoteReference: quote.reference,
           bookingReference: txBookingReference,
+          quoteOptionId: selectedOption.id,
         }),
       },
     });
@@ -433,7 +500,7 @@ export async function createInstantBookingFromQuote(reference: string) {
 
   try {
     const session = await createDirectChargeCheckoutSession({
-      connectedAccountId: quote.providerCompany.stripeConnectedAccount?.stripeAccountId || "",
+      connectedAccountId: selectedProvider.stripeConnectedAccount?.stripeAccountId || "",
       lineItems: [
         {
           quantity: 1,
@@ -443,11 +510,11 @@ export async function createInstantBookingFromQuote(reference: string) {
               name: `AreaSorted ${quote.serviceKey}`,
               description: `${quote.postcode} - ${quote.customerName}`,
             },
-            unit_amount: Math.round(Number(quote.priceSnapshot.totalCustomerPay) * 100),
+            unit_amount: Math.round(Number(selectedOption.totalCustomerPay) * 100),
           },
         },
       ],
-      applicationFeeAmount: Math.round((Number(quote.priceSnapshot.bookingFee) + Number(quote.priceSnapshot.commissionAmount)) * 100),
+      applicationFeeAmount: Math.round((Number(selectedOption.bookingFee) + Number(selectedOption.commissionAmount)) * 100),
       successUrl: `${appUrl}/api/auth/post-payment/${bookingReference}?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${appUrl}/quote/${quote.reference}`,
       metadata: {

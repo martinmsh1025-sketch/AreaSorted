@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { getAgreementContent, onboardingBusinessTypeOptions } from "@/lib/providers/onboarding-legal";
 import type { ProviderOnboardingMetadata } from "@/lib/providers/onboarding-profile";
 import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
+import { ProviderPublicProfileCard } from "@/components/provider/public-profile-card";
 
 type ChecklistItem = {
   key: string;
@@ -38,6 +39,11 @@ type ProviderOnboardingClientProps = {
     status: string;
     legalName: string | null;
     tradingName: string | null;
+    profileImageUrl?: string | null;
+    profileImageType?: string | null;
+    headline?: string | null;
+    bio?: string | null;
+    yearsExperience?: number | null;
     companyNumber: string | null;
     registeredAddress: string | null;
     contactEmail: string;
@@ -444,6 +450,13 @@ export function ProviderOnboardingClient({
   const [nationalInsuranceNumber, setNationalInsuranceNumber] = useState(onboardingMetadata.nationalInsuranceNumber || "");
   const [utrNumber, setUtrNumber] = useState(onboardingMetadata.utrNumber || "");
   const [hmrcStatus, setHmrcStatus] = useState(onboardingMetadata.hmrcStatus || "");
+  const [profileImageUrl, setProfileImageUrl] = useState(provider.profileImageUrl || "");
+  const [profileImagePreviewUrl, setProfileImagePreviewUrl] = useState(provider.profileImageUrl || "");
+  const [selectedProfileImageName, setSelectedProfileImageName] = useState("");
+  const [profileImageType, setProfileImageType] = useState(provider.profileImageType || "logo");
+  const [headline, setHeadline] = useState(provider.headline || "");
+  const [bio, setBio] = useState(provider.bio || "");
+  const [yearsExperience, setYearsExperience] = useState(provider.yearsExperience ? String(provider.yearsExperience) : "");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(isInviteFlow ? initialCategories : []);
   const [selectedServices, setSelectedServices] = useState<string[]>(isInviteFlow ? savedServiceKeys : []);
   const [selectedCouncils, setSelectedCouncils] = useState<string[]>(initialCouncils);
@@ -461,8 +474,8 @@ export function ProviderOnboardingClient({
   const groupedAvailablePostcodes = useMemo(() => groupPostcodePrefixes(availablePostcodes), [availablePostcodes]);
   const takenPostcodesSet = useMemo(() => new Set(takenPostcodes), [takenPostcodes]);
   const profileComplete = businessType === "sole_trader"
-    ? Boolean(legalName.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && dateOfBirth.trim() && nationality.trim() && rightToWorkStatus.trim())
-    : Boolean(legalName.trim() && companyNumber.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && authorisedSignatoryName.trim() && authorisedSignatoryEmail.trim());
+    ? Boolean(profileImageUrl.trim() && legalName.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && dateOfBirth.trim() && nationality.trim() && rightToWorkStatus.trim())
+    : Boolean(profileImageUrl.trim() && legalName.trim() && companyNumber.trim() && registeredAddress.trim() && contactEmail.trim() && phone.trim() && authorisedSignatoryName.trim() && authorisedSignatoryEmail.trim());
   const servicesComplete = selectedCategories.length > 0 && selectedServices.length > 0;
   const coverageComplete = selectedPostcodes.length > 0;
   const readyForConfirmation = profileComplete && servicesComplete && coverageComplete && agreementAccepted;
@@ -488,16 +501,6 @@ export function ProviderOnboardingClient({
 
   function canGoToStep(targetStep: number) {
     return targetStep >= 1 && targetStep <= unlockedStep;
-  }
-
-  function nextStep() {
-    const nextStepNumber = Math.min(totalSteps, step + 1);
-    if (step === 1 && !profileComplete) return;
-    if (step === 2 && !servicesComplete) return;
-    if (step === 3 && !coverageComplete) return;
-    setConfirmedSteps((current) => (current.includes(step) ? current : [...current, step]));
-    setUnlockedStep((current) => Math.max(current, nextStepNumber));
-    setStep(nextStepNumber);
   }
 
   function formatFileSize(sizeBytes?: number | null) {
@@ -621,6 +624,11 @@ export function ProviderOnboardingClient({
           <input type="hidden" name="dateOfBirth" value={dateOfBirth} />
           <input type="hidden" name="nationality" value={nationality} />
           <input type="hidden" name="rightToWorkStatus" value={rightToWorkStatus} />
+          <input type="hidden" name="profileImageUrl" value={profileImageUrl} />
+          <input type="hidden" name="profileImageType" value={profileImageType} />
+          <input type="hidden" name="headline" value={headline} />
+          <input type="hidden" name="bio" value={bio} />
+          <input type="hidden" name="yearsExperience" value={yearsExperience} />
           <input type="hidden" name="businessAddress" value={businessAddress} />
           <input type="hidden" name="nationalInsuranceNumber" value={nationalInsuranceNumber} />
           <input type="hidden" name="utrNumber" value={utrNumber} />
@@ -639,6 +647,83 @@ export function ProviderOnboardingClient({
                 <div>
                   <h3 className="provider-form-section-title">Business identity</h3>
                   <p className="provider-form-section-copy">Start with the business type, legal identity, and primary provider contact details.</p>
+                </div>
+                <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,0.92fr)_380px]">
+                  <div className="provider-field-stack">
+                    <Label>Profile image</Label>
+                    <div className="rounded-2xl border bg-white p-4 text-center max-w-[260px]">
+                      {profileImagePreviewUrl || profileImageUrl ? (
+                        <img src={profileImagePreviewUrl || profileImageUrl} alt="Provider profile" className="mx-auto h-36 w-36 rounded-3xl object-cover" />
+                      ) : (
+                        <div className="mx-auto flex h-36 w-36 items-center justify-center rounded-3xl bg-slate-100 text-sm text-muted-foreground">
+                          No image
+                        </div>
+                      )}
+                      <div className="mt-3 flex justify-center">
+                        <label htmlFor="profileImageFile" className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 text-xs font-medium text-white transition-colors hover:bg-blue-700">
+                          Upload image
+                        </label>
+                        <input
+                          id="profileImageFile"
+                          name="profileImageFile"
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="sr-only"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (!file) return;
+                            setSelectedProfileImageName(file.name);
+                            setUploadError("");
+                            const objectUrl = URL.createObjectURL(file);
+                            setProfileImagePreviewUrl(objectUrl);
+                          }}
+                        />
+                      </div>
+                      {selectedProfileImageName ? <p className="provider-field-help" style={{ textAlign: "center", marginTop: "0.5rem", overflowWrap: "anywhere" }}>{selectedProfileImageName}</p> : null}
+                      <p className="provider-field-help" style={{ textAlign: "center", marginTop: "0.5rem" }}>Image or logo, up to 16MB.</p>
+                      {uploadError ? <p className="text-xs text-red-600" style={{ marginTop: "0.4rem" }}>{uploadError}</p> : null}
+                    </div>
+                  </div>
+                  <div className="space-y-4 min-w-0">
+                    <div className="provider-field-stack">
+                      <Label htmlFor="profileImageType">Image type</Label>
+                      <select id="profileImageType" value={profileImageType} onChange={(event) => setProfileImageType(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                        <option value="logo">Company logo</option>
+                        <option value="person">Personal photo</option>
+                      </select>
+                    </div>
+                    <div className="provider-field-stack">
+                      <Label htmlFor="headline">Headline</Label>
+                      <Input id="headline" className={onboardingInputClass} value={headline} onChange={(event) => setHeadline(event.target.value)} disabled={!canEdit} placeholder="e.g. End of tenancy cleaning specialist" />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="provider-field-stack">
+                        <Label htmlFor="yearsExperience">Years of experience</Label>
+                        <Input id="yearsExperience" type="number" min="0" className={onboardingInputClass} value={yearsExperience} onChange={(event) => setYearsExperience(event.target.value)} disabled={!canEdit} placeholder="e.g. 5" />
+                      </div>
+                    </div>
+                    <div className="provider-field-stack">
+                      <Label htmlFor="bio">Short description</Label>
+                      <textarea id="bio" value={bio} onChange={(event) => setBio(event.target.value)} disabled={!canEdit} rows={4} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Describe the kind of work you do, what customers can expect, and what you are best known for." />
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border bg-white p-5 min-w-0">
+                    <div className="mb-3">
+                      <strong style={{ display: "block", fontSize: "1rem" }}>Live preview</strong>
+                      <p className="provider-field-help">This is how customers can see your shortlist card while comparing providers.</p>
+                    </div>
+                    <ProviderPublicProfileCard
+                      profile={{
+                        providerName: tradingName || legalName || "Your provider profile",
+                        profileImageUrl: profileImagePreviewUrl || profileImageUrl,
+                        headline,
+                        bio,
+                        yearsExperience: yearsExperience ? Number(yearsExperience) : null,
+                        hasDbs: false,
+                        hasInsurance: false,
+                      }}
+                    />
+                  </div>
                 </div>
                 <Label>Business type <span className="text-red-500">*</span></Label>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -1209,19 +1294,20 @@ export function ProviderOnboardingClient({
             </Button>
             <div className="flex items-center gap-2">
               {step < totalSteps ? (
-                <Button
-                  type="button"
-                  onClick={nextStep}
+                <button
+                  type="submit"
+                  name="nextStep"
+                  value={String(step + 1)}
                   disabled={
                     (step === 1 && !profileComplete) ||
                     (step === 2 && !servicesComplete) ||
                     (step === 3 && !coverageComplete)
                   }
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Continue
                   <ChevronRight className="size-4" />
-                </Button>
+                </button>
               ) : (
                 <button
                   type="submit"

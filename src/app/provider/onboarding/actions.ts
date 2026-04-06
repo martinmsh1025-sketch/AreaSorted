@@ -10,6 +10,7 @@ import { buildProviderChecklist } from "@/server/services/providers/checklist";
 import { saveProviderDocumentUploads } from "@/server/services/providers/documents";
 import { getOpsNotificationRecipients } from "@/lib/notifications/ops";
 import { sendLoggedEmail } from "@/lib/notifications/logged-email";
+import { saveProviderProfileImageUpload } from "@/server/services/providers/profile-images";
 
 function parseMultiValue(value: FormDataEntryValue | null) {
   return String(value || "")
@@ -118,6 +119,11 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
   const dateOfBirth = String(formData.get("dateOfBirth") || "").trim();
   const nationality = String(formData.get("nationality") || "").trim();
   const rightToWorkStatus = String(formData.get("rightToWorkStatus") || "").trim();
+  const profileImageUrl = String(formData.get("profileImageUrl") || "").trim();
+  const profileImageType = String(formData.get("profileImageType") || "logo").trim();
+  const headline = String(formData.get("headline") || "").trim();
+  const bio = String(formData.get("bio") || "").trim();
+  const yearsExperience = String(formData.get("yearsExperience") || "").trim();
   const categories = parseMultiValues(formData, "categories");
   const serviceKeys = parseServiceKeys(formData);
   const postcodePrefixes = parseMultiValue(formData.get("postcodePrefixes"));
@@ -128,6 +134,7 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
     if (!registeredAddress) throw new Error("Registered address is required.");
     if (!contactEmail || !isValidEmail(contactEmail)) throw new Error("A valid email address is required.");
     if (!phone) throw new Error("Phone number is required.");
+    if (!profileImageUrl) throw new Error("A profile photo or company logo is required.");
     if (businessType === "sole_trader") {
       if (!dateOfBirth) throw new Error("Date of birth is required for sole traders.");
       if (!nationality) throw new Error("Nationality is required for sole traders.");
@@ -154,12 +161,26 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
 
 async function persistProviderOnboarding(sessionProviderCompanyId: string, formData: FormData) {
   const businessType = String(formData.get("businessType") || "company") === "sole_trader" ? "sole_trader" : "company";
+  const existingProfileImageUrl = String(formData.get("profileImageUrl") || "").trim();
+  const profileImageType = String(formData.get("profileImageType") || "logo").trim();
+  const headline = String(formData.get("headline") || "").trim();
+  const bio = String(formData.get("bio") || "").trim();
+  const yearsExperience = String(formData.get("yearsExperience") || "").trim();
+  const profileImageUrl = await saveProviderProfileImageUpload(sessionProviderCompanyId, formData, existingProfileImageUrl);
+
+  if (headline.length > 80) throw new Error("Headline must be 80 characters or fewer.");
+  if (bio.length > 400) throw new Error("Short description must be 400 characters or fewer.");
 
   await updateProviderCompanyProfile({
     providerCompanyId: sessionProviderCompanyId,
     businessType,
     legalName: String(formData.get("legalName") || "").trim(),
     tradingName: String(formData.get("tradingName") || "").trim(),
+    profileImageUrl: profileImageUrl || undefined,
+    profileImageType: profileImageType || undefined,
+    headline: headline || undefined,
+    bio: bio || undefined,
+    yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
     companyNumber: String(formData.get("companyNumber") || "").trim(),
     registeredAddress: String(formData.get("registeredAddress") || "").trim(),
     contactEmail: String(formData.get("contactEmail") || "").trim(),
@@ -215,6 +236,7 @@ function getSubmissionBlockingLabels(checklist: ReturnType<typeof buildProviderC
 export async function saveProviderProfileAction(formData: FormData) {
   const session = await requireProviderOnboardingAccess();
   const currentStep = Math.min(4, Math.max(1, Number.parseInt(String(formData.get("currentStep") || "1"), 10) || 1));
+  const nextStep = Math.min(4, Math.max(1, Number.parseInt(String(formData.get("nextStep") || String(currentStep)), 10) || currentStep));
   if (!canProviderEditOnboarding(session.providerCompany.status)) {
     redirect("/provider/onboarding?error=review_locked");
   }
@@ -227,7 +249,7 @@ export async function saveProviderProfileAction(formData: FormData) {
   }
 
   const nextStatus = currentStep === 4 ? "documents_saved" : "saved";
-  redirect(`/provider/onboarding?status=${nextStatus}&step=${currentStep}`);
+  redirect(`/provider/onboarding?status=${nextStatus}&step=${nextStep}`);
 }
 
 export async function continueProviderSubmissionAction(formData: FormData) {

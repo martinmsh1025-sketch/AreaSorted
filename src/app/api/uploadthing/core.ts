@@ -1,6 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { headers } from "next/headers";
 import { getAppUrl } from "@/lib/config/env";
+import { getProviderSession } from "@/lib/provider-auth";
 
 const f = createUploadthing();
 
@@ -58,6 +59,23 @@ export const ourFileRouter = {
       }
 
       return { ip };
+    })
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url };
+    }),
+
+  providerProfileImage: f({
+    image: {
+      maxFileSize: "16MB",
+      maxFileCount: 1,
+    },
+  })
+    .middleware(async () => {
+      const session = await getProviderSession();
+      if (!session) {
+        throw new Error("Unauthorized");
+      }
+      return { providerCompanyId: session.providerCompany.id };
     })
     .onUploadComplete(async ({ file }) => {
       return { url: file.url };

@@ -107,6 +107,12 @@ export async function cancelBookingAction(formData: FormData) {
             where: { id: bookingId },
             data: { bookingStatus: "REFUNDED" },
           });
+          try {
+            const { sendRefundStatusEmail } = await import("@/lib/notifications/booking-emails");
+            await sendRefundStatusEmail(bookingId, Number(paymentRecord.grossAmount), "FULL");
+          } catch {
+            // Non-critical
+          }
         } catch {
           // Mark as pending refund — admin can handle manually
           await prisma.booking.update({
@@ -247,6 +253,12 @@ export async function rescheduleBookingAction(formData: FormData) {
         "The AreaSorted Team",
       ].join("\n"),
     });
+    try {
+      const { sendProviderRescheduleEmail } = await import("@/lib/notifications/booking-emails");
+      await sendProviderRescheduleEmail(bookingId, formattedDate, newTime);
+    } catch {
+      // Non-critical
+    }
   } catch { /* non-critical */ }
 
   // Notify provider if one was assigned

@@ -123,8 +123,9 @@ export async function acceptBookingAction(formData: FormData) {
 
   // Notify customer
   try {
-    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    const { sendBookingStatusEmail, sendPaymentCapturedConfirmationEmail } = await import("@/lib/notifications/booking-emails");
     await sendBookingStatusEmail(bookingId, "ASSIGNED");
+    await sendPaymentCapturedConfirmationEmail(bookingId);
   } catch { /* non-critical */ }
 
   revalidatePath("/provider/orders");

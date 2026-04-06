@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
 import { startInstantBookingAction } from "./actions";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
+import { ProviderOptionSelector } from "@/components/quote/provider-option-selector";
 
 function money(value: any) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", minimumFractionDigits: 2 }).format(Number(value || 0));
@@ -14,15 +15,39 @@ function mapEmbedUrl(postcode: string) {
   return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${q}&zoom=15`;
 }
 
-type QuoteResultPageProps = { params: Promise<{ reference: string }> };
+type QuoteResultPageProps = { params: Promise<{ reference: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
 
-export default async function QuoteResultPage({ params }: QuoteResultPageProps) {
+export default async function QuoteResultPage({ params, searchParams }: QuoteResultPageProps) {
   const { reference } = await params;
+  const query = (await searchParams) ?? {};
   const quote = await getPublicQuoteByReference(reference);
   if (!quote || !quote.priceSnapshot) notFound();
 
   const unavailable = quote.state === "EXPIRED";
   const embedUrl = mapEmbedUrl(quote.postcode);
+  const requestedOptionId = typeof query.selectedQuoteOptionId === "string" ? query.selectedQuoteOptionId : quote.selectedQuoteOptionId;
+  const selectedOption = quote.quoteOptions.find((option) => option.id === requestedOptionId) || quote.quoteOptions.find((option) => option.id === quote.selectedQuoteOptionId) || quote.quoteOptions[0] || null;
+  const recommendedOptionId = quote.quoteOptions[0]?.id;
+
+  const providerOptions = quote.quoteOptions.map((option) => {
+    const approvedDocKeys = new Set(option.providerCompany?.documents.map((document) => document.documentKey) || []);
+    return {
+      id: option.id,
+      providerName: option.providerName || option.providerCompany?.tradingName || option.providerCompany?.legalName || "Verified local provider",
+      profileImageUrl: option.providerCompany?.profileImageUrl,
+      headline: option.providerCompany?.headline,
+      bio: option.providerCompany?.bio,
+      yearsExperience: option.providerCompany?.yearsExperience,
+      totalCustomerPay: Number(option.totalCustomerPay),
+      providerBasePrice: Number(option.providerBasePrice),
+      bookingFee: Number(option.bookingFee),
+      postcodeSurcharge: Number(option.postcodeSurcharge),
+      hasDbs: approvedDocKeys.has("dbs_certificate"),
+      hasInsurance: approvedDocKeys.has("insurance_proof"),
+      recommended: option.id === recommendedOptionId,
+      selected: option.id === selectedOption?.id,
+    };
+  });
 
   return (
     <main className="section">
@@ -56,19 +81,19 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
 
             {/* Right sidebar: price + action + map */}
             <aside className="quote-sidebar-stack">
-            <section className="panel card quote-summary-panel">
-              <div className="eyebrow">Price snapshot</div>
-              <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>
-                  {money(quote.priceSnapshot.totalCustomerPay)}
-              </h2>
+              <section className="panel card quote-summary-panel">
+                <div className="eyebrow">Price snapshot</div>
+                <h2 className="title" style={{ marginTop: "0.65rem", fontSize: "2rem" }}>
+                  {money(selectedOption?.totalCustomerPay ?? quote.priceSnapshot.totalCustomerPay)}
+                </h2>
                 <div className="quote-summary-list">
-                  <div><span>Service price</span><strong>{money(quote.priceSnapshot.providerBasePrice)}</strong></div>
-                  <div><span>Booking fee</span><strong>{money(quote.priceSnapshot.bookingFee)}</strong></div>
-                  {Number(quote.priceSnapshot.postcodeSurcharge) > 0 && (
-                    <div><span>Area surcharge</span><strong>{money(quote.priceSnapshot.postcodeSurcharge)}</strong></div>
+                  <div><span>Service price</span><strong>{money(selectedOption?.providerBasePrice ?? quote.priceSnapshot.providerBasePrice)}</strong></div>
+                  <div><span>Booking fee</span><strong>{money(selectedOption?.bookingFee ?? quote.priceSnapshot.bookingFee)}</strong></div>
+                  {Number(selectedOption?.postcodeSurcharge ?? quote.priceSnapshot.postcodeSurcharge) > 0 && (
+                    <div><span>Area surcharge</span><strong>{money(selectedOption?.postcodeSurcharge ?? quote.priceSnapshot.postcodeSurcharge)}</strong></div>
                   )}
                   <div style={{ fontWeight: 600, fontSize: "1.05rem" }}>
-                    <span>Total</span><strong>{money(quote.priceSnapshot.totalCustomerPay)}</strong>
+                    <span>Total</span><strong>{money(selectedOption?.totalCustomerPay ?? quote.priceSnapshot.totalCustomerPay)}</strong>
                   </div>
                 </div>
                 {unavailable ? (
@@ -80,6 +105,7 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
                 ) : (
                   <form action={startInstantBookingAction} style={{ marginTop: "1rem" }}>
                     <input type="hidden" name="reference" value={quote.reference} />
+                    {selectedOption ? <input type="hidden" name="selectedQuoteOptionId" value={selectedOption.id} /> : null}
                     <FormSubmitButton
                       label="Continue to secure hold"
                       pendingLabel="Processing..."
@@ -96,6 +122,8 @@ export default async function QuoteResultPage({ params }: QuoteResultPageProps) 
                   </p>
                 )}
               </section>
+
+              {providerOptions.length > 1 && !unavailable ? <ProviderOptionSelector quoteReference={quote.reference} options={providerOptions} /> : null}
 
               {embedUrl && (
                 <section className="panel card quote-map-panel">

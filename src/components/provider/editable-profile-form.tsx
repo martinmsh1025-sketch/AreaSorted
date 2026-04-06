@@ -20,6 +20,11 @@ import {
 
 type EditableProfileFormProps = {
   tradingName: string;
+  profileImageUrl: string;
+  profileImageType: string;
+  headline: string;
+  bio: string;
+  yearsExperience: string;
   contactEmail: string;
   phone: string;
   registeredAddress: string;
@@ -33,6 +38,11 @@ type EditableProfileFormProps = {
 
 export function EditableProfileForm({
   tradingName,
+  profileImageUrl,
+  profileImageType,
+  headline,
+  bio,
+  yearsExperience,
   contactEmail,
   phone,
   registeredAddress,
@@ -50,12 +60,22 @@ export function EditableProfileForm({
 
   // Editable fields
   const [editTradingName, setEditTradingName] = useState(tradingName);
+  const [editProfileImageUrl, setEditProfileImageUrl] = useState(profileImageUrl);
+  const [editProfileImageType, setEditProfileImageType] = useState(profileImageType || "logo");
+  const [editHeadline, setEditHeadline] = useState(headline);
+  const [editBio, setEditBio] = useState(bio);
+  const [editYearsExperience, setEditYearsExperience] = useState(yearsExperience);
   const [editPhone, setEditPhone] = useState(phone);
   const [editAddress, setEditAddress] = useState(registeredAddress);
   const [editVat, setEditVat] = useState(vatNumber);
 
   function handleCancel() {
     setEditTradingName(tradingName);
+    setEditProfileImageUrl(profileImageUrl);
+    setEditProfileImageType(profileImageType || "logo");
+    setEditHeadline(headline);
+    setEditBio(bio);
+    setEditYearsExperience(yearsExperience);
     setEditPhone(phone);
     setEditAddress(registeredAddress);
     setEditVat(vatNumber);
@@ -72,6 +92,11 @@ export function EditableProfileForm({
     setError(null);
     const fd = new FormData();
     fd.set("tradingName", editTradingName.trim());
+    fd.set("profileImageUrl", editProfileImageUrl.trim());
+    fd.set("profileImageType", editProfileImageType.trim());
+    fd.set("headline", editHeadline.trim());
+    fd.set("bio", editBio.trim());
+    fd.set("yearsExperience", editYearsExperience.trim());
     fd.set("phone", editPhone.trim());
     fd.set("registeredAddress", editAddress.trim());
     fd.set("vatNumber", editVat.trim());
@@ -149,6 +174,11 @@ export function EditableProfileForm({
 
       {/* Fields */}
       <div className="p-4 space-y-4">
+        <FieldRow icon={<Building2 className="size-4" />} label="Profile image URL" value={editProfileImageUrl} editing={isEditing} onChange={setEditProfileImageUrl} placeholder="https://..." />
+        <FieldRow icon={<Building2 className="size-4" />} label="Image type" value={editProfileImageType} editing={isEditing} onChange={setEditProfileImageType} placeholder="logo or person" />
+        <FieldRow icon={<Building2 className="size-4" />} label="Headline" value={editHeadline} editing={isEditing} onChange={setEditHeadline} placeholder="Short public headline" />
+        <FieldRow icon={<Building2 className="size-4" />} label="Bio" value={editBio} editing={isEditing} onChange={setEditBio} placeholder="Short public description" />
+        <FieldRow icon={<Building2 className="size-4" />} label="Years of experience" value={editYearsExperience} editing={isEditing} onChange={setEditYearsExperience} placeholder="e.g. 5" />
         {/* Trading name — editable */}
         <FieldRow
           icon={<Building2 className="size-4" />}

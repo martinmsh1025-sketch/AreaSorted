@@ -18,6 +18,19 @@ export async function updateProviderProfileAction(formData: FormData) {
   const phone = String(formData.get("phone") || "").trim();
   const registeredAddress = String(formData.get("registeredAddress") || "").trim();
   const vatNumber = String(formData.get("vatNumber") || "").trim();
+  const profileImageUrl = String(formData.get("profileImageUrl") || "").trim();
+  const profileImageType = String(formData.get("profileImageType") || "logo").trim();
+  const headline = String(formData.get("headline") || "").trim();
+  const bio = String(formData.get("bio") || "").trim();
+  const yearsExperience = String(formData.get("yearsExperience") || "").trim();
+
+  if (headline.length > 80) {
+    throw new Error("Headline must be 80 characters or fewer");
+  }
+
+  if (bio.length > 400) {
+    throw new Error("Short description must be 400 characters or fewer");
+  }
 
   if (!tradingName) {
     throw new Error("Trading name is required");
@@ -30,6 +43,11 @@ export async function updateProviderProfileAction(formData: FormData) {
       phone: phone || null,
       registeredAddress: registeredAddress || null,
       vatNumber: vatNumber || null,
+      profileImageUrl: profileImageUrl || null,
+      profileImageType: profileImageType || null,
+      headline: headline || null,
+      bio: bio || null,
+      yearsExperience: yearsExperience ? Number(yearsExperience) : null,
     },
   });
 

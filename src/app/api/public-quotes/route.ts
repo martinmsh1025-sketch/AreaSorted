@@ -62,6 +62,7 @@ const schema = z.object({
   addOns: z.array(z.string()).optional(),
   /** Free-text notes / job description */
   notes: z.string().max(2000).optional(),
+  preferredProviderCompanyId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {

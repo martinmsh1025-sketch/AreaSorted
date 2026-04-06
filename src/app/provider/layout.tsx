@@ -80,6 +80,7 @@ function buildProviderNav(status: string): NavGroup[] {
       label: "Account",
       items: [
         { href: "/provider/account", label: "My Profile", icon: "Account" },
+        { href: "/provider/preview", label: "Preview", icon: "Account" },
       ],
     });
   }

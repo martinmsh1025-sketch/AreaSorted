@@ -133,6 +133,12 @@ export async function updateProviderCompanyProfile(input: {
   businessType: "company" | "sole_trader";
   legalName: string;
   tradingName?: string;
+  profileImageUrl?: string;
+  profileImageType?: string;
+  headline?: string;
+  bio?: string;
+  yearsExperience?: number | null;
+  specialtiesText?: string;
   companyNumber?: string;
   registeredAddress: string;
   contactEmail: string;
@@ -169,6 +175,12 @@ export async function updateProviderCompanyProfile(input: {
     data: {
       legalName: input.legalName || null,
       tradingName: input.tradingName || null,
+      profileImageUrl: input.profileImageUrl || null,
+      profileImageType: input.profileImageType || null,
+      headline: input.headline || null,
+      bio: input.bio || null,
+      yearsExperience: input.yearsExperience ?? null,
+      specialtiesText: input.specialtiesText || null,
       companyNumber: input.businessType === "sole_trader" ? null : input.companyNumber || null,
       registeredAddress: input.registeredAddress || null,
       contactEmail: input.contactEmail.toLowerCase(),

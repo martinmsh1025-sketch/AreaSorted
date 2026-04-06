@@ -36,6 +36,7 @@ const adminNavItems = [
     group: "Marketplace",
     items: [
       { href: "/admin/providers", label: "Providers", icon: Users },
+      { href: "/admin/customers", label: "Customers", icon: Users },
       { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
       { href: "/admin/payouts", label: "Payouts", icon: Banknote },
       { href: "/admin/refunds", label: "Refunds", icon: Receipt },

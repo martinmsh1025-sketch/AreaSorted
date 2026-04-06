@@ -17,6 +17,7 @@ import { UploadDropzone } from "@/lib/uploadthing";
 import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 import { GoogleSignInButton } from "@/components/customer/google-signin-button";
 import type { ServiceValue } from "@/lib/service-catalog";
+import { ProviderOptionSelector } from "@/components/quote/provider-option-selector";
 
 type PublicCategoryKey = ReturnType<typeof listPublicCategories>[number]["key"];
 
@@ -83,6 +84,21 @@ type ServerEstimate = {
   postcodeSurcharge: number;
   addOnsTotal: number;
   totalCustomerPay: number;
+  providerOptions?: Array<{
+    providerCompanyId: string;
+    providerName: string;
+    profileImageUrl?: string | null;
+    headline?: string | null;
+    bio?: string | null;
+    yearsExperience?: number | null;
+    hasDbs?: boolean;
+    hasInsurance?: boolean;
+    totalCustomerPay: number;
+    providerBasePrice: number;
+    bookingFee: number;
+    postcodeSurcharge: number;
+  }>;
+  selectedProviderCompanyId?: string;
 };
 
 type ScheduleOption = {
@@ -242,6 +258,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [estimateError, setEstimateError] = useState("");
   const [animatedTotal, setAnimatedTotal] = useState(0);
+  const [selectedProviderCompanyId, setSelectedProviderCompanyId] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -302,6 +319,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
         sameDay: form.sameDay,
         weekend: applyWeekendSurcharge,
         weekendCount: weekendVisitCount,
+        preferredProviderCompanyId: selectedProviderCompanyId || undefined,
       };
 
       // Cleaning-specific
@@ -358,7 +376,12 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
           postcodeSurcharge: data.postcodeSurcharge,
           addOnsTotal: data.addOnsTotal,
           totalCustomerPay: data.totalCustomerPay,
+          providerOptions: data.providerOptions,
+          selectedProviderCompanyId: data.selectedProviderCompanyId,
         });
+        if (data.selectedProviderCompanyId) {
+          setSelectedProviderCompanyId((current) => current || data.selectedProviderCompanyId);
+        }
         setEstimateError("");
         setEstimateLoading(false);
       } catch (err: unknown) {
@@ -380,7 +403,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
     form.bedrooms, form.bathrooms, form.kitchens,
     form.propertyType, form.cleaningCondition, form.supplies,
     form.jobSize, form.selectedAddOns,
-    isCleaning, isPestControl, roomCount, showPropertyType,
+    isCleaning, isPestControl, roomCount, showPropertyType, selectedProviderCompanyId,
   ]);
 
   useEffect(() => {
@@ -520,6 +543,8 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
   const progressPct = Math.round(((step + 1) / STEPS.length) * 100);
   const showSidebar = step >= 1;
   const showPricingPreview = step >= 2;
+  const showFormalQuote = step >= 3;
+  const showEstimatedFromOnly = step === 2;
 
   const currentServiceCatalog = useMemo(() => {
     const cat = serviceCatalog.find((c) => c.value === (getServiceValueForCategory(categoryKey) ?? "cleaning"));
@@ -568,6 +593,9 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
     }
     if (form.notes.trim()) {
       payload.notes = form.notes.trim();
+    }
+    if (selectedProviderCompanyId) {
+      payload.preferredProviderCompanyId = selectedProviderCompanyId;
     }
     if (showPropertyType) {
       payload.propertyType = form.propertyType;
@@ -853,6 +881,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
 
             {/* ═══════ STEP 3: SCHEDULING ═══════ */}
             {step === 3 && (
+              <div style={{ display: "grid", gap: "1rem" }}>
               <div className="panel card quote-section-card">
                 <div className="quote-section-head">
                   <strong>Scheduling</strong>
@@ -938,6 +967,37 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
                     Your selected date falls on a weekend. A weekend surcharge will apply.
                   </p>
                 )}
+              </div>
+
+              {estimate?.providerOptions && estimate.providerOptions.length > 1 ? (
+                <div className="panel card quote-section-card" style={{ borderColor: "#f59e0b", boxShadow: "0 0 0 1px rgba(245,158,11,0.18) inset" }}>
+                  <div className="quote-section-head">
+                    <strong style={{ color: "#92400e" }}>Choose your provider</strong>
+                    <p>We found multiple providers for this job. Pick the one you want before moving to the next steps.</p>
+                  </div>
+                  <ProviderOptionSelector
+                    quoteReference=""
+                    options={estimate.providerOptions.map((option, index) => ({
+                      id: option.providerCompanyId,
+                      providerName: option.providerName,
+                      profileImageUrl: option.profileImageUrl,
+                      headline: option.headline,
+                      bio: option.bio,
+                      yearsExperience: option.yearsExperience,
+                      hasDbs: Boolean(option.hasDbs),
+                      hasInsurance: Boolean(option.hasInsurance),
+                      totalCustomerPay: option.totalCustomerPay,
+                      providerBasePrice: option.providerBasePrice,
+                      bookingFee: option.bookingFee,
+                      postcodeSurcharge: option.postcodeSurcharge,
+                      recommended: index === 0,
+                      selected: (selectedProviderCompanyId || estimate.selectedProviderCompanyId) === option.providerCompanyId,
+                    }))}
+                    inlineOnly
+                    onSelect={setSelectedProviderCompanyId}
+                  />
+                </div>
+              ) : null}
               </div>
             )}
 
@@ -1123,7 +1183,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
 
             {/* Pricing estimate */}
             <section className="panel card quote-summary-panel">
-              <div className="eyebrow">Quote preview</div>
+              <div className="eyebrow">{showFormalQuote ? "Quote preview" : "Estimated from"}</div>
               {!showPricingPreview ? (
                 <>
                   <h2 className="quote-total-number" style={{ color: "var(--color-text-muted)" }}>—</h2>
@@ -1144,25 +1204,39 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
                   <h2 className="quote-total-number" style={estimateLoading ? { opacity: 0.5 } : undefined}>
                     {money(animatedTotal || estimate.totalCustomerPay)}
                   </h2>
-                  <div className="quote-live-pill">
-                    <span className="quote-live-dot" />
-                    Current estimated total
-                  </div>
-                  <div className="quote-summary-list">
-                    <div><span>Service dates</span><strong>{scheduleVisitCount}</strong></div>
-                    <div><span>Service</span><strong>{selectedJob?.label ?? serviceKey}</strong></div>
-                    <div><span>Service price</span><strong>{money(estimate.servicePrice)}</strong></div>
-                    {estimate.addOnsTotal > 0 && (
-                      <div><span>Add-ons</span><strong>{money(estimate.addOnsTotal)}</strong></div>
-                    )}
-                    {estimate.postcodeSurcharge > 0 && (
-                      <div><span>Area surcharge</span><strong>+{money(estimate.postcodeSurcharge)}</strong></div>
-                    )}
-                    <div><span>Booking fee</span><strong>{money(estimate.bookingFee)}</strong></div>
-                  </div>
-                  <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                    This is your current estimated total based on the details entered so far. You will review the booking request next, then we place a temporary card hold before provider confirmation.
-                  </p>
+                  {showFormalQuote ? (
+                    <>
+                      <div className="quote-live-pill">
+                        <span className="quote-live-dot" />
+                        Current quote
+                      </div>
+                      <div className="quote-summary-list">
+                        <div><span>Service dates</span><strong>{scheduleVisitCount}</strong></div>
+                        <div><span>Service</span><strong>{selectedJob?.label ?? serviceKey}</strong></div>
+                        <div><span>Service price</span><strong>{money(estimate.servicePrice)}</strong></div>
+                        {estimate.addOnsTotal > 0 && (
+                          <div><span>Add-ons</span><strong>{money(estimate.addOnsTotal)}</strong></div>
+                        )}
+                        {estimate.postcodeSurcharge > 0 && (
+                          <div><span>Area surcharge</span><strong>+{money(estimate.postcodeSurcharge)}</strong></div>
+                        )}
+                        <div><span>Booking fee</span><strong>{money(estimate.bookingFee)}</strong></div>
+                      </div>
+                      <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+                        This quote reflects your selected schedule and provider. You will review the booking request next, then we place a temporary card hold before provider confirmation.
+                      </p>
+                    </>
+                  ) : showEstimatedFromOnly ? (
+                    <>
+                      <div className="quote-live-pill">
+                        <span className="quote-live-dot" />
+                        Estimated starting total
+                      </div>
+                      <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+                        This is an estimated starting total based on your job details so far. Your formal quote will update after schedule and provider selection.
+                      </p>
+                    </>
+                  ) : null}
                 </>
               ) : !estimateLoading && !estimateError ? (
                 <>

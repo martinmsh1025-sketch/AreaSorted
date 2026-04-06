@@ -1197,6 +1197,12 @@ model ProviderCompany {
   userId                   String?                @unique
   legalName                String?
   tradingName              String?
+  profileImageUrl          String?
+  profileImageType         String?
+  headline                 String?
+  bio                      String?
+  yearsExperience          Int?
+  specialtiesText          String?
   companyNumber            String?                @unique
   registeredAddress        String?
   contactEmail             String

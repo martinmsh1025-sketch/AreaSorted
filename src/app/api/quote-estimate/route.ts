@@ -29,6 +29,7 @@ const schema = z.object({
   propertyType: z.string().optional(),
   jobSize: z.enum(["small", "standard", "large"]).optional(),
   addOns: z.array(z.string()).optional(),
+  preferredProviderCompanyId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -58,12 +59,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "no_coverage" }, { status: 404 });
     }
 
-    let best:
-      | {
-          provider: (typeof match.providers)[number];
-          preview: Awaited<ReturnType<typeof previewProviderPricing>>;
-        }
-      | null = null;
+    const providerOptions: Array<{
+      providerCompanyId: string;
+      providerName: string;
+      profileImageUrl?: string | null;
+      headline?: string | null;
+      bio?: string | null;
+      yearsExperience?: number | null;
+      hasDbs?: boolean;
+      hasInsurance?: boolean;
+      totalCustomerPay: number;
+      providerBasePrice: number;
+      bookingFee: number;
+      postcodeSurcharge: number;
+      addOnsTotal: number;
+    }> = [];
 
     for (const provider of match.providers) {
       try {
@@ -87,26 +97,43 @@ export async function POST(request: NextRequest) {
           addOns: payload.addOns,
         });
 
-        if (!best || preview.totalCustomerPay < best.preview.totalCustomerPay) {
-          best = { provider, preview };
-        }
+        providerOptions.push({
+          providerCompanyId: provider.providerCompanyId,
+          providerName: provider.providerName,
+          profileImageUrl: provider.profileImageUrl,
+          headline: provider.headline,
+          bio: provider.bio,
+          yearsExperience: provider.yearsExperience,
+          hasDbs: provider.hasDbs,
+          hasInsurance: provider.hasInsurance,
+          totalCustomerPay: preview.totalCustomerPay,
+          providerBasePrice: preview.providerBasePrice,
+          bookingFee: preview.bookingFee,
+          postcodeSurcharge: preview.postcodeSurcharge,
+          addOnsTotal: preview.optionalExtrasAmount,
+        });
       } catch {
         // Skip providers without a usable pricing rule for this request.
       }
     }
 
-    if (!best) {
+    if (!providerOptions.length) {
       return NextResponse.json({ status: "no_pricing" }, { status: 404 });
     }
+
+    providerOptions.sort((left, right) => left.totalCustomerPay - right.totalCustomerPay || left.providerName.localeCompare(right.providerName));
+    const best = providerOptions.find((option) => option.providerCompanyId === payload.preferredProviderCompanyId) || providerOptions[0];
 
     // 3. Return customer-facing price breakdown (hide internal fields)
     return NextResponse.json({
       status: "ok",
-      servicePrice: best.preview.providerBasePrice,
-      bookingFee: best.preview.bookingFee,
-      postcodeSurcharge: best.preview.postcodeSurcharge,
-      addOnsTotal: best.preview.optionalExtrasAmount,
-      totalCustomerPay: best.preview.totalCustomerPay,
+      servicePrice: best.providerBasePrice,
+      bookingFee: best.bookingFee,
+      postcodeSurcharge: best.postcodeSurcharge,
+      addOnsTotal: best.addOnsTotal,
+      totalCustomerPay: best.totalCustomerPay,
+      providerOptions,
+      selectedProviderCompanyId: best.providerCompanyId,
     });
   } catch (error) {
     // Provider has no pricing rule for this service
