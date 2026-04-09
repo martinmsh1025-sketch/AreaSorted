@@ -4,7 +4,7 @@ import {
   getProviderUnreadCount,
 } from "@/lib/providers/notifications";
 import { NotificationsList } from "@/components/provider/notifications-list";
-import { Bell } from "lucide-react";
+import { Bell, Inbox } from "lucide-react";
 
 export default async function ProviderNotificationsPage() {
   const session = await requireProviderSession();
@@ -19,7 +19,9 @@ export default async function ProviderNotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Bell className="size-6 text-blue-600" />
+          <div className="flex size-10 items-center justify-center rounded-2xl bg-white shadow-sm">
+            <Bell className="size-5 text-[#c62828]" />
+          </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
             <p className="text-sm text-muted-foreground">
@@ -29,6 +31,11 @@ export default async function ProviderNotificationsPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#c62828]">
+        <Inbox className="size-3.5" />
+        Updates and alerts
       </div>
 
       <NotificationsList

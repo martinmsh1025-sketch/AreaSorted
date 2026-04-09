@@ -2,7 +2,8 @@
 
 import type { JsonValue } from "@prisma/client/runtime/library";
 import { useMemo, useState } from "react";
-import { Check, Circle, Upload, FileText, AlertCircle, ChevronRight, ChevronLeft, Building2, Briefcase, MapPin, FileCheck } from "lucide-react";
+import Image from "next/image";
+import { Check, Circle, Upload, FileText, AlertCircle, ChevronRight, ChevronLeft, Building2, Briefcase, MapPin, FileCheck, Sparkles, ImageIcon, MessageSquareText, ShieldCheck } from "lucide-react";
 import { ProviderStatusBadge } from "@/components/providers/status-badge";
 import { getPostcodesForCouncils, londonCouncilOptions } from "@/lib/providers/london-coverage";
 import { getProviderDocuments, providerDocumentAcceptedFileTypes, providerDocumentAcceptedFormatsLabel, providerDocumentMaxFileSizeBytes, providerDocumentTotalMaxSizeBytes } from "@/lib/providers/onboarding-config";
@@ -177,7 +178,7 @@ const phoneCountryOptions = [
   { code: "+380", label: "Ukraine", flag: "UA" },
 ] as const;
 
-const onboardingSelectClass = "flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-white dark:text-slate-950 dark:focus:border-blue-700 dark:focus:ring-blue-950 appearance-none";
+const onboardingSelectClass = "flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-100 dark:border-slate-700 dark:bg-white dark:text-slate-950 appearance-none";
 const onboardingInputClass = "h-11 rounded-xl border-slate-200 bg-white px-3 py-2 text-slate-950 shadow-sm dark:border-slate-700 dark:bg-white dark:text-slate-950";
 
 function normaliseDateInput(value: string) {
@@ -267,7 +268,7 @@ function PhoneField({
 
 function StepIndicator({ currentStep, unlockedStep, onStepClick }: { currentStep: number; unlockedStep: number; onStepClick: (step: number) => void }) {
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex items-center gap-1.5">
       {stepMeta.map((meta, index) => {
         const stepNumber = index + 1;
         const isActive = stepNumber === currentStep;
@@ -281,19 +282,19 @@ function StepIndicator({ currentStep, unlockedStep, onStepClick }: { currentStep
               type="button"
               disabled={!isClickable}
               onClick={() => isClickable && onStepClick(stepNumber)}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-1 py-1 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                  ? "text-red-700"
                   : isCompleted
-                    ? "text-blue-600 hover:bg-blue-50/50 dark:text-blue-400 dark:hover:bg-blue-950/50"
+                    ? "text-red-700"
                     : "text-muted-foreground"
               } ${isClickable ? "cursor-pointer" : "cursor-default opacity-50"}`}
             >
-              <span className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
+              <span className={`flex size-6 items-center justify-center text-xs font-bold ${
                 isActive
-                  ? "bg-blue-600 text-white"
+                  ? "text-red-700"
                   : isCompleted
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    ? "text-red-700"
                     : "bg-muted text-muted-foreground"
               }`}>
                 {isCompleted ? <Check className="size-3.5" /> : stepNumber}
@@ -334,6 +335,18 @@ function OptionTileGroup({ label, options, selected, disabled, onToggle }: { lab
   );
 }
 
+function MiniFeature({ icon, title, copy }: { icon: React.ReactNode; title: string; copy: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="mb-2 inline-flex size-8 items-center justify-center rounded-xl bg-[#c62828] text-white">
+        {icon}
+      </div>
+      <div className="text-sm font-semibold text-slate-900">{title}</div>
+      <p className="mt-1 text-xs leading-5 text-slate-600">{copy}</p>
+    </div>
+  );
+}
+
 /* ─── Chip Selector ─── */
 function ChipSelector({ options, selected, onToggle, disabled = false, taken = new Set<string>(), competitors = {} }: { options: string[]; selected: string[]; onToggle: (value: string) => void; disabled?: boolean; taken?: Set<string>; competitors?: Record<string, number> }) {
   return (
@@ -352,8 +365,8 @@ function ChipSelector({ options, selected, onToggle, disabled = false, taken = n
               isTaken
                 ? "border-border bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
                 : isSelected
-                  ? "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                  : "border-border bg-background text-foreground hover:border-blue-200 hover:bg-blue-50/50 dark:hover:border-blue-800 dark:hover:bg-blue-950/30"
+                  ? "border-red-200 bg-white text-slate-900 shadow-sm"
+                  : "border-border bg-white text-foreground hover:border-slate-300 hover:bg-slate-50"
             } ${disabled ? "pointer-events-none opacity-50" : isTaken ? "" : "cursor-pointer"}`}
           >
             {isSelected && !isTaken && <Check className="size-3.5" />}
@@ -566,14 +579,14 @@ export function ProviderOnboardingClient({
           </CardHeader>
           <CardContent className="space-y-4">
             {provider.reviewNotes?.trim() && (
-              <div className="rounded-md border border-amber-200 bg-background p-4 dark:border-amber-900">
+              <div className="rounded-md border border-amber-200 bg-white p-4 dark:border-amber-900">
                 <div className="mb-2 text-sm font-medium">Application notes</div>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{provider.reviewNotes.trim()}</p>
               </div>
             )}
 
             {flaggedDocuments.length > 0 && (
-              <div className="rounded-md border border-amber-200 bg-background p-4 dark:border-amber-900">
+              <div className="rounded-md border border-amber-200 bg-white p-4 dark:border-amber-900">
                 <div className="mb-3 text-sm font-medium">Documents to review or replace</div>
                 <div className="space-y-3">
                   {flaggedDocuments.map((document) => (
@@ -598,7 +611,7 @@ export function ProviderOnboardingClient({
 
       {/* ─── Status messages ─── */}
       {statusMessage && (
-        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-3 text-sm text-slate-800">
           <Check className="size-4 shrink-0" />
           {statusMessage}
         </div>
@@ -685,172 +698,227 @@ export function ProviderOnboardingClient({
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="provider-form-section space-y-3">
-                <div>
-                  <h3 className="provider-form-section-title">Business identity</h3>
-                  <p className="provider-form-section-copy">Start with the business type, legal identity, and primary provider contact details.</p>
+                <div className="overflow-hidden rounded-[34px] bg-white">
+                  <div className="p-6 sm:p-7 lg:p-8">
+                      <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#c62828]">
+                        <Sparkles className="size-3.5" />
+                        Customer-facing setup
+                      </div>
+                      <h3 className="mt-3 text-[1.4rem] font-semibold tracking-tight text-slate-900">Build a provider profile customers actually want to choose</h3>
+                      <div className="relative mt-4 h-[220px] w-full overflow-hidden rounded-[28px] bg-[#f7f7f7] sm:h-[280px] lg:h-[340px]">
+                        <Image
+                          src="/images/provider-onboarding-hero.png"
+                          alt="Illustration of a home service marketplace growing through provider onboarding"
+                          fill
+                          className="object-cover object-top"
+                          sizes="100vw"
+                          priority
+                        />
+                      </div>
+                      <p className="mt-2 max-w-xl text-sm leading-6 text-slate-700">Set your image, positioning, and comparison signals. Direct contact details stay hidden until payment.</p>
+                      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                        <MiniFeature icon={<ImageIcon className="size-4" />} title="Brand first" copy="Logo, headline, and short description." />
+                        <MiniFeature icon={<MessageSquareText className="size-4" />} title="Clear signals" copy="Response time, methods, and languages." />
+                        <MiniFeature icon={<ShieldCheck className="size-4" />} title="Protected contact" copy="Reveal details only after payment." />
+                      </div>
+                  </div>
                 </div>
-                <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
+                <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
                   <div className="space-y-4">
-                    <div className="rounded-[28px] border border-slate-200 bg-white p-5 text-center shadow-sm">
-                      <div className="mb-3 text-left">
-                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Brand image</div>
-                        <p className="mt-1 text-sm text-slate-500">Upload the logo or personal photo customers will recognise.</p>
-                      </div>
-                      {profileImagePreviewUrl || profileImageUrl ? (
-                        <img src={profileImagePreviewUrl || profileImageUrl} alt="Provider profile" className="mx-auto h-36 w-36 rounded-3xl object-cover" />
-                      ) : (
-                        <div className="mx-auto flex h-36 w-36 items-center justify-center rounded-3xl bg-slate-100 text-sm text-muted-foreground">
-                          No image
+                    <div className="rounded-[28px] bg-white p-5">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><ImageIcon className="size-3.5" /> Brand image</div>
+                          <p className="mt-1 text-sm text-slate-600">Upload the image customers will recognise.</p>
                         </div>
-                      )}
-                      <div className="mt-3 flex justify-center">
-                        <label htmlFor="profileImageFile" className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg bg-blue-600 px-4 text-xs font-medium text-white transition-colors hover:bg-blue-700">
-                          Upload image
-                        </label>
-                        <input
-                          id="profileImageFile"
-                          name="profileImageFile"
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp"
-                          className="sr-only"
-                          onChange={(event) => {
-                            const file = event.target.files?.[0];
-                            if (!file) return;
-                            setSelectedProfileImageName(file.name);
-                            setUploadError("");
-                            const objectUrl = URL.createObjectURL(file);
-                            setProfileImagePreviewUrl(objectUrl);
-                          }}
-                        />
+                        <div className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600">16MB max</div>
                       </div>
-                      {selectedProfileImageName ? <p className="provider-field-help" style={{ textAlign: "center", marginTop: "0.5rem", overflowWrap: "anywhere" }}>{selectedProfileImageName}</p> : null}
-                      <p className="provider-field-help" style={{ textAlign: "center", marginTop: "0.5rem" }}>Image or logo, up to 16MB.</p>
-                      {uploadError ? <p className="text-xs text-red-600" style={{ marginTop: "0.4rem" }}>{uploadError}</p> : null}
-                    </div>
-                    <div className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
-                      <div className="mb-3">
-                        <strong style={{ display: "block", fontSize: "1rem", color: "#0f172a" }}>Live preview</strong>
-                        <p className="provider-field-help">This is the customer-facing card shown during provider comparison.</p>
-                      </div>
-                      <div>
-                        <ProviderPublicProfileCard
-                          profile={{
-                            providerName: tradingName || legalName || "Your provider profile",
-                            profileImageUrl: profileImagePreviewUrl || profileImageUrl,
-                            headline,
-                            bio,
-                            yearsExperience: yearsExperience ? Number(yearsExperience) : null,
-                            hasDbs: false,
-                            hasInsurance: false,
-                            supportedContactChannels,
-                            responseTimeLabel: responseTimeLabel || null,
-                            serviceCommitments,
-                            languagesSpoken,
-                          }}
-                        />
+                      <div className="grid items-center gap-4 sm:grid-cols-[140px_minmax(0,1fr)]">
+                        {profileImagePreviewUrl || profileImageUrl ? (
+                          <img src={profileImagePreviewUrl || profileImageUrl} alt="Provider profile" className="h-32 w-32 rounded-3xl object-cover" />
+                        ) : (
+                          <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-slate-100 text-sm text-muted-foreground">
+                            No image
+                          </div>
+                        )}
+                        <div className="space-y-3 text-left">
+                          <label htmlFor="profileImageFile" className="inline-flex h-10 cursor-pointer items-center justify-center rounded-lg bg-slate-900 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800">
+                            Upload image
+                          </label>
+                          <input
+                            id="profileImageFile"
+                            name="profileImageFile"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            className="sr-only"
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (!file) return;
+                              setSelectedProfileImageName(file.name);
+                              setUploadError("");
+                              const objectUrl = URL.createObjectURL(file);
+                              setProfileImagePreviewUrl(objectUrl);
+                            }}
+                          />
+                          <p className="text-sm text-slate-600">Use a clean logo or a clear provider photo.</p>
+                          <p className="text-xs text-slate-500 break-all">{selectedProfileImageName || "No file chosen"}</p>
+                          {uploadError ? <p className="text-xs text-red-600">{uploadError}</p> : null}
+                        </div>
                       </div>
                     </div>
                   </div>
-                    <div className="space-y-5 min-w-0">
-                    <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="space-y-5 min-w-0">
+                    <div className="rounded-[28px] bg-white p-5">
                       <div className="mb-4 flex flex-col gap-1">
-                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Public profile</div>
+                        <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><Briefcase className="size-3.5" /> Public profile</div>
                         <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>How customers understand your brand</strong>
                       </div>
-                      <div className="space-y-4">
-                      <div className="provider-field-stack">
-                        <Label htmlFor="profileImageType">Image type</Label>
-                        <select id="profileImageType" value={profileImageType} onChange={(event) => setProfileImageType(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
-                          <option value="logo">Company logo</option>
-                          <option value="person">Personal photo</option>
-                        </select>
-                      </div>
-                      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
-                        <div className="provider-field-stack">
-                          <Label htmlFor="headline">Headline</Label>
-                          <Input id="headline" className={onboardingInputClass} value={headline} onChange={(event) => setHeadline(event.target.value)} disabled={!canEdit} placeholder="e.g. End of tenancy cleaning specialist" />
+                      <div className="grid gap-4 lg:grid-cols-[160px_minmax(0,1fr)] lg:items-start">
+                        <div className="space-y-3">
+                          <div className="provider-field-stack">
+                            <Label htmlFor="profileImageType">Image type</Label>
+                            <select id="profileImageType" value={profileImageType} onChange={(event) => setProfileImageType(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                              <option value="logo">Company logo</option>
+                              <option value="person">Personal photo</option>
+                            </select>
+                          </div>
                         </div>
-                        <div className="provider-field-stack">
-                          <Label htmlFor="yearsExperience">Years of experience</Label>
-                          <Input id="yearsExperience" type="number" min="0" className={onboardingInputClass} value={yearsExperience} onChange={(event) => setYearsExperience(event.target.value)} disabled={!canEdit} placeholder="e.g. 5" />
+                        <div className="space-y-4">
+                          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
+                            <div className="provider-field-stack">
+                              <Label htmlFor="headline">Headline</Label>
+                              <Input id="headline" className={onboardingInputClass} value={headline} onChange={(event) => setHeadline(event.target.value)} disabled={!canEdit} placeholder="e.g. End of tenancy cleaning specialist" />
+                            </div>
+                            <div className="provider-field-stack">
+                              <Label htmlFor="yearsExperience">Years of experience</Label>
+                              <Input id="yearsExperience" type="number" min="0" className={onboardingInputClass} value={yearsExperience} onChange={(event) => setYearsExperience(event.target.value)} disabled={!canEdit} placeholder="e.g. 5" />
+                            </div>
+                          </div>
+                          <div className="provider-field-stack">
+                            <Label htmlFor="bio">Short description</Label>
+                            <textarea id="bio" value={bio} onChange={(event) => setBio(event.target.value)} disabled={!canEdit} rows={4} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-slate-300 focus:outline-none focus:ring-2 focus:ring-red-100" placeholder="Describe the kind of work you do, what customers can expect, and what you are best known for." />
+                          </div>
                         </div>
-                      </div>
-                      <div className="provider-field-stack">
-                        <Label htmlFor="bio">Short description</Label>
-                        <textarea id="bio" value={bio} onChange={(event) => setBio(event.target.value)} disabled={!canEdit} rows={4} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Describe the kind of work you do, what customers can expect, and what you are best known for." />
-                      </div>
                       </div>
                     </div>
-                    <div className="rounded-[28px] border border-slate-200 bg-slate-50/70 p-5 shadow-sm space-y-4">
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Comparison details</div>
-                        <strong style={{ display: "block", fontSize: "1rem", marginTop: "0.35rem", color: "#0f172a" }}>Structured signals customers can compare</strong>
-                        <p className="provider-field-help">No free-text clutter here. Customers see methods, commitments, languages, and response speed.</p>
-                      </div>
-                      <OptionTileGroup
-                        label="Supported contact methods"
-                        options={providerContactChannelOptions as unknown as string[]}
-                        selected={supportedContactChannels}
-                        disabled={!canEdit}
-                        onToggle={(value) => setSupportedContactChannels((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
-                      />
-                      {supportedContactChannels.length ? (
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {supportedContactChannels.map((channel) => (
-                            <div key={channel} className="provider-field-stack">
-                              <Label htmlFor={`contact-${channel}`}>{channel} contact detail</Label>
-                              <Input
-                                id={`contact-${channel}`}
-                                className={onboardingInputClass}
-                                value={contactDetails[channel as keyof typeof contactDetails] || ""}
-                                onChange={(event) => setContactDetails((current) => ({ ...current, [channel]: event.target.value }))}
-                                disabled={!canEdit}
-                                placeholder={`Internal ${channel} contact detail`}
-                              />
+                  </div>
+                  <div className="xl:col-span-2 rounded-[28px] bg-white p-5 space-y-4">
+                    <div>
+                      <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><MessageSquareText className="size-3.5" /> Comparison details</div>
+                      <strong style={{ display: "block", fontSize: "1rem", marginTop: "0.35rem", color: "#0f172a" }}>Structured signals customers can compare</strong>
+                      <p className="provider-field-help">Customers compare methods, commitments, languages, and response speed.</p>
+                    </div>
+                    <div className="grid gap-4 xl:grid-cols-3 xl:items-start">
+                      <div className="rounded-2xl bg-white p-4">
+                        <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><ShieldCheck className="size-3.5" /> Contact setup</div>
+                        <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-600">Method only before payment</div>
+                        <div className="mt-4 space-y-4">
+                          <OptionTileGroup
+                            label="Supported contact methods"
+                            options={providerContactChannelOptions as unknown as string[]}
+                            selected={supportedContactChannels}
+                            disabled={!canEdit}
+                            onToggle={(value) => setSupportedContactChannels((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+                          />
+                          {supportedContactChannels.length ? (
+                            <div className="grid gap-3">
+                              {supportedContactChannels.map((channel) => (
+                                <div key={channel} className="provider-field-stack">
+                                  <Label htmlFor={`contact-${channel}`}>{channel} contact detail</Label>
+                                  <Input
+                                    id={`contact-${channel}`}
+                                    className={onboardingInputClass}
+                                    value={contactDetails[channel as keyof typeof contactDetails] || ""}
+                                    onChange={(event) => setContactDetails((current) => ({ ...current, [channel]: event.target.value }))}
+                                    disabled={!canEdit}
+                                    placeholder={`${channel} contact detail`}
+                                  />
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          ) : null}
                         </div>
-                      ) : null}
-                      <div className="provider-field-stack">
-                        <Label htmlFor="responseTimeLabel">Typical response time</Label>
-                        <select id="responseTimeLabel" value={responseTimeLabel} onChange={(event) => setResponseTimeLabel(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
-                          <option value="">Select response time</option>
-                          {providerResponseTimeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-                        </select>
                       </div>
-                      <OptionTileGroup
-                        label="Service commitments"
-                        options={providerCommitmentOptions as unknown as string[]}
-                        selected={serviceCommitments}
-                        disabled={!canEdit}
-                        onToggle={(value) => setServiceCommitments((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
-                      />
-                      <OptionTileGroup
-                        label="Languages spoken"
-                        options={providerLanguageOptions as unknown as string[]}
-                        selected={languagesSpoken}
-                        disabled={!canEdit}
-                        onToggle={(value) => setLanguagesSpoken((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+                      <div className="rounded-2xl bg-white p-4 space-y-4">
+                        <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><Sparkles className="size-3.5" /> Trust signals</div>
+                        <div className="provider-field-stack">
+                          <Label htmlFor="responseTimeLabel">Typical response time</Label>
+                          <select id="responseTimeLabel" value={responseTimeLabel} onChange={(event) => setResponseTimeLabel(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                            <option value="">Select response time</option>
+                            {providerResponseTimeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                          </select>
+                        </div>
+                        <OptionTileGroup
+                          label="Service commitments"
+                          options={providerCommitmentOptions as unknown as string[]}
+                          selected={serviceCommitments}
+                          disabled={!canEdit}
+                          onToggle={(value) => setServiceCommitments((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+                        />
+                      </div>
+                      <div className="rounded-2xl bg-white p-4 space-y-4">
+                        <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><Sparkles className="size-3.5" /> Languages</div>
+                        <OptionTileGroup
+                          label="Languages spoken"
+                          options={providerLanguageOptions as unknown as string[]}
+                          selected={languagesSpoken}
+                          disabled={!canEdit}
+                          onToggle={(value) => setLanguagesSpoken((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="xl:col-span-2 rounded-[28px] bg-white p-5">
+                    <div className="mb-4 flex flex-col gap-1">
+                      <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><Sparkles className="size-3.5" /> Live preview</div>
+                      <strong style={{ display: "block", fontSize: "1rem", color: "#0f172a" }}>What customers see while comparing providers</strong>
+                      <p className="provider-field-help">Full-width preview so you can judge spacing, balance, and real customer-facing content more accurately.</p>
+                    </div>
+                    <div className="mx-auto w-full max-w-[1100px]">
+                      <ProviderPublicProfileCard
+                        profile={{
+                          providerName: tradingName || legalName || "Your provider profile",
+                          profileImageUrl: profileImagePreviewUrl || profileImageUrl,
+                          headline,
+                          bio,
+                          yearsExperience: yearsExperience ? Number(yearsExperience) : null,
+                          hasDbs: false,
+                          hasInsurance: false,
+                          supportedContactChannels,
+                          responseTimeLabel: responseTimeLabel || null,
+                          serviceCommitments,
+                          languagesSpoken,
+                        }}
                       />
                     </div>
                   </div>
                 </div>
-                <Label>Business type <span className="text-red-500">*</span></Label>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {onboardingBusinessTypeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      disabled={!canEdit}
-                      onClick={() => canEdit && setBusinessType(option.value)}
-                      className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${businessType === option.value ? "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100" : "border-border bg-background text-foreground hover:border-blue-200 hover:bg-muted/50"} ${!canEdit ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
-                    >
-                      <div className="font-medium">{option.label}</div>
-                    </button>
-                  ))}
+                    <div className="rounded-[28px] bg-white p-5">
+                  <div className="mb-4 flex flex-col gap-1">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><Building2 className="size-3.5" /> Trust and legal identity</div>
+                    <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>Who you are, how you're registered, and how we can verify you</strong>
+                  </div>
+                  <Label>Business type <span className="text-red-500">*</span></Label>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {onboardingBusinessTypeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        disabled={!canEdit}
+                        onClick={() => canEdit && setBusinessType(option.value)}
+                        className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all ${businessType === option.value ? "border-red-200 bg-white text-slate-900 shadow-sm" : "border-border bg-white text-foreground hover:border-slate-300 hover:bg-slate-50"} ${!canEdit ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
+                      >
+                        <div className="font-medium">{option.label}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <div className="provider-form-section">
+              <div className="provider-form-section rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex flex-col gap-1">
+                <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><ShieldCheck className="size-3.5" /> Legal details</div>
+                <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>Registration, business identity, and verification details</strong>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="provider-field-stack">
                   <Label htmlFor="legalName">{businessType === "sole_trader" ? "Full legal name" : "Legal company name"} <span className="text-red-500">*</span></Label>
@@ -894,7 +962,11 @@ export function ProviderOnboardingClient({
               </div>
               </div>
               {businessType === "sole_trader" ? (
-                <div className="provider-form-section grid gap-4 sm:grid-cols-2">
+                <div className="provider-form-section rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2 mb-1">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><FileCheck className="size-3.5" /> Sole trader identity</div>
+                    <strong style={{ display: "block", fontSize: "1.05rem", color: "#0f172a", marginTop: "0.35rem" }}>Personal verification details</strong>
+                  </div>
                   <div className="provider-field-stack">
                     <Label htmlFor="dateOfBirth">Date of birth <span className="text-red-500">*</span></Label>
                     <Input id="dateOfBirth" type="text" inputMode="numeric" className={onboardingInputClass} value={dateOfBirth} onChange={(event) => setDateOfBirth(normaliseDateInput(event.target.value))} disabled={!canEdit} placeholder="DD/MM/YYYY" />
@@ -918,7 +990,11 @@ export function ProviderOnboardingClient({
                   </div>
                 </div>
               ) : (
-                <div className="provider-form-section grid gap-4 sm:grid-cols-3">
+                <div className="provider-form-section rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm grid gap-4 sm:grid-cols-3">
+                  <div className="sm:col-span-3 mb-1">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><FileCheck className="size-3.5" /> Company registration</div>
+                    <strong style={{ display: "block", fontSize: "1.05rem", color: "#0f172a", marginTop: "0.35rem" }}>Company incorporation and registered entity details</strong>
+                  </div>
                   <div className="provider-field-stack">
                     <Label htmlFor="companyCountry">Country of incorporation</Label>
                     <select id="companyCountry" value={companyCountry} onChange={(event) => setCompanyCountry(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
@@ -937,12 +1013,20 @@ export function ProviderOnboardingClient({
                   </div>
                 </div>
               )}
-              <div className="provider-form-section provider-field-stack">
+              <div className="provider-form-section provider-field-stack rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mb-1">
+                  <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><MapPin className="size-3.5" /> Registered location</div>
+                  <strong style={{ display: "block", fontSize: "1.05rem", color: "#0f172a", marginTop: "0.35rem" }}>Official address for compliance and payout checks</strong>
+                </div>
                 <Label htmlFor="registeredAddress">{businessType === "sole_trader" ? "Home address" : "Registered address"} <span className="text-red-500">*</span></Label>
                 <Input id="registeredAddress" name="registeredAddress" className={onboardingInputClass} value={registeredAddress} onChange={(event) => setRegisteredAddress(event.target.value)} required disabled={!canEdit} placeholder={businessType === "sole_trader" ? "Home address" : "Full registered address"} />
                 <p className="provider-field-help">Use the address tied to your company registration or sole trader identity checks.</p>
               </div>
-              <div className="provider-form-section">
+              <div className="provider-form-section rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex flex-col gap-1">
+                <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><MessageSquareText className="size-3.5" /> Contact and admin</div>
+                <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>Admin, invoicing, and support contact details</strong>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="provider-field-stack">
                   <Label htmlFor="vatNumber">VAT number <span className="text-muted-foreground text-xs">(optional)</span></Label>
@@ -956,7 +1040,11 @@ export function ProviderOnboardingClient({
               </div>
               {businessType === "sole_trader" ? (
                 <>
-                  <div className="provider-form-section">
+                  <div className="provider-form-section rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex flex-col gap-1">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><FileCheck className="size-3.5" /> Tax profile</div>
+                    <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>Sole trader tax and HMRC details</strong>
+                  </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="provider-field-stack">
                       <Label htmlFor="businessAddress">Business address</Label>
@@ -982,7 +1070,11 @@ export function ProviderOnboardingClient({
                 </>
               ) : (
                 <>
-                  <div className="provider-form-section">
+                  <div className="provider-form-section rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="mb-4 flex flex-col gap-1">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><ShieldCheck className="size-3.5" /> Signatory and operations</div>
+                    <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>Company authority and day-to-day booking contacts</strong>
+                  </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="provider-field-stack">
                       <Label htmlFor="authorisedSignatoryName">Authorised signatory name <span className="text-red-500">*</span></Label>
@@ -1060,16 +1152,33 @@ export function ProviderOnboardingClient({
               <CardDescription>Select the services you want to offer.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+                <div className="rounded-[30px] bg-white p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#c62828] shadow-sm">
+                      <Briefcase className="size-3.5" />
+                      Service menu
+                    </div>
+                    <h3 className="mt-3 text-[1.35rem] font-semibold tracking-tight text-slate-900">Choose the work you actually want to win</h3>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-700">Keep this focused. A cleaner service menu makes matching and review easier.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3 lg:w-[420px]">
+                    <MiniFeature icon={<Briefcase className="size-4" />} title="Clear offer" copy="Only turn on the services you are ready to deliver." />
+                    <MiniFeature icon={<Check className="size-4" />} title="Better matching" copy="Sharper service choices mean fewer bad-fit leads." />
+                    <MiniFeature icon={<Sparkles className="size-4" />} title="Easier pricing" copy="A clean setup makes pricing review faster later." />
+                  </div>
+                </div>
+              </div>
               {lockedCategory && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50/50 px-4 py-3 dark:border-blue-800 dark:bg-blue-950/30">
-                  <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Approved category: {lockedCategory.label}</p>
-                  <p className="mt-0.5 text-xs text-blue-600 dark:text-blue-400">Select which services you want to offer within this category.</p>
+                <div className="rounded-lg border border-red-200 bg-white px-4 py-3">
+                  <p className="text-sm font-medium text-slate-900">Approved category: {lockedCategory.label}</p>
+                  <p className="mt-0.5 text-xs text-slate-600">Select which services you want to offer within this category.</p>
                   <input type="hidden" name="categories" value={lockedCategory.key} />
                 </div>
               )}
 
               {!lockedCategory && (
-                <div className="space-y-3">
+                <div className="space-y-3 rounded-[28px] bg-white p-5">
                   <Label>Service categories <span className="text-red-500">*</span></Label>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {providerServiceCatalog.map((category) => {
@@ -1082,8 +1191,8 @@ export function ProviderOnboardingClient({
                           disabled={!canEdit}
                           className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${
                             isSelected
-                              ? "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100"
-                              : "border-border bg-background text-foreground hover:border-blue-200 hover:bg-muted/50"
+                              ? "border-red-200 bg-white text-slate-900 shadow-sm"
+                              : "border-border bg-white text-foreground hover:border-slate-300 hover:bg-slate-50"
                           } ${!canEdit ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
                         >
                           <div className="font-medium">{category.label}</div>
@@ -1095,9 +1204,9 @@ export function ProviderOnboardingClient({
                 </div>
               )}
 
-              <div className="space-y-3">
-                <Label>Services <span className="text-red-500">*</span></Label>
-                <div className="space-y-2">
+                <div className="space-y-3 rounded-[28px] bg-white p-5">
+                  <Label>Services <span className="text-red-500">*</span></Label>
+                  <div className="space-y-2">
                   {availableServices.map((service) => {
                     const isSelected = selectedServices.includes(service.key);
                     return (
@@ -1108,12 +1217,12 @@ export function ProviderOnboardingClient({
                         disabled={!canEdit}
                         className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-all ${
                           isSelected
-                            ? "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100"
-                            : "border-border bg-background text-foreground hover:border-blue-200 hover:bg-muted/50"
+                            ? "border-red-200 bg-white text-slate-900 shadow-sm"
+                            : "border-border bg-white text-foreground hover:border-slate-300 hover:bg-slate-50"
                         } ${!canEdit ? "pointer-events-none opacity-50" : "cursor-pointer"}`}
                       >
                         <span className={`flex size-5 items-center justify-center rounded border text-white transition-colors ${
-                          isSelected ? "border-blue-600 bg-blue-600" : "border-muted-foreground/30 bg-background"
+                          isSelected ? "border-red-700 bg-red-700" : "border-muted-foreground/30 bg-white"
                         }`}>
                           {isSelected && <Check className="size-3.5" />}
                         </span>
@@ -1145,14 +1254,31 @@ export function ProviderOnboardingClient({
               <CardDescription>Choose where you want to receive jobs in London.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="space-y-2">
+              <div className="rounded-[30px] bg-white p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#c62828] shadow-sm">
+                      <MapPin className="size-3.5" />
+                      Coverage map
+                    </div>
+                    <h3 className="mt-3 text-[1.35rem] font-semibold tracking-tight text-slate-900">Mark the London areas you can serve reliably</h3>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-700">Choose boroughs first, then fine-tune postcode prefixes. Accuracy matters more than size.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3 lg:w-[420px]">
+                    <MiniFeature icon={<MapPin className="size-4" />} title="Borough first" copy="Start broad, then narrow down by postcode." />
+                    <MiniFeature icon={<Check className="size-4" />} title="Stay realistic" copy="Only select areas your team can actually cover." />
+                    <MiniFeature icon={<Sparkles className="size-4" />} title="Reduce churn" copy="Better coverage setup means fewer bad-fit bookings." />
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2 rounded-[28px] bg-white p-5">
                 <div className="flex items-center gap-2">
                   <Label>Region</Label>
                   <Badge variant="secondary">London</Badge>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-[28px] bg-white p-5">
                 <Label>Boroughs <span className="text-red-500">*</span></Label>
                   <ChipSelector
                     options={londonCouncilOptions}
@@ -1173,7 +1299,7 @@ export function ProviderOnboardingClient({
                   </p>
                 </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 rounded-[28px] bg-white p-5">
                 <Label>Postcodes <span className="text-red-500">*</span></Label>
                 {selectedCouncils.length ? (
                   <>
@@ -1216,12 +1342,30 @@ export function ProviderOnboardingClient({
               <CardDescription>Upload the documents that apply to your business type and accept the provider agreement.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              <div className="rounded-[30px] bg-white p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#c62828] shadow-sm">
+                      <FileCheck className="size-3.5" />
+                      Trust pack
+                    </div>
+                    <h3 className="mt-3 text-[1.35rem] font-semibold tracking-tight text-slate-900">Upload the proofs that unlock customer trust</h3>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-700">Upload the right proofs, accept the agreement, and move into review faster.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3 lg:w-[420px]">
+                    <MiniFeature icon={<Upload className="size-4" />} title="Fast upload" copy="PDF, JPG, or PNG up to 10 MB each." />
+                    <MiniFeature icon={<ShieldCheck className="size-4" />} title="Trust signals" copy="Insurance, ID, and compliance proofs." />
+                    <MiniFeature icon={<FileText className="size-4" />} title="One agreement" copy="Read, download, and accept in one place." />
+                  </div>
+                </div>
+              </div>
               {businessType === "sole_trader" && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
                   DBS is optional for sole traders. However, providers with a DBS may be prioritised for some jobs where another applicant has stronger trust credentials.
                 </div>
               )}
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                <div className="grid gap-4 sm:grid-cols-2">
                 {providerDocuments.map((document) => {
                   const uploaded = provider.documents.find((item) => item.documentKey === document.key);
                   const pendingUpload = pendingUploads[document.key];
@@ -1230,7 +1374,7 @@ export function ProviderOnboardingClient({
                   const badge = getDocumentBadge(uploaded, Boolean(pendingUpload));
 
                   return (
-                    <div key={document.key} className="space-y-2 rounded-lg border p-4">
+                    <div key={document.key} className="space-y-2 rounded-[24px] bg-white p-4">
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-0.5">
                           <p className="text-sm font-medium">
@@ -1241,7 +1385,7 @@ export function ProviderOnboardingClient({
                         </div>
                         <Badge variant={badge.variant}>{badge.label}</Badge>
                       </div>
-                      <label className={`flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 transition-colors hover:border-blue-300 hover:bg-blue-50/50 dark:hover:border-blue-700 dark:hover:bg-blue-950/30 ${!canEdit ? "pointer-events-none opacity-50" : ""}`}>
+                      <label className={`flex cursor-pointer items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 transition-colors hover:border-slate-300 hover:bg-slate-50 ${!canEdit ? "pointer-events-none opacity-50" : ""}`}>
                         <Upload className="size-4 text-muted-foreground" />
                         <span className="text-sm text-muted-foreground">
                           {displayName ? `${displayName}${displaySize ? ` (${formatFileSize(displaySize)})` : ""}` : "Choose file"}
@@ -1308,6 +1452,84 @@ export function ProviderOnboardingClient({
                     </div>
                   );
                 })}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-[28px] bg-white p-5">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><Upload className="size-3.5" /> Upload guide</div>
+                    <div className="mt-3 space-y-3 text-sm text-slate-600">
+                      <p>Use clear scans or clean photos. Avoid cropped edges, glare, or unreadable text.</p>
+                      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3"><strong className="block text-slate-900">File types</strong><span className="text-xs">PDF, JPG, PNG</span></div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3"><strong className="block text-slate-900">Per file</strong><span className="text-xs">Up to 10 MB</span></div>
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3"><strong className="block text-slate-900">Total upload</strong><span className="text-xs">Up to 30 MB</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[28px] bg-white p-5 space-y-4">
+                    <div>
+                      <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><FileText className="size-3.5" /> Provider agreement</div>
+                      <strong style={{ display: "block", fontSize: "1rem", color: "#0f172a", marginTop: "0.35rem" }}>{agreement.title}</strong>
+                      <p className="mt-2 text-sm text-slate-600">Read the full agreement, keep a copy, then accept it when you are ready to submit for review.</p>
+                    </div>
+                    <div className="rounded-2xl bg-white p-4">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <FileText className="size-4" />
+                        {agreement.title}
+                        <Badge variant="outline" className="text-[10px] uppercase tracking-wide">{agreement.version}</Badge>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">{agreement.intro}</p>
+                      <div className="mt-4 max-h-72 space-y-4 overflow-y-auto pr-2">
+                        {agreement.sections.map((section) => (
+                          <div key={section.heading} className="space-y-2">
+                            <h4 className="text-sm font-semibold">{section.heading}</h4>
+                            <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                              {section.points.map((point) => (
+                                <li key={point}>{point}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-white p-4 space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href={businessType === "sole_trader" ? "/provider/agreements/sole-trader" : "/provider/agreements/company"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-white px-3 text-xs font-medium shadow-sm hover:bg-slate-50"
+                        >
+                          Open full agreement
+                        </a>
+                        <a
+                          href={businessType === "sole_trader" ? "/provider-agreements/sole-trader-v1.txt" : "/provider-agreements/company-provider-v1.txt"}
+                          download
+                          className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-white px-3 text-xs font-medium shadow-sm hover:bg-slate-50"
+                        >
+                          Download text
+                        </a>
+                      </div>
+                      <label className={`flex items-start gap-3 ${canEdit ? "cursor-pointer" : "pointer-events-none opacity-70"}`}>
+                        <input
+                          type="checkbox"
+                          name="agreementAccepted"
+                          checked={agreementAccepted}
+                          onChange={() => setAgreementAccepted((current) => !current)}
+                          disabled={!canEdit}
+                          className="mt-0.5 size-4 rounded border-muted-foreground/30 text-red-700 focus:ring-red-200"
+                        />
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium">I accept the {agreement.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            By checking this box, you confirm you have read version {agreement.version} and agree to the provider terms for your business type.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {uploadError && (
@@ -1322,72 +1544,6 @@ export function ProviderOnboardingClient({
                   Selected files total: {(totalPendingUploadBytes / (1024 * 1024)).toFixed(1)} MB of 30 MB
                 </p>
               )}
-
-              {/* Agreement checkbox */}
-              <div className="rounded-lg border p-4 space-y-4">
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <FileText className="size-4" />
-                    {agreement.title}
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-wide">{agreement.version}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{agreement.intro}</p>
-                  <div className="mt-4 max-h-72 space-y-4 overflow-y-auto pr-2">
-                    {agreement.sections.map((section) => (
-                      <div key={section.heading} className="space-y-2">
-                        <h4 className="text-sm font-semibold">{section.heading}</h4>
-                        <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-                          {section.points.map((point) => (
-                            <li key={point}>{point}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-lg border bg-background p-4 space-y-3">
-                  <p className="text-sm font-medium">Read the full agreement before accepting</p>
-                  <p className="text-xs text-muted-foreground">
-                    Open the full agreement in a dedicated page, or download a copy before accepting.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <a
-                      href={businessType === "sole_trader" ? "/provider/agreements/sole-trader" : "/provider/agreements/company"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                    >
-                      Open full agreement
-                    </a>
-                    <a
-                      href={businessType === "sole_trader" ? "/provider-agreements/sole-trader-v1.txt" : "/provider-agreements/company-provider-v1.txt"}
-                      download
-                      className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
-                    >
-                      Download text
-                    </a>
-                  </div>
-                  <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
-                    The full agreement opens in its own page so you can read, print, or download it without leaving the onboarding flow open in the background.
-                  </div>
-                </div>
-                <label className={`flex items-start gap-3 ${canEdit ? "cursor-pointer" : "pointer-events-none opacity-70"}`}>
-                  <input
-                    type="checkbox"
-                    name="agreementAccepted"
-                    checked={agreementAccepted}
-                    onChange={() => setAgreementAccepted((current) => !current)}
-                    disabled={!canEdit}
-                    className="mt-0.5 size-4 rounded border-muted-foreground/30 text-blue-600 focus:ring-blue-500"
-                  />
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">I accept the {agreement.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      By checking this box, you confirm you have read version {agreement.version} and agree to the provider terms for your business type.
-                    </p>
-                  </div>
-                </label>
-              </div>
             </CardContent>
           </Card>
 
@@ -1413,7 +1569,7 @@ export function ProviderOnboardingClient({
                     (step === 2 && !servicesComplete) ||
                     (step === 3 && !coverageComplete)
                   }
-                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="bg-slate-900 hover:bg-slate-800 text-white inline-flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Continue
                   <ChevronRight className="size-4" />
@@ -1423,7 +1579,7 @@ export function ProviderOnboardingClient({
                   type="submit"
                   formAction={continueAction}
                   disabled={!canEdit || Boolean(uploadError) || Object.keys(uploadFieldErrors).length > 0}
-                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent px-3 h-9 text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="bg-slate-900 hover:bg-slate-800 text-white inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent px-3 h-9 text-sm font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Review and submit
                 </button>
@@ -1451,7 +1607,7 @@ export function ProviderOnboardingClient({
                   <div key={item.key} className="flex items-center gap-2.5">
                     <span className={`flex size-5 items-center justify-center rounded-full ${
                       item.complete
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                        ? "bg-red-100 text-red-700"
                         : "bg-muted text-muted-foreground"
                     }`}>
                       {item.complete ? <Check className="size-3" /> : <Circle className="size-3" />}

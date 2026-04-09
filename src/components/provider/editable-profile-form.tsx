@@ -169,7 +169,7 @@ export function EditableProfileForm({
               </Button>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 text-xs"
+                className="bg-slate-900 hover:bg-slate-800 text-white gap-1.5 text-xs"
                 onClick={handleSave}
                 disabled={isPending}
               >
@@ -284,7 +284,7 @@ export function EditableProfileForm({
           onToggle={(value) => setEditSupportedContactChannels((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
         />
         {editSupportedContactChannels.length > 0 ? (
-          <div className="grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2">
+          <div className="grid gap-3 rounded-lg bg-muted/10 p-3 sm:grid-cols-2">
             {editSupportedContactChannels.map((channel) => (
               <FieldRow
                 key={channel}
@@ -377,7 +377,7 @@ function SelectRow({ icon, label, value, editing, onChange, options }: { icon: R
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium text-muted-foreground">{label}</div>
         {editing && onChange ? (
-          <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-md bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-100">
             <option value="">Select response time</option>
             {options.map((option) => <option key={option} value={option}>{option}</option>)}
           </select>
@@ -431,7 +431,7 @@ function FieldRow({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             required={required}
-            className="mt-0.5 w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-0.5 w-full rounded-md bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-100"
           />
         ) : (
           <p className={`text-sm mt-0.5 ${value && value !== "Not set" ? "font-medium" : "text-muted-foreground"}`}>

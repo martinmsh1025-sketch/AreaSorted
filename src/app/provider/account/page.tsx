@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   CreditCard,
+  Shield,
+  UserCircle2,
+  Sparkles,
 } from "lucide-react";
 import { EditableProfileForm } from "@/components/provider/editable-profile-form";
 import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
@@ -45,7 +48,10 @@ export default async function ProviderAccountPage({ searchParams }: ProviderAcco
       {/* Header */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">My Profile</h1>
+          <h1 className="inline-flex items-center gap-2 text-xl font-bold tracking-tight">
+            <UserCircle2 className="size-5 text-[#c62828]" />
+            My Profile
+          </h1>
           <p className="text-sm text-muted-foreground">
             Manage your company details and account settings.
           </p>
@@ -94,7 +100,10 @@ export default async function ProviderAccountPage({ searchParams }: ProviderAcco
 
       <div className="rounded-lg border bg-card">
         <div className="px-4 py-3 border-b">
-          <h2 className="text-sm font-semibold">Security</h2>
+          <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
+            <Shield className="size-4 text-[#c62828]" />
+            Security
+          </h2>
           <p className="text-xs text-muted-foreground mt-1">Update your password without leaving the provider portal.</p>
         </div>
         <div className="p-4">
@@ -121,7 +130,10 @@ export default async function ProviderAccountPage({ searchParams }: ProviderAcco
       {/* Quick Actions */}
       <div className="rounded-lg border bg-card">
         <div className="px-4 py-3 border-b">
-          <h2 className="text-sm font-semibold">Quick Actions</h2>
+          <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
+            <Sparkles className="size-4 text-[#c62828]" />
+            Quick Actions
+          </h2>
         </div>
         <div className="p-4 flex flex-wrap gap-2">
           <Link

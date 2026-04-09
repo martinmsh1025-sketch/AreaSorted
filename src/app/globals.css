@@ -344,16 +344,21 @@ img {
 }
 
 .provider-form-card {
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 0 !important;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 .provider-form-section {
-  border: 1px solid rgba(191, 219, 254, 0.75);
+  border: 0 !important;
   border-radius: 20px;
-  background: linear-gradient(180deg, rgba(239, 246, 255, 0.85) 0%, rgba(255, 255, 255, 0.98) 100%);
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
   padding: 1.15rem;
 }
 
@@ -361,12 +366,12 @@ img {
   margin: 0;
   font-size: 0.98rem;
   font-weight: 700;
-  color: #0f2b61;
+  color: #111827;
 }
 
 .provider-form-section-copy {
   margin: 0.3rem 0 0;
-  color: #51627f;
+  color: #6b7280;
   font-size: 0.88rem;
   line-height: 1.6;
 }
