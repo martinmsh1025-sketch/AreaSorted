@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireProviderAccountAccess } from "@/lib/provider-auth";
 import { getPrisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
+import { providerContactChannelOptions, providerCommitmentOptions, providerLanguageOptions, providerResponseTimeOptions, stringifyProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
+import { validateProviderContactDetail } from "@/lib/providers/contact-detail-validation";
 
 /**
  * Update editable provider company profile fields.
@@ -23,6 +25,16 @@ export async function updateProviderProfileAction(formData: FormData) {
   const headline = String(formData.get("headline") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
   const yearsExperience = String(formData.get("yearsExperience") || "").trim();
+  const supportedContactChannels = formData.getAll("supportedContactChannels").map((item) => String(item)).filter((item) => providerContactChannelOptions.includes(item as never));
+  const responseTimeLabel = String(formData.get("responseTimeLabel") || "").trim();
+  const serviceCommitments = formData.getAll("serviceCommitments").map((item) => String(item)).filter((item) => providerCommitmentOptions.includes(item as never));
+  const languagesSpoken = formData.getAll("languagesSpoken").map((item) => String(item)).filter((item) => providerLanguageOptions.includes(item as never));
+  const whatsappContact = String(formData.get("whatsappContact") || "").trim();
+  const smsContact = String(formData.get("smsContact") || "").trim();
+  const phoneContact = String(formData.get("phoneContact") || "").trim();
+  const telegramContact = String(formData.get("telegramContact") || "").trim();
+  const emailContact = String(formData.get("emailContact") || "").trim();
+  const normalizedContactDetails: Partial<Record<"WhatsApp" | "SMS" | "Phone" | "Telegram" | "Email", string>> = {};
 
   if (headline.length > 80) {
     throw new Error("Headline must be 80 characters or fewer");
@@ -30,6 +42,34 @@ export async function updateProviderProfileAction(formData: FormData) {
 
   if (bio.length > 400) {
     throw new Error("Short description must be 400 characters or fewer");
+  }
+
+  if (responseTimeLabel && !providerResponseTimeOptions.includes(responseTimeLabel as never)) {
+    throw new Error("Please choose a valid response time option");
+  }
+  if (supportedContactChannels.includes("WhatsApp") && !whatsappContact) {
+    throw new Error("WhatsApp contact is required when WhatsApp is enabled");
+  }
+  if (supportedContactChannels.includes("SMS") && !smsContact) {
+    throw new Error("SMS contact is required when SMS is enabled");
+  }
+  if (supportedContactChannels.includes("Phone") && !phoneContact) {
+    throw new Error("Phone contact is required when Phone is enabled");
+  }
+  if (supportedContactChannels.includes("Telegram") && !telegramContact) {
+    throw new Error("Telegram contact is required when Telegram is enabled");
+  }
+  if (supportedContactChannels.includes("Email") && !emailContact) {
+    throw new Error("Email contact is required when Email is enabled");
+  }
+
+  for (const [channel, rawValue] of [["WhatsApp", whatsappContact], ["SMS", smsContact], ["Phone", phoneContact], ["Telegram", telegramContact], ["Email", emailContact]] as const) {
+    if (!supportedContactChannels.includes(channel)) continue;
+    const validated = validateProviderContactDetail(channel, rawValue);
+    if (!validated.ok) {
+      throw new Error(validated.error);
+    }
+    normalizedContactDetails[channel] = validated.normalized;
   }
 
   if (!tradingName) {
@@ -48,6 +88,13 @@ export async function updateProviderProfileAction(formData: FormData) {
       headline: headline || null,
       bio: bio || null,
       yearsExperience: yearsExperience ? Number(yearsExperience) : null,
+      specialtiesText: stringifyProviderPublicProfileMetadata({
+        supportedContactChannels,
+        contactDetails: normalizedContactDetails,
+        responseTimeLabel,
+        serviceCommitments,
+        languagesSpoken,
+      }),
     },
   });
 

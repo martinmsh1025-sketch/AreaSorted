@@ -16,6 +16,7 @@ import { getAgreementContent, onboardingBusinessTypeOptions } from "@/lib/provid
 import type { ProviderOnboardingMetadata } from "@/lib/providers/onboarding-profile";
 import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
 import { ProviderPublicProfileCard } from "@/components/provider/public-profile-card";
+import { parseProviderPublicProfileMetadata, providerCommitmentOptions, providerContactChannelOptions, providerLanguageOptions, providerResponseTimeOptions } from "@/lib/providers/public-profile-metadata";
 
 type ChecklistItem = {
   key: string;
@@ -44,6 +45,7 @@ type ProviderOnboardingClientProps = {
     headline?: string | null;
     bio?: string | null;
     yearsExperience?: number | null;
+    specialtiesText?: string | null;
     companyNumber: string | null;
     registeredAddress: string | null;
     contactEmail: string;
@@ -308,6 +310,30 @@ function StepIndicator({ currentStep, unlockedStep, onStepClick }: { currentStep
   );
 }
 
+function OptionTileGroup({ label, options, selected, disabled, onToggle }: { label: string; options: string[]; selected: string[]; disabled: boolean; onToggle: (value: string) => void; }) {
+  return (
+    <div className="provider-field-stack">
+      <Label>{label}</Label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = selected.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              disabled={disabled}
+              onClick={() => onToggle(option)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"} ${disabled ? "opacity-60" : ""}`}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Chip Selector ─── */
 function ChipSelector({ options, selected, onToggle, disabled = false, taken = new Set<string>(), competitors = {} }: { options: string[]; selected: string[]; onToggle: (value: string) => void; disabled?: boolean; taken?: Set<string>; competitors?: Record<string, number> }) {
   return (
@@ -457,6 +483,12 @@ export function ProviderOnboardingClient({
   const [headline, setHeadline] = useState(provider.headline || "");
   const [bio, setBio] = useState(provider.bio || "");
   const [yearsExperience, setYearsExperience] = useState(provider.yearsExperience ? String(provider.yearsExperience) : "");
+  const initialPublicProfileMetadata = useMemo(() => parseProviderPublicProfileMetadata(provider.specialtiesText), [provider.specialtiesText]);
+  const [supportedContactChannels, setSupportedContactChannels] = useState<string[]>(initialPublicProfileMetadata.supportedContactChannels);
+  const [contactDetails, setContactDetails] = useState(initialPublicProfileMetadata.contactDetails);
+  const [responseTimeLabel, setResponseTimeLabel] = useState(initialPublicProfileMetadata.responseTimeLabel || "");
+  const [serviceCommitments, setServiceCommitments] = useState<string[]>(initialPublicProfileMetadata.serviceCommitments);
+  const [languagesSpoken, setLanguagesSpoken] = useState<string[]>(initialPublicProfileMetadata.languagesSpoken);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(isInviteFlow ? initialCategories : []);
   const [selectedServices, setSelectedServices] = useState<string[]>(isInviteFlow ? savedServiceKeys : []);
   const [selectedCouncils, setSelectedCouncils] = useState<string[]>(initialCouncils);
@@ -629,6 +661,15 @@ export function ProviderOnboardingClient({
           <input type="hidden" name="headline" value={headline} />
           <input type="hidden" name="bio" value={bio} />
           <input type="hidden" name="yearsExperience" value={yearsExperience} />
+          {supportedContactChannels.map((channel) => <input key={`contact-channel-${channel}`} type="hidden" name="supportedContactChannels" value={channel} />)}
+          <input type="hidden" name="responseTimeLabel" value={responseTimeLabel} />
+          {serviceCommitments.map((value) => <input key={`commitment-${value}`} type="hidden" name="serviceCommitments" value={value} />)}
+          {languagesSpoken.map((value) => <input key={`language-${value}`} type="hidden" name="languagesSpoken" value={value} />)}
+          <input type="hidden" name="whatsappContact" value={contactDetails.WhatsApp || ""} />
+          <input type="hidden" name="smsContact" value={contactDetails.SMS || ""} />
+          <input type="hidden" name="phoneContact" value={contactDetails.Phone || ""} />
+          <input type="hidden" name="telegramContact" value={contactDetails.Telegram || ""} />
+          <input type="hidden" name="emailContact" value={contactDetails.Email || ""} />
           <input type="hidden" name="businessAddress" value={businessAddress} />
           <input type="hidden" name="nationalInsuranceNumber" value={nationalInsuranceNumber} />
           <input type="hidden" name="utrNumber" value={utrNumber} />
@@ -648,10 +689,13 @@ export function ProviderOnboardingClient({
                   <h3 className="provider-form-section-title">Business identity</h3>
                   <p className="provider-form-section-copy">Start with the business type, legal identity, and primary provider contact details.</p>
                 </div>
-                <div className="grid gap-5 xl:grid-cols-[260px_minmax(0,0.92fr)_380px]">
-                  <div className="provider-field-stack">
-                    <Label>Profile image</Label>
-                    <div className="rounded-2xl border bg-white p-4 text-center max-w-[260px]">
+                <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
+                  <div className="space-y-4">
+                    <div className="rounded-[28px] border border-slate-200 bg-white p-5 text-center shadow-sm">
+                      <div className="mb-3 text-left">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Brand image</div>
+                        <p className="mt-1 text-sm text-slate-500">Upload the logo or personal photo customers will recognise.</p>
+                      </div>
                       {profileImagePreviewUrl || profileImageUrl ? (
                         <img src={profileImagePreviewUrl || profileImageUrl} alt="Provider profile" className="mx-auto h-36 w-36 rounded-3xl object-cover" />
                       ) : (
@@ -683,46 +727,112 @@ export function ProviderOnboardingClient({
                       <p className="provider-field-help" style={{ textAlign: "center", marginTop: "0.5rem" }}>Image or logo, up to 16MB.</p>
                       {uploadError ? <p className="text-xs text-red-600" style={{ marginTop: "0.4rem" }}>{uploadError}</p> : null}
                     </div>
-                  </div>
-                  <div className="space-y-4 min-w-0">
-                    <div className="provider-field-stack">
-                      <Label htmlFor="profileImageType">Image type</Label>
-                      <select id="profileImageType" value={profileImageType} onChange={(event) => setProfileImageType(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
-                        <option value="logo">Company logo</option>
-                        <option value="person">Personal photo</option>
-                      </select>
-                    </div>
-                    <div className="provider-field-stack">
-                      <Label htmlFor="headline">Headline</Label>
-                      <Input id="headline" className={onboardingInputClass} value={headline} onChange={(event) => setHeadline(event.target.value)} disabled={!canEdit} placeholder="e.g. End of tenancy cleaning specialist" />
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="provider-field-stack">
-                        <Label htmlFor="yearsExperience">Years of experience</Label>
-                        <Input id="yearsExperience" type="number" min="0" className={onboardingInputClass} value={yearsExperience} onChange={(event) => setYearsExperience(event.target.value)} disabled={!canEdit} placeholder="e.g. 5" />
+                    <div className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
+                      <div className="mb-3">
+                        <strong style={{ display: "block", fontSize: "1rem", color: "#0f172a" }}>Live preview</strong>
+                        <p className="provider-field-help">This is the customer-facing card shown during provider comparison.</p>
+                      </div>
+                      <div>
+                        <ProviderPublicProfileCard
+                          profile={{
+                            providerName: tradingName || legalName || "Your provider profile",
+                            profileImageUrl: profileImagePreviewUrl || profileImageUrl,
+                            headline,
+                            bio,
+                            yearsExperience: yearsExperience ? Number(yearsExperience) : null,
+                            hasDbs: false,
+                            hasInsurance: false,
+                            supportedContactChannels,
+                            responseTimeLabel: responseTimeLabel || null,
+                            serviceCommitments,
+                            languagesSpoken,
+                          }}
+                        />
                       </div>
                     </div>
-                    <div className="provider-field-stack">
-                      <Label htmlFor="bio">Short description</Label>
-                      <textarea id="bio" value={bio} onChange={(event) => setBio(event.target.value)} disabled={!canEdit} rows={4} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Describe the kind of work you do, what customers can expect, and what you are best known for." />
-                    </div>
                   </div>
-                  <div className="rounded-2xl border bg-white p-5 min-w-0">
-                    <div className="mb-3">
-                      <strong style={{ display: "block", fontSize: "1rem" }}>Live preview</strong>
-                      <p className="provider-field-help">This is how customers can see your shortlist card while comparing providers.</p>
+                    <div className="space-y-5 min-w-0">
+                    <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="mb-4 flex flex-col gap-1">
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Public profile</div>
+                        <strong style={{ fontSize: "1.05rem", color: "#0f172a" }}>How customers understand your brand</strong>
+                      </div>
+                      <div className="space-y-4">
+                      <div className="provider-field-stack">
+                        <Label htmlFor="profileImageType">Image type</Label>
+                        <select id="profileImageType" value={profileImageType} onChange={(event) => setProfileImageType(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                          <option value="logo">Company logo</option>
+                          <option value="person">Personal photo</option>
+                        </select>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
+                        <div className="provider-field-stack">
+                          <Label htmlFor="headline">Headline</Label>
+                          <Input id="headline" className={onboardingInputClass} value={headline} onChange={(event) => setHeadline(event.target.value)} disabled={!canEdit} placeholder="e.g. End of tenancy cleaning specialist" />
+                        </div>
+                        <div className="provider-field-stack">
+                          <Label htmlFor="yearsExperience">Years of experience</Label>
+                          <Input id="yearsExperience" type="number" min="0" className={onboardingInputClass} value={yearsExperience} onChange={(event) => setYearsExperience(event.target.value)} disabled={!canEdit} placeholder="e.g. 5" />
+                        </div>
+                      </div>
+                      <div className="provider-field-stack">
+                        <Label htmlFor="bio">Short description</Label>
+                        <textarea id="bio" value={bio} onChange={(event) => setBio(event.target.value)} disabled={!canEdit} rows={4} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm transition focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Describe the kind of work you do, what customers can expect, and what you are best known for." />
+                      </div>
+                      </div>
                     </div>
-                    <ProviderPublicProfileCard
-                      profile={{
-                        providerName: tradingName || legalName || "Your provider profile",
-                        profileImageUrl: profileImagePreviewUrl || profileImageUrl,
-                        headline,
-                        bio,
-                        yearsExperience: yearsExperience ? Number(yearsExperience) : null,
-                        hasDbs: false,
-                        hasInsurance: false,
-                      }}
-                    />
+                    <div className="rounded-[28px] border border-slate-200 bg-slate-50/70 p-5 shadow-sm space-y-4">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Comparison details</div>
+                        <strong style={{ display: "block", fontSize: "1rem", marginTop: "0.35rem", color: "#0f172a" }}>Structured signals customers can compare</strong>
+                        <p className="provider-field-help">No free-text clutter here. Customers see methods, commitments, languages, and response speed.</p>
+                      </div>
+                      <OptionTileGroup
+                        label="Supported contact methods"
+                        options={providerContactChannelOptions as unknown as string[]}
+                        selected={supportedContactChannels}
+                        disabled={!canEdit}
+                        onToggle={(value) => setSupportedContactChannels((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+                      />
+                      {supportedContactChannels.length ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {supportedContactChannels.map((channel) => (
+                            <div key={channel} className="provider-field-stack">
+                              <Label htmlFor={`contact-${channel}`}>{channel} contact detail</Label>
+                              <Input
+                                id={`contact-${channel}`}
+                                className={onboardingInputClass}
+                                value={contactDetails[channel as keyof typeof contactDetails] || ""}
+                                onChange={(event) => setContactDetails((current) => ({ ...current, [channel]: event.target.value }))}
+                                disabled={!canEdit}
+                                placeholder={`Internal ${channel} contact detail`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                      <div className="provider-field-stack">
+                        <Label htmlFor="responseTimeLabel">Typical response time</Label>
+                        <select id="responseTimeLabel" value={responseTimeLabel} onChange={(event) => setResponseTimeLabel(event.target.value)} disabled={!canEdit} className={onboardingSelectClass}>
+                          <option value="">Select response time</option>
+                          {providerResponseTimeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </div>
+                      <OptionTileGroup
+                        label="Service commitments"
+                        options={providerCommitmentOptions as unknown as string[]}
+                        selected={serviceCommitments}
+                        disabled={!canEdit}
+                        onToggle={(value) => setServiceCommitments((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+                      />
+                      <OptionTileGroup
+                        label="Languages spoken"
+                        options={providerLanguageOptions as unknown as string[]}
+                        selected={languagesSpoken}
+                        disabled={!canEdit}
+                        onToggle={(value) => setLanguagesSpoken((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+                      />
+                    </div>
                   </div>
                 </div>
                 <Label>Business type <span className="text-red-500">*</span></Label>

@@ -313,6 +313,7 @@ export async function getPublicQuoteByReference(reference: string) {
               headline: true,
               bio: true,
               yearsExperience: true,
+              specialtiesText: true,
               documents: {
                 where: {
                   status: "APPROVED",

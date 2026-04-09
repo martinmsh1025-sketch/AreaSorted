@@ -11,6 +11,8 @@ import { saveProviderDocumentUploads } from "@/server/services/providers/documen
 import { getOpsNotificationRecipients } from "@/lib/notifications/ops";
 import { sendLoggedEmail } from "@/lib/notifications/logged-email";
 import { saveProviderProfileImageUpload } from "@/server/services/providers/profile-images";
+import { providerContactChannelOptions, providerCommitmentOptions, providerLanguageOptions, providerResponseTimeOptions, stringifyProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
+import { validateProviderContactDetail } from "@/lib/providers/contact-detail-validation";
 
 function parseMultiValue(value: FormDataEntryValue | null) {
   return String(value || "")
@@ -124,9 +126,30 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
   const headline = String(formData.get("headline") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
   const yearsExperience = String(formData.get("yearsExperience") || "").trim();
+  const supportedContactChannels = formData.getAll("supportedContactChannels").map((item) => String(item)).filter((item) => providerContactChannelOptions.includes(item as never));
+  const responseTimeLabel = String(formData.get("responseTimeLabel") || "").trim();
   const categories = parseMultiValues(formData, "categories");
   const serviceKeys = parseServiceKeys(formData);
   const postcodePrefixes = parseMultiValue(formData.get("postcodePrefixes"));
+  const whatsappContact = String(formData.get("whatsappContact") || "").trim();
+  const smsContact = String(formData.get("smsContact") || "").trim();
+  const phoneContact = String(formData.get("phoneContact") || "").trim();
+  const telegramContact = String(formData.get("telegramContact") || "").trim();
+  const emailContact = String(formData.get("emailContact") || "").trim();
+  const normalizedContactDetails: Partial<Record<"WhatsApp" | "SMS" | "Phone" | "Telegram" | "Email", string>> = {};
+
+  if (responseTimeLabel && !providerResponseTimeOptions.includes(responseTimeLabel as never)) throw new Error("Choose a valid response time option.");
+  if (supportedContactChannels.includes("WhatsApp") && !whatsappContact) throw new Error("Add a WhatsApp contact detail.");
+  if (supportedContactChannels.includes("SMS") && !smsContact) throw new Error("Add an SMS contact detail.");
+  if (supportedContactChannels.includes("Phone") && !phoneContact) throw new Error("Add a phone contact detail.");
+  if (supportedContactChannels.includes("Telegram") && !telegramContact) throw new Error("Add a Telegram contact detail.");
+  if (supportedContactChannels.includes("Email") && !emailContact) throw new Error("Add an email contact detail.");
+  for (const [channel, rawValue] of [["WhatsApp", whatsappContact], ["SMS", smsContact], ["Phone", phoneContact], ["Telegram", telegramContact], ["Email", emailContact]] as const) {
+    if (!supportedContactChannels.includes(channel)) continue;
+    const validated = validateProviderContactDetail(channel, rawValue);
+    if (!validated.ok) throw new Error(validated.error);
+    normalizedContactDetails[channel] = validated.normalized;
+  }
 
   if (currentStep >= 1) {
     if (!legalName) throw new Error(businessType === "sole_trader" ? "Full legal name is required." : "Company name is required.");
@@ -166,10 +189,27 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
   const headline = String(formData.get("headline") || "").trim();
   const bio = String(formData.get("bio") || "").trim();
   const yearsExperience = String(formData.get("yearsExperience") || "").trim();
+  const supportedContactChannels = formData.getAll("supportedContactChannels").map((item) => String(item)).filter((item) => providerContactChannelOptions.includes(item as never));
+  const responseTimeLabel = String(formData.get("responseTimeLabel") || "").trim();
+  const serviceCommitments = formData.getAll("serviceCommitments").map((item) => String(item)).filter((item) => providerCommitmentOptions.includes(item as never));
+  const languagesSpoken = formData.getAll("languagesSpoken").map((item) => String(item)).filter((item) => providerLanguageOptions.includes(item as never));
+  const whatsappContact = String(formData.get("whatsappContact") || "").trim();
+  const smsContact = String(formData.get("smsContact") || "").trim();
+  const phoneContact = String(formData.get("phoneContact") || "").trim();
+  const telegramContact = String(formData.get("telegramContact") || "").trim();
+  const emailContact = String(formData.get("emailContact") || "").trim();
+  const normalizedContactDetails: Partial<Record<"WhatsApp" | "SMS" | "Phone" | "Telegram" | "Email", string>> = {};
   const profileImageUrl = await saveProviderProfileImageUpload(sessionProviderCompanyId, formData, existingProfileImageUrl);
 
   if (headline.length > 80) throw new Error("Headline must be 80 characters or fewer.");
   if (bio.length > 400) throw new Error("Short description must be 400 characters or fewer.");
+  if (responseTimeLabel && !providerResponseTimeOptions.includes(responseTimeLabel as never)) throw new Error("Choose a valid response time option.");
+  for (const [channel, rawValue] of [["WhatsApp", whatsappContact], ["SMS", smsContact], ["Phone", phoneContact], ["Telegram", telegramContact], ["Email", emailContact]] as const) {
+    if (!supportedContactChannels.includes(channel)) continue;
+    const validated = validateProviderContactDetail(channel, rawValue);
+    if (!validated.ok) throw new Error(validated.error);
+    normalizedContactDetails[channel] = validated.normalized;
+  }
 
   await updateProviderCompanyProfile({
     providerCompanyId: sessionProviderCompanyId,
@@ -181,6 +221,13 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
     headline: headline || undefined,
     bio: bio || undefined,
     yearsExperience: yearsExperience ? Number(yearsExperience) : undefined,
+    specialtiesText: stringifyProviderPublicProfileMetadata({
+      supportedContactChannels,
+      contactDetails: normalizedContactDetails,
+      responseTimeLabel,
+      serviceCommitments,
+      languagesSpoken,
+    }),
     companyNumber: String(formData.get("companyNumber") || "").trim(),
     registeredAddress: String(formData.get("registeredAddress") || "").trim(),
     contactEmail: String(formData.get("contactEmail") || "").trim(),

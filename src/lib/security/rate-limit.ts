@@ -30,8 +30,9 @@ function ensureCleanup() {
     }
   }, CLEANUP_INTERVAL_MS);
   // Don't keep the process alive for cleanup
-  if (cleanupTimer && typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
-    cleanupTimer.unref();
+  const timer = cleanupTimer;
+  if (timer && typeof timer === "object" && "unref" in timer) {
+    timer.unref();
   }
 }
 

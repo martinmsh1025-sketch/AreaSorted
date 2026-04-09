@@ -6,6 +6,7 @@ import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/d
 import { CustomerCounterOfferBanner } from "@/components/customer/counter-offer-response";
 import { CancelBookingSection } from "./cancel-booking-section";
 import { RescheduleBookingSection } from "./reschedule-booking-section";
+import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
 
 type BookingDetailPageProps = {
   params: Promise<{ reference: string }>;
@@ -28,7 +29,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
       quoteRequest: { select: { reference: true, serviceKey: true, categoryKey: true } },
       priceSnapshot: true,
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
-      marketplaceProviderCompany: { select: { tradingName: true, legalName: true } },
+      marketplaceProviderCompany: { select: { tradingName: true, legalName: true, specialtiesText: true } },
       counterOffers: {
         orderBy: { createdAt: "desc" },
       },
@@ -48,6 +49,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   const providerName = payment === "CAPTURED"
     ? (booking.marketplaceProviderCompany?.tradingName ?? booking.marketplaceProviderCompany?.legalName ?? "Assigned provider")
     : "Verified local provider";
+  const providerPublicProfile = parseProviderPublicProfileMetadata(booking.marketplaceProviderCompany?.specialtiesText);
 
   const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
   const canCancel = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
@@ -139,6 +141,23 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             <div><span>Postcode</span><strong>{booking.servicePostcode}</strong></div>
           </div>
         </div>
+
+        {payment === "CAPTURED" && booking.marketplaceProviderCompany && providerPublicProfile.supportedContactChannels.length > 0 && (
+          <div className="panel card" style={{ marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Provider contact details</h2>
+            <p style={{ margin: "0 0 1rem", color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+              Your payment is secured, so you can now see the provider's direct contact details for booking coordination.
+            </p>
+            <div className="quote-summary-list">
+              <div><span>Provider</span><strong>{providerName}</strong></div>
+              {providerPublicProfile.responseTimeLabel ? <div><span>Typical response time</span><strong>{providerPublicProfile.responseTimeLabel}</strong></div> : null}
+              {providerPublicProfile.supportedContactChannels.map((channel) => {
+                const detail = providerPublicProfile.contactDetails[channel as keyof typeof providerPublicProfile.contactDetails];
+                return detail ? <div key={channel}><span>{channel}</span><strong>{detail}</strong></div> : null;
+              })}
+            </div>
+          </div>
+        )}
 
         {booking.priceSnapshot && (
           <div className="panel card" style={{ marginBottom: "1.5rem" }}>

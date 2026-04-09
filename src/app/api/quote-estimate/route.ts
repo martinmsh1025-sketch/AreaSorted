@@ -3,6 +3,7 @@ import { z } from "zod";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { checkRateLimit, QUOTE_ESTIMATE_RATE_LIMIT } from "@/lib/security/rate-limit";
+import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
 
 /**
  * Lightweight pricing preview — does provider matching + pricing calculation
@@ -66,6 +67,10 @@ export async function POST(request: NextRequest) {
       headline?: string | null;
       bio?: string | null;
       yearsExperience?: number | null;
+      supportedContactChannels?: string[];
+      responseTimeLabel?: string | null;
+      serviceCommitments?: string[];
+      languagesSpoken?: string[];
       hasDbs?: boolean;
       hasInsurance?: boolean;
       totalCustomerPay: number;
@@ -77,6 +82,7 @@ export async function POST(request: NextRequest) {
 
     for (const provider of match.providers) {
       try {
+        const publicProfileMetadata = parseProviderPublicProfileMetadata(provider.specialtiesText);
         const preview = await previewProviderPricing({
           providerCompanyId: provider.providerCompanyId,
           categoryKey: payload.categoryKey,
@@ -104,6 +110,10 @@ export async function POST(request: NextRequest) {
           headline: provider.headline,
           bio: provider.bio,
           yearsExperience: provider.yearsExperience,
+          supportedContactChannels: publicProfileMetadata.supportedContactChannels,
+          responseTimeLabel: publicProfileMetadata.responseTimeLabel,
+          serviceCommitments: publicProfileMetadata.serviceCommitments,
+          languagesSpoken: publicProfileMetadata.languagesSpoken,
           hasDbs: provider.hasDbs,
           hasInsurance: provider.hasInsurance,
           totalCustomerPay: preview.totalCustomerPay,

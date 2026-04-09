@@ -9,6 +9,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { EditableProfileForm } from "@/components/provider/editable-profile-form";
+import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
 
 type ProviderAccountPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -17,6 +18,7 @@ type ProviderAccountPageProps = {
 export default async function ProviderAccountPage({ searchParams }: ProviderAccountPageProps) {
   const session = await requireProviderAccountAccess();
   const provider = session.providerCompany;
+  const publicProfileMetadata = parseProviderPublicProfileMetadata(provider.specialtiesText);
   const params = (await searchParams) ?? {};
   const passwordStatus = typeof params.passwordStatus === "string" ? params.passwordStatus : "";
   const passwordError = typeof params.passwordError === "string" ? params.passwordError : "";
@@ -73,6 +75,11 @@ export default async function ProviderAccountPage({ searchParams }: ProviderAcco
         registeredAddress={provider.registeredAddress ?? ""}
         companyNumber={provider.companyNumber ?? ""}
         vatNumber={provider.vatNumber ?? ""}
+        supportedContactChannels={publicProfileMetadata.supportedContactChannels.join(", ")}
+        contactDetails={publicProfileMetadata.contactDetails}
+        responseTimeLabel={publicProfileMetadata.responseTimeLabel ?? ""}
+        serviceCommitments={publicProfileMetadata.serviceCommitments.join(", ")}
+        languagesSpoken={publicProfileMetadata.languagesSpoken.join(", ")}
         legalName={provider.legalName ?? ""}
         memberSince={memberSince}
         approvedAt={approvedAt}

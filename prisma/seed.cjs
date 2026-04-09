@@ -13,6 +13,16 @@ function tokenHash(token) {
   return createHash('sha256').update(token).digest('hex');
 }
 
+function stringifyPublicProfileMetadata(input) {
+  return JSON.stringify({
+    supportedContactChannels: input.supportedContactChannels || [],
+    responseTimeLabel: input.responseTimeLabel || null,
+    serviceCommitments: input.serviceCommitments || [],
+    languagesSpoken: input.languagesSpoken || [],
+    customerCareNote: input.customerCareNote || null,
+  });
+}
+
 const demoProviderInvites = [
   { token: 'demo-provider-invite-token', email: 'demo-provider-invite@example.com', approvedCategoryKey: null, approvedServiceKeysJson: null },
   { token: 'demo-provider-invite-cleaning', email: 'demo-provider-cleaning@example.com', approvedCategoryKey: 'CLEANING', approvedServiceKeysJson: ['regular-home-cleaning', 'end-of-tenancy-cleaning', 'carpet-upholstery-cleaning', 'deep-cleaning', 'office-commercial-cleaning', 'airbnb-turnover-cleaning', 'after-builders-cleaning', 'sofa-upholstery-cleaning', 'oven-cleaning', 'fridge-cleaning', 'window-cleaning-interior', 'window-cleaning-exterior-ground-floor', 'bathroom-deep-clean', 'kitchen-deep-clean'] },
@@ -241,6 +251,13 @@ async function main() {
       registeredAddress: '10 Downing Street, London SW1A 2AA',
       phone: '+44 20 7946 0001',
       categories: ['CLEANING'],
+      publicProfileMetadata: {
+        supportedContactChannels: ['WhatsApp', 'SMS', 'Phone'],
+        contactDetails: { WhatsApp: '+447700900101', SMS: '+447700900101', Phone: '+442079460001' },
+        responseTimeLabel: 'Usually replies within 30 mins',
+        serviceCommitments: ['Own supplies', 'Weekend slots', 'Arrival updates'],
+        languagesSpoken: ['English'],
+      },
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1X', 'SW1Y', 'SW1P', 'SW1H', 'SW1E', 'SW3', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'EC1', 'EC1A', 'EC1M', 'EC1N', 'EC1R', 'EC1V', 'EC1Y', 'N1'],
       pricingRules: [
         { categoryKey: 'CLEANING', serviceKey: 'regular-home-cleaning', pricingMode: 'hourly', hourlyPrice: 18, minimumCharge: 36 },
@@ -259,6 +276,13 @@ async function main() {
       registeredAddress: '221B Baker Street, London NW1 6XE',
       phone: '+44 20 7946 0002',
       categories: ['CLEANING'],
+      publicProfileMetadata: {
+        supportedContactChannels: ['WhatsApp', 'Email'],
+        contactDetails: { WhatsApp: '+447700900102', Email: 'bookings@pristinemaids.test' },
+        responseTimeLabel: 'Usually replies within 1 hour',
+        serviceCommitments: ['Eco products available', 'Landlord-ready checklists', 'Weekend slots'],
+        languagesSpoken: ['English', 'Polish'],
+      },
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1P', 'SW3', 'SW5', 'SW6', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W'],
       pricingRules: [
         { categoryKey: 'CLEANING', serviceKey: 'regular-home-cleaning', pricingMode: 'fixed_per_size', pricingJson: { small: 55, standard: 85, large: 125 }, minimumCharge: 55 },
@@ -276,6 +300,13 @@ async function main() {
       registeredAddress: '1 Oxford Street, London W1D 1AN',
       phone: '+44 20 7946 0003',
       categories: ['CLEANING'],
+      publicProfileMetadata: {
+        supportedContactChannels: ['SMS', 'Phone'],
+        contactDetails: { SMS: '+447700900103', Phone: '+442079460003' },
+        responseTimeLabel: 'Usually replies within 45 mins',
+        serviceCommitments: ['Budget-friendly pricing', 'Same-day updates', 'Flexible weekday slots'],
+        languagesSpoken: ['English', 'Romanian'],
+      },
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'WC1', 'WC1A', 'WC1B', 'WC1E', 'WC1H', 'WC1N', 'WC1R', 'WC1V', 'WC1X', 'WC2', 'WC2A', 'WC2B', 'WC2E', 'WC2H', 'WC2N', 'WC2R'],
       pricingRules: [
         { categoryKey: 'CLEANING', serviceKey: 'regular-home-cleaning', pricingMode: 'hourly', hourlyPrice: 15, minimumCharge: 30 },
@@ -294,6 +325,13 @@ async function main() {
       registeredAddress: '50 Broadway, London SW1H 0BL',
       phone: '+44 20 7946 0004',
       categories: ['PEST_CONTROL'],
+      publicProfileMetadata: {
+        supportedContactChannels: ['Phone', 'SMS', 'WhatsApp'],
+        contactDetails: { Phone: '+442079460004', SMS: '+447700900104', WhatsApp: '+447700900104' },
+        responseTimeLabel: 'Usually replies within 20 mins',
+        serviceCommitments: ['Photo proofing notes', 'Follow-up guidance', 'Emergency slots'],
+        languagesSpoken: ['English'],
+      },
       postcodes: ['SW1A', 'SW1V', 'SW1W', 'SW1X', 'SW1Y', 'SW1P', 'SW1H', 'SW1E', 'SW3', 'W1', 'W1A', 'W1B', 'W1D', 'W1F', 'W1G', 'W1H', 'W1J', 'W1K', 'W1S', 'W1T', 'W1U', 'W1W', 'W2', 'EC1', 'EC1A', 'EC1M', 'EC1N', 'EC1R', 'EC1V', 'EC1Y', 'N1', 'SE1', 'E1', 'E2', 'E14', 'NW1'],
       pricingRules: [
         { categoryKey: 'PEST_CONTROL', serviceKey: 'rat-mouse-treatment', pricingMode: 'fixed_per_size', pricingJson: { small: 129, standard: 171, large: 224 }, minimumCharge: 129 },
@@ -313,6 +351,13 @@ async function main() {
       registeredAddress: '1 Test Street, London EC1A 1BB',
       phone: '+44 20 7946 9999',
       categories: ['CLEANING', 'PEST_CONTROL', 'HANDYMAN', 'FURNITURE_ASSEMBLY', 'WASTE_REMOVAL', 'GARDEN_MAINTENANCE'],
+      publicProfileMetadata: {
+        supportedContactChannels: ['WhatsApp', 'SMS', 'Phone', 'Telegram'],
+        contactDetails: { WhatsApp: '+447700909999', SMS: '+447700909999', Phone: '+442079469999', Telegram: '@areasortedtestprovider' },
+        responseTimeLabel: 'Usually replies within 15 mins',
+        serviceCommitments: ['Multi-service coordination', 'Weekend slots', 'Arrival updates'],
+        languagesSpoken: ['English', 'Cantonese'],
+      },
       postcodes: [
         // E postcodes
         'E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8', 'E9', 'E10', 'E11', 'E12', 'E13', 'E14', 'E15', 'E16', 'E17', 'E18', 'E20',
@@ -465,6 +510,12 @@ async function main() {
   const existingActiveCompanyIds = existingActiveCompanies.map((c) => c.id);
 
   if (existingActiveCompanyIds.length) {
+    const existingQuoteRequests = await prisma.quoteRequest.findMany({
+      where: { providerCompanyId: { in: existingActiveCompanyIds } },
+      select: { id: true },
+    });
+    const existingQuoteRequestIds = existingQuoteRequests.map((q) => q.id);
+
     // Clean up bookings and their dependent records
     const existingBookings = await prisma.booking.findMany({
       where: { providerCompanyId: { in: existingActiveCompanyIds } },
@@ -472,17 +523,39 @@ async function main() {
     });
     const existingBookingIds = existingBookings.map((b) => b.id);
     if (existingBookingIds.length) {
+      await prisma.notificationLogV2.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.invoiceRecord.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.ledgerEntry.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.payoutRecord.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.disputeRecord.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.refundRecord.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.providerNotification.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.counterOffer.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.bookingAddon.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.jobAssignment.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.jobCancellation.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.complaint.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.job.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.refund.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
+      await prisma.payment.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
       await prisma.paymentRecord.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
       await prisma.bookingPriceSnapshot.deleteMany({ where: { bookingId: { in: existingBookingIds } } });
       await prisma.booking.deleteMany({ where: { id: { in: existingBookingIds } } });
     }
 
     // Clean up quote-related records that reference providers
+    if (existingQuoteRequestIds.length) {
+      await prisma.quotePriceSnapshot.deleteMany({ where: { quoteRequestId: { in: existingQuoteRequestIds } } });
+      await prisma.quoteOption.deleteMany({ where: { quoteRequestId: { in: existingQuoteRequestIds } } });
+      await prisma.quoteRequest.deleteMany({ where: { id: { in: existingQuoteRequestIds } } });
+    }
+
     await prisma.quoteOption.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.providerPricingRule.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.pricingAuditLog.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.pricingAreaOverride.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.providerCoverageArea.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
+    await prisma.coverageChangeRequest.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.providerServiceCategory.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.providerAgreement.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
     await prisma.providerOnboardingDocument.deleteMany({ where: { providerCompanyId: { in: existingActiveCompanyIds } } });
@@ -532,6 +605,7 @@ async function main() {
         onboardingSubmittedAt: new Date(),
         reviewStartedAt: new Date(),
         approvedAt: new Date(),
+        specialtiesText: stringifyPublicProfileMetadata(prov.publicProfileMetadata || {}),
       },
     });
 

@@ -91,6 +91,10 @@ type ServerEstimate = {
     headline?: string | null;
     bio?: string | null;
     yearsExperience?: number | null;
+    supportedContactChannels?: string[];
+    responseTimeLabel?: string | null;
+    serviceCommitments?: string[];
+    languagesSpoken?: string[];
     hasDbs?: boolean;
     hasInsurance?: boolean;
     totalCustomerPay: number;
@@ -969,22 +973,26 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
                 )}
               </div>
 
-              {estimate?.providerOptions && estimate.providerOptions.length > 1 ? (
+              {estimate?.providerOptions && estimate.providerOptions.length > 0 ? (
                 <div className="panel card quote-section-card" style={{ borderColor: "#f59e0b", boxShadow: "0 0 0 1px rgba(245,158,11,0.18) inset" }}>
                   <div className="quote-section-head">
-                    <strong style={{ color: "#92400e" }}>Choose your provider</strong>
-                    <p>We found multiple providers for this job. Pick the one you want before moving to the next steps.</p>
+                    <strong style={{ color: "#92400e" }}>{estimate.providerOptions.length > 1 ? "Choose your provider" : "Review your matched provider"}</strong>
+                    <p>{estimate.providerOptions.length > 1 ? "We found multiple providers for this job. Pick the one you want before moving to the next steps." : "We found one matched provider for this job. Review the provider profile before moving to the next steps."}</p>
                   </div>
                   <ProviderOptionSelector
                     quoteReference=""
                     options={estimate.providerOptions.map((option, index) => ({
                       id: option.providerCompanyId,
                       providerName: option.providerName,
-                      profileImageUrl: option.profileImageUrl,
-                      headline: option.headline,
-                      bio: option.bio,
-                      yearsExperience: option.yearsExperience,
-                      hasDbs: Boolean(option.hasDbs),
+                       profileImageUrl: option.profileImageUrl,
+                       headline: option.headline,
+                       bio: option.bio,
+                       yearsExperience: option.yearsExperience,
+                       supportedContactChannels: option.supportedContactChannels,
+                       responseTimeLabel: option.responseTimeLabel,
+                       serviceCommitments: option.serviceCommitments,
+                       languagesSpoken: option.languagesSpoken,
+                       hasDbs: Boolean(option.hasDbs),
                       hasInsurance: Boolean(option.hasInsurance),
                       totalCustomerPay: option.totalCustomerPay,
                       providerBasePrice: option.providerBasePrice,

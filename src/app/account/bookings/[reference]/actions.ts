@@ -6,6 +6,8 @@ import { requireCustomerSession } from "@/lib/customer-auth";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
 import { cancelDirectChargePaymentIntent, createDirectChargeRefund } from "@/lib/stripe/connect";
+import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
+import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import type { BookingStatus } from "@prisma/client";
 
 /** Statuses from which a customer can self-cancel */
@@ -19,6 +21,142 @@ const RESCHEDULE_TIME_SLOTS = new Set([
   "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
   "17:00", "17:30", "18:00",
 ]);
+
+function toIsoDate(value: Date) {
+  return value.toISOString().split("T")[0];
+}
+
+async function validateCustomerReschedule(input: {
+  bookingId: string;
+  providerCompanyId: string | null;
+  postcode: string;
+  categoryKey: string;
+  serviceKey: string;
+  date: Date;
+  time: string;
+  currentBookingId: string;
+  estimatedHours?: number;
+  quantity?: number;
+  sameDay?: boolean;
+  weekend?: boolean;
+  bedrooms?: number;
+  bathrooms?: number;
+  kitchens?: number;
+  cleaningCondition?: "light" | "standard" | "heavy" | "very-heavy";
+  supplies?: "customer" | "provider";
+  propertyType?: string;
+  jobSize?: "small" | "standard" | "large";
+  addOns?: string[];
+  currentTotal: number;
+}) {
+  if (!input.providerCompanyId) {
+    return { ok: false as const, error: "This booking is not linked to a provider yet. Please contact support to reschedule it safely." };
+  }
+
+  const providerMatch = await matchProvidersForPublicQuote({
+    postcode: input.postcode,
+    categoryKey: input.categoryKey,
+    serviceKey: input.serviceKey,
+    scheduledDate: input.date,
+    scheduledTime: input.time,
+  });
+
+  if (providerMatch.status !== "matched") {
+    return { ok: false as const, error: "No provider is available for that new time slot." };
+  }
+
+  const selectedProvider = providerMatch.providers.find((provider) => provider.providerCompanyId === input.providerCompanyId);
+  if (!selectedProvider) {
+    return { ok: false as const, error: "Your assigned provider is not available for that slot. Please contact support for re-assignment." };
+  }
+
+  try {
+    const repriced = await previewProviderPricing({
+      providerCompanyId: input.providerCompanyId,
+      categoryKey: input.categoryKey,
+      serviceKey: input.serviceKey,
+      postcodePrefix: selectedProvider.postcodePrefix,
+      estimatedHours: input.estimatedHours,
+      quantity: input.quantity,
+      sameDay: input.sameDay,
+      weekend: input.weekend,
+      bedrooms: input.bedrooms,
+      bathrooms: input.bathrooms,
+      kitchens: input.kitchens,
+      cleaningCondition: input.cleaningCondition,
+      supplies: input.supplies,
+      propertyType: input.propertyType,
+      jobSize: input.jobSize,
+      addOns: input.addOns,
+    });
+
+    if (Math.abs(repriced.totalCustomerPay - input.currentTotal) > 0.009) {
+      return { ok: false as const, error: "That new slot changes the booking price. Please contact support so we can review it safely." };
+    }
+  } catch {
+    return { ok: false as const, error: "We could not verify pricing for that new slot. Please contact support to reschedule." };
+  }
+
+  const prisma = getPrisma();
+  const provider = await prisma.providerCompany.findUnique({
+    where: { id: input.providerCompanyId },
+    select: {
+      leadTimeHours: true,
+      maxJobsPerDay: true,
+      availabilityRules: true,
+      dateOverrides: {
+        where: { date: input.date },
+      },
+    },
+  });
+
+  if (!provider) {
+    return { ok: false as const, error: "Assigned provider could not be re-validated." };
+  }
+
+  const scheduledAt = new Date(`${toIsoDate(input.date)}T${input.time}:00`);
+  const leadTimeHours = provider.leadTimeHours ?? 24;
+  if (scheduledAt.getTime() - Date.now() < leadTimeHours * 60 * 60 * 1000) {
+    return { ok: false as const, error: `This provider requires at least ${leadTimeHours} hours notice for schedule changes.` };
+  }
+
+  const override = provider.dateOverrides[0];
+  if (override) {
+    if (!override.isAvailable) {
+      return { ok: false as const, error: "That date has been marked unavailable by the provider." };
+    }
+    if (override.startTime && override.endTime && (input.time < override.startTime || input.time >= override.endTime)) {
+      return { ok: false as const, error: "That time falls outside the provider's available window for the selected date." };
+    }
+  } else if (provider.availabilityRules.length) {
+    const dayRule = provider.availabilityRules.find((rule) => rule.dayOfWeek === input.date.getDay());
+    if (!dayRule || !dayRule.isAvailable || input.time < dayRule.startTime || input.time >= dayRule.endTime) {
+      return { ok: false as const, error: "That time falls outside the provider's standard availability." };
+    }
+  }
+
+  if (provider.maxJobsPerDay) {
+    const dayStart = new Date(`${toIsoDate(input.date)}T00:00:00.000Z`);
+    const dayEnd = new Date(`${toIsoDate(input.date)}T23:59:59.999Z`);
+    const jobsOnDay = await prisma.booking.count({
+      where: {
+        providerCompanyId: input.providerCompanyId,
+        id: { not: input.currentBookingId },
+        bookingStatus: { in: ["ASSIGNED", "IN_PROGRESS", "COMPLETED", "PAID", "PENDING_ASSIGNMENT"] },
+        scheduledDate: {
+          gte: dayStart,
+          lte: dayEnd,
+        },
+      },
+    });
+
+    if (jobsOnDay >= provider.maxJobsPerDay) {
+      return { ok: false as const, error: "That date is already at provider capacity. Please choose another slot." };
+    }
+  }
+
+  return { ok: true as const };
+}
 
 /**
  * Customer cancels their own booking.
@@ -50,6 +188,21 @@ export async function cancelBookingAction(formData: FormData) {
   });
 
   if (claimResult.count === 0) return { error: "Booking not found or cannot be cancelled" };
+
+  try {
+    await prisma.auditLog.create({
+      data: {
+        actorType: "CUSTOMER",
+        actorId: customer.id,
+        actionType: "BOOKING_CANCELLED",
+        entityType: "Booking",
+        entityId: bookingId,
+        newValues: { reason: reason || "Cancelled by customer" },
+      },
+    });
+  } catch {
+    // Non-critical
+  }
 
   // H1 FIX: Release Stripe authorization if payment is still pending/authorized
   try {
@@ -119,6 +272,19 @@ export async function cancelBookingAction(formData: FormData) {
             where: { id: bookingId },
             data: { bookingStatus: "REFUND_PENDING" },
           });
+          try {
+            await prisma.auditLog.create({
+              data: {
+                actorType: "SYSTEM",
+                actionType: "BOOKING_REFUND_PENDING",
+                entityType: "Booking",
+                entityId: bookingId,
+                newValues: { reason: "Automatic direct-charge refund failed after customer cancellation." },
+              },
+            });
+          } catch {
+            // Non-critical
+          }
         }
       }
 
@@ -189,7 +355,8 @@ export async function rescheduleBookingAction(formData: FormData) {
       bookingStatus: { in: RESCHEDULABLE_STATUSES },
     },
     include: {
-      quoteRequest: { select: { reference: true } },
+      quoteRequest: { select: { reference: true, categoryKey: true, serviceKey: true, inputJson: true } },
+      priceSnapshot: true,
     },
   });
 
@@ -201,6 +368,41 @@ export async function rescheduleBookingAction(formData: FormData) {
   // Don't allow reschedule to same date+time
   if (oldDate === newDateStr && oldTime === newTime) {
     return { error: "New date and time are the same as the current booking" };
+  }
+
+  const quoteInput = ((booking.quoteRequest?.inputJson as Record<string, unknown> | null) ?? {});
+  const validation = await validateCustomerReschedule({
+    bookingId,
+    providerCompanyId: booking.providerCompanyId,
+    postcode: booking.servicePostcode,
+    categoryKey: booking.quoteRequest?.categoryKey ?? "CLEANING",
+    serviceKey: booking.quoteRequest?.serviceKey ?? booking.serviceType,
+    date: newDate,
+    time: newTime,
+    currentBookingId: booking.id,
+    estimatedHours: typeof quoteInput.estimatedHours === "number" ? quoteInput.estimatedHours : Number(booking.durationHours),
+    quantity: typeof quoteInput.quantity === "number" ? quoteInput.quantity : 1,
+    sameDay: false,
+    weekend: [0, 6].includes(newDate.getDay()),
+    bedrooms: typeof quoteInput.bedrooms === "number" ? quoteInput.bedrooms : undefined,
+    bathrooms: typeof quoteInput.bathrooms === "number" ? quoteInput.bathrooms : undefined,
+    kitchens: typeof quoteInput.kitchens === "number" ? quoteInput.kitchens : undefined,
+    cleaningCondition: ["light", "standard", "heavy", "very-heavy"].includes(String(quoteInput.cleaningCondition))
+      ? quoteInput.cleaningCondition as "light" | "standard" | "heavy" | "very-heavy"
+      : undefined,
+    supplies: quoteInput.supplies === "customer" || quoteInput.supplies === "provider"
+      ? quoteInput.supplies
+      : undefined,
+    propertyType: typeof quoteInput.propertyType === "string" ? quoteInput.propertyType : undefined,
+    jobSize: quoteInput.jobSize === "small" || quoteInput.jobSize === "standard" || quoteInput.jobSize === "large"
+      ? quoteInput.jobSize
+      : undefined,
+    addOns: Array.isArray(quoteInput.addOns) ? quoteInput.addOns.filter((value): value is string => typeof value === "string") : undefined,
+    currentTotal: booking.priceSnapshot ? Number(booking.priceSnapshot.customerTotalAmount) : Number(booking.totalAmount),
+  });
+
+  if (!validation.ok) {
+    return { error: validation.error };
   }
 
   // Update booking

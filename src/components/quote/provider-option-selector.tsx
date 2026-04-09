@@ -10,7 +10,11 @@ type ProviderOption = {
   headline?: string | null;
   bio?: string | null;
   yearsExperience?: number | null;
-  totalCustomerPay: number;
+   supportedContactChannels?: string[];
+   responseTimeLabel?: string | null;
+   serviceCommitments?: string[];
+   languagesSpoken?: string[];
+   totalCustomerPay: number;
   providerBasePrice: number;
   bookingFee: number;
   postcodeSurcharge: number;
@@ -70,7 +74,7 @@ export function ProviderOptionSelector({
   return (
     <section className="panel card quote-summary-panel">
       <div className="eyebrow">Provider options</div>
-      <strong style={{ display: "block", marginTop: "0.4rem" }}>Choose a verified provider option</strong>
+      <strong style={{ display: "block", marginTop: "0.4rem" }}>{options.length > 1 ? "Choose a verified provider option" : "Review your matched provider"}</strong>
       {!inlineOnly ? (
         <div style={{ marginTop: "1rem", display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
           <label style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.84rem" }}>
@@ -89,14 +93,14 @@ export function ProviderOptionSelector({
         </div>
       ) : null}
 
-      <div style={{ marginTop: "1rem", display: "grid", gap: "0.9rem" }}>
+      <div style={{ marginTop: "1rem", display: "grid", gap: "1rem" }}>
         {visibleOptions.length === 0 ? (
           <div className="rounded-xl border p-4" style={{ color: "var(--color-text-muted)" }}>
             No providers match the selected filters.
           </div>
         ) : (
           visibleOptions.map((option) => (
-            <div key={option.id} className="rounded-xl border p-4" style={option.selected ? { borderColor: "var(--color-brand)" } : undefined}>
+            <div key={option.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" style={option.selected ? { borderColor: "var(--color-brand)", boxShadow: "0 0 0 1px rgba(15,23,42,0.08)" } : undefined}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start" }}>
                 <div style={{ flex: 1 }}>
                   <ProviderPublicProfileCard
@@ -108,6 +112,10 @@ export function ProviderOptionSelector({
                       yearsExperience: option.yearsExperience,
                       hasDbs: option.hasDbs,
                       hasInsurance: option.hasInsurance,
+                      supportedContactChannels: option.supportedContactChannels,
+                      responseTimeLabel: option.responseTimeLabel,
+                      serviceCommitments: option.serviceCommitments,
+                      languagesSpoken: option.languagesSpoken,
                     }}
                   />
                   {option.recommended ? <div style={{ marginTop: "0.5rem" }}><span className="quote-map-badge">Recommended</span></div> : null}
@@ -117,7 +125,7 @@ export function ProviderOptionSelector({
                   <div style={{ fontSize: "0.78rem", color: "var(--color-text-muted)" }}>total</div>
                 </div>
               </div>
-              <div className="quote-summary-list" style={{ marginTop: "0.8rem" }}>
+              <div className="quote-summary-list" style={{ marginTop: "0.9rem" }}>
                 <div><span>Service price</span><strong>{money(option.providerBasePrice)}</strong></div>
                 <div><span>Booking fee</span><strong>{money(option.bookingFee)}</strong></div>
               </div>

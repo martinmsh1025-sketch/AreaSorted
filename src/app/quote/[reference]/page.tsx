@@ -3,16 +3,11 @@ import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
 import { startInstantBookingAction } from "./actions";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { ProviderOptionSelector } from "@/components/quote/provider-option-selector";
+import { maskAddressSummary, redactReference } from "@/lib/privacy/public-display";
+import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
 
 function money(value: any) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", minimumFractionDigits: 2 }).format(Number(value || 0));
-}
-
-function mapEmbedUrl(postcode: string) {
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  if (!key) return null;
-  const q = encodeURIComponent(postcode + ", London, UK");
-  return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${q}&zoom=15`;
 }
 
 type QuoteResultPageProps = { params: Promise<{ reference: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
@@ -24,13 +19,13 @@ export default async function QuoteResultPage({ params, searchParams }: QuoteRes
   if (!quote || !quote.priceSnapshot) notFound();
 
   const unavailable = quote.state === "EXPIRED";
-  const embedUrl = mapEmbedUrl(quote.postcode);
   const requestedOptionId = typeof query.selectedQuoteOptionId === "string" ? query.selectedQuoteOptionId : quote.selectedQuoteOptionId;
   const selectedOption = quote.quoteOptions.find((option) => option.id === requestedOptionId) || quote.quoteOptions.find((option) => option.id === quote.selectedQuoteOptionId) || quote.quoteOptions[0] || null;
   const recommendedOptionId = quote.quoteOptions[0]?.id;
 
   const providerOptions = quote.quoteOptions.map((option) => {
     const approvedDocKeys = new Set(option.providerCompany?.documents.map((document) => document.documentKey) || []);
+    const publicProfileMetadata = parseProviderPublicProfileMetadata(option.providerCompany?.specialtiesText);
     return {
       id: option.id,
       providerName: option.providerName || option.providerCompany?.tradingName || option.providerCompany?.legalName || "Verified local provider",
@@ -38,6 +33,10 @@ export default async function QuoteResultPage({ params, searchParams }: QuoteRes
       headline: option.providerCompany?.headline,
       bio: option.providerCompany?.bio,
       yearsExperience: option.providerCompany?.yearsExperience,
+      supportedContactChannels: publicProfileMetadata.supportedContactChannels,
+      responseTimeLabel: publicProfileMetadata.responseTimeLabel,
+      serviceCommitments: publicProfileMetadata.serviceCommitments,
+      languagesSpoken: publicProfileMetadata.languagesSpoken,
       totalCustomerPay: Number(option.totalCustomerPay),
       providerBasePrice: Number(option.providerBasePrice),
       bookingFee: Number(option.bookingFee),
@@ -57,7 +56,7 @@ export default async function QuoteResultPage({ params, searchParams }: QuoteRes
           <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>
             {unavailable ? "Quote unavailable" : "Your booking price"}
           </h1>
-          <p className="lead">Reference: {quote.reference}</p>
+          <p className="lead">Reference: {redactReference(quote.reference)}</p>
 
           <div className="quote-page-grid" style={{ marginTop: "1.5rem" }}>
             {/* Left: job details */}
@@ -70,11 +69,11 @@ export default async function QuoteResultPage({ params, searchParams }: QuoteRes
                 <div className="quote-summary-list">
                   <div><span>Service</span><strong>{quote.serviceKey.replace(/_/g, " ")}</strong></div>
                   <div><span>Category</span><strong>{quote.categoryKey.replace(/_/g, " ")}</strong></div>
-                  <div><span>Address</span><strong>{[quote.addressLine1, quote.addressLine2, quote.city, quote.postcode].filter(Boolean).join(", ")}</strong></div>
-                  <div><span>Provider</span><strong>Verified local provider</strong></div>
+                  <div><span>Area</span><strong>{maskAddressSummary({ city: quote.city, postcode: quote.postcode })}</strong></div>
+                  <div><span>Provider</span><strong>Compare verified provider profiles before payment</strong></div>
                 </div>
                 <p style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
-                  Your service will be carried out by an independent, vetted provider in your area. Provider details will be shared after booking is confirmed.
+                  Your service will be carried out by an independent, vetted provider in your area. We show profile details and supported contact methods here, but direct contact details stay hidden until booking and payment are secured.
                 </p>
               </div>
             </section>
@@ -123,29 +122,7 @@ export default async function QuoteResultPage({ params, searchParams }: QuoteRes
                 )}
               </section>
 
-              {providerOptions.length > 1 && !unavailable ? <ProviderOptionSelector quoteReference={quote.reference} options={providerOptions} /> : null}
-
-              {embedUrl && (
-                <section className="panel card quote-map-panel">
-                  <div className="quote-map-head">
-                    <div>
-                      <div className="eyebrow">Service area</div>
-                      <strong style={{ display: "block", marginTop: "0.3rem" }}>{quote.postcode}</strong>
-                    </div>
-                    <span className="quote-map-badge">Covered</span>
-                  </div>
-                  <div className="quote-map-frame">
-                    <iframe
-                      className="quote-map-iframe"
-                      src={embedUrl}
-                      allowFullScreen
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      title="Service location map"
-                    />
-                  </div>
-                </section>
-              )}
+              {providerOptions.length > 0 && !unavailable ? <ProviderOptionSelector quoteReference={quote.reference} options={providerOptions} /> : null}
             </aside>
           </div>
         </div>

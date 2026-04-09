@@ -7,6 +7,7 @@ export type MatchedProvider = {
   headline?: string | null;
   bio?: string | null;
   yearsExperience?: number | null;
+  specialtiesText?: string | null;
   hasDbs?: boolean;
   hasInsurance?: boolean;
   postcodePrefix: string;
@@ -89,6 +90,7 @@ export async function matchProvidersForPublicQuote(
       headline: company.headline,
       bio: company.bio,
       yearsExperience: company.yearsExperience,
+      specialtiesText: company.specialtiesText,
       hasDbs: company.documents.some((doc) => doc.documentKey === "dbs_certificate"),
       hasInsurance: company.documents.some((doc) => doc.documentKey === "insurance_proof"),
       postcodePrefix,

@@ -1,0 +1,75 @@
+export const AppTheme = {
+  colors: {
+    shell: "#f4efe6",
+    card: "#fffaf2",
+    line: "#e5dac7",
+    ink: "#1f2a24",
+    muted: "#6c746f",
+    accent: "#d2863a",
+    accentSoft: "#ead7c0",
+    hero: "#dfe8d8",
+  },
+  text: {
+    eyebrow: {
+      color: "#56615b",
+      fontSize: 12,
+      fontWeight: "700" as const,
+      letterSpacing: 1,
+      textTransform: "uppercase" as const,
+    },
+    heroTitle: {
+      color: "#1f2a24",
+      fontSize: 30,
+      lineHeight: 36,
+      fontWeight: "800" as const,
+    },
+    heroBody: {
+      color: "#465049",
+      fontSize: 15,
+      lineHeight: 22,
+      fontWeight: "500" as const,
+    },
+    pageTitle: {
+      color: "#1f2a24",
+      fontSize: 28,
+      lineHeight: 34,
+      fontWeight: "800" as const,
+    },
+    sectionTitle: {
+      color: "#1f2a24",
+      fontSize: 18,
+      lineHeight: 24,
+      fontWeight: "700" as const,
+    },
+    cardTitle: {
+      color: "#1f2a24",
+      fontSize: 16,
+      lineHeight: 22,
+      fontWeight: "700" as const,
+    },
+    body: {
+      color: "#2f3933",
+      fontSize: 15,
+      lineHeight: 22,
+      fontWeight: "500" as const,
+    },
+    bodyMuted: {
+      color: "#5f6a64",
+      fontSize: 15,
+      lineHeight: 22,
+      fontWeight: "500" as const,
+    },
+    meta: {
+      color: "#81541f",
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: "700" as const,
+    },
+    caption: {
+      color: "#6c746f",
+      fontSize: 13,
+      lineHeight: 18,
+      fontWeight: "500" as const,
+    },
+  },
+};

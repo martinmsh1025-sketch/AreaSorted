@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Building2,
@@ -17,6 +17,7 @@ import {
   Loader2,
   Check,
 } from "lucide-react";
+import { providerCommitmentOptions, providerContactChannelOptions, providerLanguageOptions, providerResponseTimeOptions } from "@/lib/providers/public-profile-metadata";
 
 type EditableProfileFormProps = {
   tradingName: string;
@@ -30,6 +31,11 @@ type EditableProfileFormProps = {
   registeredAddress: string;
   companyNumber: string;
   vatNumber: string;
+  supportedContactChannels: string;
+  contactDetails: Partial<Record<"WhatsApp" | "SMS" | "Phone" | "Telegram" | "Email", string>>;
+  responseTimeLabel: string;
+  serviceCommitments: string;
+  languagesSpoken: string;
   legalName: string;
   memberSince: string | null;
   approvedAt: string | null;
@@ -48,6 +54,11 @@ export function EditableProfileForm({
   registeredAddress,
   companyNumber,
   vatNumber,
+  supportedContactChannels,
+  contactDetails,
+  responseTimeLabel,
+  serviceCommitments,
+  languagesSpoken,
   legalName,
   memberSince,
   approvedAt,
@@ -68,6 +79,11 @@ export function EditableProfileForm({
   const [editPhone, setEditPhone] = useState(phone);
   const [editAddress, setEditAddress] = useState(registeredAddress);
   const [editVat, setEditVat] = useState(vatNumber);
+  const [editSupportedContactChannels, setEditSupportedContactChannels] = useState<string[]>(supportedContactChannels.split(", ").filter(Boolean));
+  const [editContactDetails, setEditContactDetails] = useState(contactDetails);
+  const [editResponseTimeLabel, setEditResponseTimeLabel] = useState(responseTimeLabel);
+  const [editServiceCommitments, setEditServiceCommitments] = useState<string[]>(serviceCommitments.split(", ").filter(Boolean));
+  const [editLanguagesSpoken, setEditLanguagesSpoken] = useState<string[]>(languagesSpoken.split(", ").filter(Boolean));
 
   function handleCancel() {
     setEditTradingName(tradingName);
@@ -79,6 +95,11 @@ export function EditableProfileForm({
     setEditPhone(phone);
     setEditAddress(registeredAddress);
     setEditVat(vatNumber);
+    setEditSupportedContactChannels(supportedContactChannels.split(", ").filter(Boolean));
+    setEditContactDetails(contactDetails);
+    setEditResponseTimeLabel(responseTimeLabel);
+    setEditServiceCommitments(serviceCommitments.split(", ").filter(Boolean));
+    setEditLanguagesSpoken(languagesSpoken.split(", ").filter(Boolean));
     setIsEditing(false);
     setError(null);
   }
@@ -100,6 +121,15 @@ export function EditableProfileForm({
     fd.set("phone", editPhone.trim());
     fd.set("registeredAddress", editAddress.trim());
     fd.set("vatNumber", editVat.trim());
+    editSupportedContactChannels.forEach((value) => fd.append("supportedContactChannels", value));
+    fd.set("responseTimeLabel", editResponseTimeLabel.trim());
+    editServiceCommitments.forEach((value) => fd.append("serviceCommitments", value));
+    editLanguagesSpoken.forEach((value) => fd.append("languagesSpoken", value));
+    fd.set("whatsappContact", editContactDetails.WhatsApp || "");
+    fd.set("smsContact", editContactDetails.SMS || "");
+    fd.set("phoneContact", editContactDetails.Phone || "");
+    fd.set("telegramContact", editContactDetails.Telegram || "");
+    fd.set("emailContact", editContactDetails.Email || "");
 
     startTransition(async () => {
       try {
@@ -245,6 +275,53 @@ export function EditableProfileForm({
           onChange={setEditVat}
           placeholder="e.g. GB123456789"
         />
+        <OptionGroup
+          icon={<Mail className="size-4" />}
+          label="Supported contact channels"
+          editing={isEditing}
+          options={providerContactChannelOptions as unknown as string[]}
+          values={editSupportedContactChannels}
+          onToggle={(value) => setEditSupportedContactChannels((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+        />
+        {editSupportedContactChannels.length > 0 ? (
+          <div className="grid gap-3 rounded-lg border bg-muted/20 p-3 sm:grid-cols-2">
+            {editSupportedContactChannels.map((channel) => (
+              <FieldRow
+                key={channel}
+                icon={<Phone className="size-4" />}
+                label={`${channel} contact detail`}
+                value={editContactDetails[channel as keyof typeof editContactDetails] || ""}
+                editing={isEditing}
+                onChange={(value) => setEditContactDetails((current) => ({ ...current, [channel]: value }))}
+                placeholder={`Internal ${channel} contact detail`}
+              />
+            ))}
+          </div>
+        ) : null}
+        <SelectRow
+          icon={<Calendar className="size-4" />}
+          label="Typical response time"
+          value={editResponseTimeLabel}
+          editing={isEditing}
+          onChange={setEditResponseTimeLabel}
+          options={providerResponseTimeOptions as unknown as string[]}
+        />
+        <OptionGroup
+          icon={<Shield className="size-4" />}
+          label="Service commitments"
+          editing={isEditing}
+          options={providerCommitmentOptions as unknown as string[]}
+          values={editServiceCommitments}
+          onToggle={(value) => setEditServiceCommitments((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+        />
+        <OptionGroup
+          icon={<Building2 className="size-4" />}
+          label="Languages spoken"
+          editing={isEditing}
+          options={providerLanguageOptions as unknown as string[]}
+          values={editLanguagesSpoken}
+          onToggle={(value) => setEditLanguagesSpoken((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
+        />
 
         {/* Dates — always read-only */}
         {memberSince && (
@@ -263,6 +340,49 @@ export function EditableProfileForm({
             value={approvedAt}
             editing={false}
           />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OptionGroup({ icon, label, options, values, editing, onToggle }: { icon: React.ReactNode; label: string; options: string[]; values: string[]; editing: boolean; onToggle: (value: string) => void; }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 text-muted-foreground shrink-0">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {options.map((option) => {
+            const active = values.includes(option);
+            return editing ? (
+              <button key={option} type="button" onClick={() => onToggle(option)} className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700"}`}>
+                {option}
+              </button>
+            ) : active ? (
+              <span key={option} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700">{option}</span>
+            ) : null;
+          })}
+          {!editing && values.length === 0 ? <p className="text-sm text-muted-foreground">Not set</p> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SelectRow({ icon, label, value, editing, onChange, options }: { icon: React.ReactNode; label: string; value: string; editing: boolean; onChange?: (value: string) => void; options: string[]; }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 text-muted-foreground shrink-0">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
+        {editing && onChange ? (
+          <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Select response time</option>
+            {options.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        ) : (
+          <p className={`text-sm mt-2 ${value ? "font-medium" : "text-muted-foreground"}`}>{value || "Not set"}</p>
         )}
       </div>
     </div>

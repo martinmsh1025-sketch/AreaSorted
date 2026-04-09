@@ -4,6 +4,7 @@ import { getCustomerSession } from "@/lib/customer-auth";
 import { redirect } from "next/navigation";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { GoogleSignInButton } from "@/components/customer/google-signin-button";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 
 type CustomerLoginPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -11,9 +12,10 @@ type CustomerLoginPageProps = {
 
 export default async function CustomerLoginPage({ searchParams }: CustomerLoginPageProps) {
   const session = await getCustomerSession();
-  if (session) redirect("/account");
 
   const params = (await searchParams) ?? {};
+  const redirectTo = typeof params.redirectTo === "string" ? getSafeRedirectPath(params.redirectTo, "/account") : "/account";
+  if (session) redirect(redirectTo);
   const error = typeof params.error === "string" ? params.error : "";
   const errorMessage = error === "invalid_reset_token"
     ? "This reset link is invalid or has expired. Request a new password reset email."
@@ -68,6 +70,7 @@ export default async function CustomerLoginPage({ searchParams }: CustomerLoginP
             </div>
 
             <form action={customerLoginAction} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <input type="hidden" name="redirectTo" value={redirectTo} />
               <label className="quote-field-stack">
                 <span>Email</span>
                 <input type="email" name="email" placeholder="you@example.com" autoComplete="email" required maxLength={254} />

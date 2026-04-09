@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
 import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
 import { formatMoney } from "@/lib/format";
+import { maskAddressSummary, redactReference } from "@/lib/privacy/public-display";
 
 type BookingStatusPageProps = {
   params: Promise<{ reference: string }>;
@@ -32,12 +33,12 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
       <div className="container" style={{ maxWidth: 900 }}>
         <div className="panel card">
           <div className="eyebrow">Booking status</div>
-          <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>{quote.reference}</h1>
+          <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>{redactReference(quote.reference)}</h1>
           <div className="quote-summary-list" style={{ marginTop: "1rem" }}>
             <div><span>Status</span><strong>{unavailable ? "UNAVAILABLE" : bookingStatus.replace(/_/g, " ")}</strong></div>
             <div><span>Provider</span><strong>{providerDisplay}</strong></div>
             <div><span>Service</span><strong>{quote.serviceKey.replace(/_/g, " ")}</strong></div>
-            <div><span>Address</span><strong>{[quote.addressLine1, quote.addressLine2, quote.city, quote.postcode].filter(Boolean).join(", ")}</strong></div>
+            <div><span>Area</span><strong>{maskAddressSummary({ city: quote.city, postcode: quote.postcode })}</strong></div>
             <div><span>Total quoted</span><strong>{formatMoney(quote.priceSnapshot?.totalCustomerPay)}</strong></div>
             <div><span>Payment</span><strong>{getPaymentStatusLabel(paymentStatus)}</strong></div>
           </div>
@@ -62,7 +63,7 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
                   ? "We could not prepare a quote for this request. Please contact support if you need help with a revised booking."
                   : quote.booking?.bookingStatus === "PENDING_ASSIGNMENT"
                     ? "Your temporary card hold is active. The provider usually has up to 24 hours to confirm before the hold is released automatically."
-                    : "Provider details are shared after the booking is confirmed and payment is captured."}
+                    : "Public status pages intentionally hide exact address details and provider identity until the booking is confirmed."}
             </p>
           )}
           <div className="button-row" style={{ marginTop: "1rem" }}>

@@ -1,10 +1,12 @@
 import { requireProviderAccountAccess } from "@/lib/provider-auth";
 import { ProviderPublicProfileCard } from "@/components/provider/public-profile-card";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
 
 export default async function ProviderPreviewPage() {
   const session = await requireProviderAccountAccess();
   const provider = session.providerCompany;
+  const publicProfileMetadata = parseProviderPublicProfileMetadata(provider.specialtiesText);
 
   return (
     <div className="space-y-6">
@@ -29,6 +31,10 @@ export default async function ProviderPreviewPage() {
                 yearsExperience: provider.yearsExperience,
                 hasDbs: false,
                 hasInsurance: false,
+                supportedContactChannels: publicProfileMetadata.supportedContactChannels,
+                responseTimeLabel: publicProfileMetadata.responseTimeLabel,
+                serviceCommitments: publicProfileMetadata.serviceCommitments,
+                languagesSpoken: publicProfileMetadata.languagesSpoken,
               }}
             />
           </div>

@@ -6,6 +6,7 @@ import { getPrisma } from "@/lib/db";
 import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
 import { verifyPassword, hashPassword } from "@/lib/security/password";
 import { signSessionValue } from "@/lib/security/session";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 import { checkRateLimit, LOGIN_RATE_LIMIT, REGISTER_RATE_LIMIT, isAccountLocked, recordFailedLogin, clearFailedLogins } from "@/lib/security/rate-limit";
 
@@ -17,31 +18,33 @@ async function getClientIp(): Promise<string> {
 export async function customerLoginAction(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
-  if (!email || !password) redirect("/customer/login?error=1");
+  const redirectTo = getSafeRedirectPath(String(formData.get("redirectTo") || "") || null, "/account");
+  const redirectQuery = redirectTo && redirectTo !== "/account" ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
+  if (!email || !password) redirect(`/customer/login?error=1${redirectQuery}`);
 
   // C-1 FIX: Rate limit login attempts by IP+email
   const ip = await getClientIp();
   const rl = checkRateLimit(LOGIN_RATE_LIMIT, `${ip}:${email}`);
   if (!rl.allowed) {
-    redirect("/customer/login?error=rate_limited");
+    redirect(`/customer/login?error=rate_limited${redirectQuery}`);
   }
 
   // H-18 FIX: Check account lockout (per-email, stricter than IP+email rate limit)
   if (isAccountLocked(email)) {
-    redirect("/customer/login?error=account_locked");
+    redirect(`/customer/login?error=account_locked${redirectQuery}`);
   }
 
   const prisma = getPrisma();
   const customer = await prisma.customer.findUnique({ where: { email } });
 
   if (!customer || !customer.passwordHash) {
-    redirect("/customer/login?error=1");
+    redirect(`/customer/login?error=1${redirectQuery}`);
   }
 
   const valid = await verifyPassword(password, customer.passwordHash);
   if (!valid) {
     recordFailedLogin(email);
-    redirect("/customer/login?error=1");
+    redirect(`/customer/login?error=1${redirectQuery}`);
   }
 
   // Successful login — clear lockout counter
@@ -56,7 +59,7 @@ export async function customerLoginAction(formData: FormData) {
     maxAge: 60 * 60 * 24 * 7, // 7 days
   });
 
-  redirect("/account");
+  redirect(redirectTo);
 }
 
 export async function customerLogoutAction() {
