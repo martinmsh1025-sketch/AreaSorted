@@ -6,6 +6,7 @@ import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { syncProviderLifecycleState } from "@/server/services/providers/activation";
 import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
 import { sendLoggedEmail } from "@/lib/notifications/logged-email";
+import { getAppUrl } from "@/lib/config/env";
 
 function toJsonValue<T>(value: T) {
   return JSON.parse(JSON.stringify(value));
@@ -397,7 +398,7 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
               `Postcode: ${booking.servicePostcode}`,
               scheduleOptions.length > 1 ? `Other schedule options: ${scheduleOptions.length - 1}` : "",
               "",
-              `Open the order: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/provider/orders/${record.bookingId}`,
+              `Open the order: ${getAppUrl()}/provider/orders/${record.bookingId}`,
             ].filter(Boolean).join("\n"),
             templateCode: "provider_new_job_request",
             bookingId: record.bookingId,

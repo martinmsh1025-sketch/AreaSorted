@@ -4,7 +4,7 @@ import path from "node:path";
 import { stat } from "node:fs/promises";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getProviderCompanyById } from "@/lib/providers/repository";
-import { providerStatusLabels } from "@/lib/providers/service-catalog-mapping";
+import { getAdminTranslations } from "@/lib/i18n/server";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
 import { listProviderPricingRules } from "@/lib/pricing/prisma-pricing";
 import {
@@ -99,6 +99,7 @@ type AdminProviderDetailPageProps = {
 export default async function AdminProviderDetailPage({ params, searchParams }: AdminProviderDetailPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
+  const t = await getAdminTranslations();
 
   const { id } = await params;
   const provider = await getProviderCompanyById(id);
@@ -162,15 +163,15 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
             {provider.tradingName || provider.legalName || provider.contactEmail}
           </h1>
           <p className="text-muted-foreground">
-            Review, approve, or request changes.
+            {t.providerDetail.reviewApprove}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={statusBadgeVariant(provider.status)}>
-            {providerStatusLabels[provider.status] || provider.status}
+            {t.providerDetail.providerState}
           </Badge>
           <Badge variant="outline">
-            {completedCount}/{checklist.items.length} checklist
+            {completedCount}/{checklist.items.length} {t.providerDetail.checklist}
           </Badge>
         </div>
       </div>
@@ -183,14 +184,14 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          <p className="font-medium">Approval not saved</p>
+          <p className="font-medium">{t.providerDetail.approvalNotSaved}</p>
           <p>{error}</p>
         </div>
       )}
 
       {approvalBlockers.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p className="font-medium">Still blocking approval</p>
+          <p className="font-medium">{t.providerDetail.stillBlocking}</p>
           <p>{approvalBlockers.map((item) => `${item.label}: ${item.detail}`).join(" | ")}</p>
         </div>
       )}
@@ -199,39 +200,39 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
       <div className="grid gap-4 sm:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Provider state</CardDescription>
+            <CardDescription>{t.providerDetail.providerState}</CardDescription>
             <CardTitle className="text-lg">
-              {providerStatusLabels[provider.status] || provider.status}
+              {provider.status}
             </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Application submitted</CardDescription>
+            <CardDescription>{t.providerDetail.applicationSubmitted}</CardDescription>
             <CardTitle className="text-lg">
               {provider.onboardingSubmittedAt
                 ? new Date(provider.onboardingSubmittedAt).toLocaleString("en-GB")
-                : "Not yet"}
+                : t.providerDetail.notYet}
             </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>{provider.approvedAt ? "Approved at" : "Latest review activity"}</CardDescription>
+            <CardDescription>{provider.approvedAt ? t.providerDetail.approvedAt : t.providerDetail.latestReviewActivity}</CardDescription>
             <CardTitle className="text-lg">
               {provider.approvedAt
                 ? new Date(provider.approvedAt).toLocaleString("en-GB")
                 : latestDocumentReviewAt
                   ? new Date(latestDocumentReviewAt).toLocaleString("en-GB")
-                  : "Not yet"}
+                  : t.providerDetail.notYet}
             </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Stripe</CardDescription>
+            <CardDescription>{t.providerDetail.stripeLabel}</CardDescription>
             <CardTitle className={`text-lg ${stripeReady ? "text-green-600" : "text-destructive"}`}>
-              {stripeReady ? "Ready" : "Locked / pending"}
+              {stripeReady ? t.providerDetail.ready : t.providerDetail.lockedPending}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -243,8 +244,8 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
           {/* Checklist */}
           <Card>
             <CardHeader>
-              <CardTitle>Approval checklist</CardTitle>
-              <CardDescription>Approval blockers</CardDescription>
+              <CardTitle>{t.providerDetail.approvalChecklist}</CardTitle>
+              <CardDescription>{t.providerDetail.approvalBlockers}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -256,11 +257,11 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                     <div>
                       <p className="font-medium text-sm">{item.label}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.complete ? "Completed" : item.detail}
+                        {item.complete ? t.providerDetail.completedItem : item.detail}
                       </p>
                     </div>
                     <Badge variant={item.complete ? "default" : "outline"}>
-                      {item.complete ? "Done" : "Open"}
+                      {item.complete ? t.providerDetail.done : t.providerDetail.openItem}
                     </Badge>
                   </div>
                 ))}
@@ -271,28 +272,28 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
           {/* Provider details */}
           <Card>
             <CardHeader>
-              <CardTitle>Company details</CardTitle>
+              <CardTitle>{t.providerDetail.companyDetails}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm text-muted-foreground">Legal name</dt>
+                  <dt className="text-sm text-muted-foreground">{t.providerDetail.legalName}</dt>
                   <dd className="font-medium">{provider.legalName || "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Trading name</dt>
+                  <dt className="text-sm text-muted-foreground">{t.providerDetail.tradingName}</dt>
                   <dd className="font-medium">{provider.tradingName || "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Company number</dt>
+                  <dt className="text-sm text-muted-foreground">{t.providerDetail.companyNumber}</dt>
                   <dd className="font-medium">{provider.companyNumber || "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Registered address</dt>
+                  <dt className="text-sm text-muted-foreground">{t.providerDetail.registeredAddress}</dt>
                   <dd className="font-medium">{provider.registeredAddress || "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Contact email</dt>
+                  <dt className="text-sm text-muted-foreground">{t.providerDetail.contactEmail}</dt>
                   <dd className="font-medium">{provider.contactEmail}</dd>
                 </div>
                 <div>
@@ -300,7 +301,7 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                   <dd className="font-medium">{provider.phone || "-"}</dd>
                 </div>
                 <div className="sm:col-span-2">
-                  <dt className="text-sm text-muted-foreground mb-2">Coverage areas</dt>
+                  <dt className="text-sm text-muted-foreground mb-2">{t.providerDetail.coverageAreas}</dt>
                   <dd>
                     {provider.coverageAreas.length > 0 ? (
                       <div className="space-y-3">
@@ -309,7 +310,7 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                             <div className="mb-2 flex items-center justify-between gap-2">
                               <div>
                                 <strong className="text-sm">{group.areaName}</strong>
-                                <p className="text-xs text-muted-foreground">{group.prefixes.length} postcode prefixes</p>
+                                <p className="text-xs text-muted-foreground">{group.prefixes.length} {t.providerDetail.postcondePrefixes}</p>
                               </div>
                               <Badge variant="outline" className="text-xs">{group.areaKey}</Badge>
                             </div>
@@ -320,7 +321,7 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                                 return (
                                   <div key={prefix} className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm">
                                     <span className="font-medium">{prefix}</span>
-                                    {!area.active && <Badge variant="secondary" className="text-[10px]">Inactive</Badge>}
+                                     {!area.active && <Badge variant="secondary" className="text-[10px]">{t.providerDetail.inactive}</Badge>}
                                     <form action={deleteCoverageAreaAction}>
                                       <input type="hidden" name="providerCompanyId" value={provider.id} />
                                       <input type="hidden" name="coverageAreaId" value={area.id} />
@@ -338,12 +339,12 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                         ))}
                       </div>
                     ) : (
-                      <span className="text-sm text-muted-foreground">No coverage areas</span>
+                      <span className="text-sm text-muted-foreground">{t.providerDetail.noCoverageAreas}</span>
                     )}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Categories</dt>
+                  <dt className="text-sm text-muted-foreground">{t.providerDetail.categories}</dt>
                   <dd className="font-medium">
                     {provider.serviceCategories.map((c) => c.categoryKey).join(", ") || "-"}
                   </dd>
@@ -358,8 +359,8 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
           {/* Document review */}
           <Card>
             <CardHeader>
-              <CardTitle>Document review</CardTitle>
-              <CardDescription>Review uploaded files</CardDescription>
+              <CardTitle>{t.providerDetail.documentReview}</CardTitle>
+              <CardDescription>{t.providerDetail.reviewUploadedFiles}</CardDescription>
             </CardHeader>
             <CardContent>
               {provider.documents.length > 0 ? (
@@ -378,7 +379,7 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                             {document.fileName}
                           </a>
                           {!documentAvailability.get(document.id) ? (
-                            <p className="text-[11px] text-red-600 mt-1">File missing from storage. Ask the provider to re-upload this document.</p>
+                             <p className="text-[11px] text-red-600 mt-1">{t.providerDetail.fileMissing}</p>
                           ) : null}
                         </div>
                         <Badge variant={docStatusBadgeVariant(document.status)}>
@@ -396,10 +397,10 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                             defaultValue={document.status}
                             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="PENDING">Pending</option>
-                            <option value="APPROVED">Approved</option>
-                            <option value="REJECTED">Rejected</option>
-                            <option value="NEEDS_RESUBMISSION">Needs resubmission</option>
+                             <option value="PENDING">{t.providerDetail.statusPending}</option>
+                            <option value="APPROVED">{t.providerDetail.statusApproved}</option>
+                            <option value="REJECTED">{t.providerDetail.statusRejected}</option>
+                            <option value="NEEDS_RESUBMISSION">{t.providerDetail.needsResubmission}</option>
                           </select>
                         </div>
                         <div className="sm:col-span-6">
@@ -423,7 +424,7 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground py-4 text-center">
-                  No documents uploaded yet.
+                  {t.providerDetail.noDocuments}
                 </p>
               )}
             </CardContent>
@@ -432,8 +433,8 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
           {/* Provider decision */}
           <Card>
             <CardHeader>
-              <CardTitle>Review decision</CardTitle>
-              <CardDescription>Set the review outcome for this provider</CardDescription>
+              <CardTitle>{t.providerDetail.reviewDecision}</CardTitle>
+              <CardDescription>{t.providerDetail.setReviewOutcome}</CardDescription>
             </CardHeader>
             <CardContent>
               <ReviewDecisionForm

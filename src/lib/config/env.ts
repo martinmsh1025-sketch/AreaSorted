@@ -22,7 +22,6 @@ const envSchema = z.object({
   MARKETPLACE_DEFAULT_INVOICE_STRATEGY: z.string().default("provider_service_plus_platform_fee_receipt"),
   MARKETPLACE_DEFAULT_REFUND_APPLICATION_FEE: z.coerce.boolean().default(false),
   SESSION_SECRET: z.string().optional(),
-  ADMIN_PASSWORD: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   SIMPLY_POSTCODE_API_KEY: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),

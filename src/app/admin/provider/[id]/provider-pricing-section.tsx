@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatMoney } from "@/lib/format";
+import { useT } from "@/lib/i18n/context";
 
 type PricingRule = {
   id: string;
@@ -34,12 +35,12 @@ type ProviderPricingSectionProps = {
   saveAreaOverrideAction: (formData: FormData) => void;
 };
 
-function pricingModeLabel(mode: string) {
+function pricingModeLabel(mode: string, labels: { modeHourly: string; modeFlat: string; modeMinimum: string }) {
   switch (mode) {
-    case "hourly": return "Hourly";
-    case "flat": return "Flat";
-    case "fixed_per_size": return "Per size";
-    case "minimum": return "Minimum";
+    case "hourly": return labels.modeHourly;
+    case "flat": return labels.modeFlat;
+    case "fixed_per_size": return mode;
+    case "minimum": return labels.modeMinimum;
     default: return mode;
   }
 }
@@ -67,6 +68,7 @@ export function ProviderPricingSection({
   deletePricingConfigAction,
   saveAreaOverrideAction,
 }: ProviderPricingSectionProps) {
+  const t = useT();
   const [showEditForms, setShowEditForms] = useState(false);
 
   const activeRules = rules.filter((r) => r.active).length;
@@ -76,11 +78,11 @@ export function ProviderPricingSection({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Pricing rules</CardTitle>
+            <CardTitle>{t.providerPricing.pricingRules}</CardTitle>
             <CardDescription>
               {rules.length === 0
-                ? "No pricing rules configured yet."
-                : `${activeRules} active / ${rules.length} total rules`}
+                ? t.providerPricing.noPricingRules
+                : `${activeRules} ${t.providerPricing.activeTotal} / ${rules.length}`}
             </CardDescription>
           </div>
           {rules.length > 0 && (
@@ -89,7 +91,7 @@ export function ProviderPricingSection({
               onClick={() => setShowEditForms(!showEditForms)}
               className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
             >
-              {showEditForms ? "Hide editor" : "Edit rules"}
+              {showEditForms ? t.providerPricing.hideEditor : t.providerPricing.editRules}
             </button>
           )}
         </div>
@@ -98,7 +100,7 @@ export function ProviderPricingSection({
         {rules.length === 0 ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground text-center py-4">
-              This provider has not set up any pricing rules yet.
+              {t.providerPricing.noPricingYet}
             </p>
             {/* Add new rule form even when empty */}
             <AddRuleForm
@@ -113,16 +115,16 @@ export function ProviderPricingSection({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left">
-                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Service</th>
-                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Mode</th>
-                    <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">Hourly</th>
-                    <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">Flat</th>
-                    <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">Min charge</th>
-                    <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">Travel</th>
-                    <th className="pb-2 pr-4 font-medium text-muted-foreground">Size tiers</th>
-                    <th className="pb-2 font-medium text-muted-foreground text-center">Status</th>
-                  </tr>
+                   <tr className="border-b text-left">
+                     <th className="pb-2 pr-4 font-medium text-muted-foreground">{t.providerPricing.tableHeaders.service}</th>
+                     <th className="pb-2 pr-4 font-medium text-muted-foreground">{t.providerPricing.tableHeaders.mode}</th>
+                     <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">{t.providerPricing.tableHeaders.hourly}</th>
+                     <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">{t.providerPricing.tableHeaders.flat}</th>
+                     <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">{t.providerPricing.tableHeaders.minCharge}</th>
+                     <th className="pb-2 pr-4 font-medium text-muted-foreground text-right">{t.providerPricing.tableHeaders.travel}</th>
+                     <th className="pb-2 pr-4 font-medium text-muted-foreground">{t.providerPricing.tableHeaders.sizeTiers}</th>
+                     <th className="pb-2 font-medium text-muted-foreground text-center">{t.providerPricing.tableHeaders.status}</th>
+                   </tr>
                 </thead>
                 <tbody>
                   {rules.map((rule) => (
@@ -133,7 +135,7 @@ export function ProviderPricingSection({
                       </td>
                       <td className="py-2.5 pr-4">
                         <Badge variant="outline" className="text-xs">
-                          {pricingModeLabel(rule.pricingMode)}
+                          {pricingModeLabel(rule.pricingMode, t.providerPricing)}
                         </Badge>
                       </td>
                       <td className="py-2.5 pr-4 text-right tabular-nums">
@@ -153,9 +155,9 @@ export function ProviderPricingSection({
                       </td>
                       <td className="py-2.5 text-center">
                         {rule.active ? (
-                          <Badge variant="default" className="text-xs">Active</Badge>
+                          <Badge variant="default" className="text-xs">{t.providerPricing.active}</Badge>
                         ) : (
-                          <Badge variant="secondary" className="text-xs">Off</Badge>
+                          <Badge variant="secondary" className="text-xs">{t.providerPricing.off}</Badge>
                         )}
                       </td>
                     </tr>
@@ -171,7 +173,7 @@ export function ProviderPricingSection({
 
                 {/* Existing rules inline edit */}
                 <div className="space-y-4">
-                  <p className="text-sm font-medium">Edit rules</p>
+                  <p className="text-sm font-medium">{t.providerPricing.editRules}</p>
                   {rules.map((rule) => (
                     <div key={rule.id} className="rounded-lg border p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -179,7 +181,7 @@ export function ProviderPricingSection({
                           {rule.categoryKey} / {rule.serviceKey}
                         </p>
                         <Badge variant={rule.active ? "default" : "outline"}>
-                          {rule.active ? "Active" : "Disabled"}
+                          {rule.active ? t.providerPricing.active : t.providerPricing.disabled}
                         </Badge>
                       </div>
                       <form action={savePricingConfigAction} className="grid gap-3 sm:grid-cols-12">
@@ -187,54 +189,54 @@ export function ProviderPricingSection({
                         <input type="hidden" name="categoryKey" value={rule.categoryKey} />
                         <input type="hidden" name="serviceKey" value={rule.serviceKey} />
                         <div className="sm:col-span-3">
-                          <Label>Mode</Label>
+                          <Label>{t.providerPricing.modeLabel}</Label>
                           <select
                             name="pricingMode"
                             defaultValue={rule.pricingMode}
                             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="flat">Flat</option>
-                            <option value="hourly">Hourly</option>
-                            <option value="minimum">Minimum</option>
+                            <option value="flat">{t.providerPricing.modeFlat}</option>
+                            <option value="hourly">{t.providerPricing.modeHourly}</option>
+                            <option value="minimum">{t.providerPricing.modeMinimum}</option>
                           </select>
                         </div>
                         <div className="sm:col-span-3">
-                          <Label>Flat price</Label>
+                          <Label>{t.providerPricing.flatPrice}</Label>
                           <Input type="number" step="0.01" name="flatPrice" defaultValue={rule.flatPrice ? String(rule.flatPrice) : ""} />
                         </div>
                         <div className="sm:col-span-3">
-                          <Label>Hourly</Label>
+                          <Label>{t.providerPricing.hourlyLabel}</Label>
                           <Input type="number" step="0.01" name="hourlyPrice" defaultValue={rule.hourlyPrice ? String(rule.hourlyPrice) : ""} />
                         </div>
                         <div className="sm:col-span-3">
-                          <Label>Min charge</Label>
+                          <Label>{t.providerPricing.minChargeLabel}</Label>
                           <Input type="number" step="0.01" name="minimumCharge" defaultValue={rule.minimumCharge ? String(rule.minimumCharge) : ""} />
                         </div>
                         <div className="sm:col-span-3">
-                          <Label>Travel fee</Label>
+                          <Label>{t.providerPricing.travelFee}</Label>
                           <Input type="number" step="0.01" name="travelFee" defaultValue={rule.travelFee ? String(rule.travelFee) : ""} />
                         </div>
                         <div className="sm:col-span-3">
-                          <Label>Same-day</Label>
+                          <Label>{t.providerPricing.sameDay}</Label>
                           <Input type="number" step="0.01" name="sameDayUplift" defaultValue={rule.sameDayUplift ? String(rule.sameDayUplift) : ""} />
                         </div>
                         <div className="sm:col-span-3">
-                          <Label>Weekend</Label>
+                          <Label>{t.providerPricing.weekend}</Label>
                           <Input type="number" step="0.01" name="weekendUplift" defaultValue={rule.weekendUplift ? String(rule.weekendUplift) : ""} />
                         </div>
                         <div className="sm:col-span-3 flex items-end gap-3">
                           <label className="flex items-center gap-2 text-sm">
                             <input type="checkbox" name="customQuoteRequired" defaultChecked={rule.customQuoteRequired} className="rounded" />
-                            Quote
+                            {t.providerPricing.quote}
                           </label>
                           <label className="flex items-center gap-2 text-sm">
                             <input type="checkbox" name="active" defaultChecked={rule.active} className="rounded" />
-                            Active
+                            {t.providerPricing.activeCheckbox}
                           </label>
                         </div>
                         <div className="sm:col-span-12 flex gap-2">
                           <button type="submit" className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90">
-                            Save
+                            {t.providerPricing.saveRule}
                           </button>
                         </div>
                       </form>
@@ -242,7 +244,7 @@ export function ProviderPricingSection({
                         <form action={disablePricingConfigAction}>
                           <input type="hidden" name="providerPricingRuleId" value={rule.id} />
                           <button type="submit" className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm hover:bg-muted">
-                            {rule.active ? "Disable" : "Enable"}
+                            {rule.active ? t.providerPricing.disable : t.providerPricing.enable}
                           </button>
                         </form>
                         <form action={deletePricingConfigAction}>
@@ -265,38 +267,38 @@ export function ProviderPricingSection({
 
                 {/* Area override */}
                 <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
-                  <p className="text-sm font-medium">Area-level override</p>
+                  <p className="text-sm font-medium">{t.providerPricing.areaOverride}</p>
                   <form action={saveAreaOverrideAction} className="grid gap-3 sm:grid-cols-12">
                     <input type="hidden" name="providerCompanyId" value={providerCompanyId} />
                     <div className="sm:col-span-3">
-                      <Label>Category</Label>
-                      <Input name="categoryKey" placeholder="CLEANING" />
+                      <Label>{t.providerPricing.category}</Label>
+                      <Input name="categoryKey" placeholder={t.providerPricing.categoryPlaceholder} />
                     </div>
                     <div className="sm:col-span-2">
-                      <Label>Postcode prefix</Label>
-                      <Input name="postcodePrefix" placeholder="SW6" />
+                      <Label>{t.providerPricing.postcodePrefix}</Label>
+                      <Input name="postcodePrefix" placeholder={t.providerPricing.postcodePlaceholder} />
                     </div>
                     <div className="sm:col-span-2">
-                      <Label>Surcharge</Label>
+                      <Label>{t.providerPricing.surcharge}</Label>
                       <Input type="number" step="0.01" name="surchargeAmount" />
                     </div>
                     <div className="sm:col-span-2">
-                      <Label>Fee override</Label>
+                      <Label>{t.providerPricing.feeOverride}</Label>
                       <Input type="number" step="0.01" name="bookingFeeOverride" />
                     </div>
                     <div className="sm:col-span-2">
-                      <Label>Comm % override</Label>
+                      <Label>{t.providerPricing.commOverride}</Label>
                       <Input type="number" step="0.01" name="commissionPercentOverride" />
                     </div>
                     <div className="sm:col-span-1 flex items-end">
                       <label className="flex items-center gap-1 text-sm">
                         <input type="checkbox" name="active" defaultChecked className="rounded" />
-                        On
+                        {t.providerPricing.on}
                       </label>
                     </div>
                     <div className="sm:col-span-12">
                       <button type="submit" className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90">
-                        Save area override
+                        {t.providerPricing.saveAreaOverride}
                       </button>
                     </div>
                   </form>
@@ -319,64 +321,65 @@ function AddRuleForm({
   providerName: string;
   savePricingConfigAction: (formData: FormData) => void;
 }) {
+  const t = useT();
   return (
     <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
-      <p className="text-sm font-medium">Add new rule for {providerName}</p>
+      <p className="text-sm font-medium">{t.providerPricing.addNewRule} {providerName}</p>
       <form action={savePricingConfigAction} className="grid gap-3 sm:grid-cols-12">
         <input type="hidden" name="providerCompanyId" value={providerCompanyId} />
         <div className="sm:col-span-3">
-          <Label>Category</Label>
-          <Input name="categoryKey" placeholder="CLEANING" />
+          <Label>{t.providerPricing.category}</Label>
+          <Input name="categoryKey" placeholder={t.providerPricing.categoryPlaceholder} />
         </div>
         <div className="sm:col-span-3">
-          <Label>Service key</Label>
-          <Input name="serviceKey" placeholder="regular-home-cleaning" />
+          <Label>{t.providerPricing.serviceKey}</Label>
+          <Input name="serviceKey" placeholder={t.providerPricing.serviceKeyPlaceholder} />
         </div>
         <div className="sm:col-span-3">
-          <Label>Pricing mode</Label>
+          <Label>{t.providerPricing.pricingMode}</Label>
           <select name="pricingMode" defaultValue="flat" className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-            <option value="flat">Flat</option>
-            <option value="hourly">Hourly</option>
-            <option value="minimum">Minimum</option>
+            <option value="flat">{t.providerPricing.modeFlat}</option>
+            <option value="hourly">{t.providerPricing.modeHourly}</option>
+            <option value="minimum">{t.providerPricing.modeMinimum}</option>
           </select>
         </div>
         <div className="sm:col-span-3">
-          <Label>Flat price</Label>
+          <Label>{t.providerPricing.flatPrice}</Label>
           <Input type="number" step="0.01" name="flatPrice" />
         </div>
         <div className="sm:col-span-3">
-          <Label>Hourly price</Label>
+          <Label>{t.providerPricing.hourlyPrice}</Label>
           <Input type="number" step="0.01" name="hourlyPrice" />
         </div>
         <div className="sm:col-span-3">
-          <Label>Min charge</Label>
+          <Label>{t.providerPricing.minChargeLabel}</Label>
           <Input type="number" step="0.01" name="minimumCharge" />
         </div>
         <div className="sm:col-span-2">
-          <Label>Travel fee</Label>
+          <Label>{t.providerPricing.travelFee}</Label>
           <Input type="number" step="0.01" name="travelFee" />
         </div>
         <div className="sm:col-span-2">
-          <Label>Same-day uplift</Label>
+          <Label>{t.providerPricing.sameDayUplift}</Label>
           <Input type="number" step="0.01" name="sameDayUplift" />
         </div>
         <div className="sm:col-span-2">
-          <Label>Weekend uplift</Label>
+          <Label>{t.providerPricing.weekendUplift}</Label>
           <Input type="number" step="0.01" name="weekendUplift" />
         </div>
         <div className="sm:col-span-3 flex items-end gap-3">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="customQuoteRequired" className="rounded" />
-            Quote required
+            {t.providerPricing.quoteRequired}
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="active" defaultChecked className="rounded" />
-            Active
+            {t.providerPricing.activeCheckbox}
           </label>
         </div>
         <div className="sm:col-span-3 flex items-end">
           <button type="submit" className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90">
-            Save rule
+            {t.providerPricing.saveRule}
           </button>
         </div>
       </form>

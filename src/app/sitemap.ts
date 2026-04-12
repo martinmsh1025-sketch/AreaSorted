@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { boroughPages } from "@/lib/seo/borough-pages";
+import { boroughServiceContent } from "@/lib/seo/borough-service-content";
 import { advicePosts } from "@/lib/seo/advice-posts";
 import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
@@ -165,18 +166,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-  const serviceAreaPages: MetadataRoute.Sitemap = enabledServiceValues.includes("cleaning")
-    ? [
-        `${BASE_URL}/london/camden/cleaning`,
-        `${BASE_URL}/london/islington/cleaning`,
-        `${BASE_URL}/london/westminster/cleaning`,
-      ].map((url) => ({
-        url,
-        lastModified: now,
-        changeFrequency: "monthly" as const,
-        priority: 0.75,
-      }))
-    : [];
+  const serviceAreaPages: MetadataRoute.Sitemap = [];
+  for (const borough of boroughPages) {
+    for (const serviceContent of boroughServiceContent) {
+      if (enabledServiceValues.includes(serviceContent.service)) {
+        serviceAreaPages.push({
+          url: `${BASE_URL}/london/${borough.slug}/${serviceContent.slug}`,
+          lastModified: now,
+          changeFrequency: "monthly",
+          priority: 0.75,
+        });
+      }
+    }
+  }
 
   const advicePages: MetadataRoute.Sitemap = advicePosts.map((post) => ({
     url: `${BASE_URL}/advice/${post.slug}`,
@@ -185,5 +187,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65,
   }));
 
-  return [...staticPages, ...servicePages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...authPages];
+  const comparePages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/compare/hassle-alternative`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
+    {
+      url: `${BASE_URL}/compare/handy-alternative`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    },
+  ];
+
+  return [...staticPages, ...servicePages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...comparePages, ...authPages];
 }

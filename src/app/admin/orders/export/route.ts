@@ -22,6 +22,21 @@ export async function GET(request: NextRequest) {
   const payment = searchParams.get("payment")?.trim() || "";
   const bookingStatus = searchParams.get("bookingStatus")?.trim() || "";
 
+  // Whitelist of valid BookingStatus enum values from Prisma schema
+  const VALID_BOOKING_STATUSES: ReadonlySet<string> = new Set<string>([
+    "AWAITING_PAYMENT",
+    "PAID",
+    "PENDING_ASSIGNMENT",
+    "ACCEPTING",
+    "ASSIGNED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "CANCELLED",
+    "NO_CLEANER_FOUND",
+    "REFUND_PENDING",
+    "REFUNDED",
+  ] satisfies BookingStatus[]);
+
   const where: Prisma.BookingWhereInput = {};
 
   if (startDate || endDate) {
@@ -35,6 +50,9 @@ export async function GET(request: NextRequest) {
   }
 
   if (bookingStatus) {
+    if (!VALID_BOOKING_STATUSES.has(bookingStatus)) {
+      return new NextResponse("Invalid booking status", { status: 400 });
+    }
     where.bookingStatus = bookingStatus as BookingStatus;
   }
 

@@ -8,6 +8,16 @@ import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 const pestControlJobs = jobTypeCatalog.filter((job) => job.service === "pest-control");
 const startingPrice = Math.min(...pestControlJobs.map((job) => job.startingPrice));
 
+function getSafeSiteUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "https://areasorted.com";
+  try {
+    return new URL(raw).toString().replace(/\/$/, "");
+  } catch {
+    return "https://areasorted.com";
+  }
+}
+
 export const metadata: Metadata = {
   title: "Pest Control Services in London",
   description:
@@ -62,10 +72,42 @@ export default async function PestControlServicePage() {
       },
     })),
   };
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Pest control services in London",
+    description: "Book pest control services in London through AreaSorted for rodents, insects, inspections, reports, proofing, and follow-up visits.",
+    areaServed: "London",
+    provider: {
+      "@type": "Organization",
+      name: "AreaSorted",
+    },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "GBP",
+      priceSpecification: {
+        "@type": "PriceSpecification",
+        minPrice: startingPrice,
+        priceCurrency: "GBP",
+      },
+    },
+  };
+  const siteUrl = getSafeSiteUrl();
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Services", item: `${siteUrl}/services` },
+      { "@type": "ListItem", position: 3, name: "Pest Control", item: `${siteUrl}/services/pest-control` },
+    ],
+  };
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       <section className="section">
         <div className="container" style={{ maxWidth: 860 }}>

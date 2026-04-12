@@ -1680,3 +1680,141 @@ model ContactEnquiry {
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
 }
+
+// ---------------------------------------------------------------------------
+// Provider Acquisition / Lead Management (Phase 9)
+// ---------------------------------------------------------------------------
+
+enum LeadServiceCategory {
+  CLEANING
+  PEST_CONTROL
+  HANDYMAN
+  FURNITURE_ASSEMBLY
+  WASTE_REMOVAL
+  GARDEN_MAINTENANCE
+}
+
+enum LeadType {
+  COMPANY
+  SOLE_TRADER
+  UNKNOWN
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  REPLIED
+  INTERESTED
+  ONBOARDING
+  CONVERTED
+  NOT_INTERESTED
+  UNRESPONSIVE
+  DUPLICATE
+  INVALID
+}
+
+enum LeadSource {
+  GOOGLE_MAPS
+  COMPANIES_HOUSE
+  CHECKATRADE
+  YELL
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  LOCAL_DIRECTORY
+  TRADE_ASSOCIATION
+  TRUSTPILOT
+  REFERRAL
+  MANUAL
+  CSV_IMPORT
+  OTHER
+}
+
+enum OutreachChannel {
+  EMAIL
+  WHATSAPP
+  PHONE
+  LINKEDIN_DM
+  FACEBOOK_DM
+  INSTAGRAM_DM
+}
+
+enum OutreachOutcome {
+  SENT
+  DELIVERED
+  OPENED
+  REPLIED
+  POSITIVE
+  NEGATIVE
+  NO_RESPONSE
+  BOUNCED
+  OPTED_OUT
+}
+
+model ProviderLead {
+  id            String              @id @default(cuid())
+  businessName  String
+  leadType      LeadType            @default(UNKNOWN)
+  services      LeadServiceCategory[]
+  boroughs      String[]            // London borough slugs
+  website       String?
+  sourceUrl     String?             // URL where lead was found
+  source        LeadSource          @default(MANUAL)
+  score         Int                 @default(0) // 0-100 AI suitability score
+  status        LeadStatus          @default(NEW)
+  notes         String?             // quick notes field
+  tags          String[]            // flexible tagging e.g. ["priority", "checkatrade-5star"]
+  websiteScraped Boolean           @default(false) // true once website has been scraped for contacts
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  contacts      LeadContact[]
+  outreach      LeadOutreach[]
+  detailedNotes LeadNote[]
+
+  @@index([status])
+  @@index([score])
+  @@index([source])
+}
+
+model LeadContact {
+  id           String          @id @default(cuid())
+  leadId       String
+  channel      OutreachChannel
+  value        String          // email address, phone number, URL, etc.
+  verified     Boolean         @default(false)
+  publicSource String?         // where this contact info was found (for GDPR)
+  isPrimary    Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+
+  lead         ProviderLead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+model LeadOutreach {
+  id             String           @id @default(cuid())
+  leadId         String
+  channel        OutreachChannel
+  messageVariant String?          // template name / variant used
+  sentAt         DateTime         @default(now())
+  replyAt        DateTime?
+  outcome        OutreachOutcome  @default(SENT)
+  notes          String?
+
+  lead           ProviderLead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([sentAt])
+}
+
+model LeadNote {
+  id        String       @id @default(cuid())
+  leadId    String
+  content   String
+  createdAt DateTime     @default(now())
+
+  lead      ProviderLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}

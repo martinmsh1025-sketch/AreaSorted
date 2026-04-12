@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatMoney } from "@/lib/format";
+import { useT } from "@/lib/i18n/context";
 
 type PricingRule = {
   id: string;
@@ -74,6 +75,7 @@ export function PricingOverview({
   deletePricingConfigAction,
   saveAreaOverrideAction,
 }: PricingOverviewProps) {
+  const t = useT();
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterProvider, setFilterProvider] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -157,25 +159,25 @@ export function PricingOverview({
       <div className="grid gap-4 sm:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total rules</CardDescription>
+            <CardDescription>{t.pricingOverview.totalRules}</CardDescription>
             <CardTitle className="text-2xl tabular-nums">{totalRules}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Active rules</CardDescription>
+            <CardDescription>{t.pricingOverview.activeRules}</CardDescription>
             <CardTitle className="text-2xl tabular-nums text-green-600">{activeRules}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Disabled rules</CardDescription>
+            <CardDescription>{t.pricingOverview.disabledRules}</CardDescription>
             <CardTitle className="text-2xl tabular-nums text-muted-foreground">{totalRules - activeRules}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Providers with pricing</CardDescription>
+            <CardDescription>{t.pricingOverview.providersWithPricing}</CardDescription>
             <CardTitle className="text-2xl tabular-nums">{providersWithRules} / {providers.length}</CardTitle>
           </CardHeader>
         </Card>
@@ -186,34 +188,34 @@ export function PricingOverview({
         <CardContent className="pt-6">
           <div className="grid gap-4 sm:grid-cols-6">
             <div>
-              <Label className="text-xs text-muted-foreground">Search</Label>
+              <Label className="text-xs text-muted-foreground">{t.pricingOverview.searchPlaceholder}</Label>
               <Input
-                placeholder="Provider, category, service..."
+                placeholder={t.pricingOverview.searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Category</Label>
+              <Label className="text-xs text-muted-foreground">{t.pricingOverview.categoryLabel}</Label>
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <option value="all">All categories</option>
+                <option value="all">{t.pricingOverview.allCategories}</option>
                 {categories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>{(t.serviceCategoryLabels as Record<string, string>)[c] ?? c}</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Provider</Label>
+              <Label className="text-xs text-muted-foreground">{t.pricingOverview.providerLabel}</Label>
               <select
                 value={filterProvider}
                 onChange={(e) => setFilterProvider(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <option value="all">All providers</option>
+                <option value="all">{t.pricingOverview.allProviders}</option>
                 {providers.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.tradingName || p.legalName || p.contactEmail}
@@ -222,19 +224,19 @@ export function PricingOverview({
               </select>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Status</Label>
+              <Label className="text-xs text-muted-foreground">{t.pricingOverview.statusLabel}</Label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <option value="all">All</option>
-                <option value="active">Active only</option>
-                <option value="disabled">Disabled only</option>
+                <option value="all">{t.pricingOverview.all}</option>
+                <option value="active">{t.pricingOverview.activeOnly}</option>
+                <option value="disabled">{t.pricingOverview.disabledOnly}</option>
               </select>
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Min price (&pound;)</Label>
+              <Label className="text-xs text-muted-foreground">{t.pricingOverview.minPrice}</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -244,11 +246,11 @@ export function PricingOverview({
               />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Max price (&pound;)</Label>
+              <Label className="text-xs text-muted-foreground">{t.pricingOverview.maxPrice}</Label>
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Any"
+                placeholder={t.pricingOverview.any}
                 value={priceMax}
                 onChange={(e) => setPriceMax(e.target.value)}
               />
@@ -262,8 +264,8 @@ export function PricingOverview({
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             {totalRules === 0
-              ? "No pricing rules found. Providers need to set up their pricing first."
-              : "No rules match your filters."}
+              ? t.pricingOverview.noPricingRules
+              : t.pricingOverview.noRulesMatch}
           </CardContent>
         </Card>
       ) : (
@@ -558,8 +560,8 @@ export function PricingOverview({
       {providers.filter((p) => p.rules.length === 0).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Providers without pricing</CardTitle>
-            <CardDescription>These providers have not set up any pricing rules yet.</CardDescription>
+            <CardTitle className="text-base">{t.pricingOverview.providersWithoutPricing}</CardTitle>
+            <CardDescription>{t.pricingOverview.providersWithoutPricingDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

@@ -9,6 +9,7 @@ import { saveEnabledServiceCategoriesAction, saveMarketplaceSettingAction } from
 import { BookingFeeForm } from "@/app/admin/pricing/booking-fee-form";
 import { ALL_SERVICE_VALUES } from "@/lib/service-catalog-settings";
 import { serviceCatalog } from "@/lib/service-catalog";
+import { getAdminTranslations } from "@/lib/i18n/server";
 
 type AdminSettingsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -17,6 +18,7 @@ type AdminSettingsPageProps = {
 export default async function AdminSettingsPage({ searchParams }: AdminSettingsPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
+  const t = await getAdminTranslations();
 
   const prisma = getPrisma();
   const query = (await searchParams) ?? {};
@@ -38,24 +40,24 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.settingsPage.title}</h1>
         <p className="text-muted-foreground">
-          Platform configuration and fee settings.
+          {t.settingsPage.subtitle}
         </p>
       </div>
 
       {status === "service_visibility_saved" ? (
         <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          Service visibility updated.
+          {t.settingsPage.serviceVisibilityUpdated}
         </div>
       ) : null}
 
       {/* Platform fee settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Platform fee settings</CardTitle>
+          <CardTitle>{t.settingsPage.platformFeeSettings}</CardTitle>
           <CardDescription>
-            Default booking fee and commission applied to all bookings unless overridden.
+            {t.settingsPage.platformFeeDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -68,7 +70,7 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
             <form action={saveMarketplaceSettingAction} className="space-y-3">
               <input type="hidden" name="key" value="marketplace.commission_percent" />
               <div>
-                <Label htmlFor="commissionPercent">Default commission percent (%)</Label>
+                <Label htmlFor="commissionPercent">{t.settingsPage.defaultCommission}</Label>
                 <Input
                   id="commissionPercent"
                   type="number"
@@ -79,14 +81,14 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
                   )}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Commission charged to the customer on top of the provider&apos;s price (e.g. 12 = 12%).
+                  {t.settingsPage.commissionHelp}
                 </p>
               </div>
               <button
                 type="submit"
                 className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
               >
-                Save commission
+                {t.settingsPage.saveCommission}
               </button>
             </form>
           </div>
@@ -95,26 +97,26 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
 
       <Card>
         <CardHeader>
-          <CardTitle>Ops notification emails</CardTitle>
+          <CardTitle>{t.settingsPage.opsNotification}</CardTitle>
           <CardDescription>
-            Use a comma-separated list of internal emails for provider applications, booking alerts, and reminder notifications.
+            {t.settingsPage.opsNotificationDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={saveMarketplaceSettingAction} className="space-y-3 max-w-2xl">
             <input type="hidden" name="key" value="marketplace.ops_notification_emails" />
             <div>
-              <Label htmlFor="opsEmails">Notification recipients</Label>
+              <Label htmlFor="opsEmails">{t.settingsPage.notificationRecipients}</Label>
               <Input id="opsEmails" name="value" defaultValue={opsEmails} />
               <p className="text-xs text-muted-foreground mt-1">
-                Example: ops@areasorted.com, founder@areasorted.com
+                {t.settingsPage.notificationExample}
               </p>
             </div>
             <button
               type="submit"
               className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
             >
-              Save notification emails
+              {t.settingsPage.saveNotificationEmails}
             </button>
           </form>
         </CardContent>
@@ -123,9 +125,9 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
       {/* Raw settings overview */}
       <Card>
         <CardHeader>
-          <CardTitle>Live service categories</CardTitle>
+          <CardTitle>{t.settingsPage.liveCategories}</CardTitle>
           <CardDescription>
-            Control which service categories are visible in the customer portal and public SEO pages.
+            {t.settingsPage.liveCategoriesDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -151,7 +153,7 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
               type="submit"
               className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
             >
-              Save service visibility
+              {t.settingsPage.saveServiceVisibility}
             </button>
           </form>
         </CardContent>
@@ -159,8 +161,8 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
 
       <Card>
         <CardHeader>
-          <CardTitle>All settings</CardTitle>
-          <CardDescription>{settings.length} keys configured</CardDescription>
+          <CardTitle>{t.settingsPage.allSettings}</CardTitle>
+          <CardDescription>{settings.length} {t.settingsPage.keysConfigured}</CardDescription>
         </CardHeader>
         <CardContent>
           {settings.length > 0 ? (
@@ -179,7 +181,7 @@ export default async function AdminSettingsPage({ searchParams }: AdminSettingsP
             </div>
           ) : (
             <p className="text-sm text-muted-foreground py-4 text-center">
-              No settings configured yet.
+              {t.settingsPage.noSettingsYet}
             </p>
           )}
         </CardContent>

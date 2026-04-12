@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getAdminTranslations } from "@/lib/i18n/server";
 import { getOrCreateInvoices, loadBookingForInvoice } from "@/server/services/invoices/generate";
 import { buildInvoiceData } from "@/server/services/invoices/build-data";
 import { AdminInvoice, InvoicePrintButton } from "@/components/invoice/invoice-templates";
@@ -13,6 +14,7 @@ export default async function AdminInvoicePage({ params }: Props) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
 
+  const t = await getAdminTranslations();
   const { reference } = await params;
 
   // Admin pages use booking.id as reference
@@ -45,7 +47,7 @@ export default async function AdminInvoicePage({ params }: Props) {
           href={`/admin/orders/${reference}`}
           className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
         >
-          &larr; Back to booking
+          &larr; {t.orderDetail.backToBooking}
         </Link>
         <InvoicePrintButton />
       </div>

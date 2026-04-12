@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPrisma } from "@/lib/db";
-import { getEnv } from "@/lib/config/env";
+import { getEnv, getAppUrl } from "@/lib/config/env";
 import { cancelDirectChargePaymentIntent } from "@/lib/stripe/connect";
 import { ensurePayoutRecordForBooking, isProviderPayoutAutoReleaseEnabled, refreshPayoutRecordState } from "@/lib/payouts";
 import { sendLoggedEmail } from "@/lib/notifications/logged-email";
@@ -54,12 +54,19 @@ export async function GET(request: NextRequest) {
       },
       take: 200,
     });
+    // Batch-fetch existing notification logs to avoid N+1 per booking
+    const abandonedBookingIds = abandonedReminderTargets.map((b) => b.id);
+    const abandonedNotifs = abandonedBookingIds.length
+      ? await prisma.notificationLogV2.findMany({
+          where: { bookingId: { in: abandonedBookingIds }, templateCode: "customer_abandoned_booking_reminder" },
+          select: { bookingId: true },
+        })
+      : [];
+    const abandonedNotifSet = new Set(abandonedNotifs.map((n) => n.bookingId));
+
     let abandonedReminders = 0;
     for (const booking of abandonedReminderTargets) {
-      const alreadySent = await prisma.notificationLogV2.findFirst({
-        where: { bookingId: booking.id, templateCode: "customer_abandoned_booking_reminder" },
-      });
-      if (alreadySent || !booking.customer?.email) continue;
+      if (abandonedNotifSet.has(booking.id) || !booking.customer?.email) continue;
       try {
         const { sendAbandonedBookingReminderEmail } = await import("@/lib/notifications/booking-emails");
         await sendAbandonedBookingReminderEmail(booking.id);
@@ -112,12 +119,19 @@ export async function GET(request: NextRequest) {
       take: 200,
     });
     const opsRecipients = await getOpsNotificationRecipients();
+    // Batch-fetch existing escalation notifications to avoid N+1
+    const escalationBookingIds = escalationBookings.map((b) => b.id);
+    const escalationNotifs = escalationBookingIds.length
+      ? await prisma.notificationLogV2.findMany({
+          where: { bookingId: { in: escalationBookingIds }, templateCode: "ops_pending_assignment_escalation" },
+          select: { bookingId: true },
+        })
+      : [];
+    const escalationNotifSet = new Set(escalationNotifs.map((n) => n.bookingId));
+
     let pendingEscalations = 0;
     for (const booking of escalationBookings) {
-      const alreadySent = await prisma.notificationLogV2.findFirst({
-        where: { bookingId: booking.id, templateCode: "ops_pending_assignment_escalation" },
-      });
-      if (alreadySent) continue;
+      if (escalationNotifSet.has(booking.id)) continue;
 
       await Promise.allSettled(opsRecipients.map((to) => sendLoggedEmail({
         to,
@@ -128,7 +142,7 @@ export async function GET(request: NextRequest) {
           `Reference: ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
           `Service: ${booking.quoteRequest?.serviceKey || "Service"}`,
           `Postcode: ${booking.servicePostcode}`,
-          `Review here: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/admin/orders/${booking.id}`,
+          `Review here: ${getAppUrl()}/admin/orders/${booking.id}`,
         ].join("\n"),
         templateCode: "ops_pending_assignment_escalation",
         bookingId: booking.id,
@@ -323,17 +337,28 @@ export async function GET(request: NextRequest) {
       },
       take: 200,
     });
+    // Batch-fetch existing reminder notifications to avoid N+1
+    const reminderBookingIds = upcomingBookings.map((b) => b.id);
+    const reminderNotifs = reminderBookingIds.length
+      ? await prisma.notificationLogV2.findMany({
+          where: {
+            bookingId: { in: reminderBookingIds },
+            templateCode: { in: ["customer_booking_reminder_24h", "provider_booking_reminder_24h"] },
+          },
+          select: { bookingId: true, templateCode: true },
+        })
+      : [];
+    const reminderSentMap = new Map<string, Set<string>>();
+    for (const n of reminderNotifs) {
+      if (!n.bookingId || !n.templateCode) continue;
+      if (!reminderSentMap.has(n.bookingId)) reminderSentMap.set(n.bookingId, new Set());
+      reminderSentMap.get(n.bookingId)!.add(n.templateCode);
+    }
+
     let customerReminders = 0;
     let providerReminders = 0;
     for (const booking of upcomingBookings) {
-      const alreadySent = await prisma.notificationLogV2.findMany({
-        where: {
-          bookingId: booking.id,
-          templateCode: { in: ["customer_booking_reminder_24h", "provider_booking_reminder_24h"] },
-        },
-        select: { templateCode: true },
-      });
-      const sentTemplates = new Set(alreadySent.map((item) => item.templateCode));
+      const sentTemplates = reminderSentMap.get(booking.id) || new Set();
 
       if (booking.customer?.email && !sentTemplates.has("customer_booking_reminder_24h")) {
         await sendLoggedEmail({
@@ -393,16 +418,23 @@ export async function GET(request: NextRequest) {
       take: 200,
     });
 
+    // Batch-fetch existing onboarding reminders to avoid N+1
+    const onboardingProviderIds = onboardingProviders.map((p) => p.id);
+    const onboardingNotifs = onboardingProviderIds.length
+      ? await prisma.notificationLogV2.findMany({
+          where: {
+            providerCompanyId: { in: onboardingProviderIds },
+            templateCode: "provider_onboarding_reminder",
+            createdAt: { gte: onboardingCutoff },
+          },
+          select: { providerCompanyId: true },
+        })
+      : [];
+    const onboardingNotifSet = new Set(onboardingNotifs.map((n) => n.providerCompanyId));
+
     let onboardingReminders = 0;
     for (const provider of onboardingProviders) {
-      const alreadySent = await prisma.notificationLogV2.findFirst({
-        where: {
-          providerCompanyId: provider.id,
-          templateCode: "provider_onboarding_reminder",
-          createdAt: { gte: onboardingCutoff },
-        },
-      });
-      if (alreadySent || !provider.contactEmail) continue;
+      if (onboardingNotifSet.has(provider.id) || !provider.contactEmail) continue;
 
       await sendLoggedEmail({
         to: provider.contactEmail,
@@ -413,7 +445,7 @@ export async function GET(request: NextRequest) {
           `Your provider application is still incomplete and waiting for the next step.`,
           `Current status: ${provider.status}`,
           "",
-          `Continue here: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/provider/onboarding`,
+          `Continue here: ${getAppUrl()}/provider/onboarding`,
         ].join("\n"),
         templateCode: "provider_onboarding_reminder",
         providerCompanyId: provider.id,

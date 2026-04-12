@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { blockPayoutAction, extendPayoutHoldAction, releasePayoutAction, savePayoutPolicyAction } from "./actions";
+import { getAdminTranslations } from "@/lib/i18n/server";
 
 function dec(value: Decimal | null | undefined): number {
   return value ? Number(value) : 0;
@@ -77,6 +78,7 @@ export default async function AdminPayoutsPage({
 }: AdminPayoutsPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
+  const t = await getAdminTranslations();
 
   const prisma = getPrisma();
   const params = (await searchParams) ?? {};
@@ -296,12 +298,12 @@ export default async function AdminPayoutsPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight">Payouts</h1>
+        <h1 className="text-xl font-bold tracking-tight">{t.payoutsPage.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Daily reconciliation for captured bookings only. Authorised card holds stay out of payouts until a provider confirms.
+          {t.payoutsPage.subtitle}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          Use this page to decide when provider funds stay on hold, become eligible, or are released. Need refund audit history instead? <Link href="/admin/refunds" className="text-primary hover:underline">View refunds</Link>.
+          {t.payoutsPage.helpText} <Link href="/admin/refunds" className="text-primary hover:underline">{t.payoutsPage.viewRefunds}</Link>.
         </p>
       </div>
 
@@ -310,13 +312,13 @@ export default async function AdminPayoutsPage({
         <Card className="border-l-4 border-l-blue-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Total provider payouts
+              {t.payoutsPage.totalProviderPayouts}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               {formatMoney(totalPayouts)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {totalBookings} bookings
+              {totalBookings} {t.payoutsPage.bookingsInRange}
             </p>
           </CardContent>
         </Card>
@@ -324,13 +326,13 @@ export default async function AdminPayoutsPage({
         <Card className="border-l-4 border-l-emerald-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Platform revenue
+              {t.payoutsPage.platformRevenue}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               {formatMoney(totalPlatformRevenue)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Fees + commission
+              {t.payoutsPage.feesCommission}
             </p>
           </CardContent>
         </Card>
@@ -338,13 +340,13 @@ export default async function AdminPayoutsPage({
         <Card className="border-l-4 border-l-violet-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Bookings in range
+              {t.payoutsPage.bookingsInRange}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               {totalBookings}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {dayGroups.length} days with activity
+              {dayGroups.length} {t.payoutsPage.daysWithActivity}
             </p>
           </CardContent>
         </Card>
@@ -352,13 +354,13 @@ export default async function AdminPayoutsPage({
         <Card className="border-l-4 border-l-amber-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Active providers
+              {t.payoutsPage.activeProviders}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               {uniqueProviders}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              With bookings in range
+              {t.payoutsPage.withBookingsInRange}
             </p>
           </CardContent>
         </Card>
@@ -367,26 +369,26 @@ export default async function AdminPayoutsPage({
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Payout hold policy</CardTitle>
+          <CardTitle className="text-base">{t.payoutsPage.payoutHoldPolicy}</CardTitle>
           <CardDescription>
-            Control how long provider funds stay on hold before becoming eligible for release.
+            {t.payoutsPage.payoutHoldPolicyDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={savePayoutPolicyAction} className="grid gap-3 sm:grid-cols-12">
             <div className="sm:col-span-4">
-              <Label htmlFor="holdDays" className="text-xs">Default hold days</Label>
+              <Label htmlFor="holdDays" className="text-xs">{t.payoutsPage.defaultHoldDays}</Label>
               <Input id="holdDays" name="holdDays" type="number" min={0} defaultValue={payoutHoldDays} className="h-8 text-sm" />
             </div>
             <div className="sm:col-span-4 flex items-end">
               <label className="flex h-8 items-center gap-2 text-sm text-muted-foreground">
                 <input type="checkbox" name="autoRelease" defaultChecked={autoReleaseEnabled} />
-                Auto-release when eligible
+                {t.payoutsPage.autoRelease}
               </label>
             </div>
             <div className="sm:col-span-4 flex items-end">
               <button type="submit" className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-white shadow hover:bg-primary/90">
-                Save payout policy
+                {t.payoutsPage.savePayoutPolicy}
               </button>
             </div>
           </form>
@@ -395,14 +397,14 @@ export default async function AdminPayoutsPage({
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Payout status definitions</CardTitle>
-          <CardDescription>Use these meanings when deciding whether to release, extend, or block provider funds.</CardDescription>
+          <CardTitle className="text-base">{t.payoutsPage.statusDefinitions}</CardTitle>
+          <CardDescription>{t.payoutsPage.statusDefinitionsDesc}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4 text-sm">
-          <div className="rounded-md border p-3"><div className="font-medium">ON_HOLD</div><p className="mt-1 text-muted-foreground">Captured payment exists, but provider funds are still waiting inside the hold window.</p></div>
-          <div className="rounded-md border p-3"><div className="font-medium">ELIGIBLE</div><p className="mt-1 text-muted-foreground">Hold period is over and the payout can now be released manually or automatically.</p></div>
-          <div className="rounded-md border p-3"><div className="font-medium">RELEASED</div><p className="mt-1 text-muted-foreground">AreaSorted approved release in the app. Treat this as committed unless recovery review is needed.</p></div>
-          <div className="rounded-md border p-3"><div className="font-medium">BLOCKED / CANCELLED</div><p className="mt-1 text-muted-foreground">Do not pay out. Use this when a refund, complaint, or manual review stops release.</p></div>
+          <div className="rounded-md border p-3"><div className="font-medium">{t.payoutsPage.onHold}</div><p className="mt-1 text-muted-foreground">{t.payoutsPage.onHoldDesc}</p></div>
+          <div className="rounded-md border p-3"><div className="font-medium">{t.payoutsPage.eligible}</div><p className="mt-1 text-muted-foreground">{t.payoutsPage.eligibleDesc}</p></div>
+          <div className="rounded-md border p-3"><div className="font-medium">{t.payoutsPage.released}</div><p className="mt-1 text-muted-foreground">{t.payoutsPage.releasedDesc}</p></div>
+          <div className="rounded-md border p-3"><div className="font-medium">{t.payoutsPage.blockedCancelled}</div><p className="mt-1 text-muted-foreground">{t.payoutsPage.blockedCancelledDesc}</p></div>
         </CardContent>
       </Card>
 
@@ -411,7 +413,7 @@ export default async function AdminPayoutsPage({
           <form method="GET" className="grid gap-3 sm:grid-cols-12">
             <div className="sm:col-span-3">
               <Label htmlFor="startDate" className="text-xs">
-                From
+                {t.payoutsPage.from}
               </Label>
               <Input
                 type="date"
@@ -423,7 +425,7 @@ export default async function AdminPayoutsPage({
             </div>
             <div className="sm:col-span-3">
               <Label htmlFor="endDate" className="text-xs">
-                To
+                {t.payoutsPage.to}
               </Label>
               <Input
                 type="date"
@@ -435,7 +437,7 @@ export default async function AdminPayoutsPage({
             </div>
             <div className="sm:col-span-3">
               <Label htmlFor="provider" className="text-xs">
-                Provider
+                {t.payoutsPage.providerLabel}
               </Label>
               <select
                 id="provider"
@@ -443,7 +445,7 @@ export default async function AdminPayoutsPage({
                 defaultValue={providerFilter}
                 className="flex h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <option value="">All providers</option>
+                <option value="">{t.payoutsPage.allProviders}</option>
                 {allProviders.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.tradingName || p.legalName || p.contactEmail}
@@ -473,7 +475,7 @@ export default async function AdminPayoutsPage({
       {dayGroups.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            No payouts found for the selected date range.
+            {t.payoutsPage.noPayoutsFound}
           </CardContent>
         </Card>
       ) : (
@@ -484,18 +486,18 @@ export default async function AdminPayoutsPage({
                 <div>
                   <CardTitle className="text-base">{day.date}</CardTitle>
                   <CardDescription>
-                    {day.bookingCount} booking{day.bookingCount !== 1 ? "s" : ""} &middot;{" "}
-                    {day.providers.length} provider{day.providers.length !== 1 ? "s" : ""}
+                    {day.bookingCount} {day.bookingCount !== 1 ? t.payoutsPage.booking + "s" : t.payoutsPage.booking} &middot;{" "}
+                    {day.providers.length} {day.providers.length !== 1 ? t.payoutsPage.providerPlural : t.payoutsPage.providerSingle}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Provider payouts</p>
+                   <div className="text-right">
+                    <p className="text-xs text-muted-foreground">{t.payoutsPage.providerPayouts}</p>
                     <p className="font-bold tabular-nums">{formatMoney(day.totalPayout)}</p>
                   </div>
                   <Separator orientation="vertical" className="h-8" />
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Platform revenue</p>
+                    <p className="text-xs text-muted-foreground">{t.payoutsPage.platformRevenue}</p>
                     <p className="font-bold tabular-nums text-emerald-600">
                       {formatMoney(day.totalPlatformRevenue)}
                     </p>
@@ -536,10 +538,10 @@ export default async function AdminPayoutsPage({
                           {formatMoney(provider.totalPayout)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {provider.bookingCount} booking{provider.bookingCount !== 1 ? "s" : ""}
+                          {provider.bookingCount} {provider.bookingCount !== 1 ? t.payoutsPage.booking + "s" : t.payoutsPage.booking}
                           {provider.completedCount > 0 && (
                             <span className="text-green-600">
-                              {" "}· {provider.completedCount} completed
+                              {" "}· {provider.completedCount} {t.payoutsPage.completedSuffix}
                             </span>
                           )}
                         </p>
@@ -551,14 +553,14 @@ export default async function AdminPayoutsPage({
                       <Table>
                         <TableHeader>
                             <TableRow>
-                              <TableHead className="text-xs">Ref</TableHead>
-                              <TableHead className="text-xs">Customer</TableHead>
-                              <TableHead className="text-xs">Status</TableHead>
-                              <TableHead className="text-xs">Payout</TableHead>
-                              <TableHead className="text-xs text-right">Payout</TableHead>
-                              <TableHead className="text-xs text-right">Fee</TableHead>
-                              <TableHead className="text-xs text-right">Commission</TableHead>
-                              <TableHead className="text-xs text-right">Actions</TableHead>
+                              <TableHead className="text-xs">{t.payoutsPage.tableHeaders.ref}</TableHead>
+                              <TableHead className="text-xs">{t.payoutsPage.tableHeaders.customer}</TableHead>
+                              <TableHead className="text-xs">{t.payoutsPage.tableHeaders.status}</TableHead>
+                              <TableHead className="text-xs">{t.payoutsPage.tableHeaders.payout}</TableHead>
+                              <TableHead className="text-xs text-right">{t.payoutsPage.tableHeaders.payout}</TableHead>
+                              <TableHead className="text-xs text-right">{t.payoutsPage.tableHeaders.fee}</TableHead>
+                              <TableHead className="text-xs text-right">{t.payoutsPage.tableHeaders.commission}</TableHead>
+                              <TableHead className="text-xs text-right">{t.payoutsPage.tableHeaders.actions}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -589,7 +591,7 @@ export default async function AdminPayoutsPage({
                                     {b.payoutStatus}
                                   </Badge>
                                   {b.payoutHoldUntil && (
-                                    <div className="text-[11px] text-muted-foreground">Hold until {b.payoutHoldUntil}</div>
+                                    <div className="text-[11px] text-muted-foreground">{t.payoutsPage.holdUntil} {b.payoutHoldUntil}</div>
                                   )}
                                   {b.payoutBlockedReason && (
                                     <div className="text-[11px] text-red-600 max-w-[160px]">{b.payoutBlockedReason}</div>
@@ -612,15 +614,15 @@ export default async function AdminPayoutsPage({
                                       <>
                                         <form action={releasePayoutAction}>
                                           <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
-                                          <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
-                                            Release
-                                          </button>
-                                        </form>
-                                        <form action={extendPayoutHoldAction} className="flex items-center gap-1">
-                                          <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
-                                          <input type="hidden" name="extraDays" value="3" />
-                                          <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
-                                            +3d
+                                           <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                                             {t.payoutsPage.release}
+                                           </button>
+                                         </form>
+                                         <form action={extendPayoutHoldAction} className="flex items-center gap-1">
+                                           <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
+                                           <input type="hidden" name="extraDays" value="3" />
+                                           <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                                             {t.payoutsPage.extend3d}
                                           </button>
                                         </form>
                                       </>
@@ -629,12 +631,12 @@ export default async function AdminPayoutsPage({
                                       <form action={blockPayoutAction}>
                                         <input type="hidden" name="payoutRecordId" value={b.payoutRecordId} />
                                         <input type="hidden" name="reason" value="Blocked by admin review" />
-                                        <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100">
-                                          Block
-                                        </button>
+                                         <button type="submit" className="inline-flex h-7 items-center justify-center rounded-md border border-red-300 bg-red-50 px-2 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100">
+                                           {t.payoutsPage.block}
+                                         </button>
                                       </form>
                                     ) : (
-                                      <div className="text-right text-xs text-muted-foreground">Locked</div>
+                                       <div className="text-right text-xs text-muted-foreground">{t.payoutsPage.locked}</div>
                                     )}
                                   </div>
                                 ) : (

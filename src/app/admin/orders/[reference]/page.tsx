@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getAdminTranslations } from "@/lib/i18n/server";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
 import { confirmBookingOnBehalfAction, createAdminRefundAction, updateBookingStatusAction } from "./actions";
@@ -31,6 +32,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
 
+  const t = await getAdminTranslations();
   const { reference } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const prisma = getPrisma();
@@ -149,12 +151,12 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           href="/admin/orders"
           className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
         >
-          &larr; Back
+          &larr; {t.common.back}
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-bold tracking-tight">{bookingRef}</h1>
           <p className="text-muted-foreground">
-            Booking detail &mdash; review information and update operational statuses.
+            {t.orderDetail.reviewInfo}
           </p>
         </div>
         {showInvoice && (
@@ -162,7 +164,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
             href={`/admin/orders/${reference}/invoice`}
             className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
           >
-            View Reconciliation
+            {t.orderDetail.viewReconciliation}
           </Link>
         )}
       </div>
@@ -180,23 +182,23 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
       ) : null}
 
       <div className="grid gap-3 md:grid-cols-5">
-        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Booking</div><div className="mt-2"><Badge>{booking.bookingStatus}</Badge></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Payment</div><div className="mt-2"><Badge variant={getPaymentStatusVariant(paymentStatus)}>{getPaymentStatusLabel(paymentStatus)}</Badge></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Refund</div><div className="mt-2"><Badge variant="outline">{booking.refundRecords[0]?.status || "NONE"}</Badge></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Payout</div><div className="mt-2"><Badge variant="outline">{latestPayoutRecord?.status || "NONE"}</Badge></div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">Payment mode</div><div className="mt-2"><Badge variant={isMockCapturedPayment ? "destructive" : "secondary"}>{isMockCapturedPayment ? "MOCK" : "LIVE"}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{t.orderDetail.booking}</div><div className="mt-2"><Badge>{booking.bookingStatus}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{t.orderDetail.payment}</div><div className="mt-2"><Badge variant={getPaymentStatusVariant(paymentStatus)}>{getPaymentStatusLabel(paymentStatus)}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{t.orderDetail.refund}</div><div className="mt-2"><Badge variant="outline">{booking.refundRecords[0]?.status || "NONE"}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{t.orderDetail.payoutLabel}</div><div className="mt-2"><Badge variant="outline">{latestPayoutRecord?.status || "NONE"}</Badge></div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{t.orderDetail.paymentMode}</div><div className="mt-2"><Badge variant={isMockCapturedPayment ? "destructive" : "secondary"}>{isMockCapturedPayment ? t.orderDetail.mock : t.orderDetail.liveMode}</Badge></div></CardContent></Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Status guide</CardTitle>
-          <CardDescription>Quick definitions for the states used on this order.</CardDescription>
+          <CardTitle className="text-base">{t.orderDetail.statusGuide}</CardTitle>
+          <CardDescription>{t.orderDetail.statusGuideDescription}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 text-sm">
-          <div><div className="font-medium mb-1">Booking</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">PENDING_ASSIGNMENT</strong> - Waiting for provider confirmation.</p><p><strong className="text-foreground">ASSIGNED / IN_PROGRESS</strong> - Provider accepted and work is active.</p><p><strong className="text-foreground">COMPLETED</strong> - Job marked finished.</p><p><strong className="text-foreground">CANCELLED / REFUNDED</strong> - Booking stopped or money returned.</p></div></div>
-          <div><div className="font-medium mb-1">Payment</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">PENDING</strong> - Hold or payment setup exists, not captured yet.</p><p><strong className="text-foreground">PAID</strong> - Customer payment captured.</p><p><strong className="text-foreground">PARTIALLY_REFUNDED</strong> - Only part of the captured amount returned.</p><p><strong className="text-foreground">REFUNDED</strong> - Full captured amount returned.</p></div></div>
-          <div><div className="font-medium mb-1">Refund</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">NONE</strong> - No refund record exists.</p><p><strong className="text-foreground">PENDING</strong> - Refund requested but not fully processed yet.</p><p><strong className="text-foreground">PROCESSED</strong> - Refund record completed successfully.</p></div></div>
-          <div><div className="font-medium mb-1">Payout</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">ON_HOLD</strong> - Provider funds are still inside hold period.</p><p><strong className="text-foreground">ELIGIBLE</strong> - Hold period passed and payout can be released.</p><p><strong className="text-foreground">RELEASED</strong> - AreaSorted approved payout release in app.</p><p><strong className="text-foreground">BLOCKED / CANCELLED</strong> - Do not release funds without further review.</p></div></div>
+          <div><div className="font-medium mb-1">{t.orderDetail.booking}</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">{t.orderDetail.pendingAssignment}</strong> - {t.orderDetail.pendingAssignmentDesc}</p><p><strong className="text-foreground">{t.orderDetail.assignedInProgress}</strong> - {t.orderDetail.assignedInProgressDesc}</p><p><strong className="text-foreground">{t.orderDetail.completedStatus}</strong> - {t.orderDetail.completedStatusDesc}</p><p><strong className="text-foreground">{t.orderDetail.cancelledRefunded}</strong> - {t.orderDetail.cancelledRefundedDesc}</p></div></div>
+          <div><div className="font-medium mb-1">{t.orderDetail.payment}</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">{t.orderDetail.paymentPending}</strong> - {t.orderDetail.paymentPendingDesc}</p><p><strong className="text-foreground">{t.orderDetail.paymentPaid}</strong> - {t.orderDetail.paymentPaidDesc}</p><p><strong className="text-foreground">{t.orderDetail.partiallyRefunded}</strong> - {t.orderDetail.partiallyRefundedDesc}</p><p><strong className="text-foreground">{t.orderDetail.paymentRefunded}</strong> - {t.orderDetail.paymentRefundedDesc}</p></div></div>
+          <div><div className="font-medium mb-1">{t.orderDetail.refund}</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">{t.orderDetail.refundNone}</strong> - {t.orderDetail.refundNoneDesc}</p><p><strong className="text-foreground">{t.orderDetail.refundPending}</strong> - {t.orderDetail.refundPendingDesc}</p><p><strong className="text-foreground">{t.orderDetail.refundProcessed}</strong> - {t.orderDetail.refundProcessedDesc}</p></div></div>
+          <div><div className="font-medium mb-1">{t.orderDetail.payoutLabel}</div><div className="space-y-1 text-muted-foreground"><p><strong className="text-foreground">{t.orderDetail.payoutOnHold}</strong> - {t.orderDetail.payoutOnHoldDesc}</p><p><strong className="text-foreground">{t.orderDetail.payoutEligible}</strong> - {t.orderDetail.payoutEligibleDesc}</p><p><strong className="text-foreground">{t.orderDetail.payoutReleased}</strong> - {t.orderDetail.payoutReleasedDesc}</p><p><strong className="text-foreground">{t.orderDetail.payoutBlocked}</strong> - {t.orderDetail.payoutBlockedDesc}</p></div></div>
         </CardContent>
       </Card>
 
@@ -206,27 +208,27 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {/* Customer */}
           <Card>
             <CardHeader>
-              <CardTitle>Customer</CardTitle>
-              <CardDescription>Contact and customer details</CardDescription>
+              <CardTitle>{t.orderDetail.customerSection}</CardTitle>
+              <CardDescription>{t.orderDetail.contactAndCustomerDetails}</CardDescription>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm text-muted-foreground">Name</dt>
+                  <dt className="text-sm text-muted-foreground">{t.common.name}</dt>
                   <dd className="font-medium">
                     {booking.customer.firstName} {booking.customer.lastName}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Email</dt>
+                  <dt className="text-sm text-muted-foreground">{t.common.email}</dt>
                   <dd className="font-medium">{booking.customer.email}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Phone</dt>
+                  <dt className="text-sm text-muted-foreground">{t.common.phone}</dt>
                   <dd className="font-medium">{booking.customer.phone}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Booking status</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.bookingStatus}</dt>
                   <dd>
                     <Badge>{booking.bookingStatus}</Badge>
                   </dd>
@@ -238,39 +240,39 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {/* Provider / Assignment */}
           <Card>
             <CardHeader>
-              <CardTitle>Provider &amp; assignment</CardTitle>
-              <CardDescription>Assigned provider company and cleaner</CardDescription>
+              <CardTitle>{t.orderDetail.providerAssignment}</CardTitle>
+              <CardDescription>{t.orderDetail.assignedProviderDesc}</CardDescription>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm text-muted-foreground">Provider company</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.providerCompany}</dt>
                   <dd className="font-medium">{providerName}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Provider email</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.providerEmail}</dt>
                   <dd className="font-medium">{providerEmail}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Assigned cleaner</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.assignedCleaner}</dt>
                   <dd className="font-medium">
                     {assignedCleaner
                       ? `${assignedCleaner.firstName} ${assignedCleaner.lastName}`
-                      : "Unassigned"}
+                      : t.orderDetail.unassigned}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Cleaner email</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.cleanerEmail}</dt>
                   <dd className="font-medium">{assignedCleaner?.email || "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Cleaner payout</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.cleanerPayout}</dt>
                   <dd className="font-medium tabular-nums">
                     &pound;{dec(booking.cleanerPayoutAmount).toFixed(2)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Platform margin</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.platformMargin}</dt>
                   <dd className="font-medium tabular-nums">
                     &pound;{dec(booking.platformMarginAmount).toFixed(2)}
                   </dd>
@@ -282,47 +284,47 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {/* Service details */}
           <Card>
             <CardHeader>
-              <CardTitle>Service details</CardTitle>
+              <CardTitle>{t.orderDetail.serviceDetails}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm text-muted-foreground">Service</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orders.service}</dt>
                   <dd className="font-medium">{formatService(booking.serviceType)}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Address</dt>
+                  <dt className="text-sm text-muted-foreground">{t.common.address}</dt>
                   <dd className="font-medium">{serviceAddress}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Service date</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.serviceDate}</dt>
                   <dd className="font-medium">
                     {booking.scheduledDate.toISOString().slice(0, 10)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Service time</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.serviceTime}</dt>
                   <dd className="font-medium">{booking.scheduledStartTime}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Duration</dt>
-                  <dd className="font-medium">{Number(booking.durationHours)} hours</dd>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.duration}</dt>
+                  <dd className="font-medium">{Number(booking.durationHours)} {t.orderDetail.hours}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Property type</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.propertyType}</dt>
                   <dd className="font-medium">{booking.propertyType}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Bedrooms</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.bedrooms}</dt>
                   <dd className="font-medium">{booking.bedroomCount ?? "-"}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Bathrooms</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.bathrooms}</dt>
                   <dd className="font-medium">{booking.bathroomCount ?? "-"}</dd>
                 </div>
                 {booking.addons.length > 0 && (
                   <div className="sm:col-span-2">
-                    <dt className="text-sm text-muted-foreground">Add-ons</dt>
+                    <dt className="text-sm text-muted-foreground">{t.orderDetail.addOns}</dt>
                     <dd className="font-medium">
                       {booking.addons.map((a) => `${a.addonName} (x${a.quantity})`).join(", ")}
                     </dd>
@@ -335,20 +337,20 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {/* Notes */}
           <Card>
             <CardHeader>
-              <CardTitle>Notes</CardTitle>
+              <CardTitle>{t.common.notes}</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <dt className="text-sm text-muted-foreground">Additional notes</dt>
-                  <dd className="font-medium">{booking.additionalNotes || "None"}</dd>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.additionalNotes}</dt>
+                  <dd className="font-medium">{booking.additionalNotes || t.common.none}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Entry notes</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.entryNotes}</dt>
                   <dd className="font-medium">{entryNotes}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">Parking notes</dt>
+                  <dt className="text-sm text-muted-foreground">{t.orderDetail.parkingNotes}</dt>
                   <dd className="font-medium">{parkingNotes}</dd>
                 </div>
               </dl>
@@ -359,9 +361,9 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {booking.counterOffers.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Counter offers</CardTitle>
+                <CardTitle>{t.orderDetail.counterOffers}</CardTitle>
                 <CardDescription>
-                  {booking.counterOffers.length} offer{booking.counterOffers.length !== 1 ? "s" : ""} from provider — customers respond directly
+                  {booking.counterOffers.length} {booking.counterOffers.length !== 1 ? t.orderDetail.offers : t.orderDetail.offer} {t.orderDetail.counterOffersDesc}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -384,26 +386,26 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                                     : "bg-blue-100 text-blue-800"
                           }
                         >
-                          {offer.status === "PENDING" ? "AWAITING CUSTOMER" : offer.status}
+                          {offer.status === "PENDING" ? t.orderDetail.awaitingCustomer : offer.status}
                         </Badge>
                       </div>
 
                       <dl className="grid gap-2 text-sm sm:grid-cols-3">
                         {offer.proposedPrice && (
                           <div>
-                            <dt className="text-muted-foreground">Proposed price</dt>
+                            <dt className="text-muted-foreground">{t.orderDetail.proposedPrice}</dt>
                             <dd className="font-medium tabular-nums">&pound;{Number(offer.proposedPrice).toFixed(2)}</dd>
                           </div>
                         )}
                         {offer.proposedDate && (
                           <div>
-                            <dt className="text-muted-foreground">Proposed date</dt>
+                            <dt className="text-muted-foreground">{t.orderDetail.proposedDate}</dt>
                             <dd className="font-medium">{offer.proposedDate.toISOString().slice(0, 10)}</dd>
                           </div>
                         )}
                         {offer.proposedStartTime && (
                           <div>
-                            <dt className="text-muted-foreground">Proposed time</dt>
+                            <dt className="text-muted-foreground">{t.orderDetail.proposedTime}</dt>
                             <dd className="font-medium">{offer.proposedStartTime}</dd>
                           </div>
                         )}
@@ -414,17 +416,17 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                       )}
 
                       {offer.responseNotes && (
-                        <p className="text-xs text-muted-foreground">Customer response: {offer.responseNotes}</p>
+                        <p className="text-xs text-muted-foreground">{t.orderDetail.customerResponse} {offer.responseNotes}</p>
                       )}
 
                       <p className="text-xs text-muted-foreground">
-                        Submitted {offer.createdAt.toISOString().slice(0, 19).replace("T", " ")}
-                        {offer.respondedAt && ` · Responded ${offer.respondedAt.toISOString().slice(0, 19).replace("T", " ")}`}
+                        {t.orderDetail.submitted} {offer.createdAt.toISOString().slice(0, 19).replace("T", " ")}
+                        {offer.respondedAt && ` · ${t.orderDetail.responded} ${offer.respondedAt.toISOString().slice(0, 19).replace("T", " ")}`}
                       </p>
 
                       {offer.status === "PENDING" && (
                         <p className="text-xs text-amber-600 font-medium">
-                          Awaiting customer response — counter offers are now handled directly between provider and customer.
+                          {t.orderDetail.awaitingCustomerResponse}
                         </p>
                       )}
                     </div>
@@ -438,37 +440,37 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {booking.priceSnapshot && (
             <Card>
               <CardHeader>
-                <CardTitle>Price breakdown</CardTitle>
-                <CardDescription>Frozen at time of booking</CardDescription>
+                <CardTitle>{t.orderDetail.priceBreakdown}</CardTitle>
+                <CardDescription>{t.orderDetail.frozenAtBooking}</CardDescription>
               </CardHeader>
               <CardContent>
                 <dl className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <dt className="text-sm text-muted-foreground">Provider service amount</dt>
+                    <dt className="text-sm text-muted-foreground">{t.orderDetail.providerServiceAmount}</dt>
                     <dd className="font-medium tabular-nums">
                       &pound;{dec(booking.priceSnapshot.providerServiceAmount).toFixed(2)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm text-muted-foreground">Booking fee</dt>
+                    <dt className="text-sm text-muted-foreground">{t.orderDetail.bookingFee}</dt>
                     <dd className="font-medium tabular-nums">
                       &pound;{dec(booking.priceSnapshot.platformBookingFee).toFixed(2)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm text-muted-foreground">Commission</dt>
+                    <dt className="text-sm text-muted-foreground">{t.orderDetail.commission}</dt>
                     <dd className="font-medium tabular-nums">
                       &pound;{dec(booking.priceSnapshot.platformCommissionAmount).toFixed(2)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm text-muted-foreground">Customer total</dt>
+                    <dt className="text-sm text-muted-foreground">{t.orderDetail.customerTotal}</dt>
                     <dd className="font-medium tabular-nums">
                       &pound;{dec(booking.priceSnapshot.customerTotalAmount).toFixed(2)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm text-muted-foreground">Provider expected payout</dt>
+                    <dt className="text-sm text-muted-foreground">{t.orderDetail.providerExpectedPayout}</dt>
                     <dd className="font-medium tabular-nums">
                       &pound;{dec(booking.priceSnapshot.providerExpectedPayout).toFixed(2)}
                     </dd>
@@ -484,9 +486,9 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {booking.bookingStatus === "PENDING_ASSIGNMENT" && (
             <Card className="border-amber-200 bg-amber-50/60">
               <CardHeader>
-                <CardTitle>Provider confirmation override</CardTitle>
+                <CardTitle>{t.orderDetail.providerConfirmOverride}</CardTitle>
                 <CardDescription>
-                  Use this only if the provider has confirmed offline and you need to capture the card hold on their behalf.
+                  {t.orderDetail.providerConfirmOverrideDesc}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -496,10 +498,10 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                     type="submit"
                     className="inline-flex h-9 w-full items-center justify-center rounded-md bg-amber-600 px-4 text-sm font-medium text-white shadow hover:bg-amber-700"
                   >
-                    Confirm on behalf of provider
+                    {t.orderDetail.confirmOnBehalf}
                   </button>
                   <p className="text-xs text-muted-foreground">
-                    This captures the authorised payment and moves the booking to Assigned, the same way provider acceptance would.
+                    {t.orderDetail.confirmOnBehalfHelp}
                   </p>
                 </form>
               </CardContent>
@@ -508,38 +510,38 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
 
           <Card>
             <CardHeader>
-              <CardTitle>Update status</CardTitle>
-              <CardDescription>Change booking workflow state</CardDescription>
+              <CardTitle>{t.orderDetail.updateStatus}</CardTitle>
+              <CardDescription>{t.orderDetail.changeWorkflowState}</CardDescription>
             </CardHeader>
             <CardContent>
               <form action={updateBookingStatusAction} className="space-y-4">
                 <input type="hidden" name="bookingId" value={booking.id} />
 
                 <div>
-                  <Label htmlFor="bookingStatus">Booking status</Label>
+                  <Label htmlFor="bookingStatus">{t.orderDetail.bookingStatus}</Label>
                   <select
                     id="bookingStatus"
                     name="bookingStatus"
                     defaultValue={booking.bookingStatus}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
-                    <option value="AWAITING_PAYMENT">Awaiting payment</option>
-                    <option value="PAID">Captured</option>
-                    <option value="PENDING_ASSIGNMENT">Authorised hold</option>
-                    <option value="ASSIGNED">Assigned</option>
-                    <option value="IN_PROGRESS">In progress</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
-                    <option value="NO_CLEANER_FOUND">No cleaner found</option>
-                    <option value="REFUND_PENDING">Refund pending</option>
-                    <option value="REFUNDED">Refunded</option>
+                    <option value="AWAITING_PAYMENT">{t.orderDetail.awaitingPaymentStatus}</option>
+                    <option value="PAID">{t.orderDetail.capturedStatus}</option>
+                    <option value="PENDING_ASSIGNMENT">{t.orderDetail.authorisedHoldStatus}</option>
+                    <option value="ASSIGNED">{t.orderDetail.assignedStatus}</option>
+                    <option value="IN_PROGRESS">{t.orderDetail.inProgressStatus}</option>
+                    <option value="COMPLETED">{t.orderDetail.completedOrderStatus}</option>
+                    <option value="CANCELLED">{t.orderDetail.cancelledStatus}</option>
+                    <option value="NO_CLEANER_FOUND">{t.orderDetail.noCleaner}</option>
+                    <option value="REFUND_PENDING">{t.orderDetail.refundPendingStatus}</option>
+                    <option value="REFUNDED">{t.orderDetail.refundedStatus}</option>
                   </select>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <Label htmlFor="cleanerPayoutAmount">Cleaner payout (&pound;)</Label>
+                  <Label htmlFor="cleanerPayoutAmount">{t.orderDetail.cleanerPayoutLabel}</Label>
                   <Input
                     id="cleanerPayoutAmount"
                     name="cleanerPayoutAmount"
@@ -550,7 +552,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                 </div>
 
                 <div>
-                  <Label htmlFor="platformMarginAmount">Platform margin (&pound;)</Label>
+                  <Label htmlFor="platformMarginAmount">{t.orderDetail.platformMarginLabel}</Label>
                   <Input
                     id="platformMarginAmount"
                     name="platformMarginAmount"
@@ -564,7 +566,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                   type="submit"
                   className="inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
                 >
-                  Save changes
+                  {t.orderDetail.saveChanges}
                 </button>
               </form>
             </CardContent>
@@ -573,15 +575,15 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {latestPaymentRecord?.paymentState === "PAID" && (
             <Card className="border-red-200 bg-red-50/40">
               <CardHeader>
-                <CardTitle>Refund controls</CardTitle>
+                <CardTitle>{t.orderDetail.refundControls}</CardTitle>
                 <CardDescription>
-                  Create a full or partial refund for this captured payment.
+                  {t.orderDetail.refundControlsDesc}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {isMockCapturedPayment ? (
                   <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                    This is a mock/test payment. Refund actions here will update AreaSorted records only and will not send a real refund to Stripe.
+                    {t.orderDetail.mockPaymentWarning}
                   </div>
                 ) : null}
                 <form action={createAdminRefundAction} className="space-y-4">
@@ -594,7 +596,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                       value="PROVIDER_NO_SHOW"
                       className="inline-flex h-9 w-full items-center justify-center rounded-md border border-red-300 bg-white px-4 text-sm font-medium text-red-700 shadow-sm hover:bg-red-50"
                     >
-                      Provider no-show (refund {capturedAmount.toFixed(2)})
+                      {t.orderDetail.providerNoShow.replace("{amount}", capturedAmount.toFixed(2))}
                     </button>
                     <button
                       type="submit"
@@ -602,75 +604,75 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                       value="CUSTOMER_LATE_CANCEL"
                       className="inline-flex h-9 w-full items-center justify-center rounded-md border border-amber-300 bg-white px-4 text-sm font-medium text-amber-700 shadow-sm hover:bg-amber-50"
                     >
-                      Customer late cancel (refund {lateCancelRefundAmount.toFixed(2)})
+                      {t.orderDetail.customerLateCancel.replace("{amount}", lateCancelRefundAmount.toFixed(2))}
                     </button>
                   </div>
 
                   <Separator />
 
                   <div>
-                    <Label htmlFor="refundType">Refund type</Label>
+                    <Label htmlFor="refundType">{t.orderDetail.refundType}</Label>
                     <select
                       id="refundType"
                       name="refundType"
                       defaultValue="FULL"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
-                      <option value="FULL">Full refund</option>
-                      <option value="PARTIAL">Partial refund</option>
+                      <option value="FULL">{t.orderDetail.fullRefund}</option>
+                      <option value="PARTIAL">{t.orderDetail.partialRefund}</option>
                     </select>
                   </div>
 
                   <div>
-                    <Label htmlFor="partialAmount">Partial refund amount (&pound;)</Label>
-                    <Input id="partialAmount" name="partialAmount" type="number" step="0.01" min="0" placeholder="Only used for partial refunds" />
+                    <Label htmlFor="partialAmount">{t.orderDetail.partialRefundAmount}</Label>
+                    <Input id="partialAmount" name="partialAmount" type="number" step="0.01" min="0" placeholder={t.orderDetail.partialRefundOnly} />
                   </div>
 
                   <div>
-                    <Label htmlFor="reason">Stripe reason</Label>
+                    <Label htmlFor="reason">{t.orderDetail.stripeReason}</Label>
                     <select
                       id="reason"
                       name="reason"
                       defaultValue="requested_by_customer"
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     >
-                      <option value="requested_by_customer">Requested by customer</option>
-                      <option value="duplicate">Duplicate</option>
-                      <option value="fraudulent">Fraudulent</option>
+                      <option value="requested_by_customer">{t.orderDetail.requestedByCustomer}</option>
+                      <option value="duplicate">{t.orderDetail.duplicate}</option>
+                      <option value="fraudulent">{t.orderDetail.fraudulent}</option>
                     </select>
                   </div>
 
                   <div>
-                    <Label htmlFor="policyNote">Policy note</Label>
+                    <Label htmlFor="policyNote">{t.orderDetail.policyNote}</Label>
                     <textarea
                       id="policyNote"
                       name="policyNote"
                       rows={3}
                       className="flex min-h-[84px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      placeholder="e.g. Provider no-show — full refund, or Customer cancelled within 24 hours — retain booking fee"
+                      placeholder={t.orderDetail.policyNotePlaceholder}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="confirmAmount">Confirm final refund amount (&pound;)</Label>
-                    <Input id="confirmAmount" name="confirmAmount" type="number" step="0.01" min="0" placeholder="Enter the exact refund amount to confirm" required />
+                    <Label htmlFor="confirmAmount">{t.orderDetail.confirmRefundAmount}</Label>
+                    <Input id="confirmAmount" name="confirmAmount" type="number" step="0.01" min="0" placeholder={t.orderDetail.enterExactRefund} required />
                   </div>
 
                   <div>
-                    <Label htmlFor="adminPassword">Admin password</Label>
+                    <Label htmlFor="adminPassword">{t.orderDetail.adminPassword}</Label>
                     <Input id="adminPassword" name="adminPassword" type="password" autoComplete="current-password" required />
                   </div>
 
                   <label className="flex items-start gap-2 rounded-md border border-red-200 bg-white px-3 py-2 text-xs text-red-800">
                     <input type="checkbox" name="acknowledgeRefund" className="mt-0.5" required />
-                    <span>I confirm the refund amount above is correct and I want to proceed with this refund action.</span>
+                    <span>{t.orderDetail.refundConfirmCheckbox}</span>
                   </label>
 
                   <button
                     type="submit"
                     className="inline-flex h-9 w-full items-center justify-center rounded-md bg-red-600 px-4 text-sm font-medium text-white shadow hover:bg-red-700"
                   >
-                    Create refund
+                    {t.orderDetail.createRefund}
                   </button>
                 </form>
               </CardContent>
@@ -680,8 +682,8 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {(booking.refundRecords.length > 0 || booking.invoiceRecords.length > 0 || refundAuditLogs.length > 0) && (
             <Card>
               <CardHeader>
-                <CardTitle>Refund history</CardTitle>
-                <CardDescription>Audit trail and reconciliation notes for refund activity on this booking.</CardDescription>
+                <CardTitle>{t.orderDetail.refundHistory}</CardTitle>
+                <CardDescription>{t.orderDetail.refundHistoryDesc}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {booking.refundRecords.map((refund) => (
@@ -690,7 +692,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                       <strong>&pound;{Number(refund.amount).toFixed(2)}</strong>
                       <Badge variant="outline">{refund.status}</Badge>
                     </div>
-                    <p className="mt-1 text-muted-foreground">{refund.refundReason || "No refund note recorded."}</p>
+                    <p className="mt-1 text-muted-foreground">{refund.refundReason || t.orderDetail.noRefundNote}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{refund.createdAt.toISOString().slice(0, 19).replace("T", " ")}</p>
                   </div>
                 ))}
@@ -699,9 +701,9 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                   <div key={invoice.id} className="rounded-md border p-3 text-sm bg-muted/20">
                     <div className="flex items-center justify-between gap-3">
                       <strong>{invoice.number}</strong>
-                      <span className="text-muted-foreground">Refund note</span>
+                      <span className="text-muted-foreground">{t.orderDetail.refundNote}</span>
                     </div>
-                    <p className="mt-1 text-muted-foreground">Amount: &pound;{Number(invoice.totalAmount).toFixed(2)}</p>
+                    <p className="mt-1 text-muted-foreground">{t.common.amount}: &pound;{Number(invoice.totalAmount).toFixed(2)}</p>
                   </div>
                 ))}
 
@@ -717,7 +719,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
 
           <Card>
             <CardHeader className="pb-2">
-              <CardDescription>{booking.bookingStatus === "PENDING_ASSIGNMENT" ? "Authorised amount" : "Captured amount"}</CardDescription>
+              <CardDescription>{booking.bookingStatus === "PENDING_ASSIGNMENT" ? t.orderDetail.authorisedAmount : t.orderDetail.capturedAmount}</CardDescription>
               <CardTitle className="text-3xl tabular-nums">
                 &pound;{dec(booking.totalAmount).toFixed(2)}
               </CardTitle>
@@ -725,25 +727,25 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
             <CardContent>
               <dl className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Payment status</dt>
+                  <dt className="text-muted-foreground">{t.orderDetail.paymentStatus}</dt>
                   <dd>
                     <Badge variant={getPaymentStatusVariant(paymentStatus)}>{getPaymentStatusLabel(paymentStatus)}</Badge>
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Job status</dt>
+                  <dt className="text-muted-foreground">{t.orderDetail.jobStatus}</dt>
                   <dd>
                     <Badge>{latestJob?.jobStatus || "CREATED"}</Badge>
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Assignment</dt>
+                  <dt className="text-muted-foreground">{t.orderDetail.assignment}</dt>
                   <dd>
                     <Badge>{latestAssignment?.assignmentStatus || "UNASSIGNED"}</Badge>
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Payout status</dt>
+                  <dt className="text-muted-foreground">{t.orderDetail.payoutStatus}</dt>
                   <dd>
                     <Badge variant="outline">{latestPayoutRecord?.status || "NONE"}</Badge>
                   </dd>
@@ -751,13 +753,13 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
               </dl>
               <Separator className="my-3" />
               <p className="text-xs text-muted-foreground">
-                Stripe session: {stripeSessionId}
+                {t.orderDetail.stripeSession} {stripeSessionId}
               </p>
               <p className="text-xs text-muted-foreground">
-                Created: {booking.createdAt.toISOString().slice(0, 19).replace("T", " ")}
+                {t.common.created}: {booking.createdAt.toISOString().slice(0, 19).replace("T", " ")}
               </p>
               <p className="text-xs text-muted-foreground">
-                Updated: {booking.updatedAt.toISOString().slice(0, 19).replace("T", " ")}
+                {t.common.updated}: {booking.updatedAt.toISOString().slice(0, 19).replace("T", " ")}
               </p>
             </CardContent>
           </Card>

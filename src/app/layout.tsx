@@ -56,8 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     "@type": "Organization",
     name: "AreaSorted",
     url: siteUrl,
-    logo: `${siteUrl}/favicon.ico`,
-    sameAs: [],
+    logo: `${siteUrl}/images/brand/areasorted-logo.png`,
     areaServed: {
       "@type": "City",
       name: "London",

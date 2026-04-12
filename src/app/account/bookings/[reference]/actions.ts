@@ -405,15 +405,24 @@ export async function rescheduleBookingAction(formData: FormData) {
     return { error: validation.error };
   }
 
-  // Update booking
-  await prisma.booking.update({
-    where: { id: bookingId },
+  // Update booking — use updateMany with status guard to prevent race with
+  // concurrent cancel or provider status changes between findFirst and update.
+  const updateResult = await prisma.booking.updateMany({
+    where: {
+      id: bookingId,
+      customerId: customer.id,
+      bookingStatus: { in: RESCHEDULABLE_STATUSES },
+    },
     data: {
       scheduledDate: newDate,
       scheduledStartTime: newTime,
       rescheduleCount: { increment: 1 },
     },
   });
+
+  if (updateResult.count === 0) {
+    return { error: "Booking status changed while processing. Please try again." };
+  }
 
   // Create audit log
   try {
@@ -553,10 +562,20 @@ export async function acceptCounterOfferAction(formData: FormData) {
   }
 
   if (Object.keys(bookingUpdate).length > 0) {
-    await prisma.booking.update({
-      where: { id: offer.bookingId },
+    // Guard: only apply changes if booking is still in a valid state
+    // (prevents overwriting a concurrent cancellation)
+    const bookingUpdateResult = await prisma.booking.updateMany({
+      where: {
+        id: offer.bookingId,
+        customerId: customer.id,
+        bookingStatus: { notIn: ["CANCELLED", "REFUNDED", "NO_CLEANER_FOUND"] },
+      },
       data: bookingUpdate,
     });
+
+    if (bookingUpdateResult.count === 0) {
+      return { error: "Booking status changed while processing the counter offer." };
+    }
   }
 
   // C5 FIX: If price changed, update the PriceSnapshot and PaymentRecord

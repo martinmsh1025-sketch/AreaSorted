@@ -14,10 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PricingOverview } from "./pricing-overview";
 import { BookingFeeForm } from "./booking-fee-form";
+import { getAdminTranslations } from "@/lib/i18n/server";
 
 export default async function AdminPricingPage() {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
+  const t = await getAdminTranslations();
 
   const prisma = getPrisma();
   const providers = await prisma.providerCompany.findMany({
@@ -66,18 +68,18 @@ export default async function AdminPricingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Pricing control</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t.pricing.title}</h1>
         <p className="text-muted-foreground">
-          View all provider pricing, manage platform fees, and override rules.
+          {t.pricing.subtitle}
         </p>
       </div>
 
       {/* Platform fee settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Platform fee settings</CardTitle>
+          <CardTitle>{t.pricing.platformFeeSettings}</CardTitle>
           <CardDescription>
-            Default booking fee and commission applied to all providers unless overridden.
+            {t.pricing.platformFeeDesc}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,7 +92,7 @@ export default async function AdminPricingPage() {
             <form action={saveMarketplaceSettingAction} className="space-y-3">
               <input type="hidden" name="key" value="marketplace.commission_percent" />
               <div>
-                <Label htmlFor="commissionPercent">Default commission percent (%)</Label>
+                <Label htmlFor="commissionPercent">{t.pricing.defaultCommission}</Label>
                 <Input
                   id="commissionPercent"
                   type="number"
@@ -105,7 +107,7 @@ export default async function AdminPricingPage() {
                 type="submit"
                 className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
               >
-                Save commission
+                {t.pricing.saveCommission}
               </button>
             </form>
           </div>

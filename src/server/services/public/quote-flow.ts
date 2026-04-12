@@ -592,7 +592,7 @@ export async function createInstantBookingFromQuote(reference: string, selectedQ
               `Postcode: ${booking.servicePostcode}`,
               scheduleOptions.length > 1 ? `Other schedule options: ${scheduleOptions.length - 1}` : "",
               "",
-              `Open the order: ${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")}/provider/orders/${booking.id}`,
+              `Open the order: ${appUrl}/provider/orders/${booking.id}`,
             ].filter(Boolean).join("\n"),
             templateCode: "provider_new_job_request",
             bookingId: booking.id,
@@ -627,5 +627,3 @@ export async function createInstantBookingFromQuote(reference: string, selectedQ
   return { booking, sessionUrl, bookingReference };
 }
 
-// Re-export the "BOOKING_IN_PROGRESS" state for schema/type reference
-export const QUOTE_BOOKING_IN_PROGRESS_STATE = "BOOKING_IN_PROGRESS" as const;

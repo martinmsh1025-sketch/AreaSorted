@@ -11,6 +11,10 @@ import {
   Receipt,
   LogOut,
   ShieldCheck,
+  Target,
+  MessageCircle,
+  Mail,
+  Globe,
 } from "lucide-react";
 
 import {
@@ -30,28 +34,44 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useI18n } from "@/lib/i18n/context";
+import { LOCALES, LOCALE_LABELS } from "@/lib/i18n/types";
+import type { Locale } from "@/lib/i18n/types";
+import type { TranslationKeys } from "@/lib/i18n/en";
 
-const adminNavItems = [
-  {
-    group: "Marketplace",
-    items: [
-      { href: "/admin/providers", label: "Providers", icon: Users },
-      { href: "/admin/customers", label: "Customers", icon: Users },
-      { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
-      { href: "/admin/payouts", label: "Payouts", icon: Banknote },
-      { href: "/admin/refunds", label: "Refunds", icon: Receipt },
-    ],
-  },
-  {
-    group: "System",
-    items: [
-      { href: "/admin/settings", label: "Settings", icon: Settings },
-    ],
-  },
-];
+function getAdminNavItems(t: TranslationKeys) {
+  return [
+    {
+      group: t.nav.marketplace,
+      items: [
+        { href: "/admin/providers", label: t.nav.providers, icon: Users },
+        { href: "/admin/customers", label: t.nav.customers, icon: Users },
+        { href: "/admin/orders", label: t.nav.orders, icon: ShoppingCart },
+        { href: "/admin/payouts", label: t.nav.payouts, icon: Banknote },
+        { href: "/admin/refunds", label: t.nav.refunds, icon: Receipt },
+      ],
+    },
+    {
+      group: t.nav.acquisition,
+      items: [
+        { href: "/admin/leads", label: t.nav.leads, icon: Target },
+        { href: "/admin/leads/whatsapp", label: t.nav.whatsapp, icon: MessageCircle },
+        { href: "/admin/leads/email", label: t.nav.emailNav, icon: Mail },
+      ],
+    },
+    {
+      group: t.nav.system,
+      items: [
+        { href: "/admin/settings", label: t.nav.settings, icon: Settings },
+      ],
+    },
+  ];
+}
 
 function AdminSidebarNav() {
   const pathname = usePathname();
+  const { t } = useI18n();
+  const adminNavItems = getAdminNavItems(t);
 
   return (
     <>
@@ -85,6 +105,27 @@ function AdminSidebarNav() {
   );
 }
 
+function LanguageSwitcher() {
+  const { locale, setLocale } = useI18n();
+
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1">
+      <Globe className="size-4 text-muted-foreground" />
+      <select
+        value={locale}
+        onChange={(e) => setLocale(e.target.value as Locale)}
+        className="flex h-7 flex-1 rounded-md border border-input bg-transparent px-2 text-xs shadow-sm group-data-[collapsible=icon]:hidden"
+      >
+        {LOCALES.map((l) => (
+          <option key={l} value={l}>
+            {LOCALE_LABELS[l]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 interface AdminShellProps {
   children: React.ReactNode;
   adminEmail: string | null;
@@ -92,6 +133,8 @@ interface AdminShellProps {
 }
 
 export function AdminShell({ children, adminEmail, logoutAction }: AdminShellProps) {
+  const { t } = useI18n();
+
   return (
     <SidebarProvider>
       <Sidebar variant="inset" collapsible="icon">
@@ -104,7 +147,7 @@ export function AdminShell({ children, adminEmail, logoutAction }: AdminShellPro
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-bold">AreaSorted</span>
-                  <span className="text-muted-foreground truncate text-xs">Admin Portal</span>
+                  <span className="text-muted-foreground truncate text-xs">{t.common.adminPortal}</span>
                 </div>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -116,12 +159,15 @@ export function AdminShell({ children, adminEmail, logoutAction }: AdminShellPro
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
+              <LanguageSwitcher />
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <div className="flex items-center gap-2 px-2 py-1.5">
                 <div className="bg-muted flex size-8 items-center justify-center rounded-full text-xs font-bold">
                   {adminEmail ? adminEmail.charAt(0).toUpperCase() : "A"}
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="text-muted-foreground truncate text-xs">{adminEmail || "Admin"}</span>
+                  <span className="text-muted-foreground truncate text-xs">{adminEmail || t.common.admin}</span>
                 </div>
               </div>
             </SidebarMenuItem>
@@ -129,7 +175,7 @@ export function AdminShell({ children, adminEmail, logoutAction }: AdminShellPro
               <form action={logoutAction}>
                 <SidebarMenuButton type="submit" className="w-full">
                   <LogOut className="size-4" />
-                  <span>Logout</span>
+                  <span>{t.common.logout}</span>
                 </SidebarMenuButton>
               </form>
             </SidebarMenuItem>
@@ -142,14 +188,14 @@ export function AdminShell({ children, adminEmail, logoutAction }: AdminShellPro
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs font-semibold">
-              Admin
+              {t.common.admin}
             </Badge>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <form action={logoutAction}>
               <button type="submit" className="inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-xs font-medium text-muted-foreground hover:bg-muted">
                 <LogOut className="size-3.5" />
-                Log out
+                {t.common.logOut}
               </button>
             </form>
           </div>

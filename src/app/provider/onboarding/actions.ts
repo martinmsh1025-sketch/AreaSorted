@@ -12,6 +12,7 @@ import { getOpsNotificationRecipients } from "@/lib/notifications/ops";
 import { sendLoggedEmail } from "@/lib/notifications/logged-email";
 import { saveProviderProfileImageUpload } from "@/server/services/providers/profile-images";
 import { providerContactChannelOptions, providerCommitmentOptions, providerLanguageOptions, providerResponseTimeOptions, stringifyProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
+import { getAppUrl } from "@/lib/config/env";
 import { validateProviderContactDetail } from "@/lib/providers/contact-detail-validation";
 
 function parseMultiValue(value: FormDataEntryValue | null) {
@@ -343,7 +344,7 @@ export async function submitProviderForReviewAction() {
       `Status: ${session.providerCompany.status}`,
       `Submitted at: ${new Date().toISOString()}`,
       "",
-      `Review here: ${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/admin/provider/${session.providerCompany.id}`,
+      `Review here: ${getAppUrl()}/admin/provider/${session.providerCompany.id}`,
     ].join("\n");
 
     await Promise.allSettled(

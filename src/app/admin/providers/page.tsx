@@ -4,12 +4,13 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { listProviderCompanies } from "@/lib/providers/repository";
 import { createProviderInviteAction, toggleProviderStatusAction } from "./actions";
 import { buildProviderChecklist } from "@/server/services/providers/checklist";
-import { providerServiceCatalog, providerStatusLabels } from "@/lib/providers/service-catalog-mapping";
+import { providerServiceCatalog } from "@/lib/providers/service-catalog-mapping";
 import { getProviderOnboardingMetadata } from "@/lib/providers/onboarding-profile";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { InviteForm } from "./invite-form";
 import { Input } from "@/components/ui/input";
+import { getAdminTranslations } from "@/lib/i18n/server";
 
 type AdminProvidersPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -39,6 +40,7 @@ function normaliseQueryValue(value: string | string[] | undefined) {
 export default async function AdminProvidersPage({ searchParams }: AdminProvidersPageProps) {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
+  const t = await getAdminTranslations();
 
   const params = (await searchParams) ?? {};
   const error = typeof params.error === "string" ? decodeURIComponent(params.error) : "";
@@ -107,22 +109,22 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
-              <CardTitle className="mt-1 text-xl">Provider dashboard</CardTitle>
-              <CardDescription>Track sole traders and company providers clearly in one place.</CardDescription>
+              <CardTitle className="mt-1 text-xl">{t.providers.title}</CardTitle>
+              <CardDescription>{t.providers.description}</CardDescription>
             </div>
             <Badge variant="secondary">{filteredRows.length} shown</Badge>
           </div>
         </CardHeader>
         {(error || status || inviteLink) && (
           <CardContent>
-            {error && <p className="text-sm leading-relaxed text-destructive">Action blocked: {error}</p>}
+            {error && <p className="text-sm leading-relaxed text-destructive">{t.providers.actionBlocked} {error}</p>}
             {status && <p className={`text-sm leading-relaxed text-green-600${error ? " mt-1" : ""}`}>{status.replace(/_/g, " ")}.</p>}
             {inviteLink && (
               <Card className="mt-3 border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
                 <CardContent className="space-y-1">
-                  <strong className="text-sm">Invite ready for {inviteEmail || "provider"}</strong>
+                  <strong className="text-sm">{t.providers.inviteReady} {inviteEmail || t.providers.provider}</strong>
                   <span className="block text-sm text-muted-foreground">
-                    {delivery === "email" ? "Invite email sent." : "Use this link to send manually."}
+                    {delivery === "email" ? t.providers.inviteEmailSent : t.providers.useLinkManually}
                   </span>
                   <code className="block break-all text-xs">{inviteLink}</code>
                 </CardContent>
@@ -135,25 +137,25 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Total providers</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.totalProviders}</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">{counts.total}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Sole traders</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.soleTraders}</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">{counts.soleTrader}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Company providers</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.companyProviders}</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">{counts.company}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Active live</p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.activeLive}</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">{counts.active}</p>
           </CardContent>
         </Card>
@@ -161,27 +163,27 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
 
       <Card>
         <CardHeader>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Filters</p>
-          <CardDescription>Search by provider name, email, phone, or company number.</CardDescription>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.providers.filters}</p>
+          <CardDescription>{t.providers.filtersDescription}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-3 lg:grid-cols-[1fr_180px_auto]">
-            <Input name="q" defaultValue={normaliseQueryValue(params.q)} placeholder="Search provider, email, phone, company number" />
+            <Input name="q" defaultValue={normaliseQueryValue(params.q)} placeholder={t.providers.searchPlaceholder} />
             <select
               name="type"
               defaultValue={businessTypeFilter}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
             >
-              <option value="all">Show all</option>
-              <option value="sole_trader">Sole trader</option>
-              <option value="company">Company provider</option>
+              <option value="all">{t.providers.showAll}</option>
+              <option value="sole_trader">{t.providers.soleTrader}</option>
+              <option value="company">{t.providers.companyProvider}</option>
             </select>
             <div className="flex gap-2">
               <button className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90" type="submit">
-                Apply filters
+                {t.providers.applyFilters}
               </button>
               <Link href="/admin/providers" className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
-                Show all
+                {t.providers.showAll}
               </Link>
             </div>
           </form>
@@ -190,8 +192,8 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
 
       <Card>
         <CardHeader>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Invite provider</p>
-          <CardDescription>Send an invite to start setup.</CardDescription>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.providers.inviteProvider}</p>
+          <CardDescription>{t.providers.inviteDescription}</CardDescription>
         </CardHeader>
         <CardContent>
           <InviteForm categories={providerServiceCatalog} action={createProviderInviteAction} />
@@ -200,8 +202,8 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Providers</CardTitle>
-          <CardDescription>A clear list of every provider account, with business type, readiness, and quick actions.</CardDescription>
+          <CardTitle className="text-lg">{t.providers.providersTable}</CardTitle>
+          <CardDescription>{t.providers.providersTableDesc}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 md:hidden">
@@ -214,36 +216,36 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
                     {row.provider.phone && <div className="text-sm text-muted-foreground">{row.provider.phone}</div>}
                   </div>
                   <Badge variant={statusBadgeVariant[row.provider.status] ?? "secondary"}>
-                    {providerStatusLabels[row.provider.status] ?? row.provider.status}
+                    {t.providerStatusLabels[row.provider.status] ?? row.provider.status}
                   </Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Business type</div>
-                    <div className="mt-1 font-medium">{row.businessType === "sole_trader" ? "Sole trader" : "Company"}</div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.businessType}</div>
+                    <div className="mt-1 font-medium">{row.businessType === "sole_trader" ? t.providers.soleTrader : t.providers.company}</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Stripe</div>
-                    <div className={`mt-1 font-medium ${row.stripeReady ? "text-green-600" : "text-destructive"}`}>{row.stripeReady ? "Ready" : "Not ready"}</div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.stripe}</div>
+                    <div className={`mt-1 font-medium ${row.stripeReady ? "text-green-600" : "text-destructive"}`}>{row.stripeReady ? t.providers.ready : t.providers.notReady}</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Coverage</div>
-                    <div className="mt-1 font-medium">{row.coverageCount} prefixes</div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.coverage}</div>
+                    <div className="mt-1 font-medium">{row.coverageCount} {t.providers.prefixes}</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-muted-foreground">Checklist</div>
+                    <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.providers.checklist}</div>
                     <div className="mt-1 font-medium">{row.completedCount}/{row.checklist.items.length}</div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link href={`/admin/provider/${row.provider.id}`} className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90">
-                    Open review
+                    {t.providers.openReview}
                   </Link>
                   <form action={toggleProviderStatusAction}>
                     <input type="hidden" name="providerCompanyId" value={row.provider.id} />
                     <input type="hidden" name="nextStatus" value={row.provider.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED"} />
                     <button className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground" type="submit">
-                      {row.provider.status === "SUSPENDED" ? "Activate" : "Suspend"}
+                      {row.provider.status === "SUSPENDED" ? t.providers.activate : t.providers.suspend}
                     </button>
                   </form>
                 </div>
@@ -255,14 +257,14 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
             <table className="w-full min-w-[1100px] text-sm">
               <thead>
                 <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th className="px-3 py-3 font-medium">Provider</th>
-                  <th className="px-3 py-3 font-medium">Business type</th>
-                  <th className="px-3 py-3 font-medium">Status</th>
-                  <th className="px-3 py-3 font-medium">Coverage</th>
-                  <th className="px-3 py-3 font-medium">Pricing</th>
-                  <th className="px-3 py-3 font-medium">Stripe</th>
-                  <th className="px-3 py-3 font-medium">Checklist</th>
-                  <th className="px-3 py-3 font-medium">Actions</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.provider}</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.businessType}</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.status}</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.coverage}</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.pricing}</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.stripe}</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.checklist}</th>
+                  <th className="px-3 py-3 font-medium">{t.providers.tableHeaders.actions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,42 +275,42 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
                         <div className="font-medium text-foreground">{row.provider.tradingName || row.provider.legalName || row.provider.contactEmail}</div>
                         <div className="text-muted-foreground">{row.provider.contactEmail}</div>
                         {row.provider.phone && <div className="text-muted-foreground">{row.provider.phone}</div>}
-                        <div className="text-xs text-muted-foreground">{row.provider.companyNumber || "No company number"}</div>
+                        <div className="text-xs text-muted-foreground">{row.provider.companyNumber || t.providers.noCompanyNumber}</div>
                       </div>
                     </td>
                     <td className="px-3 py-4">
-                      <Badge variant="outline">{row.businessType === "sole_trader" ? "Sole trader" : "Company"}</Badge>
+                      <Badge variant="outline">{row.businessType === "sole_trader" ? t.providers.soleTrader : t.providers.company}</Badge>
                     </td>
                     <td className="px-3 py-4">
                       <Badge variant={statusBadgeVariant[row.provider.status] ?? "secondary"}>
-                        {providerStatusLabels[row.provider.status] ?? row.provider.status}
+                        {t.providerStatusLabels[row.provider.status] ?? row.provider.status}
                       </Badge>
                     </td>
                     <td className="px-3 py-4 text-muted-foreground">
-                      <div>{row.coverageCount} postcode prefixes</div>
+                      <div>{row.coverageCount} {t.providers.postcondePrefixes}</div>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {[...new Set(row.provider.coverageAreas.map((item) => item.postcodePrefix))].slice(0, 4).map((prefix) => (
                           <Badge key={prefix} variant="outline" className="text-[10px] font-mono">{prefix}</Badge>
                         ))}
                       </div>
                     </td>
-                    <td className="px-3 py-4 text-muted-foreground">{row.activePricingCount} active rules</td>
+                    <td className="px-3 py-4 text-muted-foreground">{row.activePricingCount} {t.providers.activeRules}</td>
                     <td className="px-3 py-4">
                       <span className={row.stripeReady ? "font-medium text-green-600" : "font-medium text-destructive"}>
-                        {row.stripeReady ? "Ready" : "Not ready"}
+                        {row.stripeReady ? t.providers.ready : t.providers.notReady}
                       </span>
                     </td>
                     <td className="px-3 py-4 text-muted-foreground">{row.completedCount}/{row.checklist.items.length}</td>
                     <td className="px-3 py-4">
                       <div className="flex flex-wrap gap-2">
                         <Link href={`/admin/provider/${row.provider.id}`} className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90">
-                          Open review
+                          {t.providers.openReview}
                         </Link>
                         <form action={toggleProviderStatusAction}>
                           <input type="hidden" name="providerCompanyId" value={row.provider.id} />
                           <input type="hidden" name="nextStatus" value={row.provider.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED"} />
                           <button className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground" type="submit">
-                            {row.provider.status === "SUSPENDED" ? "Activate" : "Suspend"}
+                            {row.provider.status === "SUSPENDED" ? t.providers.activate : t.providers.suspend}
                           </button>
                         </form>
                       </div>
@@ -320,7 +322,7 @@ export default async function AdminProvidersPage({ searchParams }: AdminProvider
           </div>
           {filteredRows.length === 0 && (
             <div className="rounded-lg border border-dashed px-6 py-10 text-center text-sm text-muted-foreground">
-              No providers match this filter.
+              {t.providers.noProvidersMatch}
             </div>
           )}
         </CardContent>

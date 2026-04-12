@@ -8,6 +8,16 @@ import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 const furnitureAssemblyJobs = jobTypeCatalog.filter((job) => job.service === "furniture-assembly");
 const startingPrice = Math.min(...furnitureAssemblyJobs.map((job) => job.startingPrice));
 
+function getSafeSiteUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "https://areasorted.com";
+  try {
+    return new URL(raw).toString().replace(/\/$/, "");
+  } catch {
+    return "https://areasorted.com";
+  }
+}
+
 export const metadata: Metadata = {
   title: "Furniture Assembly Services in London",
   description:
@@ -62,10 +72,42 @@ export default async function FurnitureAssemblyServicePage() {
       },
     })),
   };
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Furniture assembly services in London",
+    description: "Book furniture assembly services in London through AreaSorted for flat-pack builds, bedroom furniture, office furniture, dining setups, disassembly, and anchoring work.",
+    areaServed: "London",
+    provider: {
+      "@type": "Organization",
+      name: "AreaSorted",
+    },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "GBP",
+      priceSpecification: {
+        "@type": "PriceSpecification",
+        minPrice: startingPrice,
+        priceCurrency: "GBP",
+      },
+    },
+  };
+  const siteUrl = getSafeSiteUrl();
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Services", item: `${siteUrl}/services` },
+      { "@type": "ListItem", position: 3, name: "Furniture Assembly", item: `${siteUrl}/services/furniture-assembly` },
+    ],
+  };
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <section className="section">
         <div className="container" style={{ maxWidth: 860 }}>
           <div className="eyebrow">Furniture assembly services</div>

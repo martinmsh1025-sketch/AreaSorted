@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n/context";
 
 export function BookingFeeForm({
   currentMode,
@@ -13,6 +14,7 @@ export function BookingFeeForm({
   currentValue: number;
   saveAction: (formData: FormData) => void;
 }) {
+  const t = useT();
   const [mode, setMode] = useState(currentMode);
 
   return (
@@ -20,19 +22,19 @@ export function BookingFeeForm({
       <input type="hidden" name="key" value="marketplace.booking_fee" />
       <input type="hidden" name="feeMode" value={mode} />
       <div>
-        <Label>Booking fee type</Label>
+        <Label>{t.bookingFeeForm.bookingFeeType}</Label>
         <select
           value={mode}
           onChange={(e) => setMode(e.target.value)}
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <option value="fixed">Fixed amount (&pound;)</option>
-          <option value="percent">Percentage of base price (%)</option>
+          <option value="fixed">{t.bookingFeeForm.fixedAmount}</option>
+          <option value="percent">{t.bookingFeeForm.percentageOfBase}</option>
         </select>
       </div>
       <div>
         <Label htmlFor="bookingFee">
-          {mode === "fixed" ? "Amount (\u00a3)" : "Percentage (%)"}
+          {mode === "fixed" ? t.bookingFeeForm.amountLabel : t.bookingFeeForm.percentageLabel}
         </Label>
         <Input
           id="bookingFee"
@@ -43,15 +45,15 @@ export function BookingFeeForm({
         />
         <p className="text-xs text-muted-foreground mt-1">
           {mode === "fixed"
-            ? "A flat fee added to every booking (e.g. \u00a312)."
-            : "A percentage of the provider\u2019s base price (e.g. 5 = 5%)."}
+            ? t.bookingFeeForm.flatFeeHelp
+            : t.bookingFeeForm.percentageHelp}
         </p>
       </div>
       <button
         type="submit"
         className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white shadow hover:bg-primary/90"
       >
-        Save booking fee
+        {t.bookingFeeForm.saveBookingFee}
       </button>
     </form>
   );

@@ -1,9 +1,22 @@
 /**
- * C-1/2 FIX: Simple in-memory rate limiter for auth endpoints.
+ * C-1/2 FIX: Rate limiter for auth and public API endpoints.
  *
- * For production at scale, replace with Redis-backed implementation.
- * This is sufficient for single-instance deployments and prevents
- * brute-force attacks on login, OTP, and password reset endpoints.
+ * Architecture note:
+ * This uses in-memory storage which works for single-instance deployments.
+ * On Vercel (serverless), each function instance has its own memory, so rate
+ * limits are per-instance rather than global. This still provides meaningful
+ * protection because:
+ *   1. Hot function instances handle bursts of requests from the same attacker
+ *   2. Account lockout (keyed by email) catches credential stuffing across instances
+ *      once combined with the DB-level session validation layer
+ *   3. The stricter per-email lockout windows (5 attempts / 30 min) make
+ *      per-instance enforcement sufficient for auth endpoints
+ *
+ * For production at scale, consider adding a Redis-backed layer (e.g. Upstash)
+ * if abuse patterns show attackers distributing across many cold starts.
+ *
+ * To upgrade to Redis: replace `stores` Map with Upstash Redis `@upstash/ratelimit`
+ * and swap `checkRateLimit` internals. The interface stays the same.
  */
 
 type RateLimitEntry = {

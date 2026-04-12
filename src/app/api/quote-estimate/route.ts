@@ -80,8 +80,9 @@ export async function POST(request: NextRequest) {
       addOnsTotal: number;
     }> = [];
 
-    for (const provider of match.providers) {
-      try {
+    // Batch all provider pricing calls in parallel to avoid N+1
+    const pricingResults = await Promise.allSettled(
+      match.providers.map(async (provider) => {
         const publicProfileMetadata = parseProviderPublicProfileMetadata(provider.specialtiesText);
         const preview = await previewProviderPricing({
           providerCompanyId: provider.providerCompanyId,
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest) {
           addOns: payload.addOns,
         });
 
-        providerOptions.push({
+        return {
           providerCompanyId: provider.providerCompanyId,
           providerName: provider.providerName,
           profileImageUrl: provider.profileImageUrl,
@@ -121,10 +122,15 @@ export async function POST(request: NextRequest) {
           bookingFee: preview.bookingFee,
           postcodeSurcharge: preview.postcodeSurcharge,
           addOnsTotal: preview.optionalExtrasAmount,
-        });
-      } catch {
-        // Skip providers without a usable pricing rule for this request.
+        };
+      }),
+    );
+
+    for (const result of pricingResults) {
+      if (result.status === "fulfilled") {
+        providerOptions.push(result.value);
       }
+      // Skip providers whose pricing call rejected (no usable pricing rule)
     }
 
     if (!providerOptions.length) {

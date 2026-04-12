@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { getAdminTranslations } from "@/lib/i18n/server";
 import { getPrisma } from "@/lib/db";
 import { Decimal } from "@prisma/client/runtime/library";
 import { Prisma, BookingStatus } from "@prisma/client";
@@ -91,6 +92,7 @@ export default async function AdminOrdersPage({
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) redirect("/admin/login");
 
+  const t = await getAdminTranslations();
   const prisma = getPrisma();
   const params = (await searchParams) ?? {};
   const query =
@@ -417,10 +419,10 @@ export default async function AdminOrdersPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
-            Orders
+            {t.orders.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Analytics, operations and booking management
+            {t.orders.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -428,19 +430,19 @@ export default async function AdminOrdersPage({
             href={`/admin/orders?view=dashboard`}
             className={`inline-flex h-8 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors ${isDashboard ? "bg-primary text-primary-foreground shadow" : "border border-input bg-background hover:bg-accent hover:text-accent-foreground"}`}
           >
-            Dashboard
+            {t.orders.dashboard}
           </Link>
           <Link
             href={`/admin/orders?view=table`}
             className={`inline-flex h-8 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors ${!isDashboard ? "bg-primary text-primary-foreground shadow" : "border border-input bg-background hover:bg-accent hover:text-accent-foreground"}`}
           >
-            Data table
+            {t.orders.dataTable}
           </Link>
           <Link
             href={`/admin/orders/export?${exportParams.toString()}`}
             className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
           >
-            Export CSV
+            {t.orders.exportCsv}
           </Link>
         </div>
       </div>
@@ -451,13 +453,13 @@ export default async function AdminOrdersPage({
         <Card className="border-l-4 border-l-blue-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Today&apos;s revenue
+              {t.orders.todaysRevenue}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               &pound;{todaysRevenue.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {todaysJobs.length} bookings
+              {todaysJobs.length} {t.orders.bookings}
             </p>
           </CardContent>
         </Card>
@@ -466,7 +468,7 @@ export default async function AdminOrdersPage({
         <Card className="border-l-4 border-l-violet-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              This week
+              {t.orders.thisWeek}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               &pound;{thisWeek.revenue.toFixed(2)}
@@ -481,7 +483,7 @@ export default async function AdminOrdersPage({
               >
                 {pctChange(thisWeek.revenue, lastWeek.revenue)}
               </span>
-              <span className="text-muted-foreground"> vs last week</span>
+              <span className="text-muted-foreground"> {t.orders.vsLastWeek}</span>
             </p>
           </CardContent>
         </Card>
@@ -490,7 +492,7 @@ export default async function AdminOrdersPage({
         <Card className="border-l-4 border-l-cyan-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              This month
+              {t.orders.thisMonth}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               &pound;{thisMonth.revenue.toFixed(2)}
@@ -505,7 +507,7 @@ export default async function AdminOrdersPage({
               >
                 {pctChange(thisMonth.revenue, lastMonth.revenue)}
               </span>
-              <span className="text-muted-foreground"> vs last month</span>
+              <span className="text-muted-foreground"> {t.orders.vsLastMonth}</span>
             </p>
           </CardContent>
         </Card>
@@ -514,7 +516,7 @@ export default async function AdminOrdersPage({
         <Card className="border-l-4 border-l-emerald-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Orders (week)
+              {t.orders.ordersWeek}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               {thisWeek.count}
@@ -529,7 +531,7 @@ export default async function AdminOrdersPage({
               >
                 {pctChange(thisWeek.count, lastWeek.count)}
               </span>
-              <span className="text-muted-foreground"> vs last week</span>
+              <span className="text-muted-foreground"> {t.orders.vsLastWeek}</span>
             </p>
           </CardContent>
         </Card>
@@ -538,13 +540,13 @@ export default async function AdminOrdersPage({
         <Card className="border-l-4 border-l-amber-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Platform take
+              {t.orders.platformTake}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               &pound;{thisMonth.platformRevenue.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Fees + commission (month)
+              {t.orders.feesCommissionMonth}
             </p>
           </CardContent>
         </Card>
@@ -553,13 +555,13 @@ export default async function AdminOrdersPage({
         <Card className="border-l-4 border-l-green-500">
           <CardContent className="pt-4 pb-3 px-4">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Completion rate
+              {t.orders.completionRate}
             </p>
             <p className="text-2xl font-bold tabular-nums mt-1">
               {thisMonth.completionRate}%
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              {thisMonth.completed}/{thisMonth.count} this month
+              {thisMonth.completed}/{thisMonth.count} {t.orders.thisMonthSuffix}
             </p>
           </CardContent>
         </Card>
@@ -586,23 +588,23 @@ export default async function AdminOrdersPage({
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Quick stats (30 days)
+                  {t.orders.quickStats}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Total bookings</p>
+                    <p className="text-xs text-muted-foreground">{t.orders.totalBookings}</p>
                     <p className="text-2xl font-bold tabular-nums">{chartBookings.length}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Total revenue</p>
+                    <p className="text-xs text-muted-foreground">{t.orders.totalRevenue}</p>
                     <p className="text-2xl font-bold tabular-nums">
                       &pound;{chartBookings.reduce((s, b) => s + b.totalAmount, 0).toFixed(2)}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Avg order value</p>
+                    <p className="text-xs text-muted-foreground">{t.orders.avgOrderValue}</p>
                     <p className="text-2xl font-bold tabular-nums">
                       &pound;
                       {chartBookings.length > 0
@@ -614,19 +616,19 @@ export default async function AdminOrdersPage({
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Unique providers</p>
+                    <p className="text-xs text-muted-foreground">{t.orders.uniqueProviders}</p>
                     <p className="text-2xl font-bold tabular-nums">
                       {new Set(chartBookings.filter((b) => b.providerName !== "Unassigned").map((b) => b.providerName)).size}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Completed</p>
+                    <p className="text-xs text-muted-foreground">{t.orders.completed}</p>
                     <p className="text-2xl font-bold tabular-nums text-green-600">
                       {chartBookings.filter((b) => b.bookingStatus === "COMPLETED").length}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Cancelled / refunded</p>
+                    <p className="text-xs text-muted-foreground">{t.orders.cancelledRefunded}</p>
                     <p className="text-2xl font-bold tabular-nums text-red-600">
                       {chartBookings.filter((b) => b.bookingStatus === "CANCELLED" || b.bookingStatus === "REFUNDED").length}
                     </p>
@@ -644,24 +646,24 @@ export default async function AdminOrdersPage({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base">
-                Today&apos;s operations &mdash; {todayStr}
+                {t.orders.todaysOperations} &mdash; {todayStr}
               </CardTitle>
               <CardDescription className="mt-0.5">
-                {todaysJobs.length} scheduled &middot;{" "}
-                {todaysCompleted} completed &middot;{" "}
-                {todaysInProgress} in progress &middot;{" "}
-                {todaysPending} awaiting action
+                {todaysJobs.length} {t.orders.scheduled} &middot;{" "}
+                {todaysCompleted} {t.orders.completed.toLowerCase()} &middot;{" "}
+                {todaysInProgress} {t.orders.inProgress} &middot;{" "}
+                {todaysPending} {t.orders.awaitingAction}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {todaysPending > 0 && (
                 <Badge variant="destructive" className="animate-pulse">
-                  {todaysPending} pending
+                  {todaysPending} {t.orders.pending}
                 </Badge>
               )}
               {todaysInProgress > 0 && (
                 <Badge variant="secondary">
-                  {todaysInProgress} live
+                  {todaysInProgress} {t.orders.live}
                 </Badge>
               )}
             </div>
@@ -673,14 +675,14 @@ export default async function AdminOrdersPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">Time</TableHead>
-                    <TableHead className="text-xs">Ref</TableHead>
-                    <TableHead className="text-xs">Customer</TableHead>
-                    <TableHead className="text-xs">Service</TableHead>
-                    <TableHead className="text-xs">Provider</TableHead>
-                    <TableHead className="text-xs text-right">Amount</TableHead>
-                    <TableHead className="text-xs">Status</TableHead>
-                    <TableHead className="text-xs">Payment</TableHead>
+                    <TableHead className="text-xs">{t.orders.time}</TableHead>
+                    <TableHead className="text-xs">{t.orders.ref}</TableHead>
+                    <TableHead className="text-xs">{t.orders.customer}</TableHead>
+                    <TableHead className="text-xs">{t.orders.service}</TableHead>
+                    <TableHead className="text-xs">{t.orders.provider}</TableHead>
+                    <TableHead className="text-xs text-right">{t.orders.amount}</TableHead>
+                    <TableHead className="text-xs">{t.common.status}</TableHead>
+                    <TableHead className="text-xs">{t.orders.payment}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -738,7 +740,7 @@ export default async function AdminOrdersPage({
         {todaysJobs.length === 0 && (
           <CardContent className="pt-0">
             <p className="text-sm text-muted-foreground text-center py-6">
-              No jobs scheduled for today.
+              {t.orders.noJobsToday}
             </p>
           </CardContent>
         )}
@@ -748,10 +750,10 @@ export default async function AdminOrdersPage({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">
-            All orders ({filteredBookings.length})
+            {t.orders.allOrders} ({filteredBookings.length})
           </CardTitle>
           <CardDescription>
-            Search, filter and drill into individual bookings
+            {t.orders.searchFilterDrill}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -759,19 +761,19 @@ export default async function AdminOrdersPage({
             <input type="hidden" name="view" value={view} />
             <div className="sm:col-span-4">
               <Label htmlFor="q" className="text-xs">
-                Search
+                {t.orders.searchLabel}
               </Label>
               <Input
                 id="q"
                 name="q"
                 defaultValue={query}
-                placeholder="Ref, customer, email, phone, postcode"
+                placeholder={t.orders.searchPlaceholder}
                 className="h-8 text-sm"
               />
             </div>
             <div className="sm:col-span-2">
               <Label htmlFor="startDate" className="text-xs">
-                From
+                {t.orders.from}
               </Label>
               <Input
                 type="date"
@@ -783,7 +785,7 @@ export default async function AdminOrdersPage({
             </div>
             <div className="sm:col-span-2">
               <Label htmlFor="endDate" className="text-xs">
-                To
+                {t.orders.to}
               </Label>
               <Input
                 type="date"
@@ -795,7 +797,7 @@ export default async function AdminOrdersPage({
             </div>
             <div className="sm:col-span-2">
               <Label htmlFor="bookingStatus" className="text-xs">
-                Status
+                {t.common.status}
               </Label>
               <select
                 id="bookingStatus"
@@ -803,15 +805,15 @@ export default async function AdminOrdersPage({
                 defaultValue={bookingStatusFilter}
                 className="flex h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
-                <option value="">All</option>
-                <option value="AWAITING_PAYMENT">Awaiting payment</option>
-                <option value="PAID">Captured</option>
-                <option value="PENDING_ASSIGNMENT">Authorised hold</option>
-                <option value="ASSIGNED">Assigned</option>
-                <option value="IN_PROGRESS">In progress</option>
-                <option value="COMPLETED">Completed</option>
-                <option value="CANCELLED">Cancelled</option>
-                <option value="REFUNDED">Refunded</option>
+                <option value="">{t.orders.allFilter}</option>
+                <option value="AWAITING_PAYMENT">{t.orders.awaitingPayment}</option>
+                <option value="PAID">{t.orders.captured}</option>
+                <option value="PENDING_ASSIGNMENT">{t.orders.authorisedHold}</option>
+                <option value="ASSIGNED">{t.orders.assigned}</option>
+                <option value="IN_PROGRESS">{t.orders.inProgress}</option>
+                <option value="COMPLETED">{t.orders.completed}</option>
+                <option value="CANCELLED">{t.orders.cancelled}</option>
+                <option value="REFUNDED">{t.orders.refunded}</option>
               </select>
             </div>
             <div className="sm:col-span-2 flex items-end gap-1.5">
@@ -819,13 +821,13 @@ export default async function AdminOrdersPage({
                 type="submit"
                 className="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
               >
-                Apply
+                {t.common.apply}
               </button>
               <Link
                 href={`/admin/orders?view=${view}`}
                 className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
               >
-                Reset
+                {t.common.reset}
               </Link>
             </div>
           </form>
@@ -852,27 +854,27 @@ export default async function AdminOrdersPage({
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Service</div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.orders.service}</div>
                       <div className="mt-1 font-medium">{formatService(booking.serviceType)}</div>
                     </div>
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Date</div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.common.date}</div>
                       <div className="mt-1 font-medium">{formatDate(booking.scheduledDate)} {booking.scheduledStartTime ? `· ${booking.scheduledStartTime}` : ""}</div>
                     </div>
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Amount</div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.orders.amount}</div>
                       <div className="mt-1 font-medium">&pound;{dec(booking.totalAmount).toFixed(2)}</div>
                     </div>
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Payment</div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.orders.payment}</div>
                       <div className="mt-1"><Badge variant={getPaymentStatusVariant(getPaymentStatus(booking))} className="text-xs">{getPaymentStatusLabel(getPaymentStatus(booking))}</Badge></div>
                     </div>
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Provider</div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.orders.provider}</div>
                       <div className="mt-1 font-medium">{getProviderName(booking)}</div>
                     </div>
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">Job</div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.orders.job}</div>
                       <div className="mt-1"><Badge variant={bookingStatusVariant(getJobStatus(booking))} className="text-xs">{getJobStatus(booking)}</Badge></div>
                     </div>
                   </div>
@@ -885,18 +887,18 @@ export default async function AdminOrdersPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Ref</TableHead>
-                  <TableHead className="text-xs">Customer</TableHead>
-                  <TableHead className="text-xs">Service</TableHead>
-                  <TableHead className="text-xs">Date / Time</TableHead>
-                  <TableHead className="text-xs text-right">Amount</TableHead>
-                  <TableHead className="text-xs">Provider</TableHead>
-                  <TableHead className="text-xs text-right">Payout</TableHead>
-                  <TableHead className="text-xs text-right">Platform</TableHead>
-                  <TableHead className="text-xs">Status</TableHead>
-                  <TableHead className="text-xs">Payment</TableHead>
-                  <TableHead className="text-xs">Job</TableHead>
-                  <TableHead className="text-xs">Created</TableHead>
+                  <TableHead className="text-xs">{t.orders.ref}</TableHead>
+                  <TableHead className="text-xs">{t.orders.customer}</TableHead>
+                  <TableHead className="text-xs">{t.orders.service}</TableHead>
+                  <TableHead className="text-xs">{t.orders.dateTime}</TableHead>
+                  <TableHead className="text-xs text-right">{t.orders.amount}</TableHead>
+                  <TableHead className="text-xs">{t.orders.provider}</TableHead>
+                  <TableHead className="text-xs text-right">{t.orders.payout}</TableHead>
+                  <TableHead className="text-xs text-right">{t.orders.platform}</TableHead>
+                  <TableHead className="text-xs">{t.common.status}</TableHead>
+                  <TableHead className="text-xs">{t.orders.payment}</TableHead>
+                  <TableHead className="text-xs">{t.orders.job}</TableHead>
+                  <TableHead className="text-xs">{t.common.created}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -987,7 +989,7 @@ export default async function AdminOrdersPage({
                       colSpan={12}
                       className="text-center text-muted-foreground py-8"
                     >
-                      No bookings found for the current filters.
+                      {t.orders.noBookingsFound}
                     </TableCell>
                   </TableRow>
                 )}

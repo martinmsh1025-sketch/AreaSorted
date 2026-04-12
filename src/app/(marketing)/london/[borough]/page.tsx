@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { boroughPages, getBoroughPage } from "@/lib/seo/borough-pages";
+import { boroughServiceContent } from "@/lib/seo/borough-service-content";
 
 type Props = {
   params: Promise<{ borough: string }>;
@@ -27,13 +28,69 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+function getSafeSiteUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "https://areasorted.com";
+  try {
+    return new URL(raw).toString().replace(/\/$/, "");
+  } catch {
+    return "https://areasorted.com";
+  }
+}
+
 export default async function BoroughPage({ params }: Props) {
   const { borough } = await params;
   const page = getBoroughPage(borough);
   if (!page) notFound();
 
+  const siteUrl = getSafeSiteUrl();
+
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "HomeAndConstructionBusiness",
+    name: "AreaSorted",
+    url: siteUrl,
+    logo: `${siteUrl}/images/brand/areasorted-logo.png`,
+    areaServed: {
+      "@type": "City",
+      name: "London",
+      containsPlace: {
+        "@type": "AdministrativeArea",
+        name: page.name,
+      },
+    },
+    description: `Book trusted local services in ${page.name}, London — cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance through AreaSorted.`,
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: `Local services in ${page.name}`,
+      itemListElement: [
+        "Cleaning", "Pest Control", "Handyman", "Furniture Assembly", "Waste Removal", "Garden Maintenance",
+      ].map((service) => ({
+        "@type": "OfferCatalog",
+        name: service,
+        itemOffered: {
+          "@type": "Service",
+          name: `${service} in ${page.name}`,
+          areaServed: page.name,
+        },
+      })),
+    },
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "London", item: `${siteUrl}/london` },
+      { "@type": "ListItem", position: 3, name: page.name, item: `${siteUrl}/london/${page.slug}` },
+    ],
+  };
+
   return (
     <main>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <section className="section">
         <div className="container" style={{ maxWidth: 860 }}>
           <div className="eyebrow">London coverage</div>
@@ -44,16 +101,35 @@ export default async function BoroughPage({ params }: Props) {
           <div className="button-row" style={{ marginTop: "1.5rem" }}>
             <Link className="button button-primary" href="/quote">Continue booking</Link>
             <Link className="button button-secondary" href="/services">Browse services</Link>
-            {[
-              "camden",
-              "islington",
-              "westminster",
-            ].includes(page.slug) ? <Link className="button button-secondary" href={`/london/${page.slug}/cleaning`}>Local cleaning</Link> : null}
           </div>
         </div>
       </section>
 
       <section className="section muted-block">
+        <div className="container">
+          <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+            <div className="eyebrow">Services in {page.name}</div>
+            <h2 className="title" style={{ marginTop: "0.6rem" }}>Explore local services</h2>
+          </div>
+          <div className="grid-3" style={{ gap: "0.8rem" }}>
+            {boroughServiceContent.map((s) => (
+              <Link
+                key={s.slug}
+                href={`/london/${page.slug}/${s.slug}`}
+                className="panel card"
+                style={{ textDecoration: "none", color: "inherit", textAlign: "center" }}
+              >
+                <strong>{s.label}</strong>
+                <p style={{ marginTop: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.5 }}>
+                  {s.label} in {page.name}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
         <div className="container grid-2" style={{ alignItems: "start" }}>
           <div className="panel card">
             <div className="eyebrow">Why this page matters</div>

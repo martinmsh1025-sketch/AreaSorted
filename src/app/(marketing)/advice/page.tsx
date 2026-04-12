@@ -12,10 +12,14 @@ export const metadata: Metadata = {
 };
 
 export default function AdviceHubPage() {
+  const sortedPosts = [...advicePosts].sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  );
+
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    itemListElement: advicePosts.map((post, index) => ({
+    itemListElement: sortedPosts.map((post, index) => ({
       "@type": "ListItem",
       position: index + 1,
       url: `/advice/${post.slug}`,
@@ -41,7 +45,7 @@ export default function AdviceHubPage() {
 
       <section className="section muted-block">
         <div className="container" style={{ display: "grid", gap: "1rem" }}>
-          {advicePosts.map((post) => (
+          {sortedPosts.map((post) => (
             <article key={post.slug} className="panel card">
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", alignItems: "center" }}>
                 <span className="eyebrow" style={{ margin: 0 }}>{post.category}</span>

@@ -8,6 +8,16 @@ import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 const handymanJobs = jobTypeCatalog.filter((job) => job.service === "handyman");
 const startingPrice = Math.min(...handymanJobs.map((job) => job.startingPrice));
 
+function getSafeSiteUrl() {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return "https://areasorted.com";
+  try {
+    return new URL(raw).toString().replace(/\/$/, "");
+  } catch {
+    return "https://areasorted.com";
+  }
+}
+
 export const metadata: Metadata = {
   title: "Handyman Services in London",
   description:
@@ -81,11 +91,22 @@ export default async function HandymanServicePage() {
       },
     },
   };
+  const siteUrl = getSafeSiteUrl();
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Services", item: `${siteUrl}/services` },
+      { "@type": "ListItem", position: 3, name: "Handyman", item: `${siteUrl}/services/handyman` },
+    ],
+  };
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       <section className="section">
         <div className="container" style={{ maxWidth: 860 }}>

@@ -82,7 +82,10 @@ export async function createProviderOtp(input: { providerCompanyId?: string; ema
         purpose: input.purpose,
         deliveryMethod,
         deliveryReason,
-        devCode: process.env.NODE_ENV !== "production" ? code : undefined,
+        // Only include devCode in non-production so the verify-email page can display it
+        ...(process.env.NODE_ENV !== "production" && deliveryMethod === "DEV_FALLBACK"
+          ? { devCode: code }
+          : {}),
       },
     },
   });
