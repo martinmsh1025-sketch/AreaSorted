@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { getDisplayPaymentStatus, getPaymentStatusLabel, getPaymentStatusVariant } from "@/lib/payments/display-status";
+import { parseComplaintAttachmentPaths } from "@/lib/complaints/attachments";
 
 function dec(value: Decimal | null | undefined): number {
   return value ? Number(value) : 0;
@@ -62,6 +63,8 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
       },
       refunds: { orderBy: { createdAt: "desc" } },
       refundRecords: { orderBy: { createdAt: "desc" } },
+      complaints: { orderBy: { createdAt: "desc" } },
+      disputeRecords: { orderBy: { createdAt: "desc" } },
       invoiceRecords: {
         where: { strategy: "REFUND_ADJUSTMENT_NOTE" },
         orderBy: { createdAt: "desc" },
@@ -180,6 +183,85 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
           {refundErrorMessage}
         </div>
       ) : null}
+
+      {(booking.complaints.length > 0 || booking.disputeRecords.length > 0) ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Trust & dispute signals</CardTitle>
+            <CardDescription>Open complaint and dispute context linked to this booking.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <div className="text-sm font-medium">Complaints</div>
+              {booking.complaints.length === 0 ? <p className="text-sm text-muted-foreground">No complaint records.</p> : booking.complaints.map((complaint) => (
+                <div key={complaint.id} className="rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-medium">{complaint.complaintType.replace(/_/g, " ")}</div>
+                    <Badge variant={complaint.status === "OPEN" ? "destructive" : complaint.status === "UNDER_REVIEW" ? "secondary" : "outline"}>
+                      {complaint.status.replace(/_/g, " ")}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{complaint.description}</p>
+                  {parseComplaintAttachmentPaths(complaint.attachmentPath).length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-3">
+                      {parseComplaintAttachmentPaths(complaint.attachmentPath).map((_, index) => (
+                        <a key={index} href={`/api/complaint-evidence/${complaint.id}?index=${index}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:underline">
+                          Evidence {index + 1}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3">
+              <div className="text-sm font-medium">Payment disputes</div>
+              {booking.disputeRecords.length === 0 ? <p className="text-sm text-muted-foreground">No dispute records.</p> : booking.disputeRecords.map((dispute) => (
+                <div key={dispute.id} className="rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-medium">GBP {Number(dispute.amount).toFixed(2)}</div>
+                    <Badge variant={dispute.status === "OPEN" ? "destructive" : "secondary"}>{dispute.status.replace(/_/g, " ")}</Badge>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{dispute.reason || "No dispute reason recorded."}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Trust ops actions</CardTitle>
+          <CardDescription>Use these shortcuts when a booking issue needs trust, refund, or payout intervention.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Link
+            href={`/admin/trust-ops?queue=complaints`}
+            className="inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
+          >
+            Open complaints queue
+          </Link>
+          <Link
+            href={`/admin/trust-ops?queue=disputes`}
+            className="inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
+          >
+            Open disputes queue
+          </Link>
+          <Link
+            href={`/admin/payouts?status=BLOCKED`}
+            className="inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
+          >
+            Review blocked payouts
+          </Link>
+          <Link
+            href={`/admin/refunds`}
+            className="inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
+          >
+            Open refund tools
+          </Link>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-3 md:grid-cols-5">
         <Card><CardContent className="p-4"><div className="text-xs uppercase tracking-wide text-muted-foreground">{t.orderDetail.booking}</div><div className="mt-2"><Badge>{booking.bookingStatus}</Badge></div></CardContent></Card>

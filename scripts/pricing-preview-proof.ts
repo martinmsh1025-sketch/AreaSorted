@@ -6,10 +6,10 @@ async function main() {
   const prisma = getPrisma();
   const provider = await prisma.providerCompany.findFirst({
     where: {
+      status: "ACTIVE",
       OR: [
         { companyNumber: "AS-TEST-999" },
         { contactEmail: "test-provider@areasorted.test" },
-        { companyNumber: "AS-DEMO-001" },
       ],
     },
   });

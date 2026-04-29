@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireCustomerSession } from "@/lib/customer-auth";
 import { getPrisma } from "@/lib/db";
 import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
+import { CaseStatusBadge } from "@/components/customer/case-status-badge";
 
 export default async function AccountBookingsPage() {
   const customer = await requireCustomerSession();
@@ -13,6 +14,7 @@ export default async function AccountBookingsPage() {
     include: {
       quoteRequest: { select: { reference: true, serviceKey: true } },
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
+      complaints: { where: { customerId: customer.id }, orderBy: { createdAt: "desc" }, take: 1 },
       counterOffers: {
         where: { status: "PENDING" },
         select: { id: true },
@@ -66,6 +68,7 @@ export default async function AccountBookingsPage() {
                   bookingStatus: booking.bookingStatus,
                 });
                 const hasPendingOffer = booking.counterOffers.length > 0;
+                const latestCase = booking.complaints[0] ?? null;
 
                 return (
                   <Link
@@ -94,6 +97,11 @@ export default async function AccountBookingsPage() {
                           Offer pending
                         </span>
                       )}
+                      {latestCase && (
+                        <span style={{ marginLeft: "0.5rem", verticalAlign: "middle" }}>
+                          <CaseStatusBadge status={latestCase.status} />
+                        </span>
+                      )}
                       <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginTop: "0.15rem" }}>
                         {ref} &middot; {date} at {booking.scheduledStartTime}
                       </div>
@@ -118,6 +126,11 @@ export default async function AccountBookingsPage() {
                           Open to respond
                         </div>
                       )}
+                      {latestCase ? (
+                        <div style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
+                          Issue logged: {latestCase.complaintType.replace(/_/g, " ").toLowerCase()}
+                        </div>
+                      ) : null}
                     </div>
                   </Link>
                 );

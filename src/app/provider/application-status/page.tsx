@@ -27,7 +27,7 @@ function getStatusDescription(status: string) {
     return "Changes are required before your application can be approved. Re-open onboarding to update your details.";
   }
   if (["APPROVED", "STRIPE_PENDING", "STRIPE_RESTRICTED", "PRICING_PENDING"].includes(status)) {
-    return "Your application has been approved. Complete the payment account and pricing setup to go live.";
+    return "Your application has been approved. Set your pricing to go live. Payment setup can be completed later before your first payout.";
   }
   return "You can monitor the latest status of your onboarding from this page.";
 }

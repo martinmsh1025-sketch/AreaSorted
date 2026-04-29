@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { customerLogoutAction } from "@/app/customer/login/actions";
 import { EditProfileSection } from "./edit-profile-section";
 import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
+import { CaseStatusBadge } from "@/components/customer/case-status-badge";
 
 export default async function AccountDashboardPage() {
   const customer = await requireCustomerSession();
@@ -13,11 +14,12 @@ export default async function AccountDashboardPage() {
     where: { customerId: customer.id },
     orderBy: { createdAt: "desc" },
     take: 5,
-    include: {
-      quoteRequest: { select: { reference: true, serviceKey: true } },
-      paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
-    },
-  });
+      include: {
+        quoteRequest: { select: { reference: true, serviceKey: true } },
+        paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
+        complaints: { where: { customerId: customer.id }, orderBy: { createdAt: "desc" }, take: 1 },
+      },
+    });
 
   const totalBookings = await prisma.booking.count({ where: { customerId: customer.id } });
   const pendingCounterOffers = await prisma.counterOffer.count({
@@ -26,6 +28,7 @@ export default async function AccountDashboardPage() {
       status: "PENDING",
     },
   });
+  const openCases = await prisma.complaint.count({ where: { customerId: customer.id, status: { in: ["OPEN", "UNDER_REVIEW"] } } });
 
   return (
     <div className="account-main-column">
@@ -55,6 +58,22 @@ export default async function AccountDashboardPage() {
           </p>
           <div style={{ marginTop: "1rem" }}>
             <Link href="/account/bookings" className="button button-primary">Review bookings</Link>
+          </div>
+        </div>
+      )}
+
+      {openCases > 0 && (
+        <div className="panel card" style={{ marginBottom: "1.5rem", border: "1px solid rgba(29,78,216,0.16)", background: "linear-gradient(135deg, #eff6ff 0%, #fff 100%)" }}>
+          <div className="eyebrow">Case update</div>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0.35rem 0 0.5rem" }}>You have active support cases</h2>
+          <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "0.95rem", lineHeight: 1.65 }}>
+            One or more booking issues are currently open or under review. Open the relevant booking to check the latest case history and any AreaSorted review notes.
+          </p>
+          <div style={{ marginTop: "1rem" }}>
+            <div className="button-row">
+              <Link href="/account/cases" className="button button-primary">View my cases</Link>
+              <Link href="/account/bookings" className="button button-secondary">View bookings</Link>
+            </div>
           </div>
         </div>
       )}
@@ -116,6 +135,11 @@ export default async function AccountDashboardPage() {
                       <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.15rem" }}>
                         Payment: {getPaymentStatusLabel(payment)}
                       </div>
+                      {booking.complaints[0] ? (
+                        <div style={{ marginTop: "0.45rem" }}>
+                          <CaseStatusBadge status={booking.complaints[0].status} />
+                        </div>
+                      ) : null}
                     </div>
                     <div style={{
                       fontSize: "0.8rem",

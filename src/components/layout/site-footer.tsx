@@ -19,6 +19,7 @@ const legalLinks = [
   ["/terms-and-conditions", "Terms & Conditions"],
   ["/privacy-policy", "Privacy Policy"],
   ["/refund-policy", "Cancellation & Refund"],
+  ["/dispute-policy", "Dispute & Payout Policy"],
   ["/gdpr-policy", "GDPR Policy"],
   ["/cookie-policy", "Cookie Policy"],
 ];

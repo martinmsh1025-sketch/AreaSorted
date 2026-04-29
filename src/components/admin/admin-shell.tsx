@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Mail,
   Globe,
+  ShieldAlert,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,7 @@ function getAdminNavItems(t: TranslationKeys) {
         { href: "/admin/providers", label: t.nav.providers, icon: Users },
         { href: "/admin/customers", label: t.nav.customers, icon: Users },
         { href: "/admin/orders", label: t.nav.orders, icon: ShoppingCart },
+        { href: "/admin/trust-ops", label: "Trust Ops", icon: ShieldAlert },
         { href: "/admin/payouts", label: t.nav.payouts, icon: Banknote },
         { href: "/admin/refunds", label: t.nav.refunds, icon: Receipt },
       ],

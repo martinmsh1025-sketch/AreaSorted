@@ -115,18 +115,36 @@ const serviceItems = [
 const howItWorks = [
   {
     title: "1. Enter your postcode",
-    description: "Check whether local services are available in your area before you spend time filling a full booking flow.",
+    description: "Check coverage first, then move straight into the right booking flow for your area.",
     icon: StepOneIcon,
   },
   {
-    title: "2. See what is available",
-    description: "Once coverage is confirmed, you can move into the right service options, quote flow, and booking details.",
+    title: "2. Tell us what you need",
+    description: "Choose your service, add the job details, and let AreaSorted structure the request clearly.",
     icon: StepTwoIcon,
   },
   {
-    title: "3. Continue to booking",
-    description: "Complete a structured quote and booking flow with one process for service details, notes, and support.",
+    title: "3. Book with support built in",
+    description: "Track the booking, get updates, and use your account if something needs review after the job.",
     icon: StepThreeIcon,
+  },
+];
+
+const protectionHighlights = [
+  {
+    title: "Know more before booking",
+    copy: "We want customers to see more than just ratings, with clearer provider context, standards, and service fit.",
+    image: "/images/customerprotection-crops/protection-before-booking.png",
+  },
+  {
+    title: "Get help if something goes wrong",
+    copy: "Use your account to report issues, upload evidence, and track the case without chasing multiple people.",
+    image: "/images/customerprotection-crops/protection-report-issue.png",
+  },
+  {
+    title: "A fairer process for both sides",
+    copy: "Providers also get a response route and a documented review process, which helps us handle complaints more consistently.",
+    image: "/images/customerprotection-crops/protection-fair-process.png",
   },
 ];
 
@@ -353,11 +371,8 @@ export default function HomePage() {
         <div className="homepage-hero-surface">
           <div className="homepage-hero-layout">
             <div className="homepage-hero-copy homepage-hero-copy-left">
-              <div className="homepage-hero-kicker">Trusted local services booking</div>
-              <h1 className="homepage-hero-title">Find trusted local services in your area.</h1>
-              <p className="homepage-hero-text">
-                Check postcode coverage for cleaning, handyman, waste removal, pest control, and garden work.
-              </p>
+              <div className="homepage-hero-kicker">A higher-trust home services marketplace</div>
+              <h1 className="homepage-hero-title">Book home services with more confidence.</h1>
 
               <form
                 className="panel mini-form homepage-quote-card homepage-quote-card-left"
@@ -495,22 +510,16 @@ export default function HomePage() {
 
       <section className="homepage-section homepage-how-section js-reveal-section">
         <div className="homepage-how-media panel">
-          <Image src="/images/homepage/howitworks.png" alt="Book trusted home services" fill className="homepage-how-media-image" sizes="(max-width: 960px) 100vw, 50vw" />
-          <div className="homepage-how-badge">
-            <div className="homepage-how-badge-icon">
-              <CheckIcon className="homepage-service-icon" />
-            </div>
-            <div>
-              <strong>Instant quote</strong>
-              <span>Takes about a minute</span>
-            </div>
-          </div>
+          <Image src="/images/homepage/howdoesitwork-left-v2.png" alt="Book trusted home services" fill className="homepage-how-media-image" sizes="(max-width: 960px) 100vw, 50vw" />
         </div>
 
         <div className="homepage-how-copy">
           <div className="homepage-section-head">
             <div className="eyebrow">How it works</div>
-            <h2 className="homepage-section-title">Three simple steps to a better home.</h2>
+            <h2 className="homepage-section-title">A clearer path from postcode to completed job.</h2>
+            <p className="homepage-how-intro">
+              We are not just a list of names. AreaSorted helps structure the request, support the booking, and keep a case trail if the job needs review later.
+            </p>
           </div>
           <div className="homepage-how-steps">
             {howItWorks.map((item, index) => {
@@ -552,6 +561,60 @@ export default function HomePage() {
                 <span className="homepage-phone-dot homepage-phone-dot-active" />
                 <span className="homepage-phone-dot" />
                 <span className="homepage-phone-dot" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="homepage-section js-reveal-section">
+        <div className="homepage-section-head homepage-section-head-center">
+          <div className="eyebrow">Customer protection</div>
+          <h2 className="homepage-section-title">More context before booking. More support after the job.</h2>
+        </div>
+        <div className="homepage-protection-grid">
+          {protectionHighlights.map((item, index) => {
+            return (
+            <article key={item.title} className={`panel card homepage-protection-card homepage-protection-card-${index + 1}`}>
+              <div className="homepage-protection-card-media">
+                <Image src={item.image} alt={item.title} fill className="homepage-protection-card-image" sizes="(max-width: 720px) 100vw, 33vw" />
+              </div>
+              <div className="eyebrow">Protection layer</div>
+              <strong style={{ marginTop: "0.5rem", display: "block" }}>{item.title}</strong>
+              <p className="lead" style={{ fontSize: "0.98rem", margin: "0.55rem 0 0" }}>{item.copy}</p>
+            </article>
+          );})}
+          <div className="homepage-protection-panel">
+            <div className="homepage-protection-visual" aria-hidden="true">
+              <Image
+                src="/images/customerprotection-crops/protection-why-it-matters.png"
+                alt="Why customer protection matters"
+                width={240}
+                height={240}
+                className="homepage-protection-visual-image"
+                sizes="240px"
+              />
+            </div>
+            <div className="homepage-protection-panel-copy">
+              <div className="eyebrow">Why it matters</div>
+              <strong>Trust should not stop at the checkout page.</strong>
+              <p>
+                Customers need a platform that explains standards clearly before booking - and still helps if the job needs review later.
+              </p>
+              <div className="homepage-protection-feature-row">
+                <span className="homepage-protection-feature">
+                  <CheckIcon className="homepage-protection-feature-icon" /> Case tracking
+                </span>
+                <span className="homepage-protection-feature">
+                  <PinIcon className="homepage-protection-feature-icon" /> London-wide coverage
+                </span>
+                <span className="homepage-protection-feature">
+                  <SearchIcon className="homepage-protection-feature-icon" /> Reviewed providers
+                </span>
+              </div>
+              <div className="button-row" style={{ marginTop: "1rem" }}>
+                <button type="button" className="button button-primary" onClick={() => router.push("/customer-protection")}>View customer protection</button>
+                <button type="button" className="button button-secondary" onClick={() => router.push("/about")}>Read our story</button>
               </div>
             </div>
           </div>

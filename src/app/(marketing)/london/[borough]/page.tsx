@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { boroughPages, getBoroughPage } from "@/lib/seo/borough-pages";
 import { boroughServiceContent } from "@/lib/seo/borough-service-content";
@@ -37,6 +38,23 @@ function getSafeSiteUrl() {
     return "https://areasorted.com";
   }
 }
+
+const eastNorthEastBoroughs = new Set(["hackney", "tower-hamlets", "newham", "waltham-forest", "redbridge", "havering", "barking-and-dagenham", "enfield", "camden", "islington", "barnet", "haringey"]);
+
+function getBoroughHeroImage(slug: string) {
+  return eastNorthEastBoroughs.has(slug)
+    ? "/images/marketing-generated/london-east-grid.png"
+    : "/images/marketing-generated/london-west-grid.png";
+}
+
+const serviceCardImages: Record<string, string> = {
+  cleaning: "/images/homepage/services/cleaning.jpg",
+  "pest-control": "/images/homepage/services/pest-control.jpg",
+  handyman: "/images/homepage/services/handyman-better.jpg",
+  "furniture-assembly": "/images/homepage/services/furniture-assembly-better.jpg",
+  "waste-removal": "/images/homepage/services/waste-removal.jpg",
+  "garden-maintenance": "/images/homepage/services/garden-maintenance-better.jpg",
+};
 
 export default async function BoroughPage({ params }: Props) {
   const { borough } = await params;
@@ -92,15 +110,20 @@ export default async function BoroughPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <section className="section">
-        <div className="container" style={{ maxWidth: 860 }}>
-          <div className="eyebrow">London coverage</div>
-          <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
-            Local services in {page.name}
-          </h1>
-          <p className="lead">{page.intro}</p>
-          <div className="button-row" style={{ marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Continue booking</Link>
-            <Link className="button button-secondary" href="/services">Browse services</Link>
+        <div className="container services-hero-grid" style={{ alignItems: "center" }}>
+          <div>
+            <div className="eyebrow">London coverage</div>
+            <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
+              Local services in {page.name}
+            </h1>
+            <p className="lead">{page.intro}</p>
+            <div className="button-row" style={{ marginTop: "1.5rem" }}>
+              <Link className="button button-primary" href="/quote">Continue booking</Link>
+              <Link className="button button-secondary" href="/services">Browse services</Link>
+            </div>
+          </div>
+          <div className="services-hero-art borough-hero-art">
+            <Image src={getBoroughHeroImage(page.slug)} alt={`${page.name} borough coverage illustration`} fill className="services-hero-art-image" sizes="(max-width: 960px) 100vw, 42vw" />
           </div>
         </div>
       </section>
@@ -117,12 +140,17 @@ export default async function BoroughPage({ params }: Props) {
                 key={s.slug}
                 href={`/london/${page.slug}/${s.slug}`}
                 className="panel card"
-                style={{ textDecoration: "none", color: "inherit", textAlign: "center" }}
+                style={{ textDecoration: "none", color: "inherit", textAlign: "center", overflow: "hidden", padding: 0 }}
               >
-                <strong>{s.label}</strong>
-                <p style={{ marginTop: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.5 }}>
-                  {s.label} in {page.name}
-                </p>
+                <div className="borough-service-card-media">
+                  <Image src={serviceCardImages[s.slug]} alt={s.label} fill className="borough-service-card-image" sizes="(max-width: 960px) 100vw, 33vw" />
+                </div>
+                <div style={{ padding: "1rem 1.1rem 1.15rem" }}>
+                  <strong>{s.label}</strong>
+                  <p style={{ marginTop: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.5 }}>
+                    {s.label} in {page.name}
+                  </p>
+                </div>
               </Link>
             ))}
           </div>

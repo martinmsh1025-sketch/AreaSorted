@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "AreaSorted helps London customers book trusted local services with clearer pricing, structured booking, and vetted professionals across multiple service categories.",
+    "AreaSorted was founded by Martin Ma to make home services easier to trust, with stronger provider standards, clearer information, and better protection for both customers and providers.",
   openGraph: {
     title: "About AreaSorted — Trusted Local Services in London",
     description:
-      "Learn how AreaSorted helps London customers book trusted local services with clearer pricing, postcode-first coverage checks, and vetted professionals.",
+      "Learn why Martin Ma founded AreaSorted to build a higher-trust marketplace for home services in London.",
   },
 };
 
@@ -21,17 +22,17 @@ const values = [
   {
     title: "Vetted providers",
     description:
-      "Every provider on the platform goes through identity checks, document verification, and a structured onboarding process before they can accept jobs.",
+      "Every provider on the platform goes through structured onboarding, profile review, and document checks before they can accept jobs.",
   },
   {
-    title: "One managed flow",
+    title: "Real provider context",
     description:
-      "From quote to booking confirmation, everything is handled through one structured flow. No chasing around for prices, availability, or next steps.",
+      "Customers should understand who they are booking - not just see a name and a rating. We want clearer provider backgrounds, communication details, insurance, DBS status where relevant, and experience signals.",
   },
   {
-    title: "Local knowledge",
+    title: "Protection on both sides",
     description:
-      "We focus on London coverage, postcode fit, and practical service matching so customers can book with more confidence.",
+      "Customers deserve a safer booking experience, and providers deserve a fair dispute process and a better chance of getting paid properly for completed work.",
   },
 ];
 
@@ -66,7 +67,7 @@ const stats = [
   { value: "6", label: "Service categories" },
   { value: "57", label: "Job types available" },
   { value: "32", label: "London boroughs covered" },
-  { value: "12-step", label: "Provider onboarding" },
+  { value: "Higher-bar", label: "Provider entry standard" },
 ];
 
 export default function AboutPage() {
@@ -77,11 +78,59 @@ export default function AboutPage() {
         <div className="container" style={{ maxWidth: 860 }}>
           <div className="eyebrow">About AreaSorted</div>
           <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
-            A clearer way to book trusted local services in London.
+            A higher-trust marketplace for home services in London.
           </h1>
           <p className="lead">
-            AreaSorted is built for customers who want transparent pricing, vetted professionals, and a smoother booking experience across London. We bring pricing, coverage checks, and booking support into one place.
+            AreaSorted was founded by Martin Ma to make home services feel less uncertain, less opaque, and less dependent on guesswork. We want customers to understand who they are booking - and good providers to work in a platform that values trust, standards, and fairness.
           </p>
+        </div>
+      </section>
+
+      {/* Founder story */}
+      <section className="section">
+        <div className="container grid-2" style={{ alignItems: "start" }}>
+          <div>
+            <div className="eyebrow">Founder story</div>
+            <h2 className="title" style={{ marginTop: "0.6rem" }}>
+              Why Martin Ma started AreaSorted.
+            </h2>
+          </div>
+          <div className="marketing-story-stack">
+            <div className="marketing-crop-frame marketing-crop-frame-about-hero">
+              <Image
+                src="/images/derived-board-tight/about-house-clean.png"
+                alt="AreaSorted home services illustration"
+                fill
+                className="marketing-crop-image"
+                sizes="(max-width: 720px) 100vw, 50vw"
+              />
+            </div>
+            <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, margin: 0 }}>
+              I started AreaSorted after seeing the same problem again and again across the UK home services market: customers often have to rely on word of mouth or online reviews to judge whether a provider is right for them. In many cases, that is still not enough to make a confident decision.
+            </p>
+            <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, marginTop: "1rem" }}>
+              My view was simple - booking a cleaner, handyman, pest controller, or any other home service professional should not feel like guesswork. Customers should be able to understand a provider's background, experience, communication style, insurance position, and DBS status where relevant before they book.
+            </p>
+            <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, marginTop: "1rem" }}>
+              That is why AreaSorted is being built with a higher bar for provider entry. We want stronger vetting, better provider introductions, and more meaningful information than a review score alone can provide.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Founder note */}
+      <section className="section muted-block">
+        <div className="container" style={{ maxWidth: 900 }}>
+          <div className="panel card" style={{ padding: "2rem", borderRadius: "1.5rem" }}>
+            <div className="eyebrow">Founder note</div>
+            <h2 className="title" style={{ marginTop: "0.6rem" }}>
+              “Trust should not start and end with a review score.”
+            </h2>
+            <p style={{ color: "var(--color-text-muted)", lineHeight: 1.8, margin: 0 }}>
+              When people book someone to come into their home, they are making a trust decision, not just a price decision. I believe customers deserve more context before they book, and providers deserve a fairer system after the job is done. AreaSorted is my attempt to build that middle layer of trust properly.
+            </p>
+            <p style={{ marginTop: "1rem", fontWeight: 700 }}>Martin Ma, Founder</p>
+          </div>
         </div>
       </section>
 
@@ -132,7 +181,31 @@ export default function AboutPage() {
               Booking local services is often frustrating: unclear prices, patchy communication, and too much uncertainty before the job is even confirmed. AreaSorted is designed to make that experience simpler, clearer, and easier to trust.
             </p>
             <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, marginTop: "1rem" }}>
-              We focus on postcode-first coverage, transparent quote building, and vetted professionals across key home service categories so customers can move from research to booking with less friction.
+              We focus on stronger provider standards, better profile transparency, postcode-first coverage, and clearer quote building so customers can move from research to booking with more confidence - while providers can work in a more structured, respected, and fair environment.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Customer + provider promise */}
+      <section className="section muted-block">
+        <div className="container grid-2" style={{ alignItems: "start" }}>
+          <div className="panel card">
+            <div className="eyebrow">For customers</div>
+            <h2 className="title" style={{ marginTop: "0.6rem", fontSize: "1.5rem" }}>
+              More confidence before you book.
+            </h2>
+            <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, margin: 0 }}>
+              We want customers to make better-informed decisions, not just rely on ratings. That means clearer provider backgrounds, structured pricing, stronger entry standards, and platform support when something goes wrong.
+            </p>
+          </div>
+          <div className="panel card">
+            <div className="eyebrow">For providers</div>
+            <h2 className="title" style={{ marginTop: "0.6rem", fontSize: "1.5rem" }}>
+              More protection after the job is done.
+            </h2>
+            <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, margin: 0 }}>
+              Good providers should not be left dealing with unclear expectations, payment anxiety, or one-sided complaints on their own. AreaSorted is designed to support fairer dispute handling, clearer job expectations, and a more reliable route to paid work.
             </p>
           </div>
         </div>
@@ -203,18 +276,20 @@ export default function AboutPage() {
           <div>
             <div className="eyebrow">Trust and standards</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>
-              Every professional on the platform goes through structured onboarding.
+              We want a higher barrier to entry than a typical listing site.
             </h2>
             <p className="lead" style={{ fontSize: "1rem" }}>
-              We do proper checks before a professional can accept work through AreaSorted. That helps create a more reliable experience for customers from the start.
+              Reviews alone do not tell the full story. Our aim is to introduce providers properly, verify key information, and create a stronger baseline of trust before they can accept work through AreaSorted.
             </p>
           </div>
           <div className="panel card">
-              <strong style={{ display: "block", marginBottom: "1rem" }}>Checks can include</strong>
+              <strong style={{ display: "block", marginBottom: "1rem" }}>Checks and standards can include</strong>
             <ul className="list-clean" style={{ color: "var(--color-text-muted)" }}>
               <li>Identity and account verification</li>
-              <li>Eligibility and document checks</li>
-              <li>Service capability review</li>
+              <li>Insurance and document checks</li>
+              <li>DBS status where relevant to the service</li>
+              <li>Service capability and experience review</li>
+              <li>Communication and professionalism standards</li>
               <li>Coverage area setup</li>
               <li>Availability and operational setup</li>
               <li>Admin approval before activation</li>

@@ -132,7 +132,7 @@ export async function requestProviderMobileOrderSupport(
   orderId: string,
   body: { requestType: "RESCHEDULE" | "CANCEL" | "ISSUE"; message: string },
 ) {
-  return apiRequest<{ ok: boolean; message: string }>(`/api/mobile/provider/orders/${orderId}/support`, {
+  return apiRequest<{ ok: boolean; message: string; caseReference?: string }>(`/api/mobile/provider/orders/${orderId}/support`, {
     method: "POST",
     token,
     body,
@@ -210,5 +210,37 @@ export async function updateProviderMobilePassword(
     method: "POST",
     token,
     body,
+  });
+}
+
+export async function updateProviderMobileAvailability(
+  token: string,
+  body: {
+    schedule: { dayOfWeek: number; isAvailable: boolean; startTime: string; endTime: string }[];
+    settings?: { maxJobsPerDay?: number | null; leadTimeHours?: number | null };
+  },
+) {
+  return apiRequest<{ ok: boolean }>("/api/mobile/provider/availability", {
+    method: "POST",
+    token,
+    body,
+  });
+}
+
+export async function createProviderMobileOverride(
+  token: string,
+  body: { date: string; isAvailable: boolean; startTime?: string; endTime?: string; note?: string },
+) {
+  return apiRequest<{ ok: boolean; override: MobileProviderAvailabilityOverride }>("/api/mobile/provider/availability/overrides", {
+    method: "POST",
+    token,
+    body,
+  });
+}
+
+export async function deleteProviderMobileOverride(token: string, overrideId: string) {
+  return apiRequest<{ ok: boolean }>(`/api/mobile/provider/availability/overrides?id=${encodeURIComponent(overrideId)}`, {
+    method: "DELETE",
+    token,
   });
 }

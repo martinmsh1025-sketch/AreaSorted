@@ -13,6 +13,7 @@ import {
   startBookingAction,
   completeBookingAction,
   requestOrderSupportAction,
+  respondToComplaintAction,
 } from "../actions";
 import {
   AcceptOrderButton,
@@ -38,6 +39,7 @@ import {
 import { serviceTypeLabels, propertyTypeLabels, formatEnumLabel } from "@/lib/providers/service-catalog-mapping";
 import { formatPreferredScheduleOption, parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { formatMoney } from "@/lib/format";
+import { getComplaintSlaMessage } from "@/lib/complaints/sla";
 
 const statusVariant: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   AWAITING_PAYMENT: "outline",
@@ -124,6 +126,25 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
         where: { providerCompanyId: session.providerCompany.id },
         orderBy: { createdAt: "desc" },
       },
+      complaints: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          complaintType: true,
+          status: true,
+          description: true,
+          createdAt: true,
+          resolutionNotes: true,
+        },
+      },
+      payoutRecords: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          status: true,
+          blockedReason: true,
+        },
+      },
     },
   });
 
@@ -132,7 +153,9 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
   const needsAcceptance = booking.bookingStatus === "PENDING_ASSIGNMENT";
   const isAssigned = booking.bookingStatus === "ASSIGNED";
   const isInProgress = booking.bookingStatus === "IN_PROGRESS";
+  const detailsUnlocked = !needsAcceptance;
   const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const latestPayout = booking.payoutRecords[0] ?? null;
 
   const hasPendingCounterOffer = booking.counterOffers.some((co) => co.status === "PENDING");
   const supportStatus = typeof resolvedSearchParams.supportStatus === "string" ? resolvedSearchParams.supportStatus : "";
@@ -215,7 +238,7 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
         </span>
         <span className="flex items-center gap-1.5">
           <User className="size-4 text-muted-foreground" />
-          {customerName}
+          {detailsUnlocked ? customerName : "Customer details unlock after acceptance"}
         </span>
         <span className="ml-auto font-semibold text-green-700 dark:text-green-400">
           {booking.priceSnapshot
@@ -387,35 +410,43 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Location</CardTitle>
+              {detailsUnlocked ? (
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  Open in Maps
+                  <ExternalLink className="size-3" />
+                </a>
+              ) : null}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Row label="Address" value={detailsUnlocked ? booking.serviceAddressLine1 : "Full address unlocks after you accept this order."} />
+            {detailsUnlocked && booking.serviceAddressLine2 && (
+              <Row label="" value={booking.serviceAddressLine2} />
+            )}
+            <Row label="City" value={detailsUnlocked ? booking.serviceCity : "London area"} />
+            <Row label="Postcode" value={booking.servicePostcode} />
+            <Separator />
+            {detailsUnlocked ? (
               <a
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:underline"
+                className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors"
               >
-                Open in Maps
-                <ExternalLink className="size-3" />
+                <MapPin className="size-4" />
+                Get directions
+                <ExternalLink className="ml-auto size-3" />
               </a>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Row label="Address" value={booking.serviceAddressLine1} />
-            {booking.serviceAddressLine2 && (
-              <Row label="" value={booking.serviceAddressLine2} />
+            ) : (
+              <p className="rounded-md border border-dashed px-3 py-3 text-sm text-muted-foreground">
+                We reveal the exact address and direct contact details after you accept the order. This protects both sides before the booking is confirmed.
+              </p>
             )}
-            <Row label="City" value={booking.serviceCity} />
-            <Row label="Postcode" value={booking.servicePostcode} />
-            <Separator />
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors"
-            >
-              <MapPin className="size-4" />
-              Get directions
-              <ExternalLink className="ml-auto size-3" />
-            </a>
           </CardContent>
         </Card>
 
@@ -427,9 +458,9 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2">
               <User className="size-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{customerName}</span>
+              <span className="text-sm font-medium">{detailsUnlocked ? customerName : "Confirmed customer"}</span>
             </div>
-            {booking.customer?.email && (
+            {detailsUnlocked && booking.customer?.email && (
               <div className="flex items-center gap-2">
                 <Mail className="size-4 text-muted-foreground" />
                 <a
@@ -440,7 +471,7 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
                 </a>
               </div>
             )}
-            {booking.customer?.phone && (
+            {detailsUnlocked && booking.customer?.phone && (
               <div className="flex items-center gap-2">
                 <Phone className="size-4 text-muted-foreground" />
                 <a
@@ -451,6 +482,11 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
                 </a>
               </div>
             )}
+            {!detailsUnlocked ? (
+              <p className="text-sm text-muted-foreground">
+                Direct contact details unlock once you accept the job and payment is captured.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -516,6 +552,67 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
         <Card>
           <CardContent className="pt-6">
             <CounterOffersList offers={counterOffers} />
+          </CardContent>
+        </Card>
+      )}
+
+      {booking.complaints.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Booking case review</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {latestPayout?.status === "BLOCKED" ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900">
+                Payout is currently on hold. {latestPayout.blockedReason || "A booking issue is under review."}
+              </div>
+            ) : null}
+
+            {booking.complaints.map((complaint) => (
+              <div key={complaint.id} className="space-y-3 rounded-md border p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-medium">{complaint.complaintType.replace(/_/g, " ")}</div>
+                    <div className="text-sm text-muted-foreground">{complaint.createdAt.toLocaleString("en-GB")}</div>
+                  </div>
+                  <Badge variant={complaint.status === "OPEN" ? "destructive" : complaint.status === "UNDER_REVIEW" ? "secondary" : "outline"}>
+                    {complaint.status.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{complaint.description}</p>
+                <div className="rounded-md border bg-slate-50 px-3 py-3 text-sm text-muted-foreground">
+                  <strong className="block text-foreground">Expected next step</strong>
+                  <p className="mt-1">{getComplaintSlaMessage(complaint.status, complaint.createdAt)}</p>
+                </div>
+                {complaint.resolutionNotes ? (
+                  <div className="rounded-md border px-3 py-3 text-sm">
+                    <strong className="block">AreaSorted review note</strong>
+                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{complaint.resolutionNotes}</p>
+                  </div>
+                ) : null}
+                {!["REJECTED", "RESOLVED"].includes(complaint.status) ? (
+                  <form action={respondToComplaintAction} className="space-y-2">
+                    <input type="hidden" name="bookingId" value={booking.id} />
+                    <input type="hidden" name="complaintId" value={complaint.id} />
+                    <Label htmlFor={`complaint-response-${complaint.id}`}>Send your response to the case team</Label>
+                    <Textarea
+                      id={`complaint-response-${complaint.id}`}
+                      name="message"
+                      rows={4}
+                      placeholder="Explain any important timing, scope, access, or work-completed details the case team should review."
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor={`complaint-evidence-${complaint.id}`}>Evidence (optional)</Label>
+                      <input id={`complaint-evidence-${complaint.id}`} name="evidence" type="file" accept=".pdf,image/png,image/jpeg" multiple className="block text-sm" />
+                      <p className="text-xs text-muted-foreground">Upload up to 5 JPG, PNG, or PDF files. 10MB each, 20MB total.</p>
+                    </div>
+                    <button type="submit" className="inline-flex h-9 items-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">
+                      Send case response
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

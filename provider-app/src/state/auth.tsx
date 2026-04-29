@@ -1,9 +1,10 @@
 import * as SecureStore from "expo-secure-store";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { loginProviderMobile, registerProviderPushToken, removeProviderPushToken, getProviderMobileMe, type MobileProviderSummary } from "@/lib/provider-api";
 import { mobileConfig } from "@/lib/config";
 import { registerForPushNotificationsAsync } from "@/lib/push-notifications";
 import { mockProviderSummary } from "@/data/mock-provider";
+import { onUnauthorized } from "@/lib/api";
 
 const TOKEN_KEY = "areasorted_provider_mobile_token";
 
@@ -130,6 +131,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPushToken(null);
     setAuthError(null);
   }, [pushToken, token]);
+
+  // Auto sign-out when any API call returns 401 (expired / invalid token)
+  const signOutRef = useRef(signOut);
+  signOutRef.current = signOut;
+  useEffect(() => {
+    return onUnauthorized(() => {
+      signOutRef.current().catch(() => undefined);
+    });
+  }, []);
 
   const value = useMemo<AuthContextValue>(() => ({
     isInitializing,

@@ -118,10 +118,10 @@ export default async function ProviderHomePage() {
   // ─── Next action CTA ───
   const nextAction = canProviderEditOnboarding(provider.status)
     ? { href: "/provider/onboarding", label: "Continue onboarding" }
-    : !stripeReady && canProviderAccessStripe(provider.status)
-      ? { href: "/provider/payment", label: accountExists ? "Complete payment setup" : "Create payment account" }
-      : !pricingReady && canProviderAccessPricing(provider.status)
+    : !pricingReady && canProviderAccessPricing(provider.status)
         ? { href: "/provider/pricing", label: "Set your pricing" }
+      : !stripeReady && canProviderAccessStripe(provider.status)
+        ? { href: "/provider/payment", label: accountExists ? "Complete payment setup" : "Add payout details" }
         : fullDashboard
           ? { href: "/provider/orders", label: "View orders" }
           : { href: "/provider/application-status", label: "Check application" };
@@ -397,6 +397,26 @@ export default async function ProviderHomePage() {
                   <Button variant="outline" size="sm" render={<Link href="/provider/coverage" />}>
                     Service Areas
                   </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Payout & dispute rules</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <p>
+                    For standard service quality issues, customers normally have <strong>48 hours</strong> after completion to raise a complaint.
+                  </p>
+                  <p>
+                    If no complaint is raised within that period, your payout should normally become eligible, subject to fraud checks, chargebacks, damage claims, or other valid hold reasons.
+                  </p>
+                  <p>
+                    Minor upheld issues may result in limited deductions, while severe failures such as no-shows, major quality failures, damage, fraud, or chargebacks may lead to larger deductions or full payout loss.
+                  </p>
+                  <p>
+                    You can review the full policy here: <Link href="/dispute-policy" className="font-medium text-primary hover:underline">Dispute & Payout Policy</Link>
+                  </p>
                 </CardContent>
               </Card>
             </div>

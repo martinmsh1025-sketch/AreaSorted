@@ -14,6 +14,8 @@ export type ProviderChecklistResult = {
   missingLabels: string[];
 };
 
+const optionalChecklistKeys = new Set(["stripe"]);
+
 type ProviderChecklistSource = {
   legalName: string | null;
   companyNumber: string | null;
@@ -162,7 +164,7 @@ export function buildProviderChecklist(provider: ProviderChecklistSource | null)
       key: "approved",
       label: "Admin approval",
       complete: Boolean(provider?.approvedAt),
-      detail: "Stripe unlocks after approval",
+      detail: "Admin approval is required before going live",
     },
     {
       key: "documents_approved",
@@ -174,7 +176,7 @@ export function buildProviderChecklist(provider: ProviderChecklistSource | null)
       key: "stripe",
       label: "Stripe",
       complete: stripeReady,
-      detail: "Charges and payouts both need to be ready",
+      detail: "Optional until your first payout if bank transfer is being used",
     },
     {
       key: "pricing",
@@ -192,8 +194,8 @@ export function buildProviderChecklist(provider: ProviderChecklistSource | null)
 
   return {
     items,
-    allComplete: items.every((item) => item.complete),
-    missingLabels: items.filter((item) => !item.complete).map((item) => item.label),
+    allComplete: items.every((item) => optionalChecklistKeys.has(item.key) || item.complete),
+    missingLabels: items.filter((item) => !item.complete && !optionalChecklistKeys.has(item.key)).map((item) => item.label),
   };
 }
 

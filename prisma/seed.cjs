@@ -96,8 +96,9 @@ async function main() {
   const settings = [
     { key: 'marketplace.charge_model', valueJson: { value: 'direct_charges' }, description: 'Default Stripe Connect charge model' },
     { key: 'marketplace.invoice_strategy', valueJson: { value: 'provider_service_plus_platform_fee_receipt' }, description: 'Default invoice ownership strategy' },
-    { key: 'marketplace.booking_fee', valueJson: { value: 12 }, description: 'Default booking fee in GBP' },
-    { key: 'marketplace.commission_percent', valueJson: { value: 12 }, description: 'Default platform commission percent' },
+    { key: 'marketplace.booking_fee', valueJson: { value: 10 }, description: 'Default launch booking fee percent' },
+    { key: 'marketplace.booking_fee_mode', valueJson: { value: 'percent' }, description: 'Default launch booking fee mode' },
+    { key: 'marketplace.commission_percent', valueJson: { value: 10 }, description: 'Default launch platform commission percent' },
     { key: 'marketplace.payout_hold_days', valueJson: { value: 7 }, description: 'Default hold period before provider payout' },
   ];
 

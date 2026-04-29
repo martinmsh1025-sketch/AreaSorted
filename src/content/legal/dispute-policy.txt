@@ -1,0 +1,134 @@
+AREASORTED
+DISPUTE & PAYOUT POLICY
+Version 1.0
+Effective Date: 15 April 2026
+
+This Policy explains how AreaSorted handles service complaints, evidence review, provider payout timing, and deductions connected with booking disputes.
+
+This Policy should be read together with our Customer Terms, Provider Terms, and Cancellation & Refund Policy.
+
+1. CORE PRINCIPLES
+
+1.1 Customers should have a fair and clear window to report service issues.
+
+1.2 Providers should not face open-ended uncertainty after completing work properly.
+
+1.3 Deductions must be proportionate to the issue and supported by a recorded rationale.
+
+1.4 Serious matters such as fraud, chargebacks, property damage, safety concerns, or legal/compliance issues may be handled outside the normal service-quality review window.
+
+2. STANDARD COMPLAINT WINDOW
+
+2.1 Customers should normally report service quality issues within 48 hours after job completion.
+
+2.2 If no complaint is raised within 48 hours, the booking will normally be treated as accepted for standard quality purposes.
+
+2.3 After that point, provider payout should normally become eligible, unless there is a fraud concern, chargeback, property damage issue, legal/compliance hold, or another valid reason to investigate further.
+
+3. PAYOUT TIMING
+
+3.1 Once a booking is marked complete, a 48-hour review window normally begins.
+
+3.2 If no complaint is raised during that period, the payout may move from hold to eligible.
+
+3.3 Subject to our Provider Terms, payment processor requirements, and any valid hold reason, AreaSorted aims to pay the provider within 5 working days after the booking is marked complete.
+
+4. IF A COMPLAINT IS RAISED IN TIME
+
+4.1 If a complaint is raised within the 48-hour window, the related payout may be placed on hold while the case is reviewed.
+
+4.2 AreaSorted may review:
+(a) booking notes;
+(b) timeline and status events;
+(c) customer and provider messages;
+(d) uploaded photos, PDFs, or other evidence;
+(e) provider responses; and
+(f) any other relevant operational or payment records.
+
+4.3 We aim to provide an initial case update within 1 business day and a review outcome within 1 to 2 business days where reasonably possible.
+
+5. DEDUCTION FRAMEWORK
+
+5.1 Minor issue
+
+Examples may include:
+(a) a small missed task;
+(b) minor lateness where the service is still substantially delivered; or
+(c) a small quality issue not requiring a revisit.
+
+Usual outcome:
+(i) customer credit or small adjustment; and/or
+(ii) provider deduction up to the lower of 15 percent of the provider payout or GBP 25.
+
+5.2 Moderate issue
+
+Examples may include:
+(a) meaningful missed tasks;
+(b) service quality requiring partial refund;
+(c) provider lateness causing material inconvenience; or
+(d) rework being required.
+
+Usual outcome:
+(i) partial refund or no-cost revisit; and/or
+(ii) provider deduction up to 50 percent of the provider payout, capped by the direct customer remedy cost reasonably attributable to the issue.
+
+5.3 Severe failure
+
+Examples may include:
+(a) no-show;
+(b) job materially not completed;
+(c) serious quality failure; or
+(d) serious breach of platform standards.
+
+Usual outcome:
+(i) full or near-full customer refund;
+(ii) provider deduction up to 100 percent of payout; and/or
+(iii) account restriction or suspension.
+
+5.4 Damage, fraud, safety, or chargeback
+
+Examples may include:
+(a) property damage;
+(b) suspected theft or fraud;
+(c) unsafe or abusive conduct; or
+(d) card dispute or chargeback.
+
+Usual outcome:
+(i) full payout hold;
+(ii) deduction up to 100 percent of payout;
+(iii) recovery from future payouts where permitted by contract and law; and/or
+(iv) account suspension pending investigation.
+
+6. LATE COMPLAINTS
+
+6.1 Complaints raised after 48 hours may still be reviewed, but they will not automatically block payout.
+
+6.2 Late complaints may require stronger supporting evidence.
+
+6.3 After the 48-hour window, the default position is that payout proceeds unless there is evidence of serious misconduct, fraud, chargeback risk, damage, or another strong reason for further review.
+
+7. PROVIDER PROTECTION
+
+7.1 Providers should be given a fair chance to respond before major deductions are finalised, except in clear no-show, fraud, safety, or payment dispute cases.
+
+7.2 Providers should be able to see when payout is on hold and, where appropriate, the high-level reason category.
+
+7.3 AreaSorted may record review notes and use booking performance data when deciding complaint outcomes.
+
+8. CUSTOMER PROTECTION
+
+8.1 Customers should be able to upload evidence such as photos or PDFs.
+
+8.2 Customers should be able to see complaint status and any review notes through their account where available.
+
+8.3 AreaSorted may offer rework, partial refund, full refund, credit, or another reasonable resolution depending on the circumstances.
+
+9. IMPORTANT LIMITATIONS
+
+9.1 Nothing in this Policy prevents AreaSorted from taking other reasonable action where required by law, card scheme rules, payment processor rules, fraud concerns, or safety obligations.
+
+9.2 This Policy does not guarantee a particular refund, deduction, or outcome in every case. Each case is reviewed on its facts.
+
+10. CONTACT
+
+If you have a question about a complaint, payout hold, or dispute outcome, please contact support@areasorted.com.

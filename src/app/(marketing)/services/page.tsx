@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { serviceCatalog, jobTypeCatalog } from "@/lib/service-catalog";
 import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
@@ -46,45 +47,56 @@ export default async function ServicesPage() {
     <main>
       {/* Hero */}
       <section className="section">
-        <div className="container" style={{ maxWidth: 860 }}>
-          <div className="eyebrow">Our services</div>
-          <h1 className="display" style={{ marginTop: "0.65rem", fontSize: "clamp(2.2rem, 3.4vw, 3.5rem)", maxWidth: 760 }}>
-            Trusted local services across London, all in one place.
-          </h1>
-          <p className="lead" style={{ marginTop: "0.95rem", maxWidth: 760 }}>
-            Browse cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance services, then get a clear quote based on your area and job details.
-          </p>
-          <p style={{ color: "var(--color-text-muted)", marginTop: "0.8rem", lineHeight: 1.7, maxWidth: 760 }}>
-            We support bookings across all 32 London boroughs and make it easier to compare service options, understand pricing, and continue to booking without chasing separate quotes.
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", marginTop: "1.25rem" }}>
-            {[
-              `${visibleServiceCatalog.length} service categories`,
-              `${visibleJobTypeCatalog.length} bookable job types`,
-              "Coverage across London",
-            ].map((item) => (
-              <span
-                key={item}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  minHeight: 38,
-                  padding: "0.55rem 0.85rem",
-                  borderRadius: 999,
-                  border: "1px solid var(--color-border)",
-                  background: "var(--color-surface-muted)",
-                  color: "var(--color-text)",
-                  fontSize: "0.92rem",
-                  fontWeight: 600,
-                }}
-              >
-                {item}
-              </span>
-            ))}
+        <div className="container services-hero-grid" style={{ alignItems: "center" }}>
+          <div>
+            <div className="eyebrow">Our services</div>
+            <h1 className="display" style={{ marginTop: "0.65rem", fontSize: "clamp(2.2rem, 3.4vw, 3.5rem)", maxWidth: 760 }}>
+              Trusted local services across London, all in one place.
+            </h1>
+            <p className="lead" style={{ marginTop: "0.95rem", maxWidth: 760 }}>
+              Browse cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance services, then get a clear quote based on your area and job details.
+            </p>
+            <p style={{ color: "var(--color-text-muted)", marginTop: "0.8rem", lineHeight: 1.7, maxWidth: 760 }}>
+              We support bookings across all 32 London boroughs and make it easier to compare service options, understand pricing, and continue to booking without chasing separate quotes.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.7rem", marginTop: "1.25rem" }}>
+              {[
+                `${visibleServiceCatalog.length} service categories`,
+                `${visibleJobTypeCatalog.length} bookable job types`,
+                "Coverage across London",
+              ].map((item) => (
+                <span
+                  key={item}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    minHeight: 38,
+                    padding: "0.55rem 0.85rem",
+                    borderRadius: 999,
+                    border: "1px solid var(--color-border)",
+                    background: "var(--color-surface-muted)",
+                    color: "var(--color-text)",
+                    fontSize: "0.92rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+            <div className="button-row" style={{ marginTop: "1.5rem" }}>
+              <Link className="button button-primary" href="/quote">Get a quote</Link>
+              <Link className="button button-secondary" href="/faq">How booking works</Link>
+            </div>
           </div>
-          <div className="button-row" style={{ marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Get a quote</Link>
-            <Link className="button button-secondary" href="/faq">How booking works</Link>
+          <div className="services-hero-art">
+            <Image
+              src="/images/services-hero-v2.png"
+              alt="AreaSorted home service categories"
+              fill
+              className="services-hero-art-image"
+              sizes="(max-width: 960px) 100vw, 42vw"
+            />
           </div>
         </div>
       </section>

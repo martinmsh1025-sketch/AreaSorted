@@ -31,6 +31,8 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
+    const detailsUnlocked = booking.bookingStatus !== "PENDING_ASSIGNMENT";
+
     return NextResponse.json({
       order: {
         ...serializeMobileProviderOrder({
@@ -49,12 +51,17 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
                 platformCommissionAmount: Number(booking.priceSnapshot.platformCommissionAmount),
               }
             : null,
-          customer: booking.customer,
+          customer: detailsUnlocked ? booking.customer : {
+            firstName: "Confirmed",
+            lastName: "customer",
+            email: null,
+            phone: null,
+          },
           additionalNotes: booking.additionalNotes,
         }),
-        serviceAddressLine1: booking.serviceAddressLine1,
-        serviceAddressLine2: booking.serviceAddressLine2,
-        serviceCity: booking.serviceCity,
+        serviceAddressLine1: detailsUnlocked ? booking.serviceAddressLine1 : "Full address unlocks after acceptance",
+        serviceAddressLine2: detailsUnlocked ? booking.serviceAddressLine2 : null,
+        serviceCity: detailsUnlocked ? booking.serviceCity : "London area",
         scheduledEndTime: booking.scheduledEndTime,
         propertyType: booking.propertyType,
         bedroomCount: booking.bedroomCount,

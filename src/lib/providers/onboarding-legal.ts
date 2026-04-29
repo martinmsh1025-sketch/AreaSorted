@@ -32,6 +32,8 @@ const soleTraderAgreement: AgreementContent = {
         "The platform may send booking opportunities with limited job details before confirmation and fuller customer details after confirmation where needed.",
         "The platform may place a pre-authorisation or payment hold on the customer's card before confirmation and capture payment after provider confirmation.",
         "Payouts are subject to fees, commission, complaints, refunds, chargebacks, and any other permitted deductions.",
+        "For standard service quality issues, customers normally have 48 hours after completion to raise a complaint. If no complaint is raised within that period, payout should normally become eligible unless there is fraud, damage, chargeback, or another valid hold reason.",
+        "Minor upheld complaints may result in limited deductions, while severe failures such as no-shows, serious misconduct, damage, fraud, or chargebacks may result in larger deductions or full payout loss.",
       ],
     },
     {
@@ -73,6 +75,8 @@ const companyAgreement: AgreementContent = {
         "The platform may send booking opportunities, manage customer communication, and control the payment process.",
         "The platform may place payment holds or pre-authorisations before confirmation and capture payment once the provider confirms.",
         "Provider payouts remain subject to fees, commission, complaints, refunds, chargebacks, investigations, and any other permitted deductions.",
+        "For standard service quality issues, customers normally have 48 hours after completion to raise a complaint. If no complaint is raised within that period, payout should normally become eligible unless there is fraud, damage, chargeback, or another valid hold reason.",
+        "Minor upheld complaints may result in limited deductions, while severe failures such as no-shows, serious misconduct, damage, fraud, or chargebacks may result in larger deductions or full payout loss.",
       ],
     },
     {

@@ -6,7 +6,12 @@ import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/d
 import { CustomerCounterOfferBanner } from "@/components/customer/counter-offer-response";
 import { CancelBookingSection } from "./cancel-booking-section";
 import { RescheduleBookingSection } from "./reschedule-booking-section";
+import { ReportBookingIssueSection } from "./report-booking-issue-section";
 import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
+import { CaseStatusBadge } from "@/components/customer/case-status-badge";
+import { parseComplaintAttachmentPaths } from "@/lib/complaints/attachments";
+import { getComplaintSlaMessage } from "@/lib/complaints/sla";
+import { ComplaintTimeline } from "@/components/customer/complaint-timeline";
 
 type BookingDetailPageProps = {
   params: Promise<{ reference: string }>;
@@ -30,6 +35,10 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
       priceSnapshot: true,
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
       marketplaceProviderCompany: { select: { tradingName: true, legalName: true, specialtiesText: true } },
+      complaints: {
+        where: { customerId: customer.id },
+        orderBy: { createdAt: "desc" },
+      },
       counterOffers: {
         orderBy: { createdAt: "desc" },
       },
@@ -237,6 +246,80 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             </>
           )}
         </div>
+
+        {booking.bookingStatus !== "CANCELLED" && (
+          <div className="panel card" style={{ marginTop: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>AreaSorted protection</h2>
+            <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.6 }}>
+              If the provider is late, misses agreed tasks, does not show up, or there is a quality or damage issue, log the case through your account. We review open complaints, investigate the booking record, and decide whether follow-up, rework, or refund handling is needed.
+            </p>
+          </div>
+        )}
+
+        {booking.complaints.length > 0 ? (
+          <div className="panel card" style={{ marginTop: "1.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: 0 }}>Case history</h2>
+              <Link href="/account/cases" style={{ color: "var(--color-brand)", fontWeight: 600, fontSize: "0.88rem" }}>View all cases</Link>
+            </div>
+            <div style={{ display: "grid", gap: "0.85rem" }}>
+              {booking.complaints.map((complaint) => (
+                <div key={complaint.id} style={{ border: "1px solid var(--color-border)", borderRadius: "0.85rem", padding: "0.95rem" }}>
+                  {(() => {
+                    const attachmentPaths = parseComplaintAttachmentPaths(complaint.attachmentPath);
+                    return (
+                      <>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+                    <div>
+                      <strong style={{ display: "block" }}>{complaint.complaintType.replace(/_/g, " ")}</strong>
+                      <div style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
+                        Logged {complaint.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </div>
+                    </div>
+                    <CaseStatusBadge status={complaint.status} />
+                  </div>
+                  <p style={{ margin: "0.75rem 0 0", color: "var(--color-text-muted)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                    {complaint.description}
+                  </p>
+                  <div style={{ marginTop: "0.75rem", padding: "0.8rem 0.9rem", borderRadius: "0.75rem", background: "#f8fafc", border: "1px solid rgba(15,23,42,0.08)" }}>
+                    <strong style={{ display: "block", fontSize: "0.88rem" }}>Expected next step</strong>
+                    <p style={{ margin: "0.35rem 0 0", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+                      {getComplaintSlaMessage(complaint.status, complaint.createdAt)}
+                    </p>
+                  </div>
+                  {attachmentPaths.length > 0 ? (
+                    <div style={{ marginTop: "0.75rem", display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+                      {attachmentPaths.map((_, index) => (
+                        <a key={index} href={`/api/complaint-evidence/${complaint.id}?index=${index}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-brand)", fontWeight: 600 }}>
+                          View evidence {index + 1}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                  {complaint.resolutionNotes ? (
+                    <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid var(--color-border)" }}>
+                      <strong style={{ display: "block", fontSize: "0.9rem" }}>AreaSorted review note</strong>
+                      <p style={{ margin: "0.35rem 0 0", color: "var(--color-text-muted)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                        {complaint.resolutionNotes}
+                      </p>
+                    </div>
+                  ) : null}
+                  <ComplaintTimeline
+                    status={complaint.status}
+                    createdAt={complaint.createdAt}
+                    reviewedAt={complaint.reviewedAt}
+                    resolutionNotes={complaint.resolutionNotes}
+                  />
+                      </>
+                    );
+                  })()}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {booking.bookingStatus !== "CANCELLED" ? <ReportBookingIssueSection bookingId={booking.id} /> : null}
     </div>
   );
 }

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, Linking, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { useAuth } from "@/state/auth";
 import { useProviderAccount } from "@/state/provider-data";
+import { mobileConfig } from "@/lib/config";
 import { AppTheme } from "@/ui/theme";
 import { Card } from "@/ui/card";
 import { Pill } from "@/ui/pill";
@@ -11,6 +12,7 @@ import { updateProviderMobilePassword, updateProviderMobileProfile } from "@/lib
 export default function AccountScreen() {
   const account = useProviderAccount();
   const { signOut, provider, token, refreshProfile } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [tradingName, setTradingName] = useState("");
@@ -22,6 +24,11 @@ export default function AccountScreen() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await refreshProfile(); } finally { setRefreshing(false); }
+  }, [refreshProfile]);
 
   useEffect(() => {
     setTradingName(provider?.tradingName || provider?.displayName || "");
@@ -75,7 +82,7 @@ export default function AccountScreen() {
 
   return (
     <Screen>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={AppTheme.colors.ink} />}>
         <View style={{ gap: 12 }}>
           <Card tone="hero">
             <Text style={AppTheme.text.eyebrow}>Provider account</Text>
@@ -154,6 +161,51 @@ export default function AccountScreen() {
             </View>
           </Card>
 
+          <Card>
+            <Text style={AppTheme.text.sectionTitle}>Legal</Text>
+            <View style={{ gap: 10, marginTop: 14 }}>
+              <LinkRow label="Provider Terms" path="/cleaner-terms" />
+              <LinkRow label="Privacy Policy" path="/privacy-policy" />
+              <LinkRow label="Terms & Conditions" path="/terms-and-conditions" />
+              <LinkRow label="GDPR Policy" path="/gdpr-policy" />
+            </View>
+          </Card>
+
+          <Card>
+            <Text style={AppTheme.text.sectionTitle}>Account</Text>
+            <View style={{ gap: 12, marginTop: 14 }}>
+              <Text style={AppTheme.text.bodyMuted}>
+                If you wish to permanently delete your account and all associated data, you can submit a request below. This action cannot be undone.
+              </Text>
+              <Pressable
+                onPress={() => {
+                  Alert.alert(
+                    "Delete account",
+                    "This will submit a request to permanently delete your provider account and all associated data. This cannot be undone.",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Request deletion",
+                        style: "destructive",
+                        onPress: () => Linking.openURL(`mailto:support@areasorted.com?subject=Account%20Deletion%20Request&body=Please%20delete%20my%20provider%20account.%0A%0AEmail%3A%20${encodeURIComponent(account.email)}`),
+                      },
+                    ],
+                  );
+                }}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#b42318",
+                  borderRadius: 18,
+                  paddingHorizontal: 18,
+                  paddingVertical: 14,
+                  alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "#b42318", fontSize: 14, fontWeight: "700" }}>Request account deletion</Text>
+              </Pressable>
+            </View>
+          </Card>
+
           <Pressable
             onPress={signOut}
             style={{
@@ -211,5 +263,13 @@ function Field({
         }}
       />
     </View>
+  );
+}
+
+function LinkRow({ label, path }: { label: string; path: string }) {
+  return (
+    <Pressable onPress={() => Linking.openURL(`${mobileConfig.apiBaseUrl}${path}`)}>
+      <Text style={{ color: AppTheme.colors.accent, fontSize: 14, fontWeight: "600" }}>{label}</Text>
+    </Pressable>
   );
 }

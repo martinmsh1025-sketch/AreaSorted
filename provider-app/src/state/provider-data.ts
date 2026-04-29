@@ -79,6 +79,12 @@ export function useProviderNotifications() {
     await query.refresh();
   }, [query, token]);
 
+  const markOneRead = useCallback(async (notificationId: string) => {
+    if (!token) return;
+    await markProviderMobileNotifications(token, { notificationId });
+    await query.refresh();
+  }, [query, token]);
+
   return {
     notifications: query.data.notifications,
     unreadCount: query.data.unreadCount,
@@ -86,6 +92,7 @@ export function useProviderNotifications() {
     error: query.error,
     refresh: query.refresh,
     markAllRead,
+    markOneRead,
   };
 }
 

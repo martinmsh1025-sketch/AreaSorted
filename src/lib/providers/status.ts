@@ -109,7 +109,7 @@ export function getProviderApplicationState(input: {
     return {
       label: "Approved",
       reason: "The application has been approved.",
-      nextAction: "Continue with Stripe and pricing setup.",
+      nextAction: "Set pricing first. Payment setup can be completed later before your first payout.",
     };
   }
 

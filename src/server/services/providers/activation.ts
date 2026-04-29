@@ -53,7 +53,6 @@ export async function syncProviderLifecycleState(providerCompanyId: string) {
   if (!provider) throw new Error("Provider company not found");
 
   const checklist = buildProviderChecklist(provider);
-  const stripeReady = Boolean(provider.stripeConnectedAccount?.chargesEnabled && provider.stripeConnectedAccount?.payoutsEnabled);
   const hasPricing = Boolean(provider.pricingRules.some((rule) => rule.active));
 
   let nextStatus = provider.status;
@@ -67,16 +66,7 @@ export async function syncProviderLifecycleState(providerCompanyId: string) {
   } else if (provider.status === "CHANGES_REQUESTED") {
     nextStatus = "CHANGES_REQUESTED";
   } else if (provider.status === "ACTIVE") {
-    // H6 FIX: Once ACTIVE, don't regress unless Stripe is explicitly broken.
-    // If Stripe becomes non-functional, downgrade to STRIPE_RESTRICTED so
-    // the provider can't accept new bookings. Otherwise stay ACTIVE.
-    if (!stripeReady && provider.stripeConnectedAccount) {
-      nextStatus = provider.stripeConnectedAccount.chargesEnabled || provider.stripeConnectedAccount.payoutsEnabled
-        ? "STRIPE_RESTRICTED"
-        : "STRIPE_PENDING";
-    } else {
-      nextStatus = "ACTIVE";
-    }
+    nextStatus = "ACTIVE";
   } else if (provider.status === "UNDER_REVIEW" || provider.status === "SUBMITTED_FOR_REVIEW") {
     // These statuses are transitional — admin review can change them.
     // However, automated lifecycle sync should NOT auto-progress them;
@@ -85,19 +75,15 @@ export async function syncProviderLifecycleState(providerCompanyId: string) {
       nextStatus = provider.status;
     } else if (checklist.allComplete) {
       nextStatus = "ACTIVE";
-    } else if (provider.approvedAt && stripeReady && !hasPricing) {
+    } else if (provider.approvedAt && !hasPricing) {
       nextStatus = "PRICING_PENDING";
-    } else if (provider.approvedAt && !stripeReady && provider.stripeConnectedAccount) {
-      nextStatus = provider.stripeConnectedAccount.chargesEnabled || provider.stripeConnectedAccount.payoutsEnabled ? "STRIPE_RESTRICTED" : "STRIPE_PENDING";
     } else if (provider.approvedAt) {
       nextStatus = "APPROVED";
     }
   } else if (checklist.allComplete) {
     nextStatus = "ACTIVE";
-  } else if (provider.approvedAt && stripeReady && !hasPricing) {
+  } else if (provider.approvedAt && !hasPricing) {
     nextStatus = "PRICING_PENDING";
-  } else if (provider.approvedAt && !stripeReady && provider.stripeConnectedAccount) {
-    nextStatus = provider.stripeConnectedAccount.chargesEnabled || provider.stripeConnectedAccount.payoutsEnabled ? "STRIPE_RESTRICTED" : "STRIPE_PENDING";
   } else if (provider.approvedAt) {
     nextStatus = "APPROVED";
   }

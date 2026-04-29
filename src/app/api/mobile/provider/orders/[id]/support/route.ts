@@ -30,7 +30,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return NextResponse.json({ error: "This request is only available for accepted or in-progress orders." }, { status: 409 });
     }
 
-    return NextResponse.json({ ok: true, message: `${result.requestLabel} sent to support.` });
+    return NextResponse.json({ ok: true, message: `${result.requestLabel} sent to support. Case ${result.caseReference}.`, caseReference: result.caseReference });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";
     if (code === "UNAUTHORIZED") {

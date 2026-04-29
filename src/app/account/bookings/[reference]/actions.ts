@@ -8,7 +8,9 @@ import { sendTransactionalEmail } from "@/lib/notifications/email";
 import { cancelDirectChargePaymentIntent, createDirectChargeRefund } from "@/lib/stripe/connect";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
-import type { BookingStatus } from "@prisma/client";
+import type { BookingStatus, ComplaintType } from "@prisma/client";
+import { saveComplaintEvidenceUploads } from "@/server/services/complaints/evidence";
+import { serializeComplaintAttachmentPaths } from "@/lib/complaints/attachments";
 
 /** Statuses from which a customer can self-cancel */
 const CANCELLABLE_STATUSES: BookingStatus[] = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"];
@@ -21,6 +23,21 @@ const RESCHEDULE_TIME_SLOTS = new Set([
   "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
   "17:00", "17:30", "18:00",
 ]);
+
+const COMPLAINT_TYPES: ComplaintType[] = [
+  "POOR_QUALITY",
+  "LATE_ARRIVAL",
+  "MISSED_TASKS",
+  "INAPPROPRIATE_BEHAVIOUR",
+  "DAMAGE_CLAIM",
+  "NO_SHOW",
+  "OTHER",
+];
+
+export type ReportBookingIssueState = {
+  error?: string;
+  success?: string;
+};
 
 function toIsoDate(value: Date) {
   return value.toISOString().split("T")[0];
@@ -319,6 +336,125 @@ export async function cancelBookingAction(formData: FormData) {
   revalidatePath("/admin/orders");
   revalidatePath("/provider/orders");
   return { success: true };
+}
+
+export async function reportBookingIssueAction(
+  _prevState: ReportBookingIssueState,
+  formData: FormData,
+): Promise<ReportBookingIssueState> {
+  const customer = await requireCustomerSession();
+  const bookingId = String(formData.get("bookingId") || "").trim();
+  const complaintType = String(formData.get("complaintType") || "").trim() as ComplaintType;
+  const description = String(formData.get("description") || "").trim();
+  const evidenceFiles = formData
+    .getAll("evidence")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+
+  if (!bookingId) return { error: "Missing booking reference." };
+  if (!COMPLAINT_TYPES.includes(complaintType)) return { error: "Please choose a valid issue type." };
+  if (description.length < 20) return { error: "Please add a little more detail so the team can review the issue properly." };
+
+  const prisma = getPrisma();
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      customerId: customer.id,
+      bookingStatus: { in: ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "REFUND_PENDING"] },
+    },
+    select: {
+      id: true,
+      providerCompanyId: true,
+      servicePostcode: true,
+      customer: { select: { email: true, firstName: true } },
+      jobs: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, assignedCleanerId: true } },
+    },
+  });
+
+  if (!booking) {
+    return { error: "This booking cannot be reported from your account. Please contact support if you still need help." };
+  }
+
+  const existingOpenComplaint = await prisma.complaint.findFirst({
+    where: {
+      bookingId: booking.id,
+      customerId: customer.id,
+      status: { in: ["OPEN", "UNDER_REVIEW"] },
+    },
+    select: { id: true },
+  });
+
+  if (existingOpenComplaint) {
+    return { error: "You already have an open issue for this booking. Our support team will review it shortly." };
+  }
+
+  const createdComplaint = await prisma.complaint.create({
+    data: {
+      bookingId: booking.id,
+      jobId: booking.jobs[0]?.id,
+      cleanerId: booking.jobs[0]?.assignedCleanerId ?? null,
+      customerId: customer.id,
+      complaintType,
+      description,
+      status: "OPEN",
+    },
+  });
+
+  if (evidenceFiles.length > 0) {
+    try {
+      const attachmentPaths = await saveComplaintEvidenceUploads(createdComplaint.id, customer.id, evidenceFiles);
+      await prisma.complaint.update({
+        where: { id: createdComplaint.id },
+        data: { attachmentPath: serializeComplaintAttachmentPaths(attachmentPaths) },
+      });
+    } catch (error) {
+      await prisma.complaint.delete({ where: { id: createdComplaint.id } });
+      return { error: error instanceof Error ? error.message : "We could not save the evidence file." };
+    }
+  }
+
+  try {
+    await prisma.auditLog.create({
+      data: {
+        actorType: "CUSTOMER",
+        actorId: customer.id,
+        actionType: "COMPLAINT_CREATED",
+        entityType: "Complaint",
+        entityId: createdComplaint.id,
+        newValues: { complaintType, description },
+      },
+    });
+  } catch {
+    // Non-critical
+  }
+
+  if (booking.customer?.email) {
+    await sendTransactionalEmail({
+      to: booking.customer.email,
+      subject: `AreaSorted case opened for booking ${booking.servicePostcode}`,
+      text: [
+        `Hi ${booking.customer.firstName || "there"},`,
+        "",
+        "We have logged your complaint and opened a support case.",
+        `Issue type: ${complaintType.replace(/_/g, " ")}`,
+        "Our support team will review the booking record and follow up if more evidence is needed.",
+      ].join("\n"),
+    }).catch(() => undefined);
+  }
+
+  if (booking.providerCompanyId) {
+    await createProviderNotification({
+      providerCompanyId: booking.providerCompanyId,
+      type: "SYSTEM_MESSAGE",
+      title: "Booking issue under review",
+      message: `A customer raised a ${complaintType.replace(/_/g, " ").toLowerCase()} case for this booking. Please check the order page for updates.`,
+      bookingId: booking.id,
+      link: `/provider/orders/${booking.id}`,
+    }).catch(() => undefined);
+  }
+
+  revalidatePath(`/account/bookings/${booking.id}`);
+  revalidatePath("/admin/trust-ops");
+  return { success: "Your issue has been logged. The AreaSorted team will review it and follow up if needed." };
 }
 
 /**

@@ -32,6 +32,7 @@ export default function OrderDetailScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [supportMessage, setSupportMessage] = useState("");
+  const [supportCaseReference, setSupportCaseReference] = useState<string | null>(null);
 
   const loadOrder = useCallback(async () => {
     if (!token || !id) return;
@@ -99,6 +100,7 @@ export default function OrderDetailScreen() {
         requestType: "ISSUE",
         message: supportMessage,
       });
+      setSupportCaseReference(response.caseReference || null);
       Alert.alert("Support updated", response.message);
       setSupportMessage("");
     } catch (supportError) {
@@ -128,6 +130,7 @@ export default function OrderDetailScreen() {
     .filter(Boolean)
     .join(", ");
   const timeSlot = order.scheduledEndTime ? `${order.scheduledStartTime} - ${order.scheduledEndTime}` : order.scheduledStartTime;
+  const detailsUnlocked = order.bookingStatus !== "PENDING_ASSIGNMENT";
 
   return (
     <Screen>
@@ -155,10 +158,13 @@ export default function OrderDetailScreen() {
           <Card>
             <Text style={AppTheme.text.sectionTitle}>Customer and address</Text>
             <View style={{ gap: 8, marginTop: 12 }}>
-              <Text style={AppTheme.text.body}>{order.customer?.name || "Customer"}</Text>
-              <Text style={AppTheme.text.bodyMuted}>{order.customer?.email || "No email"}</Text>
-              <Text style={AppTheme.text.bodyMuted}>{order.customer?.phone || "No phone"}</Text>
+              <Text style={AppTheme.text.body}>{detailsUnlocked ? (order.customer?.name || "Customer") : "Confirmed customer"}</Text>
+              <Text style={AppTheme.text.bodyMuted}>{detailsUnlocked ? (order.customer?.email || "No email") : "Contact details unlock after acceptance"}</Text>
+              <Text style={AppTheme.text.bodyMuted}>{detailsUnlocked ? (order.customer?.phone || "No phone") : "Phone unlocks after acceptance"}</Text>
               <Text style={AppTheme.text.body}>{address}</Text>
+              {!detailsUnlocked ? (
+                <Text style={AppTheme.text.caption}>We only reveal the full address and direct contact details after you accept the order.</Text>
+              ) : null}
             </View>
           </Card>
 
@@ -218,6 +224,9 @@ export default function OrderDetailScreen() {
                 }}
               />
               <ActionButton label="Send to support" onPress={sendSupportRequest} disabled={saving || supportMessage.trim().length < 10} tone="secondary" />
+              {supportCaseReference ? (
+                <Text style={AppTheme.text.caption}>Latest support case: {supportCaseReference}</Text>
+              ) : null}
             </View>
           </Card>
         </View>

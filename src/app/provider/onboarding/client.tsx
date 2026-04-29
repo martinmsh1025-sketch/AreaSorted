@@ -1537,6 +1537,14 @@ export function ProviderOnboardingClient({
                         >
                           Download text
                         </a>
+                        <a
+                          href="/dispute-policy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-8 items-center justify-center rounded-md border border-input bg-white px-3 text-xs font-medium shadow-sm hover:bg-slate-50"
+                        >
+                          Review dispute & payout rules
+                        </a>
                       </div>
                       <label className={`flex items-start gap-3 ${canEdit ? "cursor-pointer" : "pointer-events-none opacity-70"}`}>
                         <input

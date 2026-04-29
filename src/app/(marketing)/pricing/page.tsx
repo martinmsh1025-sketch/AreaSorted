@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {
   serviceCatalog,
   jobTypeCatalog,
@@ -64,23 +65,28 @@ export default async function PricingPage() {
     <main>
       {/* Hero */}
       <section className="section">
-        <div className="container" style={{ maxWidth: 860 }}>
-          <div className="eyebrow">Pricing</div>
-          <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
-            Transparent pricing with no hidden fees.
-          </h1>
-          <p className="lead">
-            Every quote shows the full breakdown — base price, add-ons, adjustments, and booking fee — before you pay. 
-            The price you see at checkout is the price you pay.
-          </p>
-          <p style={{ color: "var(--color-text-muted)", marginTop: "0.9rem", lineHeight: 1.7 }}>
-            If you are researching local service pricing in London, this page explains how AreaSorted builds a
-            quote for cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance.
-            Final pricing depends on postcode, service type, job size, timing, and any add-ons you choose.
-          </p>
-          <div className="button-row" style={{ marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Continue booking</Link>
-            <Link className="button button-secondary" href="/services">Browse services</Link>
+        <div className="container pricing-hero-grid" style={{ alignItems: "center" }}>
+          <div>
+            <div className="eyebrow">Pricing</div>
+            <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
+              Transparent pricing with no hidden fees.
+            </h1>
+            <p className="lead">
+              Every quote shows the full breakdown — base price, add-ons, adjustments, and booking fee — before you pay.
+              The price you see at checkout is the price you pay.
+            </p>
+            <p style={{ color: "var(--color-text-muted)", marginTop: "0.9rem", lineHeight: 1.7 }}>
+              If you are researching local service pricing in London, this page explains how AreaSorted builds a
+              quote for cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance.
+              Final pricing depends on postcode, service type, job size, timing, and any add-ons you choose.
+            </p>
+            <div className="button-row" style={{ marginTop: "1.5rem" }}>
+              <Link className="button button-primary" href="/quote">Continue booking</Link>
+              <Link className="button button-secondary" href="/services">Browse services</Link>
+            </div>
+          </div>
+          <div className="pricing-hero-art">
+            <Image src="/images/marketing-generated/pricing-hero-v2.png" alt="AreaSorted pricing breakdown illustration" fill className="pricing-hero-art-image" sizes="(max-width: 960px) 100vw, 42vw" />
           </div>
         </div>
       </section>
@@ -91,6 +97,9 @@ export default async function PricingPage() {
           <div style={{ textAlign: "center", marginBottom: "2rem" }}>
             <div className="eyebrow">How pricing works</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Your quote is built from four components</h2>
+          </div>
+          <div className="pricing-flow-visual">
+            <Image src="/images/marketing-generated/pricing-components-v2.png" alt="How pricing is built from four components" fill className="pricing-flow-visual-image" sizes="(max-width: 960px) 100vw, 1000px" />
           </div>
           <div className="grid-2" style={{ gap: "1.2rem", maxWidth: 900, margin: "0 auto" }}>
             {[
@@ -225,11 +234,16 @@ export default async function PricingPage() {
       {/* Adjustments */}
       <section className="section muted-block">
         <div className="container">
-          <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-            <div className="eyebrow">Price adjustments</div>
-            <h2 className="title" style={{ marginTop: "0.6rem" }}>
-              What affects the final price?
-            </h2>
+          <div className="pricing-adjustments-head">
+            <div>
+              <div className="eyebrow">Price adjustments</div>
+              <h2 className="title" style={{ marginTop: "0.6rem" }}>
+                What affects the final price?
+              </h2>
+            </div>
+            <div className="pricing-adjustments-visual">
+              <Image src="/images/marketing-generated/pricing-categories-map-v2.png" alt="Pricing varies by service category" fill className="pricing-adjustments-visual-image" sizes="(max-width: 960px) 100vw, 360px" />
+            </div>
           </div>
           <div className="grid-3" style={{ gap: "1.2rem" }}>
             {adjustments.map((group) => (

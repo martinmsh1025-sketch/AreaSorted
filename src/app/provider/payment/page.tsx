@@ -43,7 +43,7 @@ export default async function ProviderPaymentPage({
         <div>
           <h1 className="text-xl font-bold tracking-tight">Payment account</h1>
           <p className="text-sm text-muted-foreground">
-            Connect your bank account via Stripe to receive payouts.
+            Connect your bank account via Stripe to receive payouts. This step is optional during onboarding and can be completed before your first payout.
           </p>
         </div>
         <Badge
@@ -186,6 +186,9 @@ export default async function ProviderPaymentPage({
                     description="Once complete, you will be redirected back to this page. Your status will update automatically."
                   />
                 </ol>
+                <p className="mt-4 text-xs text-muted-foreground">
+                  You can skip this for now if you are not yet receiving payouts. Bank transfer can still be used manually until Stripe is connected.
+                </p>
               </CardContent>
             </Card>
           )}

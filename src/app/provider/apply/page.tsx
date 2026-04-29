@@ -18,11 +18,19 @@ export default async function ProviderApplyPage({ searchParams }: ProviderApplyP
           <div className="provider-auth-eyebrow">Provider application</div>
           <h1 className="provider-auth-title">Start onboarding as a sole trader or limited company.</h1>
           <p className="provider-auth-copy">
-            Use one public apply link for Indeed, Facebook, referrals, and organic provider recruitment. We will verify your email first, then take you into the onboarding flow.
+            Use one public apply link for Indeed, Facebook, referrals, and organic provider recruitment. We verify your email first, then take you into onboarding, review, and activation.
           </p>
           <div className="provider-auth-note">
             <strong>What happens next</strong>
             Enter your email, verify the one-time code, then complete services, coverage, documents, and agreement steps inside the provider portal.
+          </div>
+          <div className="provider-auth-note">
+            <strong>Plans at launch</strong>
+            Approved providers can join on a <strong>GBP 0 Starter plan</strong>. We also offer an optional <strong>GBP 500/month Growth plan</strong> for providers who want extra visibility and managed lead generation support. Founding member waivers may apply during the launch window.
+          </div>
+          <div className="provider-auth-note">
+            <strong>Important</strong>
+            The Growth plan is not a guarantee of bookings or revenue. It is a managed promotion plan designed to improve visibility and generate qualified leads depending on category, area, pricing, and provider responsiveness.
           </div>
         </div>
 

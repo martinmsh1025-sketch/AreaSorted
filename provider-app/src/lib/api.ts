@@ -6,6 +6,14 @@ type RequestOptions = {
   token?: string | null;
 };
 
+/** Listeners called when any API request receives a 401 Unauthorized response. */
+const unauthorizedListeners = new Set<() => void>();
+
+export function onUnauthorized(listener: () => void) {
+  unauthorizedListeners.add(listener);
+  return () => { unauthorizedListeners.delete(listener); };
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const response = await fetch(`${mobileConfig.apiBaseUrl}${path}`, {
     method: options.method || "GET",
@@ -21,6 +29,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     payload = await response.json();
   } catch {
     payload = null;
+  }
+
+  if (response.status === 401) {
+    unauthorizedListeners.forEach((fn) => fn());
   }
 
   if (!response.ok) {

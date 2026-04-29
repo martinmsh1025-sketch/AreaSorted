@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, Text, TextInput, View } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "@/state/auth";
+import { mobileConfig } from "@/lib/config";
 import { AppTheme } from "@/ui/theme";
 import { Card } from "@/ui/card";
 import { Screen } from "@/ui/screen";
@@ -88,6 +89,9 @@ export default function SignInScreen() {
             />
             {authError ? <Text style={{ color: "#b42318", fontSize: 13 }}>{authError}</Text> : null}
             {isDemoMode ? <Text style={AppTheme.text.caption}>Demo mode uses built-in sample provider data.</Text> : null}
+            <Pressable onPress={() => Linking.openURL(`${mobileConfig.apiBaseUrl}/provider/forgot-password`)}>
+              <Text style={{ color: AppTheme.colors.accent, fontSize: 14, fontWeight: "600" }}>Forgot password?</Text>
+            </Pressable>
           </View>
         </Card>
 

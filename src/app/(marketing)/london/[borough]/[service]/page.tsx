@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { formatMoney } from "@/lib/format";
 import { jobTypeCatalog, serviceCatalog } from "@/lib/service-catalog";
@@ -22,6 +23,14 @@ function getSafeSiteUrl() {
 }
 
 const serviceSlugs = boroughServiceContent.map((s) => s.slug);
+
+const eastNorthEastBoroughs = new Set(["hackney", "tower-hamlets", "newham", "waltham-forest", "redbridge", "havering", "barking-and-dagenham", "enfield", "camden", "islington", "barnet", "haringey"]);
+
+function getBoroughHeroImage(slug: string) {
+  return eastNorthEastBoroughs.has(slug)
+    ? "/images/marketing-generated/london-east-grid.png"
+    : "/images/marketing-generated/london-west-grid.png";
+}
 
 export async function generateStaticParams() {
   const params: Array<{ borough: string; service: string }> = [];
@@ -137,15 +146,16 @@ export default async function BoroughServicePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       <section className="section">
-        <div className="container" style={{ maxWidth: 860 }}>
-          <div className="eyebrow">{content.eyebrow}</div>
-          <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
-            {content.label} services in {page.name}
-          </h1>
-          <p className="lead">
-            {content.leadDescription(page.name)}
-          </p>
-          <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", marginTop: "1.25rem" }}>
+        <div className="container services-hero-grid" style={{ alignItems: "center" }}>
+          <div>
+            <div className="eyebrow">{content.eyebrow}</div>
+            <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
+              {content.label} services in {page.name}
+            </h1>
+            <p className="lead">
+              {content.leadDescription(page.name)}
+            </p>
+            <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", marginTop: "1.25rem" }}>
             {[
               `${serviceJobs.length} ${content.label.toLowerCase()} job types`,
               `From ${formatMoney(startingPrice)}`,
@@ -168,10 +178,14 @@ export default async function BoroughServicePage({ params }: Props) {
                 {item}
               </span>
             ))}
+            </div>
+            <div className="button-row" style={{ marginTop: "1.5rem" }}>
+              <Link className="button button-primary" href="/quote">Get a quote</Link>
+              <Link className="button button-secondary" href={`/services/${content.slug}`}>{content.label} services guide</Link>
+            </div>
           </div>
-          <div className="button-row" style={{ marginTop: "1.5rem" }}>
-            <Link className="button button-primary" href="/quote">Get a quote</Link>
-            <Link className="button button-secondary" href={`/services/${content.slug}`}>{content.label} services guide</Link>
+          <div className="services-hero-art borough-hero-art">
+            <Image src={getBoroughHeroImage(page.slug)} alt={`${content.label} in ${page.name}`} fill className="services-hero-art-image" sizes="(max-width: 960px) 100vw, 42vw" />
           </div>
         </div>
       </section>

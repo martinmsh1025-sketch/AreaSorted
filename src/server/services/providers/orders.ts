@@ -372,6 +372,23 @@ export async function requestProviderOrderSupport(input: {
     ].filter(Boolean).join("\n"),
   });
 
+  const enquiry = await prisma.contactEnquiry.create({
+    data: {
+      name: input.providerName,
+      email: input.providerEmail.toLowerCase(),
+      message: [
+        "[Provider support]",
+        `Topic: ${requestLabel}`,
+        `Booking ID: ${booking.id}`,
+        `Booking status: ${booking.bookingStatus}`,
+        `Customer: ${customerName}`,
+        `Service postcode: ${booking.servicePostcode}`,
+        "",
+        input.message,
+      ].join("\n"),
+    },
+  });
+
   await createProviderNotification({
     providerCompanyId: input.providerCompanyId,
     type: "SYSTEM_MESSAGE",
@@ -381,5 +398,5 @@ export async function requestProviderOrderSupport(input: {
     bookingId: booking.id,
   });
 
-  return { ok: true as const, bookingId: booking.id, requestLabel };
+  return { ok: true as const, bookingId: booking.id, requestLabel, caseReference: enquiry.id.slice(0, 8).toUpperCase() };
 }
