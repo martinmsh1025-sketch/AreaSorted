@@ -47,6 +47,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
   PENDING_ASSIGNMENT: "default",
   ASSIGNED: "secondary",
   IN_PROGRESS: "secondary",
+  COMPLETED_PENDING_CUSTOMER: "outline",
   COMPLETED: "default",
   CANCELLED: "destructive",
   NO_CLEANER_FOUND: "destructive",
@@ -60,6 +61,7 @@ const statusLabel: Record<string, string> = {
   PENDING_ASSIGNMENT: "Authorised — Needs Confirmation",
   ASSIGNED: "Accepted",
   IN_PROGRESS: "In Progress",
+  COMPLETED_PENDING_CUSTOMER: "Awaiting customer confirmation",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
   NO_CLEANER_FOUND: "Declined",
@@ -154,7 +156,7 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
   const isAssigned = booking.bookingStatus === "ASSIGNED";
   const isInProgress = booking.bookingStatus === "IN_PROGRESS";
   const detailsUnlocked = !needsAcceptance;
-  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED"].includes(booking.bookingStatus);
   const latestPayout = booking.payoutRecords[0] ?? null;
 
   const hasPendingCounterOffer = booking.counterOffers.some((co) => co.status === "PENDING");
@@ -274,6 +276,17 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
         </Card>
       )}
 
+      {booking.bookingStatus === "COMPLETED_PENDING_CUSTOMER" && (
+        <Card className="border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/10">
+          <CardContent className="pt-6">
+            <p className="font-medium">Waiting for customer review</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The customer has up to 72 hours to review the finished job. If they confirm it, the booking can move forward straight away. If they report an issue, AreaSorted can keep payout on hold while support reviews it. If they do nothing, the system will auto-confirm after the deadline.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ─── Action bar: accepted ─── */}
       {isAssigned && (
         <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/10">
@@ -296,7 +309,7 @@ export default async function ProviderOrderDetailPage({ params, searchParams }: 
             <div>
               <p className="font-medium">Job is in progress</p>
               <p className="text-sm text-muted-foreground">
-                Mark it as completed when the work is done.
+                Mark it as completed when the work is done. The customer then gets a review window before payout is released.
               </p>
             </div>
             <CompleteJobButton bookingId={booking.id} action={completeBookingAction} />

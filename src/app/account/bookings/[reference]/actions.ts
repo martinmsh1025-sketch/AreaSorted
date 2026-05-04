@@ -6,6 +6,7 @@ import { requireCustomerSession } from "@/lib/customer-auth";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { sendTransactionalEmail } from "@/lib/notifications/email";
 import { cancelDirectChargePaymentIntent, createDirectChargeRefund } from "@/lib/stripe/connect";
+import { ensurePayoutRecordForBooking, isProviderPayoutAutoReleaseEnabled, refreshPayoutRecordState } from "@/lib/payouts";
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import type { BookingStatus, ComplaintType } from "@prisma/client";
@@ -17,6 +18,7 @@ const CANCELLABLE_STATUSES: BookingStatus[] = ["PAID", "PENDING_ASSIGNMENT", "AS
 
 /** Statuses from which a customer can self-reschedule */
 const RESCHEDULABLE_STATUSES: BookingStatus[] = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"];
+const COMPLETION_CONFIRMABLE_STATUSES: BookingStatus[] = ["COMPLETED_PENDING_CUSTOMER"];
 const RESCHEDULE_TIME_SLOTS = new Set([
   "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
   "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
@@ -159,7 +161,7 @@ async function validateCustomerReschedule(input: {
       where: {
         providerCompanyId: input.providerCompanyId,
         id: { not: input.currentBookingId },
-        bookingStatus: { in: ["ASSIGNED", "IN_PROGRESS", "COMPLETED", "PAID", "PENDING_ASSIGNMENT"] },
+        bookingStatus: { in: ["ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED", "PAID", "PENDING_ASSIGNMENT"] },
         scheduledDate: {
           gte: dayStart,
           lte: dayEnd,
@@ -186,16 +188,14 @@ export async function cancelBookingAction(formData: FormData) {
 
   const prisma = getPrisma();
 
-  // C2 FIX: Atomically claim the booking for cancellation to prevent race
-  // with provider accept (which transitions from PENDING_ASSIGNMENT to ACCEPTING).
-  // Also include "ACCEPTING" as a valid target — if provider is mid-accept,
-  // the customer cancel should still succeed (funds haven't been captured yet
-  // during the ACCEPTING transitional state).
+  // Atomically claim the booking for cancellation. Do not allow self-cancel
+  // during ACCEPTING: at that point provider/admin confirmation may already be
+  // capturing funds, so cancellation must go through support/admin reconciliation.
   const claimResult = await prisma.booking.updateMany({
     where: {
       id: bookingId,
       customerId: customer.id,
-      bookingStatus: { in: [...CANCELLABLE_STATUSES, "ACCEPTING"] },
+      bookingStatus: { in: CANCELLABLE_STATUSES },
     },
     data: {
       bookingStatus: "CANCELLED",
@@ -359,12 +359,13 @@ export async function reportBookingIssueAction(
     where: {
       id: bookingId,
       customerId: customer.id,
-      bookingStatus: { in: ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "REFUND_PENDING"] },
+      bookingStatus: { in: ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED", "REFUND_PENDING"] },
     },
     select: {
       id: true,
       providerCompanyId: true,
       servicePostcode: true,
+      quoteRequest: { select: { reference: true } },
       customer: { select: { email: true, firstName: true } },
       jobs: { orderBy: { createdAt: "desc" }, take: 1, select: { id: true, assignedCleanerId: true } },
     },
@@ -452,9 +453,73 @@ export async function reportBookingIssueAction(
     }).catch(() => undefined);
   }
 
+  const ref = booking.quoteRequest?.reference ?? booking.id;
+  revalidatePath(`/account/bookings/${ref}`);
   revalidatePath(`/account/bookings/${booking.id}`);
   revalidatePath("/admin/trust-ops");
   return { success: "Your issue has been logged. The AreaSorted team will review it and follow up if needed." };
+}
+
+export async function confirmBookingCompletedAction(formData: FormData) {
+  const customer = await requireCustomerSession();
+  const bookingId = String(formData.get("bookingId") || "");
+  if (!bookingId) return { error: "Missing booking ID" };
+
+  const prisma = getPrisma();
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      customerId: customer.id,
+      bookingStatus: { in: COMPLETION_CONFIRMABLE_STATUSES },
+    },
+    select: {
+      id: true,
+      quoteRequest: { select: { reference: true } },
+    },
+  });
+
+  if (!booking) {
+    return { error: "This booking is not waiting for completion confirmation." };
+  }
+
+  const confirmedAt = new Date();
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      bookingStatus: "COMPLETED",
+      customerCompletedAt: confirmedAt,
+      completionConfirmedAt: confirmedAt,
+    },
+  });
+
+  const payout = await ensurePayoutRecordForBooking(bookingId, prisma);
+  if (payout) {
+    const refreshed = await refreshPayoutRecordState(payout.id, prisma);
+    if (refreshed?.status === "ELIGIBLE" && await isProviderPayoutAutoReleaseEnabled(prisma)) {
+      await prisma.payoutRecord.update({
+        where: { id: refreshed.id },
+        data: { status: "RELEASED", releasedAt: new Date() },
+      });
+    }
+  }
+
+  try {
+    const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+    await sendBookingStatusEmail(bookingId, "COMPLETED");
+  } catch {
+    // Non-critical
+  }
+
+  const ref = booking.quoteRequest?.reference ?? bookingId;
+  revalidatePath(`/account/bookings/${ref}`);
+  revalidatePath("/account/bookings");
+  revalidatePath("/account");
+  revalidatePath(`/provider/orders/${bookingId}`);
+  revalidatePath("/provider/orders");
+  revalidatePath(`/admin/orders/${ref}`);
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/payouts");
+  return { success: true };
 }
 
 /**

@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/db";
 import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
 import { CustomerCounterOfferBanner } from "@/components/customer/counter-offer-response";
 import { CancelBookingSection } from "./cancel-booking-section";
+import { ConfirmCompletedSection } from "./confirm-completed-section";
 import { RescheduleBookingSection } from "./reschedule-booking-section";
 import { ReportBookingIssueSection } from "./report-booking-issue-section";
 import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
@@ -31,7 +32,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
       ],
     },
     include: {
-      quoteRequest: { select: { reference: true, serviceKey: true, categoryKey: true } },
+      quoteRequest: { select: { reference: true, serviceKey: true } },
       priceSnapshot: true,
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1, select: { paymentState: true, metadataJson: true } },
       marketplaceProviderCompany: { select: { tradingName: true, legalName: true, specialtiesText: true } },
@@ -60,9 +61,19 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     : "Verified local provider";
   const providerPublicProfile = parseProviderPublicProfileMetadata(booking.marketplaceProviderCompany?.specialtiesText);
 
-  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED"].includes(booking.bookingStatus);
   const canCancel = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
   const canReschedule = ["PAID", "PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.bookingStatus);
+  const awaitingCompletionConfirmation = booking.bookingStatus === "COMPLETED_PENDING_CUSTOMER";
+  const completionDeadlineLabel = booking.completionConfirmationDeadlineAt
+    ? booking.completionConfirmationDeadlineAt.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "72 hours";
 
   // Prepare counter offers for client component
   const counterOffers = booking.counterOffers.map((co) => ({
@@ -82,7 +93,6 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     month: "long",
     year: "numeric",
   });
-
   return (
     <div>
         <div style={{ marginBottom: "1.25rem" }}>
@@ -118,6 +128,10 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             />
           </div>
         )}
+
+        {awaitingCompletionConfirmation ? (
+          <ConfirmCompletedSection bookingId={booking.id} deadlineLabel={completionDeadlineLabel} />
+        ) : null}
 
         <div className="panel card" style={{ marginBottom: "1.5rem" }}>
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Service details</h2>
@@ -155,7 +169,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           <div className="panel card" style={{ marginBottom: "1.5rem" }}>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.75rem" }}>Provider contact details</h2>
             <p style={{ margin: "0 0 1rem", color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
-              Your payment is secured, so you can now see the provider's direct contact details for booking coordination.
+              Your payment is secured, so you can now see the provider&apos;s direct contact details for booking coordination.
             </p>
             <div className="quote-summary-list">
               <div><span>Provider</span><strong>{providerName}</strong></div>
@@ -236,7 +250,9 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
                   ? "This booking has been cancelled."
                   : booking.bookingStatus === "COMPLETED"
                     ? "This booking is complete. Thank you for using AreaSorted!"
-                    : "If you need help with this booking, please contact our support team."}
+                    : booking.bookingStatus === "COMPLETED_PENDING_CUSTOMER"
+                      ? `Your provider says this service is finished. Please check the result and confirm by ${completionDeadlineLabel}, or raise an issue below so we can hold payout.`
+                      : "If you need help with this booking, please contact our support team."}
               </p>
               {booking.bookingStatus !== "CANCELLED" && (
                 <Link href="/support" className="button button-secondary">

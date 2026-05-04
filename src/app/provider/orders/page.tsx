@@ -27,6 +27,7 @@ const statusVariant: Record<string, "default" | "secondary" | "destructive" | "o
   PENDING_ASSIGNMENT: "default",
   ASSIGNED: "secondary",
   IN_PROGRESS: "secondary",
+  COMPLETED_PENDING_CUSTOMER: "outline",
   COMPLETED: "default",
   CANCELLED: "destructive",
   NO_CLEANER_FOUND: "destructive",
@@ -40,6 +41,7 @@ const statusLabel: Record<string, string> = {
   PENDING_ASSIGNMENT: "Authorised — Confirm?",
   ASSIGNED: "Accepted",
   IN_PROGRESS: "In Progress",
+  COMPLETED_PENDING_CUSTOMER: "Awaiting customer confirmation",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
   NO_CLEANER_FOUND: "Declined",
@@ -137,11 +139,11 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
   ).length;
   const accepted = filteredBookings.filter((b) => b.bookingStatus === "ASSIGNED").length;
   const inProgress = filteredBookings.filter((b) => b.bookingStatus === "IN_PROGRESS").length;
-  const completed = filteredBookings.filter((b) => b.bookingStatus === "COMPLETED").length;
+  const completed = filteredBookings.filter((b) => ["COMPLETED_PENDING_CUSTOMER", "COMPLETED"].includes(b.bookingStatus)).length;
 
   // Earnings
   const earningBookings = filteredBookings.filter((b) =>
-    ["ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(b.bookingStatus),
+    ["ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED"].includes(b.bookingStatus),
   );
   const totalRevenue = earningBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0);
   const totalPayout = earningBookings.reduce(
@@ -290,6 +292,7 @@ export default async function ProviderOrdersPage({ searchParams }: ProviderOrder
                   <option value="PAID">Captured</option>
                   <option value="ASSIGNED">Accepted</option>
                   <option value="IN_PROGRESS">In Progress</option>
+                  <option value="COMPLETED_PENDING_CUSTOMER">Awaiting customer confirmation</option>
                   <option value="COMPLETED">Completed</option>
                   <option value="CANCELLED">Cancelled</option>
                   <option value="NO_CLEANER_FOUND">Declined</option>

@@ -24,6 +24,17 @@ function formatService(value: string) {
     .join(" ");
 }
 
+function formatDateTime(value: Date | null | undefined) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(value);
+}
+
 type AdminBookingDetailPageProps = {
   params: Promise<{ reference: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -139,13 +150,20 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
   const latestPayoutRecord = booking.payoutRecords[0];
   const refundStatusMessage = typeof resolvedSearchParams.refundStatus === "string" ? resolvedSearchParams.refundStatus : "";
   const refundErrorMessage = typeof resolvedSearchParams.refundError === "string" ? resolvedSearchParams.refundError : "";
+  const completionSource = booking.customerCompletedAt
+    ? "Confirmed by customer"
+    : booking.autoCompletedAt
+      ? "Auto-confirmed by system"
+      : booking.providerCompletedAt
+        ? "Waiting for customer"
+        : "Not started";
 
   const bookingRef = booking.quoteRequest?.reference || booking.id.slice(0, 12).toUpperCase();
   const capturedAmount = Number(latestPaymentRecord?.grossAmount ?? booking.totalAmount ?? 0);
   const bookingFeeAmount = dec(booking.priceSnapshot?.platformBookingFee);
   const lateCancelRefundAmount = Math.max(0, capturedAmount - bookingFeeAmount);
 
-  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(booking.bookingStatus);
+  const showInvoice = ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED"].includes(booking.bookingStatus);
 
   return (
     <div className="space-y-6">
@@ -592,6 +610,46 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
 
           <Card>
             <CardHeader>
+              <CardTitle>Completion confirmation</CardTitle>
+              <CardDescription>Tracks who marked the job complete and whether payout can move forward.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-muted-foreground">Provider marked complete</dt>
+                  <dd className="font-medium">{formatDateTime(booking.providerCompletedAt)}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Customer confirmation deadline</dt>
+                  <dd className="font-medium">{formatDateTime(booking.completionConfirmationDeadlineAt)}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Completion source</dt>
+                  <dd className="font-medium">{completionSource}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Confirmation finalised</dt>
+                  <dd className="font-medium">{formatDateTime(booking.completionConfirmedAt)}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Confirmed by customer at</dt>
+                  <dd className="font-medium">{formatDateTime(booking.customerCompletedAt)}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Auto-confirmed at</dt>
+                  <dd className="font-medium">{formatDateTime(booking.autoCompletedAt)}</dd>
+                </div>
+              </dl>
+              {booking.bookingStatus === "COMPLETED_PENDING_CUSTOMER" ? (
+                <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  Payout should remain on hold until customer confirmation or the deadline passes without an issue.
+                </p>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>{t.orderDetail.updateStatus}</CardTitle>
               <CardDescription>{t.orderDetail.changeWorkflowState}</CardDescription>
             </CardHeader>
@@ -612,6 +670,7 @@ export default async function AdminBookingDetailPage({ params, searchParams }: A
                     <option value="PENDING_ASSIGNMENT">{t.orderDetail.authorisedHoldStatus}</option>
                     <option value="ASSIGNED">{t.orderDetail.assignedStatus}</option>
                     <option value="IN_PROGRESS">{t.orderDetail.inProgressStatus}</option>
+                    <option value="COMPLETED_PENDING_CUSTOMER">Awaiting customer confirmation</option>
                     <option value="COMPLETED">{t.orderDetail.completedOrderStatus}</option>
                     <option value="CANCELLED">{t.orderDetail.cancelledStatus}</option>
                     <option value="NO_CLEANER_FOUND">{t.orderDetail.noCleaner}</option>

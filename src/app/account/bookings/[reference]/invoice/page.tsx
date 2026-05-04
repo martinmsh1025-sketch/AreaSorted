@@ -33,6 +33,7 @@ export default async function CustomerInvoicePage({ params }: Props) {
     "PAID",
     "ASSIGNED",
     "IN_PROGRESS",
+    "COMPLETED_PENDING_CUSTOMER",
     "COMPLETED",
   ];
   if (!invoiceableStatuses.includes(booking.bookingStatus)) {

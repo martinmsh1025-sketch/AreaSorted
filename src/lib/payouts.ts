@@ -151,17 +151,18 @@ export async function refreshPayoutRecordState(payoutRecordId: string, prismaCli
 
   const hasComplaint = payout.booking.complaints.length > 0;
   const hasRefund = payout.booking.refundRecords.length > 0 || ["REFUND_PENDING", "REFUNDED", "CANCELLED"].includes(payout.booking.bookingStatus);
-  const holdUntil = payout.holdUntil ?? payout.availableOn;
-  const now = new Date();
+  const isCompletionConfirmed = payout.booking.bookingStatus === "COMPLETED";
 
   let nextStatus: ProviderPayoutStatus = payout.status;
   if (hasRefund) {
     nextStatus = "CANCELLED";
   } else if (hasComplaint) {
     nextStatus = "ON_HOLD";
-  } else if (holdUntil && holdUntil <= now) {
+  } else if (isCompletionConfirmed) {
     nextStatus = "ELIGIBLE";
   } else if (payout.status === "PENDING" || payout.status === "CREATED") {
+    nextStatus = "ON_HOLD";
+  } else {
     nextStatus = "ON_HOLD";
   }
 
@@ -173,7 +174,7 @@ export async function refreshPayoutRecordState(payoutRecordId: string, prismaCli
     where: { id: payout.id },
     data: {
       status: nextStatus,
-      ...(nextStatus === "ELIGIBLE" ? { availableOn: holdUntil ?? now } : {}),
+       ...(nextStatus === "ELIGIBLE" ? { availableOn: new Date() } : {}),
       ...(nextStatus === "CANCELLED" ? { blockedReason: payout.blockedReason ?? "Refund or cancellation applied before payout release." } : {}),
     },
   });

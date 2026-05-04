@@ -40,6 +40,8 @@ function bookingStatusVariant(
     case "PAID":
     case "COMPLETED":
       return "default";
+    case "COMPLETED_PENDING_CUSTOMER":
+      return "outline";
     case "PENDING_ASSIGNMENT":
       return "outline";
     case "CANCELLED":
@@ -110,6 +112,7 @@ export default async function AdminPayoutsPage({
     "PAID",
     "ASSIGNED",
     "IN_PROGRESS",
+    "COMPLETED_PENDING_CUSTOMER",
     "COMPLETED",
   ];
 

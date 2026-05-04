@@ -63,6 +63,8 @@ function bookingStatusVariant(
     case "PAID":
     case "COMPLETED":
       return "default";
+    case "COMPLETED_PENDING_CUSTOMER":
+      return "outline";
     case "CANCELLED":
     case "REFUNDED":
       return "destructive";
@@ -811,6 +813,7 @@ export default async function AdminOrdersPage({
                 <option value="PENDING_ASSIGNMENT">{t.orders.authorisedHold}</option>
                 <option value="ASSIGNED">{t.orders.assigned}</option>
                 <option value="IN_PROGRESS">{t.orders.inProgress}</option>
+                <option value="COMPLETED_PENDING_CUSTOMER">Awaiting customer confirmation</option>
                 <option value="COMPLETED">{t.orders.completed}</option>
                 <option value="CANCELLED">{t.orders.cancelled}</option>
                 <option value="REFUNDED">{t.orders.refunded}</option>

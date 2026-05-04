@@ -169,6 +169,23 @@ export async function sendBookingStatusEmail(
       ];
       break;
 
+    case "COMPLETED_PENDING_CUSTOMER":
+      subject = `Please confirm your service completion — ${reference}`;
+      bodyLines = [
+        `Hi ${customer.firstName},`,
+        ``,
+        `Your provider says your ${serviceLabel} booking is finished. Please review the result in your account and confirm completion if everything looks right.`,
+        ``,
+        `Reference: ${reference}`,
+        provider ? `Provider: ${providerName}` : "",
+        ``,
+        `If something is wrong, report it before the 72-hour review window ends so AreaSorted can hold payout and review the case.`,
+        `If you do nothing, AreaSorted will auto-confirm completion after 72 hours.`,
+        ``,
+        bookingUrl,
+      ];
+      break;
+
     case "CANCELLED":
       subject = `Booking cancelled — ${reference}`;
       bodyLines = [

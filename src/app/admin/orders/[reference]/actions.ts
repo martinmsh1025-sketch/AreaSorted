@@ -12,7 +12,7 @@ import { verifyPassword } from "@/lib/security/password";
 // C-10 FIX: Whitelist of valid BookingStatus values
 const VALID_BOOKING_STATUSES: Set<BookingStatus> = new Set([
   "AWAITING_PAYMENT", "PAID", "PENDING_ASSIGNMENT", "ACCEPTING",
-  "ASSIGNED", "IN_PROGRESS", "COMPLETED", "CANCELLED",
+  "ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED", "CANCELLED",
   "NO_CLEANER_FOUND", "REFUND_PENDING", "REFUNDED",
 ]);
 

@@ -4,6 +4,8 @@ import { sendTransactionalEmail } from "@/lib/notifications/email";
 import { cancelDirectChargePaymentIntent, captureDirectChargePaymentIntent } from "@/lib/stripe/connect";
 import { ensurePayoutRecordForBooking, refreshPayoutRecordState } from "@/lib/payouts";
 
+const COMPLETION_CONFIRMATION_WINDOW_MS = 72 * 60 * 60 * 1000;
+
 export async function acceptProviderBooking(input: {
   providerCompanyId: string;
   bookingId: string;
@@ -125,11 +127,25 @@ export async function rejectProviderBooking(input: {
   reason?: string;
 }) {
   const prisma = getPrisma();
+
+  const claimResult = await prisma.booking.updateMany({
+    where: {
+      id: input.bookingId,
+      providerCompanyId: input.providerCompanyId,
+      bookingStatus: "PENDING_ASSIGNMENT",
+    },
+    data: { bookingStatus: "ACCEPTING" },
+  });
+
+  if (claimResult.count === 0) {
+    return { ok: false as const, reason: "not_available" };
+  }
+
   const booking = await prisma.booking.findFirst({
     where: {
       id: input.bookingId,
       providerCompanyId: input.providerCompanyId,
-      bookingStatus: { in: ["PENDING_ASSIGNMENT"] },
+      bookingStatus: "ACCEPTING",
     },
     include: {
       paymentRecords: { orderBy: { createdAt: "desc" }, take: 1 },
@@ -138,6 +154,10 @@ export async function rejectProviderBooking(input: {
   });
 
   if (!booking) {
+    await prisma.booking.updateMany({
+      where: { id: input.bookingId, bookingStatus: "ACCEPTING" },
+      data: { bookingStatus: "PENDING_ASSIGNMENT" },
+    });
     return { ok: false as const, reason: "not_available" };
   }
 
@@ -257,6 +277,7 @@ export async function completeProviderBooking(input: {
   bookingId: string;
 }) {
   const prisma = getPrisma();
+  const completionDeadline = new Date(Date.now() + COMPLETION_CONFIRMATION_WINDOW_MS);
   const booking = await prisma.booking.findFirst({
     where: {
       id: input.bookingId,
@@ -272,7 +293,14 @@ export async function completeProviderBooking(input: {
   await prisma.$transaction(async (tx) => {
     await tx.booking.update({
       where: { id: input.bookingId },
-      data: { bookingStatus: "COMPLETED" },
+      data: {
+        bookingStatus: "COMPLETED_PENDING_CUSTOMER",
+        providerCompletedAt: new Date(),
+        customerCompletedAt: null,
+        autoCompletedAt: null,
+        completionConfirmedAt: null,
+        completionConfirmationDeadlineAt: completionDeadline,
+      },
     });
 
     const latestJob = await tx.job.findFirst({
@@ -306,7 +334,7 @@ export async function completeProviderBooking(input: {
 
   try {
     const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
-    await sendBookingStatusEmail(input.bookingId, "COMPLETED");
+    await sendBookingStatusEmail(input.bookingId, "COMPLETED_PENDING_CUSTOMER");
   } catch {
     // Non-critical
   }

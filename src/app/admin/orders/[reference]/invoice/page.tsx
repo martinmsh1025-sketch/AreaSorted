@@ -26,6 +26,7 @@ export default async function AdminInvoicePage({ params }: Props) {
     "PAID",
     "ASSIGNED",
     "IN_PROGRESS",
+    "COMPLETED_PENDING_CUSTOMER",
     "COMPLETED",
   ];
   if (!invoiceableStatuses.includes(fullBooking.bookingStatus)) {

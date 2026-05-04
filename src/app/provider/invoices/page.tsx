@@ -178,6 +178,7 @@ function getStatusColor(status: string): string {
     case "PAID":
     case "ASSIGNED":
     case "IN_PROGRESS":
+    case "COMPLETED_PENDING_CUSTOMER":
     case "PENDING_ASSIGNMENT":
       return "text-blue-600";
     case "CANCELLED":

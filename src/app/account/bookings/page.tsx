@@ -69,7 +69,6 @@ export default async function AccountBookingsPage() {
                 });
                 const hasPendingOffer = booking.counterOffers.length > 0;
                 const latestCase = booking.complaints[0] ?? null;
-
                 return (
                   <Link
                     key={booking.id}
@@ -112,9 +111,10 @@ export default async function AccountBookingsPage() {
                         fontWeight: 600,
                         textTransform: "uppercase",
                         letterSpacing: "0.03em",
-                        color: booking.bookingStatus === "COMPLETED" ? "var(--color-success, #16a34a)" :
-                               booking.bookingStatus === "CANCELLED" ? "var(--color-error)" :
-                               "var(--color-text-muted)",
+                         color: booking.bookingStatus === "COMPLETED" ? "var(--color-success, #16a34a)" :
+                                booking.bookingStatus === "COMPLETED_PENDING_CUSTOMER" ? "#b45309" :
+                                booking.bookingStatus === "CANCELLED" ? "var(--color-error)" :
+                                "var(--color-text-muted)",
                       }}>
                         {status}
                       </div>

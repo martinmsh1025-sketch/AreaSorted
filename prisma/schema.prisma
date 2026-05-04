@@ -132,6 +132,7 @@ enum BookingStatus {
   ACCEPTING
   ASSIGNED
   IN_PROGRESS
+  COMPLETED_PENDING_CUSTOMER
   COMPLETED
   CANCELLED
   NO_CLEANER_FOUND
@@ -664,6 +665,11 @@ model Booking {
   customerProvidesSupplies Boolean            @default(false)
   additionalNotes          String?
   bookingStatus            BookingStatus      @default(AWAITING_PAYMENT)
+  providerCompletedAt      DateTime?
+  customerCompletedAt      DateTime?
+  autoCompletedAt          DateTime?
+  completionConfirmedAt    DateTime?
+  completionConfirmationDeadlineAt DateTime?
   rescheduleCount          Int                @default(0)
   cancelledByType          ActorType?
   cancelledReason          String?

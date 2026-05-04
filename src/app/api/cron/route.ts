@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
           `Reference: ${booking.quoteRequest?.reference || booking.id.slice(0, 8)}`,
           `Service: ${booking.quoteRequest?.serviceKey || "Service"}`,
           `Postcode: ${booking.servicePostcode}`,
-          `Review here: ${getAppUrl()}/admin/orders/${booking.id}`,
+          `Review here: ${getAppUrl()}/admin/orders/${booking.quoteRequest?.reference || booking.id}`,
         ].join("\n"),
         templateCode: "ops_pending_assignment_escalation",
         bookingId: booking.id,
@@ -288,7 +288,7 @@ export async function GET(request: NextRequest) {
     // 7. Refresh provider payout hold states for captured bookings
     const paidBookings = await prisma.booking.findMany({
       where: {
-        bookingStatus: { in: ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED"] },
+        bookingStatus: { in: ["PAID", "ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED"] },
         providerCompanyId: { not: null },
         paymentRecords: { some: { paymentState: "PAID" } },
       },
@@ -318,7 +318,61 @@ export async function GET(request: NextRequest) {
     results.payoutEligible = payoutEligible;
     results.payoutReleased = payoutReleased;
 
-    // 8. Booking reminders (24h window)
+    // 8. Auto-confirm completed jobs after the customer response window elapses
+    const completionAutoConfirmTargets = await prisma.booking.findMany({
+      where: {
+        bookingStatus: "COMPLETED_PENDING_CUSTOMER",
+        completionConfirmationDeadlineAt: { lte: now },
+      },
+      select: {
+        id: true,
+        quoteRequest: { select: { reference: true } },
+      },
+      take: 200,
+    });
+
+    let autoCompletedBookings = 0;
+    for (const booking of completionAutoConfirmTargets) {
+      const confirmedAt = new Date();
+      const updateResult = await prisma.booking.updateMany({
+        where: {
+          id: booking.id,
+          bookingStatus: "COMPLETED_PENDING_CUSTOMER",
+          completionConfirmationDeadlineAt: { lte: now },
+        },
+        data: {
+          bookingStatus: "COMPLETED",
+          autoCompletedAt: confirmedAt,
+          completionConfirmedAt: confirmedAt,
+        },
+      });
+
+      if (updateResult.count === 0) continue;
+
+      const payout = await ensurePayoutRecordForBooking(booking.id, prisma);
+      if (payout) {
+        const refreshed = await refreshPayoutRecordState(payout.id, prisma);
+        if (autoReleaseEnabled && refreshed?.status === "ELIGIBLE") {
+          await prisma.payoutRecord.update({
+            where: { id: refreshed.id },
+            data: { status: "RELEASED", releasedAt: new Date() },
+          });
+          payoutReleased += 1;
+        }
+      }
+
+      try {
+        const { sendBookingStatusEmail } = await import("@/lib/notifications/booking-emails");
+        await sendBookingStatusEmail(booking.id, "COMPLETED");
+      } catch {
+        // Non-critical
+      }
+
+      autoCompletedBookings += 1;
+    }
+    results.autoCompletedBookings = autoCompletedBookings;
+
+    // 9. Booking reminders (24h window)
     const reminderWindowStart = new Date(now.getTime() + 23 * 60 * 60 * 1000);
     const reminderWindowEnd = new Date(now.getTime() + 25 * 60 * 60 * 1000);
     const upcomingBookings = await prisma.booking.findMany({

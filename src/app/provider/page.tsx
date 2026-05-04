@@ -58,7 +58,7 @@ function computeEarnings(
   }>,
 ) {
   const earning = bookings.filter((b) =>
-    ["ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(b.bookingStatus),
+    ["ASSIGNED", "IN_PROGRESS", "COMPLETED_PENDING_CUSTOMER", "COMPLETED"].includes(b.bookingStatus),
   );
   const completedOnly = bookings.filter((b) => b.bookingStatus === "COMPLETED");
 
@@ -163,7 +163,7 @@ export default async function ProviderHomePage() {
   const inProgress = allBookings.filter((b) => b.bookingStatus === "IN_PROGRESS").length;
 
   const recentCompleted = allBookings
-    .filter((b) => b.bookingStatus === "COMPLETED")
+    .filter((b) => ["COMPLETED_PENDING_CUSTOMER", "COMPLETED"].includes(b.bookingStatus))
     .slice(0, 5);
 
   const chartBookings: ProviderBookingSummary[] = allBookings.map((b) => ({
