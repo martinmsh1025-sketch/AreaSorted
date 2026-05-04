@@ -3,6 +3,9 @@ import { z } from "zod";
 import { createPublicQuote } from "@/server/services/public/quote-flow";
 import { normalizeUkPhone } from "@/lib/validation/uk-phone";
 import { checkRateLimit, PUBLIC_QUOTE_RATE_LIMIT } from "@/lib/security/rate-limit";
+import { getCustomerSession } from "@/lib/customer-auth";
+import { getPrisma } from "@/lib/db";
+import { createQuoteAccessToken, QUOTE_ACCESS_PARAM } from "@/lib/quotes/access";
 
 // M-11 FIX: Only allow UploadThing domains for job photo URLs
 const ALLOWED_PHOTO_HOSTS = ["utfs.io", "ufs.sh", "uploadthing.com"];
@@ -63,6 +66,7 @@ const schema = z.object({
   /** Free-text notes / job description */
   notes: z.string().max(2000).optional(),
   preferredProviderCompanyId: z.string().optional(),
+  rebookBookingId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -78,7 +82,20 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = schema.parse(await request.json());
-    const result = await createPublicQuote(payload);
+    let waiveCustomerBookingFee = false;
+    if (payload.rebookBookingId) {
+      const customer = await getCustomerSession();
+      if (customer) {
+        const prisma = getPrisma();
+        const booking = await prisma.booking.findFirst({
+          where: { id: payload.rebookBookingId, customerId: customer.id },
+          select: { id: true },
+        });
+        waiveCustomerBookingFee = Boolean(booking);
+      }
+    }
+
+    const result = await createPublicQuote({ ...payload, waiveCustomerBookingFee });
 
     if (result.status === "no_coverage") {
       return NextResponse.json({ error: "No provider coverage found for that postcode and category." }, { status: 404 });
@@ -88,9 +105,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.reason }, { status: 400 });
     }
 
+    const accessToken = createQuoteAccessToken(result.quoteRequest.reference);
+
     return NextResponse.json({
-      redirectUrl: `/quote/${result.quoteRequest.reference}`,
+      redirectUrl: `/quote/${result.quoteRequest.reference}?${QUOTE_ACCESS_PARAM}=${encodeURIComponent(accessToken)}`,
       reference: result.quoteRequest.reference,
+      accessToken,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

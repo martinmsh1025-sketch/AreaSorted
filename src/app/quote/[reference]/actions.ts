@@ -3,13 +3,15 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createInstantBookingFromQuote } from "@/server/services/public/quote-flow";
-import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
+import { CUSTOMER_SESSION_COOKIE, getCustomerSession } from "@/lib/customer-auth";
 import { signSessionValue } from "@/lib/security/session";
 import { getPrisma } from "@/lib/db";
 import { getAppUrl } from "@/lib/config/env";
+import { customerOwnsQuote, QUOTE_ACCESS_PARAM, verifyQuoteAccessToken } from "@/lib/quotes/access";
 
 export async function startInstantBookingAction(formData: FormData) {
   const reference = String(formData.get("reference") || "").trim();
+  const accessToken = String(formData.get(QUOTE_ACCESS_PARAM) || "").trim();
   const selectedQuoteOptionId = String(formData.get("selectedQuoteOptionId") || "").trim() || undefined;
 
   // C-3 FIX: Validate input + verify the quote actually exists before proceeding.
@@ -27,6 +29,12 @@ export async function startInstantBookingAction(formData: FormData) {
 
   if (!quote || quote.state !== "PRICED") {
     throw new Error("This quote is no longer available for booking");
+  }
+
+  const session = await getCustomerSession();
+  const hasQuoteAccess = verifyQuoteAccessToken(reference, accessToken) || customerOwnsQuote(quote.customerEmail, session?.email);
+  if (!hasQuoteAccess) {
+    throw new Error("Secure quote access is required to continue this booking");
   }
 
   // Verify the request originates from our own site (basic CSRF protection)
@@ -51,5 +59,6 @@ export async function startInstantBookingAction(formData: FormData) {
     });
   }
 
-  redirect(result.sessionUrl || `/booking/status/${result.bookingReference}`);
+  const fallbackStatusUrl = `/booking/status/${result.bookingReference}${accessToken ? `?${QUOTE_ACCESS_PARAM}=${encodeURIComponent(accessToken)}` : ""}`;
+  redirect(result.sessionUrl || fallbackStatusUrl);
 }

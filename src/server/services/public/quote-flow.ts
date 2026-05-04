@@ -9,6 +9,7 @@ import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
 import { matchProvidersForPublicQuote } from "@/server/services/public/provider-matching";
 import { jobTypeCatalog } from "@/lib/service-catalog";
 import { hashPassword } from "@/lib/security/password";
+import { withQuoteAccess } from "@/lib/quotes/access";
 import type { ServiceType } from "@prisma/client";
 
 function mapCategoryToServiceType(categoryKey: string): ServiceType {
@@ -64,7 +65,17 @@ type CreateQuoteInput = {
   /** Free-text notes */
   notes?: string;
   preferredProviderCompanyId?: string;
+  waiveCustomerBookingFee?: boolean;
 };
+
+function applyRebookNoFee<T extends { bookingFee: number; totalCustomerPay: number }>(preview: T, enabled: boolean): T {
+  if (!enabled) return preview;
+  return {
+    ...preview,
+    bookingFee: 0,
+    totalCustomerPay: Math.max(0, Number(preview.totalCustomerPay) - Number(preview.bookingFee)),
+  };
+}
 
 function createReference(prefix: string) {
   return `${prefix}-${randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase()}`;
@@ -96,8 +107,8 @@ export async function createPublicQuote(input: CreateQuoteInput) {
 
   for (const provider of match.providers) {
     try {
-      const preview = await previewProviderPricing({
-        providerCompanyId: provider.providerCompanyId,
+        const rawPreview = await previewProviderPricing({
+          providerCompanyId: provider.providerCompanyId,
         categoryKey: input.categoryKey,
         serviceKey: input.serviceKey,
         postcodePrefix: provider.postcodePrefix,
@@ -112,8 +123,10 @@ export async function createPublicQuote(input: CreateQuoteInput) {
         supplies: input.supplies,
         propertyType: input.propertyType,
         jobSize: input.jobSize,
-        addOns: input.addOns,
-      });
+          addOns: input.addOns,
+        });
+
+        const preview = applyRebookNoFee(rawPreview, Boolean(input.waiveCustomerBookingFee));
 
       pricedProviders.push({ provider, preview });
     } catch {
@@ -140,19 +153,10 @@ export async function createPublicQuote(input: CreateQuoteInput) {
   const reference = createReference("QR");
   const quoteRequired = false;
 
-  // C-12 FIX: Use upsert instead of findUnique+create to prevent race condition
-  // when two quote submissions for the same email arrive concurrently.
   const passwordHash = await hashPassword(input.password);
   await prisma.customer.upsert({
     where: { email: input.customerEmail },
-    update: {
-      firstName: input.customerName.split(" ")[0] || input.customerName,
-      lastName: input.customerName.split(" ").slice(1).join(" ") || input.customerName,
-      phone: input.customerPhone,
-      // Only set password if they don't already have one (preserve existing passwords)
-      // Prisma upsert doesn't support conditional fields in update, so we handle this
-      // by setting the password in a follow-up conditional update if needed.
-    },
+    update: {},
     create: {
       email: input.customerEmail,
       firstName: input.customerName.split(" ")[0] || input.customerName,
@@ -160,16 +164,6 @@ export async function createPublicQuote(input: CreateQuoteInput) {
       phone: input.customerPhone,
       passwordHash,
     },
-  });
-
-  // For existing customers without a password, set it now
-  // (upsert update path doesn't conditionally set passwordHash)
-  await prisma.customer.updateMany({
-    where: {
-      email: input.customerEmail,
-      passwordHash: null,
-    },
-    data: { passwordHash },
   });
 
   const quoteRequest = await prisma.quoteRequest.create({
@@ -231,6 +225,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
             addOns: input.addOns,
             notes: input.notes,
             preferredScheduleOptions: input.preferredScheduleOptions,
+            waiveCustomerBookingFee: input.waiveCustomerBookingFee,
           }),
         },
       },
@@ -268,6 +263,7 @@ export async function createPublicQuote(input: CreateQuoteInput) {
             addOns: input.addOns,
             notes: input.notes,
             preferredScheduleOptions: input.preferredScheduleOptions,
+            waiveCustomerBookingFee: input.waiveCustomerBookingFee,
           }),
         })),
       },
@@ -331,6 +327,19 @@ export async function getPublicQuoteByReference(reference: string) {
           paymentRecords: true,
         },
       },
+    },
+  });
+}
+
+export async function getQuoteAccessGateByReference(reference: string) {
+  const prisma = getPrisma();
+  return prisma.quoteRequest.findUnique({
+    where: { reference },
+    select: {
+      reference: true,
+      customerEmail: true,
+      state: true,
+      bookingId: true,
     },
   });
 }
@@ -404,14 +413,12 @@ export async function createInstantBookingFromQuote(reference: string, selectedQ
   // in a single interactive transaction to ensure atomicity. Stripe calls happen
   // outside the transaction since they are external API calls.
   const { booking, paymentRecord, bookingReference } = await prisma.$transaction(async (tx) => {
-    const customer = await tx.customer.upsert({
+    const existingCustomer = await tx.customer.findUnique({
       where: { email: quote.customerEmail },
-      update: {
-        firstName: quote.customerName.split(" ")[0] || quote.customerName,
-        lastName: quote.customerName.split(" ").slice(1).join(" ") || quote.customerName,
-        phone: quote.customerPhone,
-      },
-      create: {
+    });
+
+    const customer = existingCustomer || await tx.customer.create({
+      data: {
         email: quote.customerEmail,
         firstName: quote.customerName.split(" ")[0] || quote.customerName,
         lastName: quote.customerName.split(" ").slice(1).join(" ") || quote.customerName,
@@ -517,7 +524,7 @@ export async function createInstantBookingFromQuote(reference: string, selectedQ
       ],
       applicationFeeAmount: Math.round((Number(selectedOption.bookingFee) + Number(selectedOption.commissionAmount)) * 100),
       successUrl: `${appUrl}/api/auth/post-payment/${bookingReference}?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${appUrl}/quote/${quote.reference}`,
+      cancelUrl: `${appUrl}${withQuoteAccess(`/quote/${quote.reference}`, quote.reference)}`,
       metadata: {
         bookingId: booking.id,
         bookingReference,
@@ -528,6 +535,18 @@ export async function createInstantBookingFromQuote(reference: string, selectedQ
     sessionUrl = session.url || `${appUrl}/api/auth/post-payment/${bookingReference}`;
   } catch (error) {
     if (!getEnv().ALLOW_MOCK_STRIPE_CHECKOUT) {
+      await prisma.$transaction(async (tx) => {
+        await tx.paymentRecord.delete({ where: { id: paymentRecord.id } });
+        await tx.bookingPriceSnapshot.deleteMany({ where: { bookingId: booking.id } });
+        await tx.booking.delete({ where: { id: booking.id } });
+        if (booking.customerAddressId) {
+          await tx.customerAddress.delete({ where: { id: booking.customerAddressId } });
+        }
+        await tx.quoteRequest.update({
+          where: { id: quote.id },
+          data: { state: "PRICED", bookingId: null },
+        });
+      });
       throw error;
     }
 
@@ -626,4 +645,3 @@ export async function createInstantBookingFromQuote(reference: string, selectedQ
 
   return { booking, sessionUrl, bookingReference };
 }
-

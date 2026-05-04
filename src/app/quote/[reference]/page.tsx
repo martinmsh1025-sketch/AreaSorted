@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
-import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
+import Link from "next/link";
+import { getQuoteAccessGateByReference, getPublicQuoteByReference } from "@/server/services/public/quote-flow";
 import { startInstantBookingAction } from "./actions";
 import { FormSubmitButton } from "@/components/shared/form-submit-button";
 import { ProviderOptionSelector } from "@/components/quote/provider-option-selector";
 import { maskAddressSummary, redactReference } from "@/lib/privacy/public-display";
 import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
+import { getCustomerSession } from "@/lib/customer-auth";
+import { customerOwnsQuote, QUOTE_ACCESS_PARAM, verifyQuoteAccessToken } from "@/lib/quotes/access";
 
 function money(value: any) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", minimumFractionDigits: 2 }).format(Number(value || 0));
@@ -15,6 +18,41 @@ type QuoteResultPageProps = { params: Promise<{ reference: string }>; searchPara
 export default async function QuoteResultPage({ params, searchParams }: QuoteResultPageProps) {
   const { reference } = await params;
   const query = (await searchParams) ?? {};
+  const accessToken = typeof query[QUOTE_ACCESS_PARAM] === "string" ? query[QUOTE_ACCESS_PARAM] : "";
+  const gate = await getQuoteAccessGateByReference(reference);
+  if (!gate) notFound();
+
+  const session = await getCustomerSession();
+  const canAccessQuote = verifyQuoteAccessToken(reference, accessToken) || customerOwnsQuote(gate.customerEmail, session?.email);
+
+  if (!canAccessQuote) {
+    const loginRedirect = `/quote/${encodeURIComponent(reference)}`;
+    return (
+      <main className="section">
+        <div className="container" style={{ maxWidth: 900 }}>
+          <div className="panel card">
+            <div className="eyebrow">Quote access</div>
+            <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>
+              Secure quote link required.
+            </h1>
+            <p className="lead">
+              For privacy, quote details are only shown from the secure quote link or inside the customer account that created the quote.
+            </p>
+            <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+              Reference: {redactReference(reference)}
+            </p>
+            <div className="button-row" style={{ marginTop: "1.25rem" }}>
+              <Link className="button button-primary" href={`/customer/login?redirectTo=${encodeURIComponent(loginRedirect)}`}>
+                Log in to view quote
+              </Link>
+              <Link className="button button-secondary" href="/support">Contact support</Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const quote = await getPublicQuoteByReference(reference);
   if (!quote || !quote.priceSnapshot) notFound();
 
@@ -104,6 +142,7 @@ export default async function QuoteResultPage({ params, searchParams }: QuoteRes
                 ) : (
                   <form action={startInstantBookingAction} style={{ marginTop: "1rem" }}>
                     <input type="hidden" name="reference" value={quote.reference} />
+                    {accessToken ? <input type="hidden" name={QUOTE_ACCESS_PARAM} value={accessToken} /> : null}
                     {selectedOption ? <input type="hidden" name="selectedQuoteOptionId" value={selectedOption.id} /> : null}
                     <FormSubmitButton
                       label="Continue to secure hold"
@@ -122,7 +161,7 @@ export default async function QuoteResultPage({ params, searchParams }: QuoteRes
                 )}
               </section>
 
-              {providerOptions.length > 0 && !unavailable ? <ProviderOptionSelector quoteReference={quote.reference} options={providerOptions} /> : null}
+              {providerOptions.length > 0 && !unavailable ? <ProviderOptionSelector quoteReference={quote.reference} accessToken={accessToken} options={providerOptions} /> : null}
             </aside>
           </div>
         </div>

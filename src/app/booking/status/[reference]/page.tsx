@@ -1,15 +1,54 @@
 import { notFound } from "next/navigation";
-import { getPublicQuoteByReference } from "@/server/services/public/quote-flow";
+import Link from "next/link";
+import { getQuoteAccessGateByReference, getPublicQuoteByReference } from "@/server/services/public/quote-flow";
 import { getDisplayPaymentStatus, getPaymentStatusLabel } from "@/lib/payments/display-status";
 import { formatMoney } from "@/lib/format";
 import { maskAddressSummary, redactReference } from "@/lib/privacy/public-display";
+import { getCustomerSession } from "@/lib/customer-auth";
+import { customerOwnsQuote, QUOTE_ACCESS_PARAM, verifyQuoteAccessToken } from "@/lib/quotes/access";
 
 type BookingStatusPageProps = {
   params: Promise<{ reference: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function BookingStatusPage({ params }: BookingStatusPageProps) {
+export default async function BookingStatusPage({ params, searchParams }: BookingStatusPageProps) {
   const { reference } = await params;
+  const query = (await searchParams) ?? {};
+  const accessToken = typeof query[QUOTE_ACCESS_PARAM] === "string" ? query[QUOTE_ACCESS_PARAM] : "";
+  const gate = await getQuoteAccessGateByReference(reference);
+  if (!gate) notFound();
+
+  const session = await getCustomerSession();
+  const canAccessStatus = verifyQuoteAccessToken(reference, accessToken) || customerOwnsQuote(gate.customerEmail, session?.email);
+
+  if (!canAccessStatus) {
+    return (
+      <main className="section">
+        <div className="container" style={{ maxWidth: 900 }}>
+          <div className="panel card">
+            <div className="eyebrow">Booking status</div>
+            <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(2rem, 4vw, 3rem)" }}>
+              Secure status link required.
+            </h1>
+            <p className="lead">
+              For privacy, booking status is only shown from the secure booking link or inside the customer account.
+            </p>
+            <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+              Reference: {redactReference(reference)}
+            </p>
+            <div className="button-row" style={{ marginTop: "1.25rem" }}>
+              <Link className="button button-primary" href={`/customer/login?redirectTo=${encodeURIComponent(`/booking/status/${reference}`)}`}>
+                Log in to view status
+              </Link>
+              <Link className="button button-secondary" href="/support">Contact support</Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const quote = await getPublicQuoteByReference(reference);
   if (!quote) notFound();
 
@@ -54,7 +93,12 @@ export default async function BookingStatusPage({ params }: BookingStatusPagePro
           )}
           {canBookNow && (
             <div className="button-row" style={{ marginTop: "1rem" }}>
-              <a className="button button-primary" href={`/quote/${quote.reference}`}>Review quote and continue</a>
+              <a
+                className="button button-primary"
+                href={`/quote/${quote.reference}${accessToken ? `?${QUOTE_ACCESS_PARAM}=${encodeURIComponent(accessToken)}` : ""}`}
+              >
+                Review quote and continue
+              </a>
             </div>
           )}
           {!isPaid && (
