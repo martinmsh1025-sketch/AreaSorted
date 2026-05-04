@@ -29,6 +29,7 @@ export type ProviderOnboardingMetadata = {
   nationalInsuranceNumber?: string;
   utrNumber?: string;
   hmrcStatus?: string;
+  introVideoUrl?: string;
 };
 
 function asRecord(value: unknown) {
@@ -66,6 +67,7 @@ export function getProviderOnboardingMetadata(value: JsonValue | null | undefine
     nationalInsuranceNumber: typeof record?.nationalInsuranceNumber === "string" ? record.nationalInsuranceNumber : "",
     utrNumber: typeof record?.utrNumber === "string" ? record.utrNumber : "",
     hmrcStatus: typeof record?.hmrcStatus === "string" ? record.hmrcStatus : "",
+    introVideoUrl: typeof record?.introVideoUrl === "string" ? record.introVideoUrl : "",
   };
 }
 

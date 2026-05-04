@@ -36,6 +36,7 @@ export type PublicProfileMetadata = {
   responseTimeLabel: string | null;
   serviceCommitments: string[];
   languagesSpoken: string[];
+  introVideoUrl: string | null;
 };
 
 const EMPTY_METADATA: PublicProfileMetadata = {
@@ -44,6 +45,7 @@ const EMPTY_METADATA: PublicProfileMetadata = {
   responseTimeLabel: null,
   serviceCommitments: [],
   languagesSpoken: [],
+  introVideoUrl: null,
 };
 
 function normalizeAgainstOptions(value: unknown, allowed: readonly string[]) {
@@ -82,6 +84,7 @@ export function parseProviderPublicProfileMetadata(raw: string | null | undefine
           : null,
       serviceCommitments: normalizeAgainstOptions(parsed.serviceCommitments, providerCommitmentOptions),
       languagesSpoken: normalizeAgainstOptions(parsed.languagesSpoken, providerLanguageOptions),
+      introVideoUrl: typeof parsed.introVideoUrl === "string" && parsed.introVideoUrl.trim() ? parsed.introVideoUrl.trim().slice(0, 500) : null,
     };
   } catch {
     return EMPTY_METADATA;
@@ -98,5 +101,6 @@ export function stringifyProviderPublicProfileMetadata(input: PublicProfileMetad
         : null,
     serviceCommitments: normalizeAgainstOptions(input.serviceCommitments, providerCommitmentOptions),
     languagesSpoken: normalizeAgainstOptions(input.languagesSpoken, providerLanguageOptions),
+    introVideoUrl: input.introVideoUrl?.trim() ? input.introVideoUrl.trim().slice(0, 500) : null,
   });
 }

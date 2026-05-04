@@ -86,7 +86,7 @@ export default async function PricingPage() {
             </div>
           </div>
           <div className="pricing-hero-art">
-            <Image src="/images/marketing-generated/pricing-hero-v2.png" alt="AreaSorted pricing breakdown illustration" fill className="pricing-hero-art-image" sizes="(max-width: 960px) 100vw, 42vw" />
+            <Image src="/images/marketing-generated/pricing-hero-v2.png" alt="AreaSorted pricing breakdown illustration" fill className="pricing-hero-art-image" sizes="(max-width: 960px) 100vw, 42vw" loading="eager" />
           </div>
         </div>
       </section>

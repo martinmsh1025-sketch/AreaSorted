@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { CheckCircle2, Headphones, MapPin, Rocket, ShieldCheck, ClipboardList, BadgeCheck, House } from "lucide-react";
+import { Headphones, MapPin, Rocket, ShieldCheck, ClipboardList, BadgeCheck, House } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Become a Provider — Join AreaSorted",
@@ -12,19 +12,19 @@ export default function BecomeCleanerPage() {
   return (
     <main>
       <section className="section">
-        <div className="container grid-2" style={{ alignItems: "center" }}>
-          <div>
+        <div className="container provider-hero-layout" style={{ alignItems: "center" }}>
+          <div className="provider-hero-copy">
             <div className="eyebrow">For providers</div>
             <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.6rem, 4vw, 4.4rem)" }}>
               Join AreaSorted as an independent local service provider.
             </h1>
-            <p className="lead">
+            <p className="lead provider-lead-tight">
               Join AreaSorted to offer cleaning, pest control, handyman work, furniture assembly, waste removal, and garden maintenance across London.
             </p>
-            <p className="lead" style={{ fontSize: "1rem" }}>
+            <p className="lead provider-sublead">
               We review providers carefully, help you set coverage and standards clearly, and support a cleaner path from onboarding to local work opportunities.
             </p>
-            <div className="button-row">
+            <div className="button-row provider-hero-actions">
               <a className="button button-primary" href="/provider/apply">Apply to Join</a>
               <a className="button button-secondary" href="/contact">Talk to the Team</a>
             </div>
@@ -33,7 +33,7 @@ export default function BecomeCleanerPage() {
           <div className="provider-hero-visual">
             <div className="provider-hero-board provider-hero-board-main">
               <Image
-                src="/images/provider-generated/provider-hero-structured.png"
+                src="/images/provider-generated/provider-hero-clean.png"
                 alt="AreaSorted home services marketplace"
                 fill
                 className="marketing-crop-image"
@@ -62,10 +62,29 @@ export default function BecomeCleanerPage() {
             </div>
             <div className="provider-hero-note panel card">
               <div className="eyebrow">Platform fit</div>
-              <strong>Built for local professionals who want a more structured route to work.</strong>
-              <p style={{ color: "var(--color-text-muted)", margin: "0.55rem 0 0", lineHeight: 1.65 }}>
-                Better standards, local visibility, and tools that help good providers get found by the right customers.
-              </p>
+              <div className="provider-fit-grid">
+                <div className="provider-fit-item">
+                  <span className="provider-fit-icon"><ShieldCheck size={18} /></span>
+                  <div>
+                    <strong>Reviewed standards</strong>
+                    <p>Profiles are reviewed before going live.</p>
+                  </div>
+                </div>
+                <div className="provider-fit-item">
+                  <span className="provider-fit-icon"><MapPin size={18} /></span>
+                  <div>
+                    <strong>Local visibility</strong>
+                    <p>Show up in the areas that match your coverage.</p>
+                  </div>
+                </div>
+                <div className="provider-fit-item">
+                  <span className="provider-fit-icon"><Headphones size={18} /></span>
+                  <div>
+                    <strong>Provider support</strong>
+                    <p>Use a clearer route from onboarding to opportunities.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -74,7 +93,7 @@ export default function BecomeCleanerPage() {
       <section className="section">
         <div className="container">
           <div className="panel card provider-apply-checklist">
-            <strong>Before you apply</strong>
+            <strong className="provider-section-title">Before you apply</strong>
             <ul className="list-clean" style={{ marginTop: "1rem", color: "var(--color-text-muted)" }}>
               <li>ID and core eligibility documents are required</li>
               <li>You should have relevant experience for the services you offer</li>
@@ -87,10 +106,10 @@ export default function BecomeCleanerPage() {
 
       <section className="section muted-block">
         <div className="container provider-plans-layout">
-          <div>
+          <div className="provider-plans-copy">
             <div className="eyebrow">Provider plans</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Choose the plan that fits your goals.</h2>
-            <p className="lead" style={{ fontSize: "1rem", marginTop: "0.8rem" }}>
+            <p className="lead provider-sublead" style={{ marginTop: "0.8rem" }}>
               Start free, or choose a growth plan if you want more visibility, managed promotion, and stronger lead support.
             </p>
           </div>
@@ -127,7 +146,7 @@ export default function BecomeCleanerPage() {
               </p>
               <ul className="list-clean" style={{ marginTop: "1rem", color: "var(--color-text-muted)" }}>
                 <li>Priority placement in selected categories or areas</li>
-                <li>Managed promotion using the provider's own monthly budget</li>
+                <li>Managed promotion using the provider&apos;s own monthly budget</li>
                 <li>Lead-generation support across channels such as SEO and paid social</li>
                 <li>Targeted qualified lead volume, depending on category, location, pricing, and responsiveness</li>
               </ul>
@@ -146,10 +165,10 @@ export default function BecomeCleanerPage() {
 
       <section className="section muted-block">
         <div className="container provider-steps-layout">
-          <div>
+          <div className="provider-steps-copy">
             <div className="eyebrow">How it works</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Three simple steps to get started.</h2>
-            <p className="lead" style={{ fontSize: "1rem", marginTop: "0.8rem" }}>
+            <p className="lead provider-sublead" style={{ marginTop: "0.8rem" }}>
               A simple onboarding path before you start receiving opportunities.
             </p>
           </div>

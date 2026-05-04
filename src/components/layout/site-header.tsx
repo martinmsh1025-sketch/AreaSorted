@@ -91,7 +91,7 @@ export async function SiteHeader() {
   return (
     <header className="site-header-shell">
       <div className="container site-header-grid">
-        <Link href="/" className="site-header-brand">
+        <Link href="/" className="site-header-brand" aria-label="AreaSorted home">
           <AreaSortedLogo compact />
         </Link>
 

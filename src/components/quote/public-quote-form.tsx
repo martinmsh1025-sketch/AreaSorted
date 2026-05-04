@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Bug, CreditCard, Hammer, PackageOpen, Sparkles, Trash2, Trees } from "lucide-react";
@@ -147,6 +148,8 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
   const categories = listPublicCategories(enabledServiceValues);
   const requestedStep = Number(searchParams.get("step") || 1);
   const initialStep = Number.isFinite(requestedStep) ? Math.min(STEPS.length - 1, Math.max(0, requestedStep - 1)) : 0;
+  const rebookBookingId = searchParams.get("rebookBookingId") || "";
+  const isRebookFlow = Boolean(rebookBookingId);
 
   const [step, setStep] = useState(initialStep);
   const [categoryKey, setCategoryKey] = useState<PublicCategoryKey>((categories[0]?.key || "CLEANING") as PublicCategoryKey);
@@ -223,6 +226,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
   const roomCount = selectedJob ? isRoomCountCleaning(selectedJob.service, selectedJob.subcategory) : false;
   const showJobSize = !roomCount;
   const showPropertyType = selectedJob ? selectedJob.propertyTypes.length > 0 : false;
+  const [selectedProviderCompanyId, setSelectedProviderCompanyId] = useState("");
 
   const removePhoto = useCallback((url: string) => {
     setPhotoUrls((prev) => prev.filter((u) => u !== url));
@@ -237,6 +241,9 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
     const line1 = searchParams.get("line1");
     const line2 = searchParams.get("line2");
     const city = searchParams.get("city");
+    const categoryKeyFromQuery = searchParams.get("categoryKey");
+    const serviceValue = searchParams.get("serviceKey");
+    const preferredProviderCompanyId = searchParams.get("preferredProviderCompanyId");
     if (postcode || line1) {
       setForm((prev) => ({
         ...prev,
@@ -246,7 +253,21 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
         ...(city ? { city } : {}),
       }));
     }
-  }, [searchParams]);
+    if (categoryKeyFromQuery) {
+      const exists = categories.find((item) => item.key === categoryKeyFromQuery);
+      if (exists) {
+        setCategoryKey(categoryKeyFromQuery as PublicCategoryKey);
+      }
+    }
+    if (serviceValue) {
+      if (categoryKeyFromQuery) {
+        setServiceKey(serviceValue);
+      }
+    }
+    if (preferredProviderCompanyId) {
+      setSelectedProviderCompanyId(preferredProviderCompanyId);
+    }
+  }, [categories, searchParams]);
 
   const toggleAddOn = useCallback((key: string) => {
     setForm((prev) => ({
@@ -262,10 +283,14 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [estimateError, setEstimateError] = useState("");
   const [animatedTotal, setAnimatedTotal] = useState(0);
-  const [selectedProviderCompanyId, setSelectedProviderCompanyId] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const animatedTotalRef = useRef(0);
+
+  useEffect(() => {
+    animatedTotalRef.current = animatedTotal;
+  }, [animatedTotal]);
 
   // Build estimated hours for the API payload (same logic as before, needed for server)
   const estimatedHours = useMemo(() => {
@@ -324,6 +349,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
         weekend: applyWeekendSurcharge,
         weekendCount: weekendVisitCount,
         preferredProviderCompanyId: selectedProviderCompanyId || undefined,
+        rebookBookingId: rebookBookingId || undefined,
       };
 
       // Cleaning-specific
@@ -407,7 +433,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
     form.bedrooms, form.bathrooms, form.kitchens,
     form.propertyType, form.cleaningCondition, form.supplies,
     form.jobSize, form.selectedAddOns,
-    isCleaning, isPestControl, roomCount, showPropertyType, selectedProviderCompanyId,
+    isCleaning, isPestControl, roomCount, rebookBookingId, showPropertyType, selectedProviderCompanyId,
   ]);
 
   useEffect(() => {
@@ -417,7 +443,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
     }
 
     const target = estimate.totalCustomerPay;
-    const startValue = animatedTotal;
+    const startValue = animatedTotalRef.current;
     const startTime = performance.now();
     const duration = 520;
 
@@ -437,7 +463,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [estimate?.totalCustomerPay]);
+  }, [estimate]);
 
   const sizeOptions = useMemo(() => {
     if (!selectedJob) return [];
@@ -598,9 +624,12 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
     if (form.notes.trim()) {
       payload.notes = form.notes.trim();
     }
-    if (selectedProviderCompanyId) {
-      payload.preferredProviderCompanyId = selectedProviderCompanyId;
-    }
+      if (selectedProviderCompanyId) {
+        payload.preferredProviderCompanyId = selectedProviderCompanyId;
+      }
+      if (rebookBookingId) {
+        payload.rebookBookingId = rebookBookingId;
+      }
     if (showPropertyType) {
       payload.propertyType = form.propertyType;
     }
@@ -654,6 +683,14 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
       <h1 className="title" style={{ marginTop: "0.6rem", fontSize: "clamp(1.6rem, 3.5vw, 2.4rem)" }}>
         Tell us about your job
       </h1>
+      {isRebookFlow ? (
+        <div style={{ marginTop: "0.85rem", padding: "0.85rem 0.95rem", borderRadius: "0.8rem", background: "linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)", border: "1px solid rgba(29,78,216,0.14)" }}>
+          <strong style={{ display: "block", fontSize: "0.92rem" }}>Returning customer rebook</strong>
+          <p style={{ margin: "0.35rem 0 0", color: "var(--color-text-muted)", fontSize: "0.86rem", lineHeight: 1.55 }}>
+            You are rebooking from your AreaSorted account and we will try to keep the same provider match where available. The customer booking fee is waived on this quote, while provider-side fees still apply.
+          </p>
+        </div>
+      ) : null}
       <p className="lead" style={{ marginTop: "0.3rem", marginBottom: "0", fontSize: "0.95rem", color: "var(--color-text-muted)" }}>
         Complete each step below and we will prepare your quote before you move to the booking request stage.
       </p>
@@ -1044,7 +1081,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
                     <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
                       {photoUrls.map((url) => (
                         <div key={url} style={{ position: "relative", width: 80, height: 80, borderRadius: "var(--radius-sm)", overflow: "hidden", border: "1px solid var(--color-border)" }}>
-                          <img src={url} alt="Upload" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          <Image src={url} alt="Upload" fill unoptimized sizes="80px" style={{ objectFit: "cover" }} />
                           <button
                             type="button"
                             onClick={() => removePhoto(url)}
@@ -1228,7 +1265,7 @@ export function PublicQuoteForm({ enabledServiceValues }: { enabledServiceValues
                         {estimate.postcodeSurcharge > 0 && (
                           <div><span>Area surcharge</span><strong>+{money(estimate.postcodeSurcharge)}</strong></div>
                         )}
-                        <div><span>Booking fee</span><strong>{money(estimate.bookingFee)}</strong></div>
+                        <div><span>{isRebookFlow ? "Customer booking fee waived" : "Booking fee"}</span><strong>{money(estimate.bookingFee)}</strong></div>
                       </div>
                       <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
                         This quote reflects your selected schedule and provider. You will review the booking request next, then we place a temporary card hold before provider confirmation.

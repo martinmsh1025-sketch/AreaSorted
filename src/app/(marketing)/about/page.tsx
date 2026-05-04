@@ -109,7 +109,7 @@ export default function AboutPage() {
               I started AreaSorted after seeing the same problem again and again across the UK home services market: customers often have to rely on word of mouth or online reviews to judge whether a provider is right for them. In many cases, that is still not enough to make a confident decision.
             </p>
             <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, marginTop: "1rem" }}>
-              My view was simple - booking a cleaner, handyman, pest controller, or any other home service professional should not feel like guesswork. Customers should be able to understand a provider's background, experience, communication style, insurance position, and DBS status where relevant before they book.
+              My view was simple - booking a cleaner, handyman, pest controller, or any other home service professional should not feel like guesswork. Customers should be able to understand a provider&apos;s background, experience, communication style, insurance position, and DBS status where relevant before they book.
             </p>
             <p style={{ color: "var(--color-text-muted)", lineHeight: 1.7, marginTop: "1rem" }}>
               That is why AreaSorted is being built with a higher bar for provider entry. We want stronger vetting, better provider introductions, and more meaningful information than a review score alone can provide.

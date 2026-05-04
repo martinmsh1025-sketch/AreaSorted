@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { getCoverageForPostcode, normalisePostcode } from "@/lib/postcode-coverage";
+import { normalisePostcode } from "@/lib/postcode-coverage";
 import { PageLoading } from "@/components/shared/page-loading";
 
 type IconProps = { className?: string };
@@ -181,9 +181,7 @@ export default function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [openFaq, setOpenFaq] = useState(0);
-  const [lookupReady, setLookupReady] = useState(false);
 
-  const coverage = useMemo(() => getCoverageForPostcode(postcode), [postcode]);
   const selectedAddress = addresses.find((item) => item.ID === addressId);
 
   useEffect(() => {
@@ -213,7 +211,6 @@ export default function HomePage() {
   function updatePostcode(value: string) {
     setPostcode(value.toUpperCase());
     setSubmitMessage("");
-    setLookupReady(false);
   }
 
   async function lookupAddresses() {
@@ -241,7 +238,6 @@ export default function HomePage() {
 
       setAddresses(data.results || []);
       setAddressId("");
-      setLookupReady(Boolean(data.results?.length));
       setSubmitMessage(
         data.results?.length
           ? ""
@@ -252,8 +248,8 @@ export default function HomePage() {
       setAddressId("");
       setSubmitMessage("Unable to look up addresses right now. Please use manual address entry.");
     } finally {
-    setIsLookingUp(false);
-  }
+      setIsLookingUp(false);
+    }
   }
 
   const coverageAreas = [
@@ -378,6 +374,7 @@ export default function HomePage() {
                 className="panel mini-form homepage-quote-card homepage-quote-card-left"
                 onSubmit={(event) => {
                   event.preventDefault();
+                  void handleCoverageCheck();
                 }}
               >
                 <div className="homepage-quote-head">
@@ -415,7 +412,16 @@ export default function HomePage() {
                 </label>
 
                 <div className="button-row" style={{ justifyContent: "center", marginTop: "-0.2rem" }}>
-                  <button type="button" className="button button-secondary" onClick={() => setEntryMode(entryMode === "lookup" ? "manual" : "lookup")}>{entryMode === "lookup" ? "Use manual address" : "Use postcode finder"}</button>
+                  <button
+                    type="button"
+                    className="button button-secondary"
+                    onClick={() => {
+                      setEntryMode(entryMode === "lookup" ? "manual" : "lookup");
+                      setSubmitMessage("");
+                    }}
+                  >
+                    {entryMode === "lookup" ? "Use manual address" : "Use postcode finder"}
+                  </button>
                 </div>
 
                 {entryMode === "lookup" ? (
@@ -452,14 +458,14 @@ export default function HomePage() {
                 {!postcode && <p className="hero-minimal-note">Enter your postcode to check whether services are available in your area.</p>}
                 {submitMessage ? <p className="hero-minimal-note" style={{ color: "var(--color-error)" }}>{submitMessage}</p> : null}
 
-                <button type="button" className="button button-primary homepage-quote-button" onClick={handleCoverageCheck} disabled={isSubmitting}>
+                <button type="submit" className="button button-primary homepage-quote-button" disabled={isSubmitting || isLookingUp}>
                   {isSubmitting || isLookingUp ? <span className="button-spinner-wrap"><span className="button-spinner" />Please wait</span> : entryMode === "lookup" && !selectedAddress ? "Find address" : "Check coverage"}
                 </button>
               </form>
             </div>
 
             <div className="homepage-hero-art">
-              <Image src="/images/homepage/hero.png" alt="Home services at work" fill className="homepage-hero-art-image" sizes="(max-width: 960px) 100vw, 50vw" />
+              <Image src="/images/homepage/hero.png" alt="Home services at work" fill className="homepage-hero-art-image" sizes="(max-width: 960px) 100vw, 50vw" loading="eager" />
             </div>
           </div>
         </div>

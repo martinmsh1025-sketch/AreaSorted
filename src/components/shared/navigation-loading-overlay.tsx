@@ -73,7 +73,7 @@ export function NavigationLoadingOverlay() {
       document.removeEventListener("submit", handleSubmit, true);
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
     };
-  }, []);
+  }, [routeKey]);
 
   useEffect(() => {
     if (!loading) return;

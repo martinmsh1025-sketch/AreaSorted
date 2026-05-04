@@ -14,6 +14,7 @@ type ProviderOption = {
    responseTimeLabel?: string | null;
    serviceCommitments?: string[];
    languagesSpoken?: string[];
+   introVideoUrl?: string | null;
    totalCustomerPay: number;
   providerBasePrice: number;
   bookingFee: number;
@@ -34,11 +35,13 @@ function money(value: number) {
 
 export function ProviderOptionSelector({
   quoteReference,
+  accessToken,
   options,
   onSelect,
   inlineOnly = false,
 }: {
   quoteReference: string;
+  accessToken?: string;
   options: ProviderOption[];
   onSelect?: (providerId: string) => void;
   inlineOnly?: boolean;
@@ -116,6 +119,7 @@ export function ProviderOptionSelector({
                       responseTimeLabel: option.responseTimeLabel,
                       serviceCommitments: option.serviceCommitments,
                       languagesSpoken: option.languagesSpoken,
+                      introVideoUrl: option.introVideoUrl,
                     }}
                   />
                   {option.recommended ? <div style={{ marginTop: "0.5rem" }}><span className="quote-map-badge">Recommended</span></div> : null}
@@ -136,7 +140,13 @@ export function ProviderOptionSelector({
                       Choose this provider
                     </button>
                   ) : (
-                    <a className="button button-secondary" href={`/quote/${quoteReference}?selectedQuoteOptionId=${encodeURIComponent(option.id)}`}>
+                    <a
+                      className="button button-secondary"
+                      href={`/quote/${quoteReference}?${new URLSearchParams({
+                        ...(accessToken ? { access: accessToken } : {}),
+                        selectedQuoteOptionId: option.id,
+                      }).toString()}`}
+                    >
                       Choose this provider
                     </a>
                   )}
