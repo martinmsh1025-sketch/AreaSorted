@@ -110,6 +110,16 @@ function isValidEmail(value: string) {
   return /^\S+@\S+\.\S+$/.test(value);
 }
 
+function isValidHttpUrl(value: string) {
+  if (!value) return true;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 function validateProviderOnboardingForm(formData: FormData, currentStep: number) {
   const businessType = String(formData.get("businessType") || "company") === "sole_trader" ? "sole_trader" : "company";
   const legalName = String(formData.get("legalName") || "").trim();
@@ -129,6 +139,7 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
   const yearsExperience = String(formData.get("yearsExperience") || "").trim();
   const supportedContactChannels = formData.getAll("supportedContactChannels").map((item) => String(item)).filter((item) => providerContactChannelOptions.includes(item as never));
   const responseTimeLabel = String(formData.get("responseTimeLabel") || "").trim();
+  const introVideoUrl = String(formData.get("introVideoUrl") || "").trim();
   const categories = parseMultiValues(formData, "categories");
   const serviceKeys = parseServiceKeys(formData);
   const postcodePrefixes = parseMultiValue(formData.get("postcodePrefixes"));
@@ -140,6 +151,7 @@ function validateProviderOnboardingForm(formData: FormData, currentStep: number)
   const normalizedContactDetails: Partial<Record<"WhatsApp" | "SMS" | "Phone" | "Telegram" | "Email", string>> = {};
 
   if (responseTimeLabel && !providerResponseTimeOptions.includes(responseTimeLabel as never)) throw new Error("Choose a valid response time option.");
+  if (introVideoUrl && !isValidHttpUrl(introVideoUrl)) throw new Error("Add a valid video URL.");
   if (supportedContactChannels.includes("WhatsApp") && !whatsappContact) throw new Error("Add a WhatsApp contact detail.");
   if (supportedContactChannels.includes("SMS") && !smsContact) throw new Error("Add an SMS contact detail.");
   if (supportedContactChannels.includes("Phone") && !phoneContact) throw new Error("Add a phone contact detail.");
@@ -192,6 +204,7 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
   const yearsExperience = String(formData.get("yearsExperience") || "").trim();
   const supportedContactChannels = formData.getAll("supportedContactChannels").map((item) => String(item)).filter((item) => providerContactChannelOptions.includes(item as never));
   const responseTimeLabel = String(formData.get("responseTimeLabel") || "").trim();
+  const introVideoUrl = String(formData.get("introVideoUrl") || "").trim();
   const serviceCommitments = formData.getAll("serviceCommitments").map((item) => String(item)).filter((item) => providerCommitmentOptions.includes(item as never));
   const languagesSpoken = formData.getAll("languagesSpoken").map((item) => String(item)).filter((item) => providerLanguageOptions.includes(item as never));
   const whatsappContact = String(formData.get("whatsappContact") || "").trim();
@@ -205,6 +218,7 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
   if (headline.length > 80) throw new Error("Headline must be 80 characters or fewer.");
   if (bio.length > 400) throw new Error("Short description must be 400 characters or fewer.");
   if (responseTimeLabel && !providerResponseTimeOptions.includes(responseTimeLabel as never)) throw new Error("Choose a valid response time option.");
+  if (introVideoUrl && !isValidHttpUrl(introVideoUrl)) throw new Error("Add a valid video URL.");
   for (const [channel, rawValue] of [["WhatsApp", whatsappContact], ["SMS", smsContact], ["Phone", phoneContact], ["Telegram", telegramContact], ["Email", emailContact]] as const) {
     if (!supportedContactChannels.includes(channel)) continue;
     const validated = validateProviderContactDetail(channel, rawValue);
@@ -228,6 +242,7 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
       responseTimeLabel,
       serviceCommitments,
       languagesSpoken,
+      introVideoUrl,
     }),
     companyNumber: String(formData.get("companyNumber") || "").trim(),
     registeredAddress: String(formData.get("registeredAddress") || "").trim(),
@@ -261,6 +276,7 @@ async function persistProviderOnboarding(sessionProviderCompanyId: string, formD
       nationalInsuranceNumber: String(formData.get("nationalInsuranceNumber") || "").trim(),
       utrNumber: String(formData.get("utrNumber") || "").trim(),
       hmrcStatus: String(formData.get("hmrcStatus") || "").trim(),
+      introVideoUrl,
     },
     insuranceExpiry: formData.get("insuranceExpiry") ? new Date(String(formData.get("insuranceExpiry"))) : null,
     complianceNotes: String(formData.get("complianceNotes") || "").trim(),

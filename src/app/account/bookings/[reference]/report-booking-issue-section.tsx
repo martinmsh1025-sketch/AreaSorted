@@ -18,7 +18,7 @@ export function ReportBookingIssueSection({ bookingId }: { bookingId: string }) 
   const [state, formAction] = useFormState(reportBookingIssueAction, initialState);
 
   return (
-    <div className="panel card" style={{ marginTop: "1.5rem" }}>
+    <div id="report-booking-issue" className="panel card" style={{ marginTop: "1.5rem" }}>
       <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>Need help with this booking?</h2>
       <p style={{ fontSize: "0.9rem", color: "var(--color-text-muted)", margin: "0 0 0.9rem", lineHeight: 1.6 }}>
         If the provider was late, missed agreed tasks, caused damage, or the visit did not go as expected, send the details here. AreaSorted will log the case for review and contact you if more evidence is needed.

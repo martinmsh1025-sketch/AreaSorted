@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { groupPostcodePrefixes } from "@/lib/postcodes/group-prefixes";
+import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
 
 function statusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
@@ -116,6 +117,9 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
   const stripeReady =
     provider.stripeConnectedAccount?.chargesEnabled &&
     provider.stripeConnectedAccount?.payoutsEnabled;
+  const publicProfileMetadata = parseProviderPublicProfileMetadata(provider.specialtiesText);
+  const hasVerifiedInsurance = provider.documents.some((document) => document.documentKey === "insurance_proof" && document.status === "APPROVED");
+  const hasVerifiedDbs = provider.documents.some((document) => document.documentKey === "dbs_certificate" && document.status === "APPROVED");
 
   // Fetch pricing rules for this provider
   const pricingRules = await listProviderPricingRules(id);
@@ -350,6 +354,34 @@ export default async function AdminProviderDetailPage({ params, searchParams }: 
                   </dd>
                 </div>
               </dl>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Customer-facing trust badges</CardTitle>
+              <CardDescription>These are derived from approved documents and public profile details.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm text-muted-foreground">Insurance badge</div>
+                  <div className="mt-1 font-medium">{hasVerifiedInsurance ? "Insurance verified" : "Not verified"}</div>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-sm text-muted-foreground">DBS badge</div>
+                  <div className="mt-1 font-medium">{hasVerifiedDbs ? "DBS verified" : "Not verified"}</div>
+                </div>
+                <div className="rounded-lg border p-3 sm:col-span-2">
+                  <div className="text-sm text-muted-foreground">Intro video</div>
+                  <div className="mt-1 font-medium">{publicProfileMetadata.introVideoUrl ? "Provided" : "Not provided"}</div>
+                  {publicProfileMetadata.introVideoUrl ? (
+                    <a href={publicProfileMetadata.introVideoUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex text-sm font-medium text-primary hover:underline">
+                      Open provider video
+                    </a>
+                  ) : null}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

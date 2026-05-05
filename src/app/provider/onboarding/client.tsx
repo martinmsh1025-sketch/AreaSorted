@@ -544,6 +544,7 @@ export function ProviderOnboardingClient({
   const [responseTimeLabel, setResponseTimeLabel] = useState(initialPublicProfileMetadata.responseTimeLabel || "");
   const [serviceCommitments, setServiceCommitments] = useState<string[]>(initialPublicProfileMetadata.serviceCommitments);
   const [languagesSpoken, setLanguagesSpoken] = useState<string[]>(initialPublicProfileMetadata.languagesSpoken);
+  const [introVideoUrl, setIntroVideoUrl] = useState(initialPublicProfileMetadata.introVideoUrl || onboardingMetadata.introVideoUrl || "");
   const [step1OpenSections, setStep1OpenSections] = useState<Record<string, boolean>>({
     identity: true,
     brand: false,
@@ -573,7 +574,7 @@ export function ProviderOnboardingClient({
   const step1Completion = {
     brand: Boolean(profileImageUrl.trim()),
     profile: Boolean(headline.trim() && bio.trim()),
-    comparison: Boolean(responseTimeLabel || supportedContactChannels.length || serviceCommitments.length || languagesSpoken.length),
+    comparison: Boolean(responseTimeLabel || supportedContactChannels.length || serviceCommitments.length || languagesSpoken.length || introVideoUrl),
     identity: Boolean(businessType && legalName.trim()),
     legal: Boolean(legalName.trim() && contactEmail.trim() && phone.trim() && (businessType === "sole_trader" || companyNumber.trim())),
     soleTraderIdentity: Boolean(dateOfBirth.trim() && nationality.trim() && rightToWorkStatus.trim()),
@@ -738,6 +739,7 @@ export function ProviderOnboardingClient({
           <input type="hidden" name="yearsExperience" value={yearsExperience} />
           {supportedContactChannels.map((channel) => <input key={`contact-channel-${channel}`} type="hidden" name="supportedContactChannels" value={channel} />)}
           <input type="hidden" name="responseTimeLabel" value={responseTimeLabel} />
+          <input type="hidden" name="introVideoUrl" value={introVideoUrl} />
           {serviceCommitments.map((value) => <input key={`commitment-${value}`} type="hidden" name="serviceCommitments" value={value} />)}
           {languagesSpoken.map((value) => <input key={`language-${value}`} type="hidden" name="languagesSpoken" value={value} />)}
           <input type="hidden" name="whatsappContact" value={contactDetails.WhatsApp || ""} />
@@ -816,7 +818,14 @@ export function ProviderOnboardingClient({
                   >
                     <div className="grid items-center gap-4 sm:grid-cols-[140px_minmax(0,1fr)]">
                       {profileImagePreviewUrl || profileImageUrl ? (
-                        <img src={profileImagePreviewUrl || profileImageUrl} alt="Provider profile" className="h-32 w-32 rounded-3xl object-cover" />
+                        <Image
+                          src={profileImagePreviewUrl || profileImageUrl}
+                          alt="Provider profile"
+                          width={128}
+                          height={128}
+                          unoptimized
+                          className="h-32 w-32 rounded-3xl object-cover"
+                        />
                       ) : (
                         <div className="flex h-32 w-32 items-center justify-center rounded-3xl bg-slate-100 text-sm text-muted-foreground">
                           No image
@@ -942,6 +951,10 @@ export function ProviderOnboardingClient({
                           disabled={!canEdit}
                           onToggle={(value) => setServiceCommitments((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value])}
                         />
+                        <div className="provider-field-stack">
+                          <Label htmlFor="introVideoUrl">Intro video URL (optional)</Label>
+                          <Input id="introVideoUrl" className={onboardingInputClass} value={introVideoUrl} onChange={(event) => setIntroVideoUrl(event.target.value)} disabled={!canEdit} placeholder="https://..." />
+                        </div>
                       </div>
                       <div className="rounded-2xl bg-white p-4 space-y-4">
                         <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#c62828]"><Sparkles className="size-3.5" /> Languages</div>
@@ -970,12 +983,13 @@ export function ProviderOnboardingClient({
                           headline,
                           bio,
                           yearsExperience: yearsExperience ? Number(yearsExperience) : null,
-                          hasDbs: false,
-                          hasInsurance: false,
+                          hasDbs: provider.documents.some((item) => item.documentKey === "dbs_certificate" && item.status === "APPROVED"),
+                          hasInsurance: provider.documents.some((item) => item.documentKey === "insurance_proof" && item.status === "APPROVED"),
                           supportedContactChannels,
                           responseTimeLabel: responseTimeLabel || null,
                           serviceCommitments,
                           languagesSpoken,
+                          introVideoUrl: introVideoUrl || null,
                         }}
                       />
                     </div>

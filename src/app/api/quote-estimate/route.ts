@@ -4,6 +4,8 @@ import { matchProvidersForPublicQuote } from "@/server/services/public/provider-
 import { previewProviderPricing } from "@/lib/pricing/prisma-pricing";
 import { checkRateLimit, QUOTE_ESTIMATE_RATE_LIMIT } from "@/lib/security/rate-limit";
 import { parseProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
+import { getCustomerSession } from "@/lib/customer-auth";
+import { getPrisma } from "@/lib/db";
 
 /**
  * Lightweight pricing preview — does provider matching + pricing calculation
@@ -31,6 +33,7 @@ const schema = z.object({
   jobSize: z.enum(["small", "standard", "large"]).optional(),
   addOns: z.array(z.string()).optional(),
   preferredProviderCompanyId: z.string().optional(),
+  rebookBookingId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -46,6 +49,18 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = schema.parse(await request.json());
+    let waiveCustomerBookingFee = false;
+    if (payload.rebookBookingId) {
+      const customer = await getCustomerSession();
+      if (customer) {
+        const prisma = getPrisma();
+        const booking = await prisma.booking.findFirst({
+          where: { id: payload.rebookBookingId, customerId: customer.id },
+          select: { id: true },
+        });
+        waiveCustomerBookingFee = Boolean(booking);
+      }
+    }
 
     // 1. Match provider
     const match = await matchProvidersForPublicQuote({
@@ -73,6 +88,7 @@ export async function POST(request: NextRequest) {
       languagesSpoken?: string[];
       hasDbs?: boolean;
       hasInsurance?: boolean;
+      introVideoUrl?: string | null;
       totalCustomerPay: number;
       providerBasePrice: number;
       bookingFee: number;
@@ -84,7 +100,7 @@ export async function POST(request: NextRequest) {
     const pricingResults = await Promise.allSettled(
       match.providers.map(async (provider) => {
         const publicProfileMetadata = parseProviderPublicProfileMetadata(provider.specialtiesText);
-        const preview = await previewProviderPricing({
+        const rawPreview = await previewProviderPricing({
           providerCompanyId: provider.providerCompanyId,
           categoryKey: payload.categoryKey,
           serviceKey: payload.serviceKey,
@@ -104,6 +120,10 @@ export async function POST(request: NextRequest) {
           addOns: payload.addOns,
         });
 
+        const preview = waiveCustomerBookingFee
+          ? { ...rawPreview, bookingFee: 0, totalCustomerPay: Math.max(0, rawPreview.totalCustomerPay - rawPreview.bookingFee) }
+          : rawPreview;
+
         return {
           providerCompanyId: provider.providerCompanyId,
           providerName: provider.providerName,
@@ -117,6 +137,7 @@ export async function POST(request: NextRequest) {
           languagesSpoken: publicProfileMetadata.languagesSpoken,
           hasDbs: provider.hasDbs,
           hasInsurance: provider.hasInsurance,
+          introVideoUrl: publicProfileMetadata.introVideoUrl,
           totalCustomerPay: preview.totalCustomerPay,
           providerBasePrice: preview.providerBasePrice,
           bookingFee: preview.bookingFee,

@@ -89,8 +89,12 @@ function checkCsrf(request: NextRequest): NextResponse | null {
   return null;
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith("/uploads/provider-documents/")) {
+    return new NextResponse("Not found", { status: 404 });
+  }
 
   // CSRF protection for all state-changing requests
   const csrfResponse = checkCsrf(request);
@@ -140,5 +144,6 @@ export const config = {
     "/provider/:path*",
     "/account/:path*",
     "/api/:path*",
+    "/uploads/provider-documents/:path*",
   ],
 };

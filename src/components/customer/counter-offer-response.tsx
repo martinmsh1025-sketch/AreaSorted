@@ -141,7 +141,7 @@ function PendingOfferCard({
       </div>
 
       <h2 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "0 0 0.5rem" }}>
-        Respond to {providerName}'s counter offer
+        Respond to {providerName}&apos;s counter offer
       </h2>
       <p style={{ fontSize: "0.92rem", color: "var(--color-text-muted)", lineHeight: 1.6, margin: "0 0 1rem" }}>
         Review the proposed changes below. Accepting updates this booking. Declining keeps your current booking terms unchanged.

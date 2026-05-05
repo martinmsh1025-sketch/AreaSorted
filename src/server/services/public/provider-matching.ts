@@ -20,7 +20,13 @@ export type ProviderMatchResult =
   | { status: "no_coverage" }
   | { status: "invalid_input"; reason: string };
 
-export type RematchResult = { status: "no_alternative" };
+export type RematchResult =
+  | {
+      status: "rematched";
+      provider: MatchedProvider;
+      selectedQuoteOptionId?: string;
+    }
+  | { status: "no_alternative" };
 
 function getPostcodePrefix(postcode: string) {
   return postcode.trim().toUpperCase().split(" ")[0] || "";
@@ -152,7 +158,81 @@ export async function rematchBookingAfterRejection(input: {
   bookingId: string;
   postcode: string;
   categoryKey: string;
+  serviceKey?: string;
   excludeProviderIds: string[];
 }): Promise<RematchResult> {
-  return { status: "no_alternative" };
+  const prisma = getPrisma();
+
+  const quoteRequest = await prisma.quoteRequest.findFirst({
+    where: { bookingId: input.bookingId },
+    include: {
+      quoteOptions: {
+        include: {
+          providerCompany: {
+            include: {
+              stripeConnectedAccount: true,
+              documents: {
+                where: { status: "APPROVED", documentKey: { in: ["dbs_certificate", "insurance_proof"] } },
+                select: { documentKey: true },
+              },
+              pricingRules: {
+                where: {
+                  active: true,
+                  categoryKey: input.categoryKey,
+                  ...(input.serviceKey ? { serviceKey: input.serviceKey } : {}),
+                },
+                select: { id: true },
+              },
+            },
+          },
+        },
+        orderBy: [{ totalCustomerPay: "asc" }, { providerName: "asc" }],
+      },
+    },
+  });
+
+  const nextQuoteOption = quoteRequest?.quoteOptions.find(
+    (option) => option.paymentReady && !input.excludeProviderIds.includes(option.providerCompanyId),
+  );
+
+  if (nextQuoteOption) {
+    const company = nextQuoteOption.providerCompany;
+    return {
+      status: "rematched",
+      selectedQuoteOptionId: nextQuoteOption.id,
+      provider: {
+        providerCompanyId: company.id,
+        providerName: company.tradingName || company.legalName || nextQuoteOption.providerName || "Service provider",
+        profileImageUrl: company.profileImageUrl,
+        headline: company.headline,
+        bio: company.bio,
+        yearsExperience: company.yearsExperience,
+        specialtiesText: company.specialtiesText,
+        hasDbs: company.documents.some((doc) => doc.documentKey === "dbs_certificate"),
+        hasInsurance: company.documents.some((doc) => doc.documentKey === "insurance_proof"),
+        postcodePrefix: getPostcodePrefix(input.postcode),
+        paymentReady: Boolean(
+          company.stripeConnectedAccount?.chargesEnabled &&
+          company.stripeConnectedAccount?.payoutsEnabled,
+        ),
+        hasActivePricing: company.pricingRules.length > 0,
+      },
+    };
+  }
+
+  const fallback = await matchProvidersForPublicQuote({
+    postcode: input.postcode,
+    categoryKey: input.categoryKey,
+    serviceKey: input.serviceKey,
+    excludeProviderIds: input.excludeProviderIds,
+  });
+
+  if (fallback.status !== "matched" || !fallback.providers.length) {
+    return { status: "no_alternative" };
+  }
+
+  return {
+    status: "rematched",
+    provider: fallback.providers[0],
+  };
 }

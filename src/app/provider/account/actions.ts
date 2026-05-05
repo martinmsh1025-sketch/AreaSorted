@@ -94,6 +94,7 @@ export async function updateProviderProfileAction(formData: FormData) {
         responseTimeLabel,
         serviceCommitments,
         languagesSpoken,
+        introVideoUrl: null,
       }),
     },
   });

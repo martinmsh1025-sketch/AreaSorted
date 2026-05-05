@@ -33,9 +33,9 @@ export async function GET(request: Request, context: { params: Promise<{ enquiry
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const normalized = path.normalize(path.join(process.cwd(), selectedPath));
-  const allowedRoot = path.join(process.cwd(), ".data", "provider-case-evidence");
-  if (!normalized.startsWith(allowedRoot)) {
+  const allowedRoot = path.join(/* turbopackIgnore: true */ process.cwd(), ".data", "provider-case-evidence");
+  const normalized = path.normalize(path.resolve(allowedRoot, path.relative(".data/provider-case-evidence", selectedPath)));
+  if (!normalized.startsWith(`${allowedRoot}${path.sep}`)) {
     return new NextResponse("Invalid path", { status: 400 });
   }
 

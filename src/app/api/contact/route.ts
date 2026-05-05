@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getPrisma } from "@/lib/db";
+import { getAppUrl } from "@/lib/config/env";
 import { checkRateLimit, CONTACT_RATE_LIMIT } from "@/lib/security/rate-limit";
+import { sendLoggedEmail } from "@/lib/notifications/logged-email";
+import { getOpsNotificationRecipients } from "@/lib/notifications/ops";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Please enter your name.").max(120),
@@ -26,13 +29,31 @@ export async function POST(request: NextRequest) {
     const prisma = getPrisma();
 
     // Store the enquiry in the database
-    await prisma.contactEnquiry.create({
+    const enquiry = await prisma.contactEnquiry.create({
       data: {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         message: message.trim(),
       },
     });
+
+    const opsRecipients = await getOpsNotificationRecipients();
+    const appUrl = getAppUrl();
+    await Promise.allSettled(opsRecipients.map((to) => sendLoggedEmail({
+      to,
+      subject: `[Contact] New website enquiry from ${name.trim()}`,
+      text: [
+        `Name: ${name.trim()}`,
+        `Email: ${email.trim().toLowerCase()}`,
+        `Enquiry ID: ${enquiry.id}`,
+        "",
+        message.trim(),
+        "",
+        `Review in admin: ${appUrl}/admin/trust-ops`,
+      ].join("\n"),
+      templateCode: "contact_form_enquiry",
+      payload: { enquiryId: enquiry.id },
+    })));
 
     return NextResponse.json({ ok: true });
   } catch (error) {

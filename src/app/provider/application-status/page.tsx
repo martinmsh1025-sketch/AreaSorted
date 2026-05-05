@@ -9,14 +9,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, CheckCircle, AlertCircle, ArrowRight, LogOut } from "lucide-react";
 
+const statusIconMap = {
+  APPROVED: CheckCircle,
+  ACTIVE: CheckCircle,
+  CHANGES_REQUESTED: AlertCircle,
+  REJECTED: AlertCircle,
+  SUSPENDED: AlertCircle,
+} as const;
+
 type ProviderApplicationStatusPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function getStatusIcon(status: string) {
-  if (["APPROVED", "ACTIVE"].includes(status)) return CheckCircle;
-  if (["CHANGES_REQUESTED", "REJECTED", "SUSPENDED"].includes(status)) return AlertCircle;
-  return Clock;
+function ProviderStatusIcon({ status }: { status: string }) {
+  const Icon = statusIconMap[status as keyof typeof statusIconMap] || Clock;
+  return <Icon className="size-6" />;
 }
 
 function getStatusDescription(status: string) {
@@ -64,7 +71,6 @@ export default async function ProviderApplicationStatusPage({ searchParams }: Pr
           ? { href: "/provider/orders", label: "Open orders" }
           : { href: "/provider", label: "Open dashboard" };
 
-  const StatusIcon = getStatusIcon(provider.status);
   const feedback = getActionableFeedback(provider);
 
   return (
@@ -88,7 +94,7 @@ export default async function ProviderApplicationStatusPage({ searchParams }: Pr
                   ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
                   : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
             }`}>
-              <StatusIcon className="size-6" />
+              <ProviderStatusIcon status={provider.status} />
             </div>
             <div className="flex-1 space-y-2">
               <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
