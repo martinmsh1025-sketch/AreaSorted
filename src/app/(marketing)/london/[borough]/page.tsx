@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${page.name} Local Services`,
-    description: `${page.intro} Explore booking expectations, common jobs, and service coverage in ${page.name}, London.`,
+    description: `${page.intro} ${page.localAngle} Explore booking expectations, common jobs, and service coverage in ${page.name}, London.`,
     alternates: {
       canonical: `/london/${page.slug}`,
     },
@@ -39,7 +39,7 @@ function getSafeSiteUrl() {
   }
 }
 
-const eastNorthEastBoroughs = new Set(["hackney", "tower-hamlets", "newham", "waltham-forest", "redbridge", "havering", "barking-and-dagenham", "enfield", "camden", "islington", "barnet", "haringey"]);
+const eastNorthEastBoroughs = new Set(["hackney", "tower-hamlets", "newham", "waltham-forest", "redbridge", "havering", "barking-dagenham", "enfield", "camden", "islington", "barnet", "haringey"]);
 
 function getBoroughHeroImage(slug: string) {
   return eastNorthEastBoroughs.has(slug)
@@ -163,9 +163,9 @@ export default async function BoroughPage({ params }: Props) {
             <div className="eyebrow">Why this page matters</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Booking in {page.name}</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.7 }}>
-              AreaSorted is built for London postcode matching. When you start a booking in {page.name}, we check
-              local coverage, service suitability, timing, and pricing before you continue. We place a temporary card
-              hold first, and only capture payment once the provider confirms the booking.
+              {page.localAngle} {page.bookingReality} AreaSorted is built around London postcode matching, so we check
+              coverage, service fit, timing, and pricing before you continue. We place a temporary card hold first, and
+              only capture payment once the provider confirms the booking.
             </p>
           </div>
           <div className="panel card">
@@ -194,7 +194,7 @@ export default async function BoroughPage({ params }: Props) {
             <div className="eyebrow">Nearby areas</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Neighbourhoods we also think about</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.7 }}>
-              Customers searching in {page.name} often also compare options in nearby areas such as {page.nearbyAreas.join(", ")}. Coverage is always postcode-led, so the fastest next step is to continue booking and check your exact address.
+              Customers searching in {page.name} often also compare options in nearby areas such as {page.nearbyAreas.join(", ")}. {page.pricingContext} Coverage is always postcode-led, so the fastest next step is to continue booking and check your exact address.
             </p>
           </div>
         </div>

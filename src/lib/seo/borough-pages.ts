@@ -2,6 +2,9 @@ export type BoroughPage = {
   slug: string;
   name: string;
   intro: string;
+  localAngle: string;
+  bookingReality: string;
+  pricingContext: string;
   highlights: string[];
   commonJobs: string[];
   nearbyAreas: string[];
@@ -11,8 +14,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "camden",
     name: "Camden",
-    intro:
-      "Book trusted local services in Camden with postcode-first coverage checks, clear pricing, and managed provider confirmation through AreaSorted.",
+    intro: "Book trusted local services in Camden with postcode-first coverage checks, clear pricing, and managed provider confirmation through AreaSorted.",
+    localAngle: "Camden mixes student lets, mansion blocks, and period conversions, so move-out cleaning, assembly, and reset work stay consistently busy.",
+    bookingReality: "Bloomsbury, Kentish Town, and Hampstead may share the same borough page, but access rules, parking, and building layouts vary enough to affect job planning.",
+    pricingContext: "In Camden, the quote is often shaped by controlled streets, carrying distance, and how tightly the visit has to fit around central London schedules.",
     highlights: ["Townhouses and flats", "End of tenancy demand", "Busy weekday scheduling"],
     commonJobs: ["End of tenancy cleaning", "Handyman odd jobs", "Waste removal", "Furniture assembly"],
     nearbyAreas: ["Kentish Town", "Bloomsbury", "Hampstead", "Primrose Hill"],
@@ -20,8 +25,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "islington",
     name: "Islington",
-    intro:
-      "Arrange local cleaning, handyman, pest control, and waste removal services in Islington through one managed London booking flow.",
+    intro: "Arrange local cleaning, handyman, pest control, and waste removal services in Islington through one managed London booking flow.",
+    localAngle: "Islington demand is driven by compact flats, terrace conversions, and quick landlord turnover, which keeps recurring cleaning and assembly demand high.",
+    bookingReality: "Angel, Highbury, and Barnsbury often look interchangeable in search, but access and property style still change how straightforward a booking really is.",
+    pricingContext: "Here, pricing is often influenced more by floor level, building access, and short service windows than by distance alone.",
     highlights: ["Victorian conversions", "Compact flats", "Fast access to Zone 1"],
     commonJobs: ["Regular cleaning", "Flat-pack assembly", "Pest inspections", "Small repair visits"],
     nearbyAreas: ["Angel", "Highbury", "Canonbury", "Barnsbury"],
@@ -29,8 +36,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "westminster",
     name: "Westminster",
-    intro:
-      "Check coverage and book vetted local service providers in Westminster with transparent pricing and central London support through AreaSorted.",
+    intro: "Check coverage and book vetted local service providers in Westminster with transparent pricing and central London support through AreaSorted.",
+    localAngle: "Westminster bookings lean toward apartment work, fast-turnaround support, and customers who care a lot about timing, discretion, and presentation.",
+    bookingReality: "A postcode-first check matters here because concierge rules, loading restrictions, and access conditions can change from one block to the next.",
+    pricingContext: "In Westminster, access complexity and timing precision often affect the quote as much as the underlying task itself.",
     highlights: ["High-density central locations", "Apartment cleaning", "Time-sensitive bookings"],
     commonJobs: ["Deep cleaning", "Waste collection", "Handyman visits", "Furniture setup"],
     nearbyAreas: ["Victoria", "Pimlico", "Marylebone", "Soho"],
@@ -38,8 +47,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "hackney",
     name: "Hackney",
-    intro:
-      "AreaSorted helps customers in Hackney continue booking trusted local service providers for cleaning, repairs, assembly, and maintenance work.",
+    intro: "AreaSorted helps customers in Hackney continue booking trusted local service providers for cleaning, repairs, assembly, and maintenance work.",
+    localAngle: "Hackney creates a wide spread of domestic demand, from furniture setup in compact flats to tidy-up, clearance, and repair work for busy mixed-use homes.",
+    bookingReality: "Dalston, Clapton, and London Fields sit under one borough label, but their access patterns and property mix still create different operational realities.",
+    pricingContext: "Hackney jobs are often affected by parking, stairs, and how much setup space the provider actually has on arrival.",
     highlights: ["Mix of family homes and flats", "Creative workspaces", "Popular assembly and clearance jobs"],
     commonJobs: ["Furniture assembly", "Waste removal", "Garden tidy-ups", "General cleaning"],
     nearbyAreas: ["Dalston", "Shoreditch", "Clapton", "London Fields"],
@@ -47,8 +58,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "lambeth",
     name: "Lambeth",
-    intro:
-      "Find local service availability in Lambeth and continue booking through AreaSorted with clear pricing, booking support, and provider confirmation handling.",
+    intro: "Find local service availability in Lambeth and continue booking through AreaSorted with clear pricing, booking support, and provider confirmation handling.",
+    localAngle: "Lambeth mixes family-home upkeep with rental-turnover demand, so recurring cleaning and reactive support both show up strongly across the borough.",
+    bookingReality: "Brixton, Vauxhall, and Streatham create different booking rhythms, so a borough page needs more nuance than generic South London copy.",
+    pricingContext: "In Lambeth, urgency and access windows regularly influence quotes, especially for apartment jobs or short-notice cleaning work.",
     highlights: ["Busy residential turnover", "Short-notice cleaning", "South London handyman demand"],
     commonJobs: ["Move-out cleaning", "General handyman", "Waste removal", "Garden maintenance"],
     nearbyAreas: ["Brixton", "Clapham", "Streatham", "Vauxhall"],
@@ -56,8 +69,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "southwark",
     name: "Southwark",
-    intro:
-      "Book trusted local services in Southwark through AreaSorted with postcode checks, transparent pricing, and managed provider confirmation.",
+    intro: "Book trusted local services in Southwark through AreaSorted with postcode checks, transparent pricing, and managed provider confirmation.",
+    localAngle: "Southwark search demand often comes from dense apartment living, landlord handovers, and fast reset work between occupancies.",
+    bookingReality: "Bankside, Peckham, and Dulwich can all appear inside one borough search, but the job mix and access constraints are not remotely identical.",
+    pricingContext: "Clearance volume, carrying distance, and building access often influence Southwark quotes more than customers expect from the service label alone.",
     highlights: ["High-density flats", "Move-out cleaning demand", "Frequent waste clearance jobs"],
     commonJobs: ["End of tenancy cleaning", "Waste removal", "Handyman repairs", "Pest control"],
     nearbyAreas: ["Bermondsey", "Peckham", "Dulwich", "Bankside"],
@@ -65,8 +80,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "tower-hamlets",
     name: "Tower Hamlets",
-    intro:
-      "Arrange local services in Tower Hamlets with one managed booking flow covering pricing, temporary card holds, and provider confirmation.",
+    intro: "Arrange local services in Tower Hamlets with one managed booking flow covering pricing, temporary card holds, and provider confirmation.",
+    localAngle: "Tower Hamlets skews toward apartment-heavy bookings, rental resets, and practical handyman or assembly jobs for compact homes.",
+    bookingReality: "Canary Wharf towers and older East End streets can sit minutes apart but create very different provider access and timing constraints.",
+    pricingContext: "Tower Hamlets pricing often shifts because of concierge rules, lift dependence, and loading arrangements rather than pure travel distance.",
     highlights: ["Apartment-heavy stock", "Short-notice service demand", "Assembly and handyman jobs"],
     commonJobs: ["Regular cleaning", "Furniture assembly", "Handyman visits", "Waste removal"],
     nearbyAreas: ["Canary Wharf", "Bethnal Green", "Whitechapel", "Bow"],
@@ -74,8 +91,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "greenwich",
     name: "Greenwich",
-    intro:
-      "Check coverage and continue booking local cleaning, assembly, repair, and maintenance services in Greenwich through AreaSorted.",
+    intro: "Check coverage and continue booking local cleaning, assembly, repair, and maintenance services in Greenwich through AreaSorted.",
+    localAngle: "Greenwich demand often combines family-home routines, riverside flat upkeep, and more outdoor work than inner borough pages usually need to talk about.",
+    bookingReality: "Blackheath, Woolwich, and Eltham all feed the same borough search path, but travel planning and property shape can still differ noticeably.",
+    pricingContext: "Garden access, outdoor waste volume, and broader property footprints tend to affect Greenwich jobs more than in flatter central areas.",
     highlights: ["Family homes and riverside flats", "Garden jobs", "Recurring cleaning"],
     commonJobs: ["General cleaning", "Garden maintenance", "Furniture assembly", "Handyman jobs"],
     nearbyAreas: ["Blackheath", "Woolwich", "Charlton", "Eltham"],
@@ -83,8 +102,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "kensington-chelsea",
     name: "Kensington and Chelsea",
-    intro:
-      "Book vetted local service providers in Kensington and Chelsea with a postcode-first flow, transparent pricing, and managed confirmation.",
+    intro: "Book vetted local service providers in Kensington and Chelsea with a postcode-first flow, transparent pricing, and managed confirmation.",
+    localAngle: "Kensington and Chelsea demand usually centres on higher-spec homes where careful handling, reliable timing, and polished execution matter more than generic speed claims.",
+    bookingReality: "Notting Hill, Chelsea, and South Kensington may be geographically close, but access expectations and property standards still vary materially.",
+    pricingContext: "Premium residential access, larger interiors, and presentation-sensitive work can all influence quotes in this borough.",
     highlights: ["Premium residential stock", "Deep cleaning demand", "Precision assembly and repairs"],
     commonJobs: ["Deep cleaning", "Handyman work", "Furniture assembly", "Pest control"],
     nearbyAreas: ["Notting Hill", "Chelsea", "South Kensington", "Earl's Court"],
@@ -92,8 +113,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "wandsworth",
     name: "Wandsworth",
-    intro:
-      "AreaSorted helps customers in Wandsworth check local service availability and continue booking with clear pricing and provider confirmation rules.",
+    intro: "AreaSorted helps customers in Wandsworth check local service availability and continue booking with clear pricing and provider confirmation rules.",
+    localAngle: "Wandsworth booking demand is anchored by family homes, commuter schedules, and a steady mix of regular cleaning, repair, and outdoor upkeep jobs.",
+    bookingReality: "Clapham Junction and Putney do not behave the same way operationally as Balham or Tooting, so postcode-specific checks matter before confirmation.",
+    pricingContext: "Property size, storage density, and whether the work extends outdoors often influence Wandsworth quotes more than the service category alone.",
     highlights: ["High residential turnover", "Family home cleaning", "Outdoor maintenance demand"],
     commonJobs: ["Regular cleaning", "Garden maintenance", "Waste removal", "Handyman repairs"],
     nearbyAreas: ["Clapham Junction", "Putney", "Balham", "Tooting"],
@@ -101,8 +124,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "barking-dagenham",
     name: "Barking and Dagenham",
-    intro:
-      "AreaSorted helps customers in Barking and Dagenham check local service coverage and continue booking with clear pricing and managed provider confirmation.",
+    intro: "AreaSorted helps customers in Barking and Dagenham check local service coverage and continue booking with clear pricing and managed provider confirmation.",
+    localAngle: "Barking and Dagenham searches usually skew toward practical household work: repeat cleaning, repairs, waste collection, and general family-home upkeep.",
+    bookingReality: "Outer East London routing matters here, especially when customers search one borough name but the actual address sits on a longer provider journey.",
+    pricingContext: "Travel windows, property access, and disposal handling can all move quotes in Barking and Dagenham more than customers expect.",
     highlights: ["Outer East London travel planning", "Busy family households", "Repeat cleaning and repair demand"],
     commonJobs: ["Regular cleaning", "Handyman repairs", "Waste removal", "Garden maintenance"],
     nearbyAreas: ["Barking", "Dagenham", "Becontree", "Chadwell Heath"],
@@ -110,8 +135,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "barnet",
     name: "Barnet",
-    intro:
-      "Check AreaSorted service availability in Barnet for cleaning, assembly, repairs, pest control, and practical home support across North London postcodes.",
+    intro: "Check AreaSorted service availability in Barnet for cleaning, assembly, repairs, pest control, and practical home support across North London postcodes.",
+    localAngle: "Barnet tends to generate longer-form domestic jobs, especially where larger homes need recurring cleaning, garden work, assembly, or maintenance support.",
+    bookingReality: "Finchley, Hendon, and Mill Hill all sit under Barnet search intent, but travel spread and property scale still affect provider fit.",
+    pricingContext: "In Barnet, quote differences often come from property size and route planning rather than urgency alone.",
     highlights: ["Family homes", "Longer travel windows", "Regular cleaning demand"],
     commonJobs: ["Regular cleaning", "Handyman repairs", "Furniture assembly", "Garden maintenance"],
     nearbyAreas: ["Finchley", "Hendon", "Golders Green", "Mill Hill"],
@@ -119,8 +146,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "bexley",
     name: "Bexley",
-    intro:
-      "AreaSorted helps customers in Bexley continue booking local services with postcode-first coverage checks and transparent pricing before confirmation.",
+    intro: "AreaSorted helps customers in Bexley continue booking local services with postcode-first coverage checks and transparent pricing before confirmation.",
+    localAngle: "Bexley demand is more suburban and household-led, with regular cleaning, garden upkeep, waste clearance, and routine repairs appearing often.",
+    bookingReality: "Sidcup, Welling, and Bexleyheath may share a borough page, but postcode-level routing still decides whether a provider can realistically take the job.",
+    pricingContext: "Garden volume, parking ease, and property footprint often matter more in Bexley than they do in tighter inner-London jobs.",
     highlights: ["Residential suburbs", "Weekend demand", "Garden and clearance jobs"],
     commonJobs: ["General cleaning", "Garden maintenance", "Waste removal", "Handyman visits"],
     nearbyAreas: ["Sidcup", "Welling", "Bexleyheath", "Erith"],
@@ -128,8 +157,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "brent",
     name: "Brent",
-    intro:
-      "Book vetted local services in Brent through AreaSorted, from cleaning and handyman work to pest control, assembly, and waste removal.",
+    intro: "Book vetted local services in Brent through AreaSorted, from cleaning and handyman work to pest control, assembly, and waste removal.",
+    localAngle: "Brent sees steady move-in, move-out, assembly, and cleaning demand across mixed housing, so practical flexibility matters more than narrow niche positioning.",
+    bookingReality: "Wembley, Kilburn, and Willesden all feed the same borough-level search, but density and access conditions can still change the shape of the booking.",
+    pricingContext: "In Brent, quote changes often come from volume and access friction, especially where apartment visits or bulky clearances are involved.",
     highlights: ["Busy mixed housing stock", "Short-notice demand", "High move-in and move-out activity"],
     commonJobs: ["End of tenancy cleaning", "Furniture assembly", "Waste removal", "Pest control"],
     nearbyAreas: ["Wembley", "Kilburn", "Neasden", "Willesden"],
@@ -137,8 +168,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "bromley",
     name: "Bromley",
-    intro:
-      "Arrange local services in Bromley with postcode-led coverage checks, clear pricing, and provider confirmation handled through AreaSorted.",
+    intro: "Arrange local services in Bromley with postcode-led coverage checks, clear pricing, and provider confirmation handled through AreaSorted.",
+    localAngle: "Bromley often produces larger-home and outdoor-heavy bookings, where recurring cleaning sits alongside seasonal garden and repair work.",
+    bookingReality: "Beckenham and Orpington may sit under the same borough umbrella, but property scale and route timing can still differ significantly.",
+    pricingContext: "Quotes in Bromley are often shaped by property footprint and external work scope rather than by rush timing alone.",
     highlights: ["Larger homes", "Outdoor maintenance demand", "Recurring domestic jobs"],
     commonJobs: ["Regular cleaning", "Garden maintenance", "Handyman work", "Waste collection"],
     nearbyAreas: ["Beckenham", "Orpington", "Chislehurst", "Shortlands"],
@@ -146,8 +179,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "croydon",
     name: "Croydon",
-    intro:
-      "Continue booking trusted local services in Croydon through AreaSorted for cleaning, repairs, assembly, clearance, and maintenance jobs.",
+    intro: "Continue booking trusted local services in Croydon through AreaSorted for cleaning, repairs, assembly, clearance, and maintenance jobs.",
+    localAngle: "Croydon combines dense flats, busy family homes, and fast rental turnover, so the service mix stays broad and often operationally messy.",
+    bookingReality: "Purley, Thornton Heath, and South Croydon are all part of the same borough search path, but exact postcode still changes routing and fit.",
+    pricingContext: "In Croydon, quote movement often comes from job size and route sequencing rather than from service label alone.",
     highlights: ["High-density housing mix", "Fast turnaround jobs", "Strong cleaning demand"],
     commonJobs: ["General cleaning", "Handyman repairs", "Furniture assembly", "Waste removal"],
     nearbyAreas: ["Purley", "South Croydon", "Thornton Heath", "Norbury"],
@@ -155,8 +190,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "ealing",
     name: "Ealing",
-    intro:
-      "AreaSorted helps customers in Ealing book local cleaning, handyman, pest control, and home support services with a managed booking flow.",
+    intro: "AreaSorted helps customers in Ealing book local cleaning, handyman, pest control, and home support services with a managed booking flow.",
+    localAngle: "Ealing generates balanced demand across recurring cleaning, family-home repairs, and setup work for a mix of flats, terraces, and larger houses.",
+    bookingReality: "Acton, Hanwell, and Southall can all be searched as Ealing, but access and timing expectations still shift by area.",
+    pricingContext: "Ealing quotes often reflect property size and travel spread as much as the underlying task category.",
     highlights: ["Family homes and flats", "Commuter-heavy schedules", "Frequent maintenance bookings"],
     commonJobs: ["Regular cleaning", "Handyman work", "Pest inspections", "Furniture assembly"],
     nearbyAreas: ["Acton", "Hanwell", "Southall", "Northfields"],
@@ -164,8 +201,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "enfield",
     name: "Enfield",
-    intro:
-      "Check local service coverage in Enfield with AreaSorted and continue booking once your address, timing, and provider fit are confirmed.",
+    intro: "Check local service coverage in Enfield with AreaSorted and continue booking once your address, timing, and provider fit are confirmed.",
+    localAngle: "Enfield search demand usually reflects practical home upkeep across family properties, especially recurring cleaning, repairs, and outdoor work.",
+    bookingReality: "Because the borough covers wider travel patterns, exact postcode confirmation matters more than a broad North London assumption.",
+    pricingContext: "Travel spread, property scale, and external work can influence Enfield quotes more than in denser inner-borough jobs.",
     highlights: ["Outer London travel planning", "Family homes", "Recurring cleaning and repair jobs"],
     commonJobs: ["Regular cleaning", "Handyman repairs", "Garden maintenance", "Waste removal"],
     nearbyAreas: ["Winchmore Hill", "Palmers Green", "Edmonton", "Southgate"],
@@ -173,8 +212,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "hammersmith-fulham",
     name: "Hammersmith and Fulham",
-    intro:
-      "Book trusted local services in Hammersmith and Fulham with transparent pricing, postcode matching, and managed provider confirmation through AreaSorted.",
+    intro: "Book trusted local services in Hammersmith and Fulham with transparent pricing, postcode matching, and managed provider confirmation through AreaSorted.",
+    localAngle: "Hammersmith and Fulham demand often comes from dense residential streets where customers want quick, tidy execution for cleaning, assembly, and minor repairs.",
+    bookingReality: "Fulham, Hammersmith, and Shepherd's Bush may be bundled into one page, but access and property conditions still shift enough to matter.",
+    pricingContext: "Quotes here are frequently influenced by access and turnaround expectations rather than by distance alone.",
     highlights: ["Dense residential streets", "Flats and terraced homes", "Fast-turnaround jobs"],
     commonJobs: ["Regular cleaning", "End of tenancy cleaning", "Furniture assembly", "Handyman visits"],
     nearbyAreas: ["Fulham", "Hammersmith", "Shepherd's Bush", "West Kensington"],
@@ -182,8 +223,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "haringey",
     name: "Haringey",
-    intro:
-      "AreaSorted supports bookings across Haringey for cleaning, assembly, repairs, pest control, and practical home services.",
+    intro: "AreaSorted supports bookings across Haringey for cleaning, assembly, repairs, pest control, and practical home services.",
+    localAngle: "Haringey combines terrace housing, family homes, and compact flats, which keeps recurring cleaning, assembly, and repair demand varied.",
+    bookingReality: "Tottenham and Muswell Hill may sit in the same borough search, but providers still need exact address context before confirming realistic timing.",
+    pricingContext: "In Haringey, quote differences often come from task bundling and property layout rather than simply from urgency.",
     highlights: ["Victorian terraces", "Mixed household sizes", "Strong handyman demand"],
     commonJobs: ["General cleaning", "Handyman repairs", "Furniture assembly", "Pest control"],
     nearbyAreas: ["Crouch End", "Muswell Hill", "Tottenham", "Hornsey"],
@@ -191,8 +234,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "harrow",
     name: "Harrow",
-    intro:
-      "Find local service availability in Harrow and continue booking through AreaSorted with clear pricing and postcode-first provider matching.",
+    intro: "Find local service availability in Harrow and continue booking through AreaSorted with clear pricing and postcode-first provider matching.",
+    localAngle: "Harrow demand usually comes from steady residential upkeep rather than rapid turnover, so cleaning, garden work, and home maintenance dominate search intent.",
+    bookingReality: "Pinner, Stanmore, and Wealdstone can sit inside one borough page, but route planning and property context still affect provider fit.",
+    pricingContext: "Quote differences in Harrow often come from time on site and property footprint more than from access pressure alone.",
     highlights: ["Suburban homes", "Weekend availability", "Routine maintenance jobs"],
     commonJobs: ["Regular cleaning", "Garden maintenance", "Handyman work", "Waste collection"],
     nearbyAreas: ["Pinner", "Wealdstone", "Rayners Lane", "Stanmore"],
@@ -200,8 +245,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "havering",
     name: "Havering",
-    intro:
-      "AreaSorted helps customers in Havering book local services with managed confirmation, pricing checks, and practical support from quote to job day.",
+    intro: "AreaSorted helps customers in Havering book local services with managed confirmation, pricing checks, and practical support from quote to job day.",
+    localAngle: "Havering bookings often centre on larger residential properties, with cleaning, waste, repair, and garden work all appearing in the same search journey.",
+    bookingReality: "Romford, Hornchurch, and Upminster may share one borough label, but provider routing still depends on exact postcode and job profile.",
+    pricingContext: "Longer travel windows and bigger property footprints can influence Havering quotes more than customers used to inner-London jobs might expect.",
     highlights: ["Outer East London coverage", "Larger homes", "Garden and clearance demand"],
     commonJobs: ["General cleaning", "Garden maintenance", "Waste removal", "Handyman repairs"],
     nearbyAreas: ["Romford", "Hornchurch", "Upminster", "Rainham"],
@@ -209,8 +256,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "hillingdon",
     name: "Hillingdon",
-    intro:
-      "Arrange local cleaning, repairs, clearance, and maintenance services in Hillingdon through one structured AreaSorted booking flow.",
+    intro: "Arrange local cleaning, repairs, clearance, and maintenance services in Hillingdon through one structured AreaSorted booking flow.",
+    localAngle: "Hillingdon carries a wide practical mix, with cleaning, assembly, clearance, and repair jobs often spread across broader travel distances than inner borough work.",
+    bookingReality: "Uxbridge, Hayes, and Ruislip sit in the same borough search area, but job routing and timing still depend on exact postcode fit.",
+    pricingContext: "For Hillingdon, route planning and job bundling can influence final pricing nearly as much as the headline service category.",
     highlights: ["Wide travel coverage", "Residential and commercial mix", "Flexible scheduling demand"],
     commonJobs: ["General cleaning", "Handyman visits", "Waste removal", "Furniture assembly"],
     nearbyAreas: ["Uxbridge", "Hayes", "Ruislip", "West Drayton"],
@@ -218,8 +267,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "hounslow",
     name: "Hounslow",
-    intro:
-      "Book trusted local services in Hounslow with postcode-led coverage checks, transparent pricing, and managed provider confirmation through AreaSorted.",
+    intro: "Book trusted local services in Hounslow with postcode-led coverage checks, transparent pricing, and managed provider confirmation through AreaSorted.",
+    localAngle: "Hounslow demand reflects commuter households, rental resets, and practical maintenance work across both flats and family homes.",
+    bookingReality: "Chiswick and Feltham can appear inside one borough search, but timing, access, and property context still differ enough to affect booking fit.",
+    pricingContext: "In Hounslow, quote movement often comes from access windows and mixed property types rather than pure mileage.",
     highlights: ["Busy mixed housing stock", "Airport corridor demand", "Regular cleaning and repairs"],
     commonJobs: ["Regular cleaning", "Handyman work", "Furniture assembly", "Waste collection"],
     nearbyAreas: ["Chiswick", "Isleworth", "Brentford", "Feltham"],
@@ -227,8 +278,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "kingston-upon-thames",
     name: "Kingston upon Thames",
-    intro:
-      "Check coverage and continue booking local services in Kingston upon Thames with AreaSorted for cleaning, repairs, assembly, and maintenance work.",
+    intro: "Check coverage and continue booking local services in Kingston upon Thames with AreaSorted for cleaning, repairs, assembly, and maintenance work.",
+    localAngle: "Kingston upon Thames demand often comes from family households, student lets, and recurring domestic support rather than only one-off reactive jobs.",
+    bookingReality: "Surbiton and New Malden may share a borough page, but access, property layout, and scheduling patterns still differ enough to matter.",
+    pricingContext: "Quotes here often move with item count, property size, and whether the customer is booking routine upkeep or a one-off reset.",
     highlights: ["Family households", "Student and rental demand", "Recurring home support"],
     commonJobs: ["Regular cleaning", "Furniture assembly", "Handyman repairs", "Garden maintenance"],
     nearbyAreas: ["Surbiton", "New Malden", "Chessington", "Norbiton"],
@@ -236,8 +289,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "lewisham",
     name: "Lewisham",
-    intro:
-      "AreaSorted helps customers in Lewisham book trusted local services with postcode matching, clear booking expectations, and transparent pricing.",
+    intro: "AreaSorted helps customers in Lewisham book trusted local services with postcode matching, clear booking expectations, and transparent pricing.",
+    localAngle: "Lewisham generates strong demand for practical home support, especially where compact flats and busy turnover create repeat cleaning and assembly needs.",
+    bookingReality: "Deptford, Brockley, and Catford may all sit on the same borough page, but property style and access conditions still shape booking fit.",
+    pricingContext: "In Lewisham, carrying distance and access details often influence quotes more than customers expect from the service label alone.",
     highlights: ["High-density housing mix", "Short-notice cleaning demand", "Strong assembly and repair demand"],
     commonJobs: ["General cleaning", "Furniture assembly", "Handyman visits", "Waste removal"],
     nearbyAreas: ["Deptford", "Catford", "Brockley", "New Cross"],
@@ -245,8 +300,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "merton",
     name: "Merton",
-    intro:
-      "Book local cleaning, handyman, pest control, and maintenance services in Merton through AreaSorted with managed provider confirmation.",
+    intro: "Book local cleaning, handyman, pest control, and maintenance services in Merton through AreaSorted with managed provider confirmation.",
+    localAngle: "Merton demand usually blends family-home upkeep with one-off assembly, repair, and outdoor jobs rather than leaning too heavily on a single service type.",
+    bookingReality: "Wimbledon and Mitcham may sit inside one borough search journey, but route timing and property context still change the operational fit.",
+    pricingContext: "In Merton, quotes often move with how much of the property or garden the work actually touches once the brief is clear.",
     highlights: ["Family homes", "Regular domestic demand", "Garden and maintenance jobs"],
     commonJobs: ["Regular cleaning", "Garden maintenance", "Handyman work", "Furniture assembly"],
     nearbyAreas: ["Wimbledon", "Mitcham", "Colliers Wood", "Raynes Park"],
@@ -254,8 +311,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "newham",
     name: "Newham",
-    intro:
-      "Arrange local services in Newham through AreaSorted, from cleaning and assembly to repairs, pest control, and waste removal.",
+    intro: "Arrange local services in Newham through AreaSorted, from cleaning and assembly to repairs, pest control, and waste removal.",
+    localAngle: "Newham demand is shaped by apartment-heavy living, fast-moving rentals, and practical support needs around assembly, cleaning, and waste removal.",
+    bookingReality: "Stratford and Plaistow may appear together on a borough page, but access conditions and timing expectations can still vary sharply by postcode.",
+    pricingContext: "Lift access, loading conditions, and short turnaround windows regularly influence Newham quotes.",
     highlights: ["Apartment-heavy areas", "Fast-moving rental demand", "Busy weekday scheduling"],
     commonJobs: ["End of tenancy cleaning", "Furniture assembly", "Waste removal", "Pest control"],
     nearbyAreas: ["Stratford", "Canning Town", "Plaistow", "Forest Gate"],
@@ -263,8 +322,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "redbridge",
     name: "Redbridge",
-    intro:
-      "Check local service coverage in Redbridge and continue booking through AreaSorted with postcode checks, pricing clarity, and managed provider matching.",
+    intro: "Check local service coverage in Redbridge and continue booking through AreaSorted with postcode checks, pricing clarity, and managed provider matching.",
+    localAngle: "Redbridge tends to generate steady family-home demand, especially for repeat cleaning, repairs, garden tasks, and one-off clearances.",
+    bookingReality: "Ilford, Wanstead, and Woodford may be grouped into one borough search, but real provider fit still depends on exact address and task profile.",
+    pricingContext: "For Redbridge, pricing often moves with property scale, travel spread, and whether the job includes heavier lifting or disposal.",
     highlights: ["Family households", "Outer East London travel planning", "Repeat booking potential"],
     commonJobs: ["Regular cleaning", "Handyman repairs", "Garden maintenance", "Waste removal"],
     nearbyAreas: ["Ilford", "Wanstead", "Woodford", "Barkingside"],
@@ -272,8 +333,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "richmond-upon-thames",
     name: "Richmond upon Thames",
-    intro:
-      "AreaSorted supports local bookings in Richmond upon Thames for premium home cleaning, assembly, repairs, and practical maintenance jobs.",
+    intro: "AreaSorted supports local bookings in Richmond upon Thames for premium home cleaning, assembly, repairs, and practical maintenance jobs.",
+    localAngle: "Richmond upon Thames often attracts customers looking for consistent recurring support in larger homes rather than just reactive one-off fixes.",
+    bookingReality: "Richmond, Kew, and Twickenham are close on the map, but access, parking, and property layout still affect how jobs are scheduled.",
+    pricingContext: "Bigger homes, outdoor areas, and finish-sensitive work can all shape quotes here more than in denser central boroughs.",
     highlights: ["Premium residential stock", "Family homes", "High-quality recurring service demand"],
     commonJobs: ["Regular cleaning", "Deep cleaning", "Handyman work", "Garden maintenance"],
     nearbyAreas: ["Richmond", "Kew", "Teddington", "Twickenham"],
@@ -281,8 +344,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "sutton",
     name: "Sutton",
-    intro:
-      "Find trusted local service availability in Sutton and continue booking through AreaSorted with transparent pricing and postcode-first checks.",
+    intro: "Find trusted local service availability in Sutton and continue booking through AreaSorted with transparent pricing and postcode-first checks.",
+    localAngle: "Sutton demand is largely suburban and household-led, with recurring cleaning and practical maintenance more common than dense move-out turnover.",
+    bookingReality: "Carshalton and Cheam can sit on the same borough page, but providers still need postcode-level routing to confirm realistic availability.",
+    pricingContext: "Quote differences in Sutton often come from property size, outdoor scope, and how many tasks are bundled into one visit.",
     highlights: ["Residential suburbs", "Routine maintenance jobs", "Family home cleaning"],
     commonJobs: ["Regular cleaning", "Handyman visits", "Garden maintenance", "Waste collection"],
     nearbyAreas: ["Carshalton", "Cheam", "Wallington", "Belmont"],
@@ -290,8 +355,10 @@ export const boroughPages: BoroughPage[] = [
   {
     slug: "waltham-forest",
     name: "Waltham Forest",
-    intro:
-      "Book trusted local services in Waltham Forest with AreaSorted for cleaning, repairs, furniture assembly, pest control, and waste removal.",
+    intro: "Book trusted local services in Waltham Forest with AreaSorted for cleaning, repairs, furniture assembly, pest control, and waste removal.",
+    localAngle: "Waltham Forest combines family homes, compact flats, and active move-around demand, so cleaning, assembly, and repair bookings all stay busy.",
+    bookingReality: "Walthamstow and Chingford may share a borough page, but access, property style, and timing expectations still differ enough to affect job fit.",
+    pricingContext: "In Waltham Forest, carrying distance, disposal volume, and access conditions often shape quotes as much as the service itself.",
     highlights: ["Mixed housing stock", "Creative and family households", "Strong cleaning and repair demand"],
     commonJobs: ["General cleaning", "Furniture assembly", "Handyman work", "Waste removal"],
     nearbyAreas: ["Walthamstow", "Leyton", "Chingford", "South Woodford"],

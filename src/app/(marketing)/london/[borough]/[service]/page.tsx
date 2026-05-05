@@ -24,7 +24,7 @@ function getSafeSiteUrl() {
 
 const serviceSlugs = boroughServiceContent.map((s) => s.slug);
 
-const eastNorthEastBoroughs = new Set(["hackney", "tower-hamlets", "newham", "waltham-forest", "redbridge", "havering", "barking-and-dagenham", "enfield", "camden", "islington", "barnet", "haringey"]);
+const eastNorthEastBoroughs = new Set(["hackney", "tower-hamlets", "newham", "waltham-forest", "redbridge", "havering", "barking-dagenham", "enfield", "camden", "islington", "barnet", "haringey"]);
 
 function getBoroughHeroImage(slug: string) {
   return eastNorthEastBoroughs.has(slug)
@@ -52,13 +52,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${serviceLabel} Services in ${page.name}`,
-    description: `Book ${serviceLabel.toLowerCase()} services in ${page.name}, London through AreaSorted. Check coverage, compare options, understand pricing factors, and continue booking online.`,
+    description: `Book ${serviceLabel.toLowerCase()} services in ${page.name}, London through AreaSorted. ${page.localAngle} Check coverage, compare options, understand pricing factors, and continue booking online.`,
     alternates: {
       canonical: `/london/${page.slug}/${content.slug}`,
     },
     openGraph: {
       title: `${serviceLabel} Services in ${page.name} | AreaSorted`,
-      description: `Compare ${serviceLabel.toLowerCase()} services in ${page.name}, London with clear pricing, postcode-first coverage checks, and managed booking through AreaSorted.`,
+      description: `Compare ${serviceLabel.toLowerCase()} services in ${page.name}, London with clear pricing, postcode-first coverage checks, and local context built around ${page.localAngle.toLowerCase()}`,
     },
   };
 }
@@ -196,7 +196,7 @@ export default async function BoroughServicePage({ params }: Props) {
             <div className="eyebrow">Why customers book here</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>{content.label} demand in {page.name}</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
-              {content.demandDescription(page.name, page.highlights)}
+              {content.demandDescription(page.name, page.highlights)} {page.localAngle}
             </p>
           </div>
           <div className="panel card">
@@ -215,6 +215,9 @@ export default async function BoroughServicePage({ params }: Props) {
           <div className="panel card">
             <div className="eyebrow">What affects price</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Pricing factors for {content.label.toLowerCase()} in {page.name}</h2>
+            <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
+              {page.pricingContext}
+            </p>
             <ul className="list-clean" style={{ marginTop: "0.9rem" }}>
               {content.pricingFactors.map((factor) => (
                 <li key={factor}>{factor}</li>
@@ -226,8 +229,7 @@ export default async function BoroughServicePage({ params }: Props) {
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Neighbourhoods customers often compare</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
               Customers searching for {content.label.toLowerCase()} in {page.name} often also compare options in{" "}
-              {page.nearbyAreas.join(", ")}. Coverage stays postcode-led, so the fastest next step is still to start
-              with your exact address.
+              {page.nearbyAreas.join(", ")}. {page.bookingReality} Coverage stays postcode-led, so the fastest next step is still to start with your exact address.
             </p>
           </div>
         </div>
