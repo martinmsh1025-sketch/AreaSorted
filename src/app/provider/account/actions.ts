@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requireProviderAccountAccess } from "@/lib/provider-auth";
 import { getPrisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/security/password";
-import { providerContactChannelOptions, providerCommitmentOptions, providerLanguageOptions, providerResponseTimeOptions, stringifyProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
+import { parseProviderPublicProfileMetadata, providerContactChannelOptions, providerCommitmentOptions, providerLanguageOptions, providerResponseTimeOptions, stringifyProviderPublicProfileMetadata } from "@/lib/providers/public-profile-metadata";
 import { validateProviderContactDetail } from "@/lib/providers/contact-detail-validation";
 
 /**
@@ -76,6 +76,8 @@ export async function updateProviderProfileAction(formData: FormData) {
     throw new Error("Trading name is required");
   }
 
+  const existingPublicProfileMetadata = parseProviderPublicProfileMetadata(session.providerCompany.specialtiesText);
+
   await prisma.providerCompany.update({
     where: { id: providerCompanyId },
     data: {
@@ -94,7 +96,7 @@ export async function updateProviderProfileAction(formData: FormData) {
         responseTimeLabel,
         serviceCommitments,
         languagesSpoken,
-        introVideoUrl: null,
+        introVideoUrl: existingPublicProfileMetadata.introVideoUrl,
       }),
     },
   });

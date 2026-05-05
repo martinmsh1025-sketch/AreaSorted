@@ -43,7 +43,7 @@ export async function GET(
         { storagePath: { endsWith: fileName } },
       ],
     },
-    select: { status: true },
+    select: { status: true, storagePath: true, storedFileName: true },
   });
 
   if (!isAdmin) {
@@ -54,22 +54,39 @@ export async function GET(
 
   }
 
-  const filePath = path.join(process.cwd(), ".data", "provider-documents", providerCompanyId, fileName);
+  const safeFileName = documentRecord?.storedFileName || path.basename(fileName);
+  const candidateFiles = [
+    path.join(/* turbopackIgnore: true */ process.cwd(), ".data", "provider-documents", providerCompanyId, safeFileName),
+    path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads", "provider-documents", providerCompanyId, safeFileName),
+  ];
 
-  // Verify the resolved path doesn't escape the documents directory
-  const documentsRoot = path.join(process.cwd(), ".data", "provider-documents");
-  if (!filePath.startsWith(documentsRoot)) {
-    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  let resolvedPath: string | null = null;
+  for (const candidate of candidateFiles) {
+    const normalized = path.normalize(candidate);
+    const allowedRoots = [
+      path.join(/* turbopackIgnore: true */ process.cwd(), ".data", "provider-documents"),
+      path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads", "provider-documents"),
+    ];
+
+    if (!allowedRoots.some((root) => normalized.startsWith(root))) {
+      continue;
+    }
+
+    try {
+      await stat(normalized);
+      resolvedPath = normalized;
+      break;
+    } catch {
+      // Try next legacy/current storage location.
+    }
   }
 
-  try {
-    await stat(filePath);
-  } catch {
+  if (!resolvedPath) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  const buffer = await readFile(filePath);
-  const ext = path.extname(fileName).toLowerCase();
+  const buffer = await readFile(resolvedPath);
+  const ext = path.extname(resolvedPath).toLowerCase();
   const mimeTypes: Record<string, string> = {
     ".pdf": "application/pdf",
     ".jpg": "image/jpeg",
@@ -83,7 +100,7 @@ export async function GET(
       "Content-Type": contentType,
       // M-12 FIX: Sanitise filename — only use the basename and remove special chars
       // to prevent header injection via crafted filenames
-      "Content-Disposition": `inline; filename="${path.basename(fileName).replace(/[^\w.\-]/g, "_")}"`,
+      "Content-Disposition": `inline; filename="${path.basename(safeFileName).replace(/[^\w.\-]/g, "_")}"`,
       "Cache-Control": "private, no-cache",
       // M-12 FIX: Prevent MIME-type sniffing
       "X-Content-Type-Options": "nosniff",

@@ -78,7 +78,7 @@ function getProviderDocumentCandidates(providerCompanyId: string, storagePath: s
   const fileName = storedFileName || storagePath.split("/").pop() || "";
   return [
     path.join(process.cwd(), ".data", "provider-documents", providerCompanyId, fileName),
-    path.join(process.cwd(), "uploads", "provider-documents", providerCompanyId, fileName),
+    path.join(process.cwd(), "public", "uploads", "provider-documents", providerCompanyId, fileName),
     path.join(process.cwd(), "public", "mock", "documents", path.basename(storagePath)),
   ];
 }
