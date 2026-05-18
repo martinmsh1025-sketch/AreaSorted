@@ -2,6 +2,41 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { boroughPages } from "@/lib/seo/borough-pages";
 
+const boroughCardImages: Partial<Record<string, string>> = {
+  hackney: "/images/borough-cards/hackney.png",
+  "tower-hamlets": "/images/borough-cards/tower-hamlets.png",
+  newham: "/images/borough-cards/newham.png",
+  "waltham-forest": "/images/borough-cards/waltham-forest.png",
+  redbridge: "/images/borough-cards/redbridge.png",
+  havering: "/images/borough-cards/havering.png",
+  "barking-dagenham": "/images/borough-cards/barking-dagenham.png",
+  enfield: "/images/borough-cards/enfield.png",
+  ealing: "/images/borough-cards/ealing.png",
+  hounslow: "/images/borough-cards/hounslow.png",
+  hillingdon: "/images/borough-cards/hillingdon.png",
+  harrow: "/images/borough-cards/harrow.png",
+  "richmond-upon-thames": "/images/borough-cards/richmond-upon-thames.png",
+  "kingston-upon-thames": "/images/borough-cards/kingston-upon-thames.png",
+  merton: "/images/borough-cards/merton.png",
+  wandsworth: "/images/borough-cards/wandsworth.png",
+  lambeth: "/images/borough-cards/lambeth.png",
+  southwark: "/images/borough-cards/southwark.png",
+  lewisham: "/images/borough-cards/lewisham.png",
+  greenwich: "/images/borough-cards/greenwich.png",
+  bexley: "/images/borough-cards/bexley.png",
+  bromley: "/images/borough-cards/bromley.png",
+  croydon: "/images/borough-cards/croydon.png",
+  sutton: "/images/borough-cards/sutton.png",
+};
+
+const eastNorthFallbacks = new Set(["camden", "islington", "barnet", "haringey"]);
+
+function getBoroughCardImage(slug: string) {
+  return boroughCardImages[slug] || (eastNorthFallbacks.has(slug)
+    ? "/images/marketing-generated/london-east-grid.png"
+    : "/images/marketing-generated/london-west-grid.png");
+}
+
 export const metadata: Metadata = {
   title: "London Areas We Cover",
   description:
@@ -47,12 +82,23 @@ export default function LondonCoverageHubPage() {
               <div
                 key={page.slug}
                 className="panel card"
-                style={{ padding: "1.1rem 1.2rem" }}
+                style={{ overflow: "hidden", padding: 0 }}
               >
-                <strong>{page.name}</strong>
-                <p style={{ marginTop: "0.45rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                  Local reference points: {page.nearbyAreas.join(", ")}.
-                </p>
+                <div className="borough-card-media" style={{ minHeight: 150 }}>
+                  <Image
+                    src={getBoroughCardImage(page.slug)}
+                    alt={`${page.name} London coverage reference`}
+                    fill
+                    className="borough-card-media-image"
+                    sizes="(max-width: 960px) 100vw, 33vw"
+                  />
+                </div>
+                <div style={{ padding: "1rem 1.1rem 1.15rem" }}>
+                  <strong>{page.name}</strong>
+                  <p style={{ marginTop: "0.45rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
+                    Local reference points: {page.nearbyAreas.join(", ")}.
+                  </p>
+                </div>
               </div>
             ))}
           </div>
