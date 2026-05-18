@@ -54,6 +54,8 @@ export async function GET(request: Request, context: { params: Promise<{ complai
       headers: {
         "Content-Type": getContentType(normalized),
         "Cache-Control": "private, no-store",
+        "Content-Disposition": `inline; filename="${path.basename(normalized).replace(/[^\w.\-]/g, "_")}"`,
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch {

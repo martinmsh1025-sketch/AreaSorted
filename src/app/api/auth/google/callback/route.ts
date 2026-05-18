@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db";
 import { CUSTOMER_SESSION_COOKIE } from "@/lib/customer-auth";
 import { signSessionValue } from "@/lib/security/session";
 import { getAppUrl } from "@/lib/config/env";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 
 const GOOGLE_STATE_COOKIE = "areasorted_google_oauth_state";
 
@@ -78,6 +79,9 @@ export async function GET(request: Request) {
     if (!userInfo.email || !userInfo.sub) {
       throw new Error("missing_google_profile_fields");
     }
+    if (userInfo.email_verified !== true) {
+      throw new Error("google_email_not_verified");
+    }
 
     const prisma = getPrisma();
     const existingByGoogle = await prisma.customer.findUnique({ where: { googleSub: userInfo.sub } });
@@ -121,7 +125,7 @@ export async function GET(request: Request) {
     });
     cookieStore.delete(GOOGLE_STATE_COOKIE);
 
-    return NextResponse.redirect(new URL(getNextPathFromState(state), appUrl));
+    return NextResponse.redirect(new URL(getSafeRedirectPath(getNextPathFromState(state), "/account"), appUrl));
   } catch {
     cookieStore.delete(GOOGLE_STATE_COOKIE);
     return NextResponse.redirect(new URL("/customer/login?error=google_failed", appUrl));

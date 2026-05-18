@@ -25,8 +25,9 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({
-      orders: bookings.map((booking) =>
-        serializeMobileProviderOrder({
+      orders: bookings.map((booking) => {
+        const detailsUnlocked = booking.bookingStatus !== "PENDING_ASSIGNMENT";
+        return serializeMobileProviderOrder({
           id: booking.id,
           serviceType: booking.serviceType,
           servicePostcode: booking.servicePostcode,
@@ -42,10 +43,15 @@ export async function GET(request: Request) {
                 platformCommissionAmount: Number(booking.priceSnapshot.platformCommissionAmount),
               }
             : null,
-          customer: booking.customer,
-          additionalNotes: booking.additionalNotes,
-        }),
-      ),
+          customer: detailsUnlocked ? booking.customer : {
+            firstName: "Confirmed",
+            lastName: "customer",
+            email: null,
+            phone: null,
+          },
+          additionalNotes: detailsUnlocked ? booking.additionalNotes : null,
+        });
+      }),
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : "UNKNOWN";

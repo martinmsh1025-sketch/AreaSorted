@@ -46,6 +46,10 @@ export async function GET(
     select: { status: true, storagePath: true, storedFileName: true },
   });
 
+  if (!documentRecord) {
+    return NextResponse.json({ error: "File not found" }, { status: 404 });
+  }
+
   if (!isAdmin) {
     const providerSession = await getProviderSession();
     if (!providerSession || providerSession.providerCompany.id !== providerCompanyId) {
@@ -54,7 +58,7 @@ export async function GET(
 
   }
 
-  const safeFileName = documentRecord?.storedFileName || path.basename(fileName);
+  const safeFileName = documentRecord.storedFileName;
   const candidateFiles = [
     path.join(/* turbopackIgnore: true */ process.cwd(), ".data", "provider-documents", providerCompanyId, safeFileName),
     path.join(/* turbopackIgnore: true */ process.cwd(), "public", "uploads", "provider-documents", providerCompanyId, safeFileName),

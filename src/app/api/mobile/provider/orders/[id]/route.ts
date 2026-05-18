@@ -57,7 +57,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
             email: null,
             phone: null,
           },
-          additionalNotes: booking.additionalNotes,
+          additionalNotes: detailsUnlocked ? booking.additionalNotes : null,
         }),
         serviceAddressLine1: detailsUnlocked ? booking.serviceAddressLine1 : "Full address unlocks after acceptance",
         serviceAddressLine2: detailsUnlocked ? booking.serviceAddressLine2 : null,
