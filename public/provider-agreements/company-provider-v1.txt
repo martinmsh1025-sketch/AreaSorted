@@ -26,7 +26,7 @@ By clicking "I agree", signing electronically, completing onboarding, accepting 
 "Fees Schedule" means the fees, commissions, charges, payout rules, and related commercial terms set out in the Platform portal, a pricing schedule, or otherwise agreed in writing between the parties from time to time.
 "Personnel" means any director, officer, employee, worker, consultant, contractor, subcontractor, temporary worker, substitute, or other individual engaged by or through the Provider.
 "Provider Materials" means any equipment, products, consumables, tools, uniforms, documents, content, logos, trade names, photos, or information supplied by the Provider.
-"Provider Payout" means the amount payable by the Platform to the Provider for a completed Booking, after applying any agreed deductions under these Terms.
+"Provider Payout" means the amount due to the Provider for a completed Booking, after applying any agreed deductions under these Terms, and settled through Stripe, another payment processor, or another agreed payout method.
 "Provider Standards" means the Platform's service, quality, conduct, safety, and operational standards notified to the Provider from time to time.
 "Services" means the cleaning or related services provided by the Provider to Customers through the Platform.
 "VAT" means value added tax or any equivalent sales tax.
@@ -36,7 +36,7 @@ By clicking "I agree", signing electronically, completing onboarding, accepting 
 
 2. THE PLATFORM
 
-The Platform operates a marketplace and booking platform through which Customers may request or book Services from independent service providers. The Platform may advertise the Services, receive booking requests, hold or process Customer payments, present pricing, send Booking Opportunities, administer fees, refunds, payouts, and communicate with Customers and Providers regarding Bookings. Unless expressly agreed otherwise in writing, the Platform does not employ the Provider and does not guarantee any minimum number of Booking Opportunities, Bookings, earnings, or revenue.
+The Platform operates a marketplace and booking platform through which Customers may request or book Services from independent service providers. The Platform may advertise the Services, receive booking requests, facilitate payment holds and payment processing through Stripe or another payment processor, present pricing, send Booking Opportunities, administer fees, refunds, payout status, and communicate with Customers and Providers regarding Bookings. Unless expressly agreed otherwise in writing, the Platform does not employ the Provider and does not guarantee any minimum number of Booking Opportunities, Bookings, earnings, or revenue.
 
 3. PROVIDER STATUS
 
@@ -52,11 +52,11 @@ The individual accepting these Terms on behalf of the Provider represents and wa
 
 6. BOOKING OPPORTUNITIES AND BOOKINGS
 
-The Platform may send Booking Opportunities through the portal, dashboard, email, SMS, WhatsApp, telephone, app notification, or other communication channels used by the Platform. A Booking Opportunity may include postcode, service type, date and time, estimated duration, pricing or payout information, property details, and other relevant booking information. The Provider may accept or reject a Booking Opportunity within the specified time. A Booking becomes confirmed only when the Platform confirms it to the Provider and/or the Customer. The Platform may use a payment hold, pre-authorisation, delayed capture, deposit, booking fee, or other payment mechanism before a Booking is confirmed, and controls the Customer payment process and timing.
+The Platform may send Booking Opportunities through the portal, dashboard, email, SMS, WhatsApp, telephone, app notification, or other communication channels used by the Platform. A Booking Opportunity may include postcode, service type, date and time, estimated duration, pricing or payout information, property details, and other relevant booking information. The Provider may accept or reject a Booking Opportunity within the specified time. A Booking becomes confirmed only when the Platform confirms it to the Provider and/or the Customer. The Platform may use a payment hold, pre-authorisation, delayed capture, deposit, booking fee, or other payment mechanism before a Booking is confirmed, and controls or facilitates the Customer payment process and timing.
 
 7. PRICING, FEES, COMMISSION, AND PAYOUTS
 
-The pricing structure applicable to the Provider shall be as set out in the Fees Schedule, the Provider portal, or otherwise agreed in writing. The Platform may display the Provider's rates, instant or estimated quotes, booking fees, surcharges, and taxes to Customers. Unless otherwise agreed in writing, the Platform may place a payment hold or pre-authorisation on the Customer's card before a Booking is confirmed, capture payment once the Booking is confirmed, retain agreed commission from each completed Booking, and make permitted deductions for refunds, discounts, credits, Chargebacks, payment processing costs, complaint credits, re-performance costs, or other sums properly due under these Terms.
+The pricing structure applicable to the Provider shall be as set out in the Fees Schedule, the Provider portal, or otherwise agreed in writing. The Platform may display the Provider's rates, instant or estimated quotes, booking fees, surcharges, and taxes to Customers. Unless otherwise agreed in writing, Customer payments may be authorised and captured through Stripe or another payment processor. Where Stripe Connect direct charges or a similar connected-account model is used, the provider service amount is processed on the Provider's connected payment account, and the Platform receives agreed booking fees, commission, application fees, or other disclosed platform fees through the payment processor. The Platform does not hold provider service funds in its own bank account under that model. The Platform may make permitted deductions or adjustments for refunds, discounts, credits, Chargebacks, payment processing costs, complaint credits, re-performance costs, or other sums properly due under these Terms.
 
 8. TAX, VAT, PAYROLL, AND INVOICING
 
@@ -84,7 +84,7 @@ The Provider must comply with the Cancellation Policy. The Platform may issue re
 
 14. INSURANCE, SAFETY, AND COMPLIANCE
 
-The Provider must maintain at its own cost all insurance reasonably required by the Platform, including public liability insurance and, where legally required, employers' liability insurance. The Provider must notify the Platform immediately if required insurance lapses or changes materially and must comply, and ensure its Personnel comply, with health and safety obligations, incident reporting, and lawful service delivery requirements.
+The Platform may maintain platform-level insurance or arrange an insurance programme for eligible Bookings. Any such insurance is subject to the policy wording, exclusions, claims process, and eligibility rules and does not guarantee that every loss, complaint, or incident will be covered. The Provider must cooperate with any insurance requirements, provide accurate information, and promptly report incidents. The Provider remains responsible for its own acts, omissions, Personnel, legal obligations, and liabilities. The Provider must maintain at its own cost any insurance required by law, including employers' liability insurance where legally required, and any insurance separately required by the Platform for the Provider's services, unless the Platform agrees in writing that a platform insurance arrangement is sufficient for the relevant requirement.
 
 15. NON-CIRCUMVENTION AND CUSTOMER NON-SOLICITATION
 
@@ -100,7 +100,7 @@ The Platform may collect, display, use, and analyse ratings, reviews, complaints
 
 18. SUSPENSION AND TERMINATION
 
-The Platform may suspend, restrict, or terminate the Provider's Account where it reasonably believes the Provider or its Personnel have breached these Terms or Applicable Laws, supplied false or incomplete onboarding information, pose a safety or fraud risk, lack valid insurance, or have shown repeated poor performance or non-compliance. Termination does not affect accrued rights, ongoing investigations, refund or Chargeback processes, or clauses intended to survive.
+The Platform may suspend, restrict, or terminate the Provider's Account where it reasonably believes the Provider or its Personnel have breached these Terms or Applicable Laws, supplied false or incomplete onboarding information, pose a safety or fraud risk, fail insurance or compliance requirements, or have shown repeated poor performance or non-compliance. Termination does not affect accrued rights, ongoing investigations, refund or Chargeback processes, or clauses intended to survive.
 
 19. LIABILITY AND INDEMNITY
 
@@ -116,7 +116,7 @@ These Terms, together with any Fees Schedule, Provider Standards, policies incor
 
 SCHEDULE 1 - FEES AND PAYOUTS
 
-The Customer shall pay a booking fee at checkout. The Platform may place a pre-authorisation or payment hold on the Customer's card before a Booking is confirmed and may capture the applicable booking fee once the Booking is confirmed. The Platform retains the agreed commission from each completed Booking. Subject to the Terms and any permitted deductions, the Platform will pay the Provider within 5 working days after the Booking is marked complete.
+The Customer shall pay a booking fee at checkout. The Platform may place a pre-authorisation or payment hold on the Customer's card before a Booking is confirmed and may capture the applicable amount once the Booking is confirmed. Where Stripe Connect direct charges or a similar connected-account model is used, Stripe or the relevant payment processor processes the provider service amount on the Provider's connected payment account and the Platform receives agreed booking fees, commission, application fees, or other disclosed platform fees. Subject to the Terms, processor requirements, and any permitted deductions, the Provider Payout should normally become eligible for processor settlement or another agreed payout method within 5 working days after the Booking is marked complete.
 
 SCHEDULE 2 - CANCELLATIONS, REFUNDS, AND NO-SHOWS
 

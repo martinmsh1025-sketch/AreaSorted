@@ -53,7 +53,7 @@ const faqs = [
   {
     question: "When am I charged for cleaning services?",
     answer:
-      "AreaSorted places a temporary card hold when you continue booking and captures payment only once the booking is confirmed.",
+      "AreaSorted places a temporary card hold when you continue booking and captures payment only once the provider confirms the job.",
   },
 ];
 
@@ -204,7 +204,7 @@ export default async function CleaningServicePage() {
             <div className="eyebrow">How booking works</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>From postcode to confirmed cleaning slot</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
-              Start with your postcode, select the cleaning job and size, review the quote, and continue with a temporary card hold. Payment is only captured once the booking is confirmed.
+              Start with your postcode, select the cleaning job and size, review the quote, and continue with a temporary card hold. Payment is only captured once the provider confirms the job.
             </p>
             <div className="button-row" style={{ marginTop: "1rem" }}>
               <Link className="button button-secondary" href="/how-it-works">How booking works</Link>

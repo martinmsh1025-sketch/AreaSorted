@@ -31,7 +31,7 @@ Website: https://areasorted.com
 (c) place a pre-authorisation or hold on your payment card;
 (d) communicate with providers about your requested service;
 (e) confirm, reschedule, or cancel bookings;
-(f) collect booking fees and other disclosed charges;
+(f) facilitate payment processing for provider services and collect booking fees, platform fees, commission, application fees, or other disclosed charges; and
 (g) support complaints, refunds, credits, re-bookings, and customer service.
 
 2.3 A booking request is not the same as a confirmed booking.
@@ -82,11 +82,13 @@ Website: https://areasorted.com
 
 5.3 Your card may be pre-authorised before your booking is confirmed.
 
-5.4 If your booking is confirmed, we may capture the booking fee and any other amount disclosed to you at checkout.
+5.4 If your booking is confirmed by the provider, we and/or our payment processor may capture the authorised amount disclosed to you at checkout.
 
-5.5 If your booking request is not confirmed, any applicable payment hold will be released. The timing of release may depend on your bank, card issuer, or payment provider.
+5.5 Where Stripe Connect direct charges or a similar connected-account payment model is used, the provider service amount may be processed on the provider's connected payment account. AreaSorted may receive disclosed booking fees, platform fees, commission, or application fees through the payment processor. AreaSorted does not hold provider service funds in its own bank account under that model.
 
-5.6 You must ensure that your payment details are valid and that sufficient funds or credit are available where required.
+5.6 If your booking request is not confirmed, any applicable payment hold will be released. The timing of release may depend on your bank, card issuer, or payment provider.
+
+5.7 You must ensure that your payment details are valid and that sufficient funds or credit are available where required.
 
 6. BOOKING CONFIRMATION, RESCHEDULING, AND AVAILABILITY
 

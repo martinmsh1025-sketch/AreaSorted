@@ -33,14 +33,14 @@ export async function GET(request: Request, context: { params: Promise<{ enquiry
     return new NextResponse("Not found", { status: 404 });
   }
 
-  const allowedRoot = path.join(/* turbopackIgnore: true */ process.cwd(), ".data", "provider-case-evidence");
+  const allowedRoot = path.join(/*turbopackIgnore: true*/ process.cwd(), ".data", "provider-case-evidence");
   const normalized = path.normalize(path.resolve(allowedRoot, path.relative(".data/provider-case-evidence", selectedPath)));
   if (!normalized.startsWith(`${allowedRoot}${path.sep}`)) {
     return new NextResponse("Invalid path", { status: 400 });
   }
 
   try {
-    const buffer = await readFile(normalized);
+    const buffer = await readFile(/*turbopackIgnore: true*/ normalized);
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": getContentType(normalized),

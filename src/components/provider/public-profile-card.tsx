@@ -92,7 +92,7 @@ export function ProviderPublicProfileCard({ profile }: { profile: ProviderPublic
         {profile.yearsExperience ? <p style={{ marginTop: "0.35rem", fontSize: "0.9rem", color: "var(--color-text-muted)" }}>{profile.yearsExperience}+ years experience</p> : null}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem", marginTop: "0.45rem" }}>
           {profile.hasDbs ? <span className="quote-map-badge">DBS verified</span> : null}
-          {profile.hasInsurance ? <span className="quote-map-badge">Insurance verified</span> : null}
+          {profile.hasInsurance ? <span className="quote-map-badge">Provider insurance verified</span> : null}
           {profile.introVideoUrl ? <span className="quote-map-badge">Video intro</span> : null}
           {profile.responseTimeLabel ? <span className="quote-map-badge">{profile.responseTimeLabel}</span> : null}
         </div>

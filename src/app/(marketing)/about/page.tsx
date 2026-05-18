@@ -56,7 +56,7 @@ const steps = [
     number: "03",
     title: "Continue booking securely",
     description:
-      "Continue securely online. We place a temporary card hold first and only capture payment once the booking is confirmed.",
+      "Continue securely online. We place a temporary card hold first and only capture payment once the matched provider confirms the job.",
   },
   {
     number: "04",

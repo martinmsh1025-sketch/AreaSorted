@@ -44,7 +44,7 @@ const steps = [
     number: "05",
     title: "Wait for booking confirmation",
     description:
-      "A suitable local provider is matched based on coverage, service fit, and availability. Payment is only captured once the booking is confirmed.",
+      "A suitable local provider is matched based on coverage, service fit, and availability. Payment is only captured once the provider confirms the job.",
   },
   {
     number: "06",
@@ -58,7 +58,7 @@ const faqs = [
   {
     question: "When am I charged?",
     answer:
-      "AreaSorted places a temporary card hold when you continue booking. Payment is only captured once the booking is confirmed.",
+      "AreaSorted places a temporary card hold when you continue booking. Payment is only captured once the provider confirms the job.",
   },
   {
     question: "Do I need an account to complete a booking?",
@@ -170,7 +170,7 @@ export default function HowItWorksPage() {
             <div className="eyebrow">What happens next</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Confirmation comes before capture</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
-              AreaSorted uses a temporary card hold while a suitable provider is matched. Once the booking is confirmed, payment is captured and the booking details move forward.
+              AreaSorted uses a temporary card hold while a suitable provider is matched. Once the provider confirms the booking, payment is captured and the booking details move forward.
             </p>
           </div>
         </div>

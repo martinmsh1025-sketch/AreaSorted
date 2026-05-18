@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+function envBoolean(defaultValue: boolean) {
+  return z.preprocess((value) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (["true", "1", "yes", "on"].includes(normalized)) return true;
+      if (["false", "0", "no", "off"].includes(normalized)) return false;
+    }
+    return value;
+  }, z.boolean().default(defaultValue));
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   DATABASE_URL: z.string().optional(),
@@ -14,13 +26,13 @@ const envSchema = z.object({
   STRIPE_DEFAULT_COUNTRY: z.string().default("GB"),
   STRIPE_DEFAULT_CURRENCY: z.string().default("gbp"),
   STRIPE_PAYOUT_HOLD_DAYS: z.coerce.number().int().nonnegative().default(7),
-  STRIPE_MANUAL_PAYOUTS: z.coerce.boolean().default(true),
-  ALLOW_MOCK_STRIPE_CHECKOUT: z.coerce.boolean().default(false),
+  STRIPE_MANUAL_PAYOUTS: envBoolean(true),
+  ALLOW_MOCK_STRIPE_CHECKOUT: envBoolean(false),
   MARKETPLACE_DEFAULT_BOOKING_FEE_GBP: z.coerce.number().nonnegative().default(12),
   MARKETPLACE_DEFAULT_COMMISSION_PERCENT: z.coerce.number().nonnegative().default(12),
-  MARKETPLACE_DEFAULT_MARKUP_ENABLED: z.coerce.boolean().default(false),
+  MARKETPLACE_DEFAULT_MARKUP_ENABLED: envBoolean(false),
   MARKETPLACE_DEFAULT_INVOICE_STRATEGY: z.string().default("provider_service_plus_platform_fee_receipt"),
-  MARKETPLACE_DEFAULT_REFUND_APPLICATION_FEE: z.coerce.boolean().default(false),
+  MARKETPLACE_DEFAULT_REFUND_APPLICATION_FEE: envBoolean(false),
   SESSION_SECRET: z.string().optional(),
   CRON_SECRET: z.string().optional(),
   SIMPLY_POSTCODE_API_KEY: z.string().optional(),

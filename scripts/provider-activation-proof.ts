@@ -20,6 +20,11 @@ async function main() {
       registeredAddress: "1 Demo Street, London",
       contactEmail: "provider@example.com",
       phone: "02000000000",
+      stripeRequirementsJson: {
+        businessType: "company",
+        authorisedSignatoryName: "Demo Signatory",
+        authorisedSignatoryEmail: "signatory@example.com",
+      },
     },
     create: {
       legalName: "AreaSorted Demo Provider Ltd",
@@ -33,6 +38,11 @@ async function main() {
       passwordSetAt: new Date(),
       onboardingSubmittedAt: new Date(),
       approvedAt: new Date(),
+      stripeRequirementsJson: {
+        businessType: "company",
+        authorisedSignatoryName: "Demo Signatory",
+        authorisedSignatoryEmail: "signatory@example.com",
+      },
     },
   });
 

@@ -91,7 +91,7 @@ export function ProviderOptionSelector({
             <input type="checkbox" checked={dbsOnly} onChange={() => setDbsOnly((current) => !current)} /> DBS only
           </label>
           <label style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.84rem" }}>
-            <input type="checkbox" checked={insuredOnly} onChange={() => setInsuredOnly((current) => !current)} /> Insured only
+            <input type="checkbox" checked={insuredOnly} onChange={() => setInsuredOnly((current) => !current)} /> Provider insurance verified
           </label>
         </div>
       ) : null}

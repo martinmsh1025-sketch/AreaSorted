@@ -83,7 +83,7 @@ export const boroughServiceContent: BoroughServiceContent[] = [
       },
       {
         question: `How does pest control booking work in ${b}?`,
-        answer: `Describe the issue, review the quote or inspection route, and continue with a temporary card hold. Once the booking is confirmed, payment is captured and the job moves forward.`,
+        answer: `Describe the issue, review the quote or inspection route, and continue with a temporary card hold. Once the provider confirms the booking, payment is captured and the job moves forward.`,
       },
     ],
   },
@@ -194,7 +194,7 @@ export const boroughServiceContent: BoroughServiceContent[] = [
       },
       {
         question: `How does waste removal booking work in ${b}?`,
-        answer: `Start with your postcode, describe the waste job clearly, and continue with a temporary card hold. Once the booking is confirmed, payment is captured and the collection moves forward.`,
+        answer: `Start with your postcode, describe the waste job clearly, and continue with a temporary card hold. Once the provider confirms the booking, payment is captured and the collection moves forward.`,
       },
     ],
   },

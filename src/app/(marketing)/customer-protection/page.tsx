@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const protections = [
   {
     title: "Provider standards before booking",
-    copy: "We aim to give customers more than a star rating alone. Our direction is stronger onboarding, clearer provider context, insurance checks, DBS status where relevant, and more meaningful profile quality signals.",
+    copy: "We aim to give customers more than a star rating alone. Our direction is stronger onboarding, clearer provider context, insurance arrangements where relevant, DBS status where relevant, and more meaningful profile quality signals.",
   },
   {
     title: "A documented route if something goes wrong",
@@ -90,6 +90,9 @@ export default function CustomerProtectionPage() {
             <h2 className="title" style={{ marginTop: "0.6rem" }}>A simple, evidence-led support flow.</h2>
             <p className="lead" style={{ fontSize: "1rem" }}>
               For standard service quality issues, customers should normally raise a complaint within 48 hours of completion. After that, the booking is generally treated as accepted for standard quality purposes, subject to fraud, chargebacks, damage, and other serious matters.
+            </p>
+            <p style={{ color: "var(--color-text-muted)", marginTop: "0.9rem", lineHeight: 1.65 }}>
+              Any AreaSorted or provider insurance position is subject to the relevant policy terms and does not guarantee that every complaint, loss, or incident will be covered.
             </p>
           </div>
           <div className="panel card" style={{ display: "grid", gap: "0.9rem" }}>

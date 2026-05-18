@@ -189,7 +189,7 @@ export default async function WasteRemovalServicePage() {
             <div className="eyebrow">How booking works</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Scope first, confirmation after review</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
-              Start with your postcode, describe the waste job clearly, and continue with a temporary card hold where applicable. Once the booking is confirmed, payment is captured and the collection moves forward.
+              Start with your postcode, describe the waste job clearly, and continue with a temporary card hold where applicable. Once the provider confirms the booking, payment is captured and the collection moves forward.
             </p>
             <div className="button-row" style={{ marginTop: "1rem" }}>
               <Link className="button button-secondary" href="/how-it-works">How booking works</Link>

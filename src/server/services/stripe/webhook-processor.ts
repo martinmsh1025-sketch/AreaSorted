@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import { Prisma } from "@prisma/client";
 import { getPrisma } from "@/lib/db";
 import { createProviderNotification } from "@/lib/providers/notifications";
 import { parsePreferredScheduleOptions } from "@/lib/quotes/preferred-schedule";
@@ -417,28 +416,17 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
 
 export async function processStripeWebhookEvent(event: Stripe.Event) {
   const prisma = getPrisma();
-
-  let webhookEvent;
-
-  try {
-    webhookEvent = await prisma.webhookEvent.create({
-      data: {
-        provider: "STRIPE",
-        externalEventId: event.id,
-        eventType: event.type,
-        status: "RECEIVED",
-        payloadJson: toJsonValue(event),
-      },
-    });
-  } catch (error) {
-    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
-      throw error;
-    }
-
-    webhookEvent = await prisma.webhookEvent.findUnique({
-      where: { externalEventId: event.id },
-    });
-  }
+  const webhookEvent = await prisma.webhookEvent.upsert({
+    where: { externalEventId: event.id },
+    create: {
+      provider: "STRIPE",
+      externalEventId: event.id,
+      eventType: event.type,
+      status: "RECEIVED",
+      payloadJson: toJsonValue(event),
+    },
+    update: {},
+  });
 
   if (!webhookEvent) {
     throw new Error(`WebhookEvent not found for ${event.id}`);

@@ -32,13 +32,15 @@ This Policy should be read together with our Customer Terms, Provider Terms, and
 
 3.1 Once a booking is marked complete, a 48-hour review window normally begins.
 
-3.2 If no complaint is raised during that period, the payout may move from hold to eligible.
+3.2 If no complaint is raised during that period, the payout record may move from hold to eligible.
 
-3.3 Subject to our Provider Terms, payment processor requirements, and any valid hold reason, AreaSorted aims to pay the provider within 5 working days after the booking is marked complete.
+3.3 Subject to our Provider Terms, payment processor requirements, and any valid hold reason, the provider service amount should normally become eligible for Stripe settlement, payment processor settlement, or another agreed payout method within 5 working days after the booking is marked complete.
+
+3.4 Where Stripe Connect direct charges or a similar connected-account model is used, AreaSorted does not hold provider service funds in its own bank account. AreaSorted may administer payout status, deductions, refunds, chargebacks, and platform fees through the payment processor and its internal records.
 
 4. IF A COMPLAINT IS RAISED IN TIME
 
-4.1 If a complaint is raised within the 48-hour window, the related payout may be placed on hold while the case is reviewed.
+4.1 If a complaint is raised within the 48-hour window, the related payout record, processor release, or payout eligibility may be placed on hold while the case is reviewed.
 
 4.2 AreaSorted may review:
 (a) booking notes;
@@ -104,11 +106,11 @@ Usual outcome:
 
 6. LATE COMPLAINTS
 
-6.1 Complaints raised after 48 hours may still be reviewed, but they will not automatically block payout.
+6.1 Complaints raised after 48 hours may still be reviewed, but they will not automatically block payout eligibility or payment processor settlement.
 
 6.2 Late complaints may require stronger supporting evidence.
 
-6.3 After the 48-hour window, the default position is that payout proceeds unless there is evidence of serious misconduct, fraud, chargeback risk, damage, or another strong reason for further review.
+6.3 After the 48-hour window, the default position is that payout eligibility proceeds unless there is evidence of serious misconduct, fraud, chargeback risk, damage, or another strong reason for further review.
 
 7. PROVIDER PROTECTION
 

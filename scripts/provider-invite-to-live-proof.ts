@@ -23,6 +23,7 @@ async function main() {
     await prisma.providerAgreement.deleteMany({ where: { providerCompanyId: existingProvider.id } });
     await prisma.providerOnboardingDocument.deleteMany({ where: { providerCompanyId: existingProvider.id } });
     await prisma.stripeConnectedAccount.deleteMany({ where: { providerCompanyId: existingProvider.id } });
+    await prisma.providerNotification.deleteMany({ where: { providerCompanyId: existingProvider.id } });
     await prisma.providerInvite.updateMany({ where: { providerCompanyId: existingProvider.id }, data: { providerCompanyId: null } });
     await prisma.providerCompany.delete({ where: { id: existingProvider.id } });
   }
@@ -49,6 +50,12 @@ async function main() {
     contactEmail: email,
     phone: "02070000000",
     vatNumber: "GB123456789",
+    onboardingMetadata: {
+      authorisedSignatoryName: "Proof Signatory",
+      authorisedSignatoryEmail: "signatory-proof@areasorted.test",
+      authorisedSignatoryTitle: "Director",
+      authorisedSignatoryAuthority: "Director authority",
+    },
     categories: ["CLEANING"],
     serviceKeys: ["regular-home-cleaning", "deep-cleaning"],
     postcodePrefixes: ["SW6", "W14"],
@@ -130,6 +137,10 @@ async function main() {
 
   const latestInvite = await findProviderInviteByEmail(email);
   const finalChecklist = buildProviderChecklist(finalProvider);
+
+  if (!finalChecklist.allComplete || finalProvider.status !== "ACTIVE") {
+    throw new Error(`Provider invite-to-live proof failed: status=${finalProvider.status}, missing=${finalChecklist.missingLabels.join(", ")}`);
+  }
 
   console.log(JSON.stringify({
     invite: {

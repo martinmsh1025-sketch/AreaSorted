@@ -17,6 +17,8 @@ This Policy should be read together with our Customer Terms and Conditions and a
 
 1.4 This Policy does not exclude or limit any statutory rights you may have under applicable consumer law.
 
+1.5 Payments, payment holds, captures, releases, and refunds may be processed by Stripe or another payment processor. Where connected provider accounts are used, provider service amounts may be processed on the provider's connected payment account, while AreaSorted may receive or refund disclosed platform fees through the payment processor.
+
 2. CUSTOMER CANCELLATION BEFORE BOOKING CONFIRMATION
 
 2.1 If you cancel before your booking is confirmed, we will not treat the booking as confirmed.
@@ -108,6 +110,8 @@ This Policy should be read together with our Customer Terms and Conditions and a
 9.3 Refunds will usually be made back to the original payment method unless otherwise agreed or required by law.
 
 9.4 The time taken for the refund to appear in your account may depend on your bank, card issuer, or payment provider.
+
+9.5 If a refund includes both provider service amounts and AreaSorted platform fees, those amounts may be reversed through the relevant Stripe or payment processor records rather than from a single AreaSorted-held balance.
 
 10. CHANGES TO THIS POLICY
 

@@ -156,7 +156,7 @@ export default async function PricingPage() {
             ))}
           </div>
           <p style={{ color: "var(--color-text-muted)", margin: "1.2rem auto 0", maxWidth: 860, textAlign: "center", lineHeight: 1.6 }}>
-            AreaSorted places a temporary card hold when you continue booking. Payment is only captured once your booking is confirmed.
+            AreaSorted places a temporary card hold when you continue booking. Payment is only captured once the matched provider confirms the job.
           </p>
         </div>
       </section>
