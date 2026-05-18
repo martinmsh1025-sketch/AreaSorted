@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: "Customer Support",
   description:
     "Get help with bookings, payment holds, provider confirmation, rescheduling, cancellations, and account access for AreaSorted services in London.",
+  alternates: {
+    canonical: "/support",
+  },
 };
 
 const supportTopics = [

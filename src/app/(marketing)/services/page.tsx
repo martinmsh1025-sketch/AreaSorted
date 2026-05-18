@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Services — Cleaning, Pest Control, Handyman & More",
   description:
     "Browse 57 bookable service types across cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance. All services arranged through AreaSorted in London.",
+  alternates: {
+    canonical: "/services",
+  },
   openGraph: {
     title: "Services — Cleaning, Pest Control, Handyman & More | AreaSorted",
     description:

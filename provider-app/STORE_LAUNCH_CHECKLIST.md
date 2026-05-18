@@ -4,7 +4,7 @@
 
 - Set `EXPO_PUBLIC_API_BASE_URL` to production API
 - Set EAS project ID in Expo config
-- Replace placeholder assets with production icon, splash, and notification assets
+- Use production icon, splash, and notification assets
 - Test real provider login on iOS and Android devices
 - Verify push token registration in production
 - Confirm provider mobile endpoints work against production DB

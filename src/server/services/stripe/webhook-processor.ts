@@ -376,7 +376,7 @@ async function syncCheckoutSessionCompleted(event: Stripe.Event) {
         });
         const dateStr = booking.scheduledDate
           ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-          : "TBC";
+          : "To be confirmed";
         const scheduleOptions = parsePreferredScheduleOptions(booking.quoteRequest?.inputJson);
         await createProviderNotification({
           providerCompanyId: booking.providerCompanyId,

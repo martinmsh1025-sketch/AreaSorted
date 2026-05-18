@@ -32,6 +32,29 @@ function getBoroughHeroImage(slug: string) {
     : "/images/marketing-generated/london-west-grid.png";
 }
 
+function sentenceIndex(slug: string, count: number) {
+  return slug.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % count;
+}
+
+function getServiceDemandCopy(content: NonNullable<ReturnType<typeof getBoroughServiceContent>>, page: NonNullable<ReturnType<typeof getBoroughPage>>) {
+  const localSentences = [
+    `Local fit still depends on the exact address, especially around ${page.nearbyAreas[0]} and ${page.nearbyAreas[1]}.`,
+    `That is why the booking flow checks postcode, access notes, and timing before provider confirmation.`,
+    `The borough label is only a starting point; the actual job brief decides which provider can realistically take it.`,
+  ];
+
+  return `${content.demandDescription(page.name, page.highlights)} ${localSentences[sentenceIndex(page.slug + content.slug, localSentences.length)]}`;
+}
+
+function getServiceNearbyCopy(content: NonNullable<ReturnType<typeof getBoroughServiceContent>>, page: NonNullable<ReturnType<typeof getBoroughPage>>) {
+  return `${page.nearbyAreas.join(", ")} give useful local context for ${content.label.toLowerCase()} demand, but availability is not decided by neighbourhood names alone. ${page.bookingReality} Start with the exact postcode so coverage and timing can be checked properly.`;
+}
+
+function getOtherServiceCopy(service: NonNullable<ReturnType<typeof getBoroughServiceContent>>, page: NonNullable<ReturnType<typeof getBoroughPage>>) {
+  const need = service.popularNeeds[1]?.replace(/\.$/, "").toLowerCase() || service.popularNeeds[0].replace(/\.$/, "").toLowerCase();
+  return `${need}, often checked alongside ${page.nearbyAreas[0]} and ${page.nearbyAreas[1]} demand.`;
+}
+
 export async function generateStaticParams() {
   const params: Array<{ borough: string; service: string }> = [];
   for (const borough of boroughPages) {
@@ -159,7 +182,7 @@ export default async function BoroughServicePage({ params }: Props) {
             {[
               `${serviceJobs.length} ${content.label.toLowerCase()} job types`,
               `From ${formatMoney(startingPrice)}`,
-              `Areas near ${page.nearbyAreas[0]}`,
+              `Local reference: ${page.nearbyAreas[0]}`,
             ].map((item) => (
               <span
                 key={item}
@@ -196,7 +219,7 @@ export default async function BoroughServicePage({ params }: Props) {
             <div className="eyebrow">Why customers book here</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>{content.label} demand in {page.name}</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
-              {content.demandDescription(page.name, page.highlights)} {page.localAngle}
+              {getServiceDemandCopy(content, page)}
             </p>
           </div>
           <div className="panel card">
@@ -226,10 +249,9 @@ export default async function BoroughServicePage({ params }: Props) {
           </div>
           <div className="panel card">
             <div className="eyebrow">Nearby areas</div>
-            <h2 className="title" style={{ marginTop: "0.6rem" }}>Neighbourhoods customers often compare</h2>
+            <h2 className="title" style={{ marginTop: "0.6rem" }}>Local context beyond the borough name</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.7rem", lineHeight: 1.7 }}>
-              Customers searching for {content.label.toLowerCase()} in {page.name} often also compare options in{" "}
-              {page.nearbyAreas.join(", ")}. {page.bookingReality} Coverage stays postcode-led, so the fastest next step is still to start with your exact address.
+              {getServiceNearbyCopy(content, page)}
             </p>
           </div>
         </div>
@@ -269,7 +291,7 @@ export default async function BoroughServicePage({ params }: Props) {
                 >
                   <strong>{s.label}</strong>
                   <p style={{ marginTop: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.5 }}>
-                    {s.label} in {page.name}
+                    {getOtherServiceCopy(s, page)}
                   </p>
                 </Link>
               ))}

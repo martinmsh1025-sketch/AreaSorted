@@ -56,6 +56,30 @@ const serviceCardImages: Record<string, string> = {
   "garden-maintenance": "/images/homepage/services/garden-maintenance-better.jpg",
 };
 
+function sentenceIndex(slug: string, count: number) {
+  return slug.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % count;
+}
+
+function getBoroughBookingCopy(page: NonNullable<ReturnType<typeof getBoroughPage>>) {
+  const flowSentences = [
+    "That means we check exact postcode, access notes, service fit, and timing before treating the booking as ready for provider confirmation.",
+    "The flow is deliberately address-led: local availability is checked first, and payment is only captured after provider confirmation.",
+    "Instead of assuming one borough behaves the same throughout, we use the job details and address context to reduce bad-fit bookings.",
+  ];
+
+  return `${page.localAngle} ${page.bookingReality} ${flowSentences[sentenceIndex(page.slug, flowSentences.length)]}`;
+}
+
+function getServiceCardCopy(service: (typeof boroughServiceContent)[number], page: NonNullable<ReturnType<typeof getBoroughPage>>) {
+  const firstNeed = service.popularNeeds[0].replace(/\.$/, "").toLowerCase();
+  return `${firstNeed}, with local fit checked around ${page.nearbyAreas[0]} and ${page.nearbyAreas[1]}.`;
+}
+
+function getNearbyAreaCopy(page: NonNullable<ReturnType<typeof getBoroughPage>>) {
+  const areas = page.nearbyAreas.join(", ");
+  return `Use ${areas} as reference points rather than fixed service boundaries. ${page.pricingContext} Coverage is postcode-led, so the most accurate next step is to check the exact address.`;
+}
+
 export default async function BoroughPage({ params }: Props) {
   const { borough } = await params;
   const page = getBoroughPage(borough);
@@ -116,7 +140,8 @@ export default async function BoroughPage({ params }: Props) {
             <h1 className="display" style={{ marginTop: "0.8rem", fontSize: "clamp(2.4rem, 3.8vw, 4rem)" }}>
               Local services in {page.name}
             </h1>
-            <p className="lead">{page.intro}</p>
+            <p className="lead">{page.localAngle}</p>
+            <p style={{ color: "var(--color-text-muted)", marginTop: "0.75rem", lineHeight: 1.7 }}>{page.bookingReality}</p>
             <div className="button-row" style={{ marginTop: "1.5rem" }}>
               <Link className="button button-primary" href="/quote">Continue booking</Link>
               <Link className="button button-secondary" href="/services">Browse services</Link>
@@ -148,7 +173,7 @@ export default async function BoroughPage({ params }: Props) {
                 <div style={{ padding: "1rem 1.1rem 1.15rem" }}>
                   <strong>{s.label}</strong>
                   <p style={{ marginTop: "0.3rem", color: "var(--color-text-muted)", fontSize: "0.9rem", lineHeight: 1.5 }}>
-                    {s.label} in {page.name}
+                    {getServiceCardCopy(s, page)}
                   </p>
                 </div>
               </Link>
@@ -163,9 +188,7 @@ export default async function BoroughPage({ params }: Props) {
             <div className="eyebrow">Why this page matters</div>
             <h2 className="title" style={{ marginTop: "0.6rem" }}>Booking in {page.name}</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.7 }}>
-              {page.localAngle} {page.bookingReality} AreaSorted is built around London postcode matching, so we check
-              coverage, service fit, timing, and pricing before you continue. We place a temporary card hold first, and
-              only capture payment once the provider confirms the booking.
+              {getBoroughBookingCopy(page)}
             </p>
           </div>
           <div className="panel card">
@@ -192,9 +215,9 @@ export default async function BoroughPage({ params }: Props) {
           </div>
           <div className="panel card">
             <div className="eyebrow">Nearby areas</div>
-            <h2 className="title" style={{ marginTop: "0.6rem" }}>Neighbourhoods we also think about</h2>
+            <h2 className="title" style={{ marginTop: "0.6rem" }}>Neighbourhoods that shape local demand</h2>
             <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.7 }}>
-              Customers searching in {page.name} often also compare options in nearby areas such as {page.nearbyAreas.join(", ")}. {page.pricingContext} Coverage is always postcode-led, so the fastest next step is to continue booking and check your exact address.
+              {getNearbyAreaCopy(page)}
             </p>
           </div>
         </div>

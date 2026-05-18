@@ -589,7 +589,7 @@ export async function createInstantBookingFromQuote(reference: string, selectedQ
         });
         const dateStr = booking.scheduledDate
           ? new Date(booking.scheduledDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
-          : "TBC";
+          : "To be confirmed";
         const scheduleOptions = parsePreferredScheduleOptions(quote.inputJson);
         await createProviderNotification({
           providerCompanyId: booking.providerCompanyId,

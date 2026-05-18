@@ -1,9 +1,9 @@
-[PLATFORM NAME]
+AREASORTED
 CUSTOMER TERMS AND CONDITIONS
 Version 2.0
-Effective Date: [DATE]
+Effective Date: 18 May 2026
 
-These Terms and Conditions ("Terms") govern your use of [PLATFORM NAME], including any quote, booking request, booking, account, communication, or related service made through our website, app, portal, email, telephone, or other supported channel.
+These Terms and Conditions ("Terms") govern your use of AreaSorted, including any quote, booking request, booking, account, communication, or related service made through our website, app, portal, email, telephone, or other supported channel.
 
 Please read these Terms carefully before using our platform or placing a booking request.
 
@@ -11,13 +11,15 @@ By creating an account, requesting a quote, submitting a booking request, placin
 
 1. WHO WE ARE
 
-1.1 [LEGAL ENTITY NAME] trading as [PLATFORM NAME] ("Platform", "we", "us", "our") operates an online platform through which customers can request and arrange cleaning and related services.
+1.1 Happy Mamaland Limited (company number 17215430), registered in England and Wales and trading as AreaSorted ("Platform", "we", "us", "our"), operates an online platform through which customers can request and arrange cleaning and related services.
 
 1.2 Our contact details are:
-Registered address: [ADDRESS]
-Email: [SUPPORT EMAIL]
-Phone: [PHONE]
-Website: [WEBSITE]
+Legal entity: Happy Mamaland Limited
+Company number: 17215430
+Trading name: AreaSorted
+Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH
+Email: support@areasorted.com
+Website: https://areasorted.com
 
 2. OUR PLATFORM AND HOW BOOKINGS WORK
 
@@ -169,7 +171,7 @@ Website: [WEBSITE]
 
 12. COMPLAINTS, REPEAT PERFORMANCE, REFUNDS, AND CREDITS
 
-12.1 If you are dissatisfied with the services, please contact us as soon as reasonably possible and, where possible, within [24/48] hours after the booking is completed.
+12.1 If you are dissatisfied with the services, please contact us as soon as reasonably possible and, where possible, within 48 hours after the booking is completed.
 
 12.2 You should provide reasonable details of the issue, including photos or other supporting information where appropriate.
 
@@ -258,8 +260,8 @@ Website: [WEBSITE]
 
 If you have questions about these Terms, your booking, or a complaint, please contact:
 
-[LEGAL ENTITY NAME / PLATFORM NAME]
-[ADDRESS]
-[SUPPORT EMAIL]
-[PHONE]
-[WEBSITE]
+Happy Mamaland Limited trading as AreaSorted
+Company number: 17215430
+Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH
+Email: support@areasorted.com
+Website: https://areasorted.com

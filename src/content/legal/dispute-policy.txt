@@ -1,7 +1,10 @@
 AREASORTED
 DISPUTE & PAYOUT POLICY
 Version 1.0
-Effective Date: 15 April 2026
+Effective Date: 18 May 2026
+
+Platform operator: Happy Mamaland Limited (company number 17215430), registered in England and Wales and trading as AreaSorted.
+Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH
 
 This Policy explains how AreaSorted handles service complaints, evidence review, provider payout timing, and deductions connected with booking disputes.
 
@@ -131,4 +134,4 @@ Usual outcome:
 
 10. CONTACT
 
-If you have a question about a complaint, payout hold, or dispute outcome, please contact support@areasorted.com.
+If you have a question about a complaint, payout hold, or dispute outcome, please contact Happy Mamaland Limited trading as AreaSorted at support@areasorted.com.

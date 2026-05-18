@@ -1,9 +1,9 @@
-[PLATFORM NAME]
+AREASORTED
 CUSTOMER CANCELLATION & REFUND POLICY
 Version 1.0
-Effective Date: [DATE]
+Effective Date: 18 May 2026
 
-This Cancellation & Refund Policy explains how cancellations, booking fees, payment holds, and refunds are handled for bookings made through [PLATFORM NAME].
+This Cancellation & Refund Policy explains how cancellations, booking fees, payment holds, and refunds are handled for bookings made through AreaSorted.
 
 This Policy should be read together with our Customer Terms and Conditions and any booking-specific information shown to you at checkout.
 
@@ -117,8 +117,8 @@ We may update this Cancellation & Refund Policy from time to time. The latest ve
 
 If you have any questions about a cancellation, refund, or complaint, please contact:
 
-[LEGAL ENTITY NAME / PLATFORM NAME]
-[ADDRESS]
-[SUPPORT EMAIL]
-[PHONE]
-[WEBSITE]
+Happy Mamaland Limited trading as AreaSorted
+Company number: 17215430
+Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH
+Email: support@areasorted.com
+Website: https://areasorted.com

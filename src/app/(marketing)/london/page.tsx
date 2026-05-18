@@ -42,7 +42,15 @@ export const metadata: Metadata = {
   title: "London Areas We Cover",
   description:
     "Explore AreaSorted coverage across London boroughs and discover local service booking pages for cleaning, handyman work, pest control, waste removal, furniture assembly, and garden maintenance.",
+  alternates: {
+    canonical: "/london",
+  },
 };
+
+function getBoroughCardCopy(page: (typeof boroughPages)[number]) {
+  const [firstArea, secondArea] = page.nearbyAreas;
+  return `${page.localAngle} We also factor in nearby patterns around ${firstArea} and ${secondArea}, not just the borough name.`;
+}
 
 export default function LondonCoverageHubPage() {
   return (
@@ -81,7 +89,7 @@ export default function LondonCoverageHubPage() {
                 <div style={{ padding: "1.15rem 1.2rem 1.25rem" }}>
                   <strong>{page.name}</strong>
                   <p style={{ marginTop: "0.5rem", color: "var(--color-text-muted)", lineHeight: 1.6 }}>
-                    {page.intro}
+                    {getBoroughCardCopy(page)}
                   </p>
                 </div>
               </Link>

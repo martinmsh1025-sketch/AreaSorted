@@ -1,6 +1,6 @@
 # AreaSorted Provider App
 
-Expo/React Native scaffold for a provider-facing mobile app.
+Expo/React Native provider-facing mobile app for AreaSorted providers.
 
 ## MVP scope
 
@@ -53,7 +53,7 @@ For iOS simulator access to your local Next app, change the base URL to your Mac
 - Demo mode can force the whole app into built-in sample data without calling the backend.
 - API client is separated under `src/lib/api.ts` and `src/lib/provider-api.ts`.
 - Mobile auth is token-based and isolated from the web cookie session.
-- Push token registration is scaffolded with Expo Notifications plus a temporary file-backed store.
+- Push token registration is implemented with Expo Notifications and should use the production backend storage configured for the deployment environment.
 
 ## Internal build commands
 
@@ -73,8 +73,8 @@ Full internal distribution steps live in `provider-app/INTERNAL_BUILD_GUIDE.md`.
 
 Before TestFlight / Play internal testing:
 
-- replace `provider-app/app.json` EAS project id
-- replace the generated placeholder assets in `provider-app/assets/`
+- set `provider-app/app.json` EAS project id
+- use production icon, splash, and notification assets in `provider-app/assets/`
 - set production `EXPO_PUBLIC_API_BASE_URL`
 - log in with a real provider account on a physical device
 
@@ -88,5 +88,5 @@ Before TestFlight / Play internal testing:
 
 1. Add provider order detail + support request screens.
 2. Add provider payout and profile edit screens.
-3. Replace the temporary file-backed push token store with a database-backed table.
+3. Confirm production push-token storage and notification delivery.
 4. Add EAS project ID, production icons, splash assets, and real store metadata.

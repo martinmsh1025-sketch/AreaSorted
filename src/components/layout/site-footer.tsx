@@ -78,7 +78,7 @@ export function SiteFooter() {
             <LinkList items={sitemapLinks} />
           </div>
         </div>
-        <div className="footer-bottom">© 2026 AreaSorted.com.</div>
+        <div className="footer-bottom">© 2026 AreaSorted.com. AreaSorted is a trading name of Happy Mamaland Limited, company number 17215430.</div>
       </div>
     </footer>
   );

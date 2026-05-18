@@ -5,6 +5,9 @@ import Image from "next/image";
 export const metadata: Metadata = {
   title: "Customer Protection",
   description: "How AreaSorted protects customers with stronger provider standards, evidence-led complaint handling, and clearer support when a booking goes wrong.",
+  alternates: {
+    canonical: "/customer-protection",
+  },
 };
 
 const protections = [

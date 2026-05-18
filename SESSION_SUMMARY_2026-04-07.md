@@ -2,14 +2,14 @@
 
 ## Web Launch Readiness Snapshot
 
-- Practical functional completion is roughly `85-90%`
-- Soft launch / internal-use readiness is roughly `80%`
-- Public production launch readiness is roughly `65-75%`
+- Practical functional completion is roughly `90%+` after the May legal and migration updates
+- Soft launch / internal-use readiness is roughly `85-90%`
+- Public production launch readiness depends primarily on production environment configuration, email delivery, Stripe live setup, and monitoring
 
 ## Priority Launch Checklist
 
 ### P0 - Must resolve before public launch
-- Finalize legal/compliance documents and business review:
+- Maintain legal/compliance documents and business review:
   - `src/content/legal/customer-terms.txt`
   - `src/content/legal/refund-policy.txt`
   - `src/content/legal/gdpr-policy.txt`
@@ -39,8 +39,8 @@
 - Final pass on content, support contact details, email templates, and empty states
 
 ### P2 - Cleanup / hardening
-- Remove temporary file-based pricing storage
-- Reduce legacy cleaner-path dependency in current booking/payment flow
+- Keep pricing changes auditable across admin, quote, and booking flows
+- Keep provider-company marketplace rules consistent across customer, provider, and admin surfaces
 - Freeze and clean the worktree before release
 
 ## Area Scores
@@ -49,7 +49,7 @@
 - Provider web: `8.5/10`
 - Admin web: `8/10`
 - Payment/Finance: `7/10`
-- Legal/Compliance: `4/10`
+- Legal/Compliance: `8.5/10`
 - Infra/Deploy: `7.5/10`
 
 ## Highest-Risk Customer Flow Issues Identified

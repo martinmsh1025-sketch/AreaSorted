@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Become a Provider — Join AreaSorted",
   description:
     "Apply to join AreaSorted as an independent service provider in London. Structured onboarding, verified profiles, and local job opportunities across multiple service categories.",
+  alternates: {
+    canonical: "/become-a-cleaner",
+  },
 };
 
 export default function BecomeCleanerPage() {

@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import { getAdminSession } from "@/lib/admin-auth";
 import { adminLogoutAction } from "@/app/admin/login/actions";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n/context";
 import { getAdminLocale } from "@/lib/i18n/server";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getAdminSession();

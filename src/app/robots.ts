@@ -17,25 +17,9 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        userAgent: "OAI-SearchBot",
-        allow: "/",
-      },
-      {
-        userAgent: "GPTBot",
-        allow: "/",
-      },
-      {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/admin/",
-          "/provider/",
-          "/account/",
-          "/api/",
-          "/booking/",
-          "/quote/",
-          "/cleaner/",
-        ],
+        disallow: ["/api/"],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,

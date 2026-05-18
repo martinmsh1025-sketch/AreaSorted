@@ -1,8 +1,8 @@
 # AreaSorted dispute and payout policy
 
-Status: draft v1
+Status: Current policy v1
 
-This policy is intended to support a higher-trust marketplace model by protecting both customers and providers.
+This policy supports AreaSorted's marketplace model by protecting both customers and providers with clear complaint windows, evidence review, and payout handling rules.
 
 ## Core principles
 

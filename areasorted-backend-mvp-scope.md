@@ -3,7 +3,7 @@
 > Alignment note (2026-03-16)
 > - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
 > - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
-> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
+> - Provider-company is the primary marketplace entity; worker or cleaner records are operational sub-resources where needed.
 > - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
 > - Legacy brand names (`WashHub`, `Alder London`) have been removed from all source code and data files. `AreaSorted` is the sole active brand.
 
@@ -70,7 +70,7 @@ This file records the agreed backend development scope so the project can contin
 - Architecture decisions doc
 - Folder tree
 - Environment contract
-- Prisma marketplace schema draft
+- Prisma marketplace schema plan
 - Docker compose for app + database
 
 ### Phase B - Core Domain

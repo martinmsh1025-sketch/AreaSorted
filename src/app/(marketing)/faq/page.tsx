@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "FAQ — Frequently Asked Questions",
   description:
     "Answers to common questions about booking services, pricing, payments, cancellations, and how AreaSorted works across London.",
+  alternates: {
+    canonical: "/faq",
+  },
   openGraph: {
     title: "FAQ — Frequently Asked Questions | AreaSorted",
     description:

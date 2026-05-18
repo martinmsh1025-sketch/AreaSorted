@@ -29,28 +29,28 @@
    - Risk: protections weaken across multiple instances / serverless scale-out
    - Severity: High
 
-6. **Legal/compliance documents are not fully finalized**
+6. **Legal/compliance documents require production version control**
    - `src/content/legal/customer-terms.txt`
    - `src/content/legal/refund-policy.txt`
    - `src/content/legal/gdpr-policy.txt`
    - `src/content/legal/cookie-policy.txt`
    - `src/app/(marketing)/cleaner-terms/page.tsx`
-   - Risk: launch with incomplete customer/provider policy coverage
-   - Severity: Critical
+   - Risk: future policy edits may drift without version control and periodic review
+   - Severity: Medium
 
 7. **Live production integration keys are still missing**
    - Google login, Crisp, WhatsApp, production DB config
    - Risk: broken auth/support paths or incorrect production environment wiring
    - Severity: High
 
-8. **Legacy and temporary architecture remains in the live customer/payment path**
+8. **Customer/payment path needs continued regression testing**
    - `README.md`
-   - Risk: regressions caused by mixed old/new booking and pricing implementations
+   - Risk: regressions caused by booking, pricing, payment, refund, or payout edge cases
    - Severity: Medium-High
 
-9. **Pricing configuration still uses temporary file-backed storage in part of the stack**
+9. **Pricing configuration needs continued auditability checks**
    - `src/lib/pricing-config-store.ts`
-   - Risk: operational drift, deploy portability issues, weaker auditability
+   - Risk: operational drift or weaker auditability if pricing changes are not reviewed consistently
    - Severity: Medium-High
 
 10. **Test and monitoring coverage is not yet launch-grade**
@@ -61,6 +61,6 @@
 
 1. Fix public data exposure and sensitive reference-based flows
 2. Re-test payment/cancel/reschedule edge cases end-to-end
-3. Finalize legal/compliance pack
+3. Maintain legal/compliance version control
 4. Complete production env + deployment validation
 5. Add launch-critical tests and monitoring

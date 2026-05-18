@@ -55,15 +55,7 @@ Priority order:
 
 ## Borough Landing Plan
 
-Start with 5 borough pages only.
-
-Recommended first batch:
-
-1. Camden
-2. Islington
-3. Westminster
-4. Hackney
-5. Lambeth
+AreaSorted now has indexable borough pages across the London coverage set. The next priority is not adding more near-duplicate pages, but improving borough-specific copy, internal linking, and conversion clarity.
 
 Each borough page should include:
 
@@ -83,15 +75,15 @@ Suggested URL pattern:
 - `/london/hackney`
 - `/london/lambeth`
 
-## Before Public Launch
+## Production SEO Checklist
 
-Finish these first:
+Complete or maintain these items:
 
-- replace all legal/content placeholders
-- finalise privacy and cookie implementation wording
-- keep payment hold / capture wording consistent everywhere
-- add Google Search Console
-- add GA4
+- legal and policy pages contain real company details and effective dates
+- privacy and cookie wording matches the live consent behaviour
+- payment hold / capture wording remains consistent across quote, booking, FAQ, and policy pages
+- Google Search Console is connected for production
+- GA4 or another analytics tool is connected for production
 
 ## Traffic Measurement Setup
 

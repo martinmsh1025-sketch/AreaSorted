@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import { providerLogoutAction } from "@/app/provider/login/actions";
 import { getProviderSession } from "@/lib/provider-auth";
 import { providerPortalStatusLabels } from "@/lib/providers/service-catalog-mapping";
 import { ProviderShell } from "@/components/provider/provider-shell";
 import type { NavGroup } from "@/components/provider/provider-shell";
 import { TooltipProvider } from "@/components/ui/tooltip";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 function buildProviderNav(): NavGroup[] {
   return [

@@ -1,9 +1,12 @@
-[PLATFORM NAME]
+AREASORTED
 PROVIDER TERMS FOR SOLE TRADERS
 Version 1.0
-Effective Date: [DATE]
+Effective Date: 18 May 2026
 
-These Provider Terms for Sole Traders ("Terms") govern the relationship between [LEGAL ENTITY NAME], trading as [PLATFORM NAME] ("Platform", "we", "us", "our"), and the sole trader service provider identified during onboarding ("Provider", "you", "your").
+Platform operator: Happy Mamaland Limited (company number 17215430), registered in England and Wales and trading as AreaSorted.
+Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH
+
+These Provider Terms for Sole Traders ("Terms") govern the relationship between Happy Mamaland Limited (company number 17215430), registered in England and Wales and trading as AreaSorted ("Platform", "we", "us", "our"), and the sole trader service provider identified during onboarding ("Provider", "you", "your").
 
 By clicking "I agree", signing electronically, completing onboarding, accepting a Booking Opportunity, performing Services, or otherwise using the Platform after these Terms take effect, you agree to be bound by these Terms.
 

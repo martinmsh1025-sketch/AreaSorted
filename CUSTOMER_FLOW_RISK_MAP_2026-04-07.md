@@ -14,7 +14,7 @@ flowchart TD
     J --> K[Refund / Payout / Admin Ops]
 
     B -. Rate limit / abuse risk .-> R1[Risk: in-memory rate limiting]
-    C -. Account creation / pricing mix .-> R2[Risk: legacy + new architecture overlap]
+    C -. Account creation / pricing mix .-> R2[Risk: operational dependency overlap]
     D -. Public reference access .-> R3[Risk: quote disclosure by reference]
     F -. Public reference access .-> R4[Risk: booking status privacy assumptions]
     H -. Was public before fix .-> R5[Risk: booking manage PII exposure]

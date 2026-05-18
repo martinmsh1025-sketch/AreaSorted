@@ -1,6 +1,23 @@
+import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/legal-page";
 
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "How AreaSorted collects, uses, shares, stores, and protects personal information for customers, providers, and website visitors.",
+  alternates: {
+    canonical: "/privacy-policy",
+  },
+};
+
 const sections = [
+  {
+    heading: "Who we are",
+    paragraphs: [
+      "AreaSorted is operated by Happy Mamaland Limited (company number 17215430), a company registered in England and Wales and trading as AreaSorted.",
+      "Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH.",
+      "You can contact us about privacy matters at support@areasorted.com or through https://areasorted.com.",
+    ],
+  },
   {
     heading: "Who this policy covers",
     paragraphs: [
@@ -72,7 +89,7 @@ export default function PrivacyPolicyPage() {
     <LegalPage
       title="Privacy Policy"
       lead="This policy explains how AreaSorted handles personal information across bookings, accounts, customer support, payments, and provider operations."
-      version="Website version based on current customer terms and data protection policy"
+      version="Version 1.0 | Effective Date: 18 May 2026 | Data controller: Happy Mamaland Limited trading as AreaSorted"
       sections={sections}
     />
   );

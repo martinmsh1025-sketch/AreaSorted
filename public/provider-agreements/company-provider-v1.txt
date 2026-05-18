@@ -1,9 +1,12 @@
-[PLATFORM NAME]
+AREASORTED
 COMPANY PROVIDER TERMS
 Version 1.0
-Effective Date: [DATE]
+Effective Date: 18 May 2026
 
-These Company Provider Terms ("Terms") govern the relationship between [LEGAL ENTITY NAME], trading as [PLATFORM NAME] ("Platform", "we", "us", "our"), and the company identified during onboarding ("Company Provider", "Provider", "you", "your").
+Platform operator: Happy Mamaland Limited (company number 17215430), registered in England and Wales and trading as AreaSorted.
+Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH
+
+These Company Provider Terms ("Terms") govern the relationship between Happy Mamaland Limited (company number 17215430), registered in England and Wales and trading as AreaSorted ("Platform", "we", "us", "our"), and the company identified during onboarding ("Company Provider", "Provider", "you", "your").
 
 By clicking "I agree", signing electronically, completing onboarding, accepting a Booking Opportunity, performing Services, or otherwise using the Platform after these Terms take effect, the Provider agrees to be bound by these Terms. If the individual accepting these Terms does so on behalf of the Provider, that individual represents and warrants that they have full authority to bind the Provider to these Terms.
 

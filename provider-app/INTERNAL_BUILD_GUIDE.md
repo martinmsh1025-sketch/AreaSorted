@@ -9,7 +9,7 @@ npx eas-cli login
 npx eas-cli init
 ```
 
-Then update these placeholders:
+Then set these configuration values:
 
 - `provider-app/app.json` -> `extra.eas.projectId`
 - `provider-app/eas.json` -> `submit.production.ios.ascAppId`
@@ -64,7 +64,7 @@ Use one of these payload data shapes:
 
 ## 6. Before store submission
 
-- replace generated placeholder assets in `provider-app/assets/`
+- use production brand assets in `provider-app/assets/`
 - confirm privacy policy and support URL
 - set real production API base URL
-- replace temporary push token file store with DB-backed storage if moving beyond initial rollout
+- confirm production push token storage and notification delivery

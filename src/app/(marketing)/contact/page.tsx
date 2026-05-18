@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Contact Us",
   description:
     "Get in touch with the AreaSorted team for customer support, booking queries, provider onboarding questions, or general business enquiries.",
+  alternates: {
+    canonical: "/contact",
+  },
 };
 
 export default function ContactPage() {

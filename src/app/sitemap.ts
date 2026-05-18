@@ -72,6 +72,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
+      url: `${BASE_URL}/customer-protection`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: `${BASE_URL}/london`,
       lastModified: now,
       changeFrequency: "weekly",
@@ -120,26 +126,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.3,
     },
     {
-      url: `${BASE_URL}/cleaner-terms`,
+      url: `${BASE_URL}/dispute-policy`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,
     },
-  ];
-
-  // Customer auth pages (indexable for SEO)
-  const authPages: MetadataRoute.Sitemap = [
     {
-      url: `${BASE_URL}/customer/login`,
+      url: `${BASE_URL}/cleaner-terms`,
       lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.4,
-    },
-    {
-      url: `${BASE_URL}/customer/register`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.4,
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
   ];
 
@@ -202,5 +198,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  return [...staticPages, ...servicePages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...comparePages, ...authPages];
+  return [...staticPages, ...servicePages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...comparePages];
 }

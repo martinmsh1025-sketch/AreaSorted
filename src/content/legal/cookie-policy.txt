@@ -1,9 +1,9 @@
-[PLATFORM NAME]
+AREASORTED
 COOKIE POLICY
 Version 1.1
-Effective Date: [DATE]
+Effective Date: 18 May 2026
 
-This Cookie Policy explains how [LEGAL ENTITY NAME] trading as [PLATFORM NAME] ("Platform", "we", "us", "our") uses cookies and similar technologies on our website, app, portals, and related online services.
+This Cookie Policy explains how Happy Mamaland Limited (company number 17215430), registered in England and Wales and trading as AreaSorted ("Platform", "we", "us", "our"), uses cookies and similar technologies on our website, app, portals, and related online services.
 
 1. WHAT ARE COOKIES?
 
@@ -100,8 +100,8 @@ We may update this Cookie Policy from time to time. The latest version will be p
 
 If you have questions about our use of cookies or similar technologies, please contact:
 
-[LEGAL ENTITY NAME / PLATFORM NAME]
-[ADDRESS]
-[PRIVACY EMAIL]
-[PHONE]
-[WEBSITE]
+Happy Mamaland Limited trading as AreaSorted
+Company number: 17215430
+Registered office: 8 Camden Row, Cuckoo Hill, Pinner, England, HA5 2AH
+Email: support@areasorted.com
+Website: https://areasorted.com

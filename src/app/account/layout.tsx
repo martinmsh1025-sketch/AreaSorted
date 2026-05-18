@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import { CustomerShell } from "@/components/layout/customer-shell";
 import { CustomerAccountNav } from "@/components/customer/account-nav";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   return (

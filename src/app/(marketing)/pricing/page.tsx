@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: "Pricing — Transparent Service Pricing",
   description:
     "See starting prices for all 57 service types across cleaning, pest control, handyman, furniture assembly, waste removal, and garden maintenance in London. Clear totals, clear adjustments, no hidden charges.",
+  alternates: {
+    canonical: "/pricing",
+  },
   openGraph: {
     title: "Pricing — Transparent Service Pricing | AreaSorted",
     description:

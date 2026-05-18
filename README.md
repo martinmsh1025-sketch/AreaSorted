@@ -1,11 +1,10 @@
 # AreaSorted
 
-> Alignment note (2026-03-16)
-> - Authoritative product direction is `AreaSorted` as a managed marketplace with `provider-company` as the primary commercial entity.
+> Product note (2026-05-18)
+> - AreaSorted is operated as a managed marketplace with `ProviderCompany` as the primary commercial entity.
 > - `ProviderCompany` is the top-level provider model for customer booking, pricing, onboarding, admin review, Stripe setup, and provider portal access.
-> - `Cleaner` or worker flows remain legacy or secondary operational modules unless a document explicitly states they are future subcontractor/workforce features under a provider.
-> - Provider auth lifecycle should be read as: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`.
-> - Legacy brand names (`WashHub`, `Alder London`) have been removed from all source code and data files. `AreaSorted` is the sole active brand.
+> - Provider auth lifecycle is: `invite -> email verification -> password setup -> onboarding -> admin review -> Stripe/payment setup -> pricing -> active portal`.
+> - `AreaSorted` is the sole active customer-facing brand.
 
 
 AreaSorted is a managed marketplace for local home and property services.
@@ -17,7 +16,7 @@ This codebase keeps the provider as the primary service seller by default and tr
 - Active brand: `AreaSorted`
 - Authoritative business model: managed marketplace with `ProviderCompany` as the primary commercial entity
 - Primary protected backoffice flow: `admin invite -> provider email verification -> password setup -> onboarding -> admin review -> Stripe -> pricing -> active portal`
-- `Cleaner` or worker flows are legacy or secondary workforce modules and must not override provider-company marketplace decisions
+- Workforce-related records are operational sub-resources under the provider-company marketplace model and do not override provider-company decisions
 - Customer-facing booking and quote UX remains customer-first; provider onboarding and provider portal are separate protected flows
 
 ## Local development bootstrap
@@ -28,7 +27,7 @@ Prisma uses:
 - migration source: `prisma/migrations/`
 - Prisma config: `prisma.config.ts`
 
-`prisma/marketplace.prisma` has been removed because it was only an earlier draft and is not authoritative.
+`prisma/schema.prisma` is the authoritative Prisma schema for marketplace, provider, customer, booking, pricing, and payment records.
 
 ### 1. Install dependencies
 
@@ -118,11 +117,11 @@ npm run build
   - `src/lib/pricing-config-store.ts`
   - `src/app/admin/pricing/`
 
-## Temporary compromises
+## Current Production Notes
 
-- Existing customer booking/payment flow still uses the pre-Prisma operational path in parts of the app.
-- `src/lib/pricing-config-store.ts` still uses temporary file storage and is scheduled to move fully into Prisma in the next backend step.
-- Existing cleaner-related legacy models remain in the main schema because they are still used by current pages.
+- Customer booking, provider onboarding, pricing review, dispute handling, and legal policy pages are implemented in the current app.
+- Production deployment requires live environment variables for database, Stripe, email, postcode lookup, upload, and analytics services.
+- Database migrations must be applied before deployment using `npm run prisma:migrate:deploy`.
 
 ## Stripe / marketplace note
 

@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "About Us",
   description:
     "AreaSorted was founded by Martin Ma to make home services easier to trust, with stronger provider standards, clearer information, and better protection for both customers and providers.",
+  alternates: {
+    canonical: "/about",
+  },
   openGraph: {
     title: "About AreaSorted — Trusted Local Services in London",
     description:
