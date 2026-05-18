@@ -359,17 +359,17 @@ export default async function ProviderHomePage() {
                   <ReadinessRow
                     label="Payments"
                     ok={stripeReady}
-                    detail={stripeReady ? "Charges and payouts enabled" : "Stripe Connect not fully set up"}
+                    detail={stripeReady ? "Stripe ready" : "Finish Stripe setup"}
                   />
                   <ReadinessRow
                     label="Pricing"
                     ok={pricingReady}
-                    detail={pricingReady ? "At least one active rule" : "No active pricing rule"}
+                    detail={pricingReady ? "Pricing active" : "Add active pricing"}
                   />
                   <ReadinessRow
                     label="Orders"
                     ok={canProviderAccessOrders(provider.status)}
-                    detail={canProviderAccessOrders(provider.status) ? "Accepting orders" : "Locked until live"}
+                    detail={canProviderAccessOrders(provider.status) ? "Open" : "Waiting"}
                   />
                   {payoutReady && (
                     <div className="flex items-center gap-1.5 text-sm text-green-700 dark:text-green-400 pt-1">
@@ -402,20 +402,14 @@ export default async function ProviderHomePage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Payout & dispute rules</CardTitle>
+                  <CardTitle className="text-sm">Payout rules</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
                   <p>
-                    For standard service quality issues, customers normally have <strong>48 hours</strong> after completion to raise a complaint.
+                    Customers usually have <strong>48 hours</strong> after completion to raise a service issue. Payouts may be held for complaints, fraud checks, chargebacks, or damage claims.
                   </p>
                   <p>
-                    If no complaint is raised within that period, your payout should normally become eligible, subject to fraud checks, chargebacks, damage claims, or other valid hold reasons.
-                  </p>
-                  <p>
-                    Minor upheld issues may result in limited deductions, while severe failures such as no-shows, major quality failures, damage, fraud, or chargebacks may lead to larger deductions or full payout loss.
-                  </p>
-                  <p>
-                    You can review the full policy here: <Link href="/dispute-policy" className="font-medium text-primary hover:underline">Dispute & Payout Policy</Link>
+                    Full policy: <Link href="/dispute-policy" className="font-medium text-primary hover:underline">Dispute & Payout Policy</Link>
                   </p>
                 </CardContent>
               </Card>
@@ -555,17 +549,17 @@ function SetupWizard({
     steps.push({
       key: "application",
       number: 1,
-      title: "Application Review",
+      title: "Application",
       description: isEditable
-        ? "Complete and submit your application for admin review."
+        ? "Complete and submit your application."
         : provider.status === "REJECTED"
-          ? "Your application was not approved. Please check admin feedback."
-          : "Your application is being reviewed by our team.",
+          ? "Application not approved. Check feedback."
+          : "Your application is under review.",
       detail: isEditable
-        ? "Fill in company details, upload documents, and submit"
+        ? "Add details, documents, and submit"
         : provider.status === "CHANGES_REQUESTED"
-          ? "Changes requested — please update and resubmit"
-          : "Typically takes 1–2 business days",
+          ? "Update and resubmit"
+          : "Usually 1-2 business days",
       icon: Clock,
       status: "current",
       href: isEditable ? "/provider/onboarding" : "/provider/application-status",
@@ -576,7 +570,7 @@ function SetupWizard({
       key: "application",
       number: 1,
       title: "Application Approved",
-      description: "Your application has been reviewed and approved.",
+      description: "Approved and ready for setup.",
       detail: provider.approvedAt
         ? `Approved on ${new Date(provider.approvedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
         : "Approved",
@@ -598,12 +592,12 @@ function SetupWizard({
   steps.push({
     key: "payments",
     number: 2,
-    title: "Connect Payment Account",
+    title: "Payments",
     description: stripeReady
-      ? "Your Stripe account is connected and ready to receive payouts."
+      ? "Stripe is ready."
       : accountExists
-        ? "Your Stripe account needs additional information to enable payouts."
-        : "Connect your bank account through Stripe to receive customer payments.",
+        ? "Stripe needs more details."
+        : "Connect Stripe to receive payouts.",
     detail: stripeReady
       ? "Charges and payouts enabled"
       : accountExists && detailsSubmitted
@@ -632,10 +626,10 @@ function SetupWizard({
   steps.push({
     key: "pricing",
     number: 3,
-    title: "Set Your Pricing",
+    title: "Pricing",
     description: pricingReady
-      ? "Your pricing rules are configured and active."
-      : "Configure your hourly rates and service pricing. Default rates are pre-filled — review and adjust to your preference.",
+      ? "Pricing is active."
+      : "Review and save your rates.",
     detail: pricingReady
       ? `${provider.pricingRules?.filter((r: any) => r.active).length || 0} active rule(s)`
       : "Review pre-filled rates and save to activate",
@@ -650,10 +644,10 @@ function SetupWizard({
   steps.push({
     key: "availability",
     number: 4,
-    title: "Set Availability",
+    title: "Availability",
     description: hasAvailability
-      ? "Your weekly schedule is configured."
-      : "Set your working hours so customers can only book when you are available. Default hours (Mon–Fri 9–5) apply if not set.",
+      ? "Schedule set."
+      : "Set working hours. Defaults apply if unset.",
     detail: hasAvailability
       ? `${availabilityCount} day(s) configured`
       : "Recommended — prevents unwanted bookings",
@@ -683,17 +677,17 @@ function SetupWizard({
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 px-0 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#c62828]">
               <Rocket className="size-3.5" />
-              Provider Launch Setup
+              Provider setup
             </div>
 
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-2xl font-semibold tracking-tight text-slate-950 dark:text-slate-50 sm:text-3xl">
                   {provider.status === "APPROVED" && !accountExists
-                    ? "You are approved. Let’s get you live."
+                    ? "Approved. Finish setup."
                     : currentStep
                       ? `Next: ${currentStep.title}`
-                      : "Everything is set for launch."}
+                      : "Ready to launch."}
                 </h2>
                 <Badge className="border-0 bg-transparent text-slate-700">
                   {completedRequired}/{totalRequired} complete
@@ -701,10 +695,10 @@ function SetupWizard({
               </div>
               <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
                 {provider.status === "APPROVED" && !accountExists
-                  ? "Your application is approved. Complete the remaining setup below to start receiving bookings and payouts."
+                  ? "Add payments and pricing to open orders."
                   : currentStep
-                    ? `${currentStep.description} Finish this step first, then the next one unlocks automatically.`
-                    : "Your required setup is complete. We will unlock orders as soon as your account state finishes syncing."}
+                    ? "Finish this step to continue."
+                    : "Required setup is complete. Orders will open once synced."}
               </p>
             </div>
 
@@ -740,7 +734,7 @@ function SetupWizard({
                     <Zap className="size-4 text-[#c62828]" />
                     Launch readiness
                   </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">These are the key items that decide whether your account can go live.</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">Required before orders open.</p>
                 </div>
                 <Badge className="border-0 bg-slate-100 text-slate-700">
                   Priority
@@ -762,10 +756,10 @@ function SetupWizard({
                   </div>
                   <p className="mt-2 text-sm leading-5 text-slate-700 dark:text-slate-300">
                     {stripeReady
-                      ? "Charges and payouts are enabled."
+                      ? "Stripe ready."
                       : accountExists
-                        ? "Stripe account exists but still needs completion."
-                        : "Create your Stripe Express account."}
+                        ? "Finish Stripe."
+                        : "Create Stripe Express."}
                   </p>
                 </div>
 
@@ -784,8 +778,8 @@ function SetupWizard({
                   </div>
                   <p className="mt-2 text-sm leading-5 text-slate-700 dark:text-slate-300">
                     {pricingReady
-                      ? "At least one active rule is ready."
-                      : "Review the pre-filled pricing and save it."}
+                      ? "Active rule ready."
+                      : "Review and save rates."}
                   </p>
                 </div>
 
@@ -804,26 +798,26 @@ function SetupWizard({
                   </div>
                   <p className="mt-2 text-sm leading-5 text-slate-700 dark:text-slate-300">
                     {canProviderAccessOrders(provider.status)
-                      ? "You can now receive and manage bookings."
-                      : "Orders unlock after payment and pricing are ready."}
+                      ? "Manage bookings."
+                      : "Opens after setup."}
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-3">
-                <div>
-                  <div className="inline-flex items-center gap-2 text-sm font-semibold tracking-tight text-slate-950 dark:text-slate-50">
-                    <Briefcase className="size-4 text-[#c62828]" />
-                    Business setup
-                  </div>
-                  <p className="text-sm text-slate-600 dark:text-slate-300">Operational details that help your account run smoothly once orders open.</p>
+              <div>
+                <div className="inline-flex items-center gap-2 text-sm font-semibold tracking-tight text-slate-950 dark:text-slate-50">
+                  <Briefcase className="size-4 text-[#c62828]" />
+                  Business setup
                 </div>
+                <p className="text-sm text-slate-600 dark:text-slate-300">Useful once orders open.</p>
+              </div>
               <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
                 <div className="rounded-2xl bg-white px-4 py-4">
                   <div className="flex items-center gap-2.5 mb-2">
                     <MapPin className="size-4 text-slate-700" />
-                    <span className="text-sm font-medium">Coverage Areas</span>
+                    <span className="text-sm font-medium">Coverage</span>
                   </div>
                   <p className="text-3xl font-bold tracking-tight">{coverageCount}</p>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -868,8 +862,8 @@ function SetupWizard({
                   <p className="text-3xl font-bold tracking-tight">{canProviderAccessOrders(provider.status) ? "Open" : "Locked"}</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {canProviderAccessOrders(provider.status)
-                      ? "You can receive and manage bookings"
-                      : "Complete setup to start receiving bookings"}
+                      ? "Bookings can be managed"
+                      : "Finish setup first"}
                   </p>
                 </div>
               </div>
@@ -904,87 +898,78 @@ function SetupWizard({
           )}
 
           <div className="space-y-3">
-          {steps.map((step, idx) => {
-            const isOptional = step.key === "availability";
-            const isCurrent = step.status === "current";
-            const isCompleted = step.status === "completed";
-            const isLocked = step.status === "locked";
-            const StepIcon = step.icon;
+            {steps.map((step, idx) => {
+              const isOptional = step.key === "availability";
+              const isCurrent = step.status === "current";
+              const isCompleted = step.status === "completed";
+              const isLocked = step.status === "locked";
+              const StepIcon = step.icon;
 
-            return (
-              <Card
-                key={step.key}
-                className={
-                  isCurrent
-                    ? "border-0 bg-white shadow-none"
-                    : isCompleted
-                      ? "border-0 bg-white shadow-none"
-                      : "border-0 bg-white shadow-none"
-                }
-              >
-                <CardContent className="py-4 sm:py-5">
-                  <div className="flex items-start gap-4">
-                    <div className="relative shrink-0">
-                      {idx < steps.length - 1 && (
-                        <span className="absolute left-1/2 top-10 hidden h-[calc(100%+1rem)] w-px -translate-x-1/2 bg-gradient-to-b from-slate-200 via-slate-200 to-transparent sm:block" />
-                      )}
-                      {isCompleted ? (
-                        <div className="flex size-10 items-center justify-center rounded-2xl bg-emerald-100 shadow-sm dark:bg-emerald-900/40">
-                          <Check className="size-4.5 text-green-700 dark:text-green-400" />
-                        </div>
-                      ) : isCurrent ? (
-                        <div className="flex size-10 items-center justify-center rounded-2xl bg-[#c62828] text-white shadow-sm">
-                          <span className="text-sm font-bold">{step.number}</span>
-                        </div>
-                      ) : (
-                        <div className="flex size-10 items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-white/70 dark:bg-slate-950/40">
-                          <Lock className="size-3.5 text-muted-foreground/40" />
-                        </div>
-                      )}
-                    </div>
+              return (
+                <Card key={step.key} className="border-0 bg-white shadow-none">
+                  <CardContent className="py-4 sm:py-5">
+                    <div className="flex items-start gap-4">
+                      <div className="relative shrink-0">
+                        {idx < steps.length - 1 && (
+                          <span className="absolute left-1/2 top-10 hidden h-[calc(100%+1rem)] w-px -translate-x-1/2 bg-gradient-to-b from-slate-200 via-slate-200 to-transparent sm:block" />
+                        )}
+                        {isCompleted ? (
+                          <div className="flex size-10 items-center justify-center rounded-2xl bg-emerald-100 shadow-sm dark:bg-emerald-900/40">
+                            <Check className="size-4.5 text-green-700 dark:text-green-400" />
+                          </div>
+                        ) : isCurrent ? (
+                          <div className="flex size-10 items-center justify-center rounded-2xl bg-[#c62828] text-white shadow-sm">
+                            <span className="text-sm font-bold">{step.number}</span>
+                          </div>
+                        ) : (
+                          <div className="flex size-10 items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-white/70 dark:bg-slate-950/40">
+                            <Lock className="size-3.5 text-muted-foreground/40" />
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className={`text-sm font-semibold ${isLocked ? "text-muted-foreground" : ""}`}>
-                          {step.title}
-                        </h3>
-                        {isOptional && (
-                          <Badge variant="outline" className="text-[10px]">
-                            Optional
-                          </Badge>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className={`text-sm font-semibold ${isLocked ? "text-muted-foreground" : ""}`}>
+                            {step.title}
+                          </h3>
+                          {isOptional && (
+                            <Badge variant="outline" className="text-[10px]">
+                              Optional
+                            </Badge>
+                          )}
+                          {isCompleted && (
+                            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 text-[10px]">
+                              Complete
+                            </Badge>
+                          )}
+                          {isCurrent && <Badge className="bg-[#c62828] text-white text-[10px]">Now</Badge>}
+                        </div>
+                        <p className={`mt-1 text-sm ${isLocked ? "text-muted-foreground/70" : "text-muted-foreground"}`}>
+                          {step.description}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground/70">{step.detail}</p>
+                      </div>
+
+                      <div className="shrink-0 self-center">
+                        {isCurrent && step.href && (
+                          <Button
+                            size="sm"
+                            render={<Link href={step.href} />}
+                            className="bg-slate-900 hover:bg-slate-800 text-white"
+                          >
+                            {step.ctaLabel}
+                            <ArrowRight className="ml-1.5 size-3.5" />
+                          </Button>
                         )}
                         {isCompleted && (
-                          <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 text-[10px]">
-                            Complete
-                          </Badge>
+                          <StepIcon className="size-5 text-emerald-600/60 dark:text-emerald-400/40" />
                         )}
-                        {isCurrent && <Badge className="bg-[#c62828] text-white text-[10px]">Now</Badge>}
+                        {isLocked && <Lock className="size-4 text-muted-foreground/30" />}
                       </div>
-                      <p className={`mt-1 text-sm ${isLocked ? "text-muted-foreground/70" : "text-muted-foreground"}`}>
-                        {step.description}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground/70">{step.detail}</p>
                     </div>
-
-                    <div className="shrink-0 self-center">
-                      {isCurrent && step.href && (
-                        <Button
-                          size="sm"
-                          render={<Link href={step.href} />}
-                          className="bg-slate-900 hover:bg-slate-800 text-white"
-                        >
-                          {step.ctaLabel}
-                          <ArrowRight className="ml-1.5 size-3.5" />
-                        </Button>
-                      )}
-                      {isCompleted && (
-                        <StepIcon className="size-5 text-emerald-600/60 dark:text-emerald-400/40" />
-                      )}
-                      {isLocked && <Lock className="size-4 text-muted-foreground/30" />}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
@@ -1006,7 +991,7 @@ function SetupWizard({
                 Pricing must be active before orders can open.
               </div>
               <div className="rounded-2xl bg-slate-50 px-3 py-3 dark:bg-slate-900/80">
-                Availability is optional, but strongly recommended.
+                Availability helps avoid bad slots.
               </div>
             </CardContent>
           </Card>
@@ -1016,7 +1001,7 @@ function SetupWizard({
 
       <div className="rounded-2xl bg-white px-4 py-3 text-xs text-muted-foreground">
         <p>
-          <strong>Need help?</strong> Finish the highlighted step first. The next required step unlocks automatically, and orders open once payments and pricing are ready.
+          <strong>Need help?</strong> Finish the highlighted step. Orders open once payments and pricing are ready.
         </p>
       </div>
     </>

@@ -30,18 +30,18 @@ export default async function ProviderLoginPage({ searchParams }: ProviderLoginP
             <LogIn className="size-3.5" />
             AreaSorted provider portal
           </div>
-          <h1 className="provider-auth-title">Turn availability, service coverage, and pricing into repeat work.</h1>
+          <h1 className="provider-auth-title">Manage your AreaSorted work.</h1>
           <p className="provider-auth-copy">
-            AreaSorted helps independent providers turn their setup into real bookings. Manage your service areas, availability, pricing, and payout status from one place.
+            Sign in to view orders, availability, pricing, and payout status.
           </p>
           <div className="provider-auth-aside">
             <div className="provider-auth-note">
-              <strong>Why providers use AreaSorted</strong>
-              Quote requests, booking confirmation, account setup, and payout visibility all stay in one structured portal.
+              <strong>One portal</strong>
+              Keep bookings, setup, and payout visibility together.
             </div>
             <div className="provider-auth-note">
               <strong>New provider?</strong>
-              Start with the public onboarding link, verify your email, and create your password before signing in.
+              Apply first, verify your email, then create your password.
             </div>
           </div>
         </div>

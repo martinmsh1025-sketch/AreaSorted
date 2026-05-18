@@ -1,6 +1,4 @@
 import type { MetadataRoute } from "next";
-import { boroughPages } from "@/lib/seo/borough-pages";
-import { boroughServiceContent } from "@/lib/seo/borough-service-content";
 import { advicePosts } from "@/lib/seo/advice-posts";
 import { getEnabledServiceValues } from "@/lib/service-catalog-settings";
 
@@ -139,13 +137,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const boroughLandingPages: MetadataRoute.Sitemap = boroughPages.map((page) => ({
-    url: `${BASE_URL}/london/${page.slug}`,
-    lastModified: now,
-    changeFrequency: "monthly",
-    priority: 0.7,
-  }));
-
   const servicePages: MetadataRoute.Sitemap = [
     { service: "cleaning", path: "/services/cleaning" },
     { service: "handyman", path: "/services/handyman" },
@@ -161,20 +152,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
-
-  const serviceAreaPages: MetadataRoute.Sitemap = [];
-  for (const borough of boroughPages) {
-    for (const serviceContent of boroughServiceContent) {
-      if (enabledServiceValues.includes(serviceContent.service)) {
-        serviceAreaPages.push({
-          url: `${BASE_URL}/london/${borough.slug}/${serviceContent.slug}`,
-          lastModified: now,
-          changeFrequency: "monthly",
-          priority: 0.75,
-        });
-      }
-    }
-  }
 
   const advicePages: MetadataRoute.Sitemap = advicePosts.map((post) => ({
     url: `${BASE_URL}/advice/${post.slug}`,
@@ -198,5 +175,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  return [...staticPages, ...servicePages, ...boroughLandingPages, ...serviceAreaPages, ...advicePages, ...comparePages];
+  return [...staticPages, ...servicePages, ...advicePages, ...comparePages];
 }

@@ -237,13 +237,8 @@ export default async function CleaningServicePage() {
             Check your area, review the quote, and continue to booking when you are ready.
           </p>
           <p style={{ color: "var(--color-text-muted)", marginTop: "0.6rem", lineHeight: 1.7 }}>
-            You can also explore local cleaning pages for{" "}
-            <Link href="/london/camden/cleaning" style={{ color: "var(--color-brand)", fontWeight: 600 }}>Camden</Link>,{" "}
-            <Link href="/london/islington/cleaning" style={{ color: "var(--color-brand)", fontWeight: 600 }}>Islington</Link>,{" "}
-            <Link href="/london/westminster/cleaning" style={{ color: "var(--color-brand)", fontWeight: 600 }}>Westminster</Link>,{" "}
-            <Link href="/london/hackney/cleaning" style={{ color: "var(--color-brand)", fontWeight: 600 }}>Hackney</Link>,{" "}
-            <Link href="/london/lambeth/cleaning" style={{ color: "var(--color-brand)", fontWeight: 600 }}>Lambeth</Link>,{" "}
-            and <Link href="/london" style={{ color: "var(--color-brand)", fontWeight: 600 }}>more London boroughs</Link>.
+            AreaSorted uses one London coverage page instead of separate borough cleaning pages. Start with your exact
+            postcode so availability and local fit can be checked properly.
           </p>
           <div className="button-row" style={{ justifyContent: "center", marginTop: "1.4rem" }}>
             <Link className="button button-primary" href="/quote">Get a quote</Link>

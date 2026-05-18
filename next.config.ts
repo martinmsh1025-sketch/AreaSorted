@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "30mb",
     },
   },
+  redirects: async () => [
+    {
+      source: "/london/:path+",
+      destination: "/london",
+      permanent: true,
+    },
+  ],
   // M-1 FIX: Security headers to protect against common web vulnerabilities
   headers: async () => [
     {
